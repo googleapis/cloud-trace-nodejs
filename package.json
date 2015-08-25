@@ -1,0 +1,61 @@
+{
+  "name": "@google/cloud-trace",
+  "version": "0.1.0",
+  "description": "Node.js Support for Google Cloud Trace",
+  "main": "index.js",
+  "scripts": {
+    "test": "jshint . && istanbul test ./node_modules/.bin/_mocha -- test --timeout 4000 --R spec",
+    "coverage": "istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- test --timeout 4000 --R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "closure": "./node_modules/.bin/closure-npc"
+  },
+  "keywords": [
+    "google",
+    "tracing",
+    "profiling"
+  ],
+  "author": "Google Inc.",
+  "contributors": [
+    {
+      "name": "Ali Ijaz Sheikh",
+      "email": "ofrobots@google.com"
+    },
+    {
+      "name": "Matt Loring",
+      "email": "mattloring@google.com"
+    },
+    {
+      "name": "Scott McMaster",
+      "email": "smcmaster@google.com"
+    }
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=0.12"
+  },
+  "devDependencies": {
+    "closure-npc": "*",
+    "coveralls": "^2.11.2",
+    "express": "^4.13.1",
+    "glob": "^5.0.14",
+    "hapi": "^8.8.0",
+    "istanbul": "^0.3.17",
+    "jshint": "^2.7.0",
+    "mocha": "^2.2.4",
+    "mongodb": "^2.0.39",
+    "mongoose": "^4.1.1",
+    "nock": "^1.9.0",
+    "proxyquire": "^1.4.0",
+    "q": "^1.4.1",
+    "redis": "^0.12.1",
+    "restify": "^3.0.3",
+    "timekeeper": "0.0.5",
+    "tmp": "0.0.26"
+  },
+  "dependencies": {
+    "continuation-local-storage": "^3.1.4",
+    "google-auth-library": "^0.9.5",
+    "request": "^2.55.0",
+    "shimmer": "^1.0.0",
+    "uuid": "^2.0.1"
+  }
+}

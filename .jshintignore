@@ -1,0 +1,4 @@
+node_modules
+test/debug/e2e/node_modules
+test/debug/fixtures/coffee
+test/trace/examples/node_modules
