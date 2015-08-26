@@ -31,7 +31,7 @@ var http = require('http');
 var fs = require('fs');
 var path = require('path');
 
-var FORGIVENESS = 1.2;
+var FORGIVENESS = 0.2;
 var SERVER_WAIT = 200;
 var SERVER_PORT = 9042;
 var SERVER_RES = '1729';
@@ -86,8 +86,8 @@ function assertDurationCorrect(predicate) {
   predicate = predicate || function(span) { return span.name !== 'outer'; };
   var span = getMatchingSpan(predicate);
   var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
-  assert(duration > SERVER_WAIT);
-  assert(duration < SERVER_WAIT * FORGIVENESS);
+  assert(duration > SERVER_WAIT * (1 - FORGIVENESS));
+  assert(duration < SERVER_WAIT * (1 + FORGIVENESS));
 }
 
 function doRequest(method, done, tracePredicate, path) {
