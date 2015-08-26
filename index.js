@@ -28,6 +28,7 @@ var semver = require('semver');
  */
 var phantomTraceAgent = {
   startSpan: function() { return OpaqueSpan.nullSpan; },
+  endSpan: function(opaque) { opaque.end(); },
   setTransactionName: function() {},
   addTransactionLabel: function() {}
 };
@@ -45,6 +46,10 @@ var publicAgent = {
 
   startSpan: function(name, labels) {
     return agent.startSpan(name, labels);
+  },
+
+  endSpan: function(opaque) {
+    return agent.end(opaque);
   },
 
   setTransactionName: function(name) {
