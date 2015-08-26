@@ -1,8 +1,8 @@
 #!/bin/bash
 
 jshint . || exit 1
-istanbul test ./node_modules/.bin/_mocha -- test --timeout 4000 --R spec || exit 1
-for test in test/hooks/test-*.js ;
+istanbul test $(npm bin)/_mocha -- test test/hooks --timeout 4000 --R spec || exit 1
+for test in test/standalone/test-*.js ;
 do
-  istanbul test ./node_modules/.bin/_mocha -- ${test} --timeout 4000 --R spec || exit 1
+  istanbul test $(npm bin)/_mocha -- ${test} --timeout 4000 --R spec || exit 1
 done

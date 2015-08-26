@@ -16,7 +16,7 @@
 
 'use strict';
 
-var common = require('./common.js');
+var common = require('../hooks/common.js');
 var cluster = require('cluster');
 var express = require('express');
 

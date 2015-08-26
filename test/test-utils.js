@@ -29,6 +29,9 @@ var utils = require('../lib/utils.js');
 nock.disableNetConnect();
 
 describe('utils', function() {
+  after(function() {
+    nock.enableNetConnect();
+  });
 
   describe('getProjectNumber', function() {
 
@@ -46,8 +49,10 @@ describe('utils', function() {
         var scope = nock('http://metadata')
                       .get('/computeMetadata/v1/project/numeric-project-id')
                       .reply(200, '567');
+        var num = process.env.GCLOUD_PROJECT_NUM;
         delete process.env.GCLOUD_PROJECT_NUM;
         utils.getProjectNumber(function(err, project) {
+          process.env.GCLOUD_PROJECT_NUM = num;
           assert.ok(!err);
           assert.strictEqual(project, '567');
           scope.done();
