@@ -24,13 +24,19 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
 var assert = require('assert');
 var agent = require('../..');
 
-
 describe('index.js', function() {
 
   it('should be harmless to stop before a start', function() {
     agent.stop();
     agent.stop();
     agent.stop();
+  });
+
+  it('should complain when config.projectId is not a string', function() {
+    agent.start({projectId: 0, enabled: true, logLevel: 0});
+    assert.strictEqual(agent.isActive(), false);
+    agent.start({projectId: 1001, enabled: true, logLevel: 0});
+    assert.strictEqual(agent.isActive(), false);
   });
 
   function wrapTest(nodule, property) {

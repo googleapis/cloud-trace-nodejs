@@ -39,6 +39,10 @@ var agent = phantomTraceAgent;
  * The singleton public agent. This is the public API of the module.
  */
 var publicAgent = {
+  isActive: function() {
+    return agent !== phantomTraceAgent;
+  },
+
   startSpan: function(name, labels) {
     return agent.startSpan(name, labels);
   },
@@ -52,37 +56,52 @@ var publicAgent = {
   },
 
   start: function(projectConfig) {
-    if (agent === phantomTraceAgent) {
-      var util = require('util');
-      var config = {};
-      util._extend(config, require('./config.js'));
-      util._extend(config, projectConfig);
-      var logger = new Logger(config.logLevel, '@google/cloud-trace');
-      if (!semver.satisfies(process.versions.node, '>=0.12')) {
-        logger.error('Tracing is only supported on Node versions >=0.12');
-        return phantomTraceAgent;
-      }
-      agent = require('./lib/trace-agent.js').get(config, logger);
-
-      if (!config.projectId) {
-        // Queue the work to acquire the projectNumber (potentially from the
-        // network.)
-        require('./lib/utils.js').getProjectNumber(function(err, project) {
-          if (err) {
-            // Fatal error. Disable the agent.
-            publicAgent.stop();
-            config.enabled = false;
-            return;
-          }
-          config.projectId = project;
-        });
-      }
+    if (this.isActive()) { // already started.
+      return publicAgent;
     }
+
+    var util = require('util');
+    var config = {};
+    util._extend(config, require('./config.js'));
+    util._extend(config, projectConfig);
+    var logger = new Logger(config.logLevel, '@google/cloud-trace');
+    if (!semver.satisfies(process.versions.node, '>=0.12')) {
+      logger.error('Tracing is only supported on Node versions >=0.12');
+      return publicAgent;
+    }
+
+    if (typeof config.projectId === 'undefined' &&
+        process.env.GCLOUD_PROJECT_NUM) {
+      config.projectId = process.env.GCLOUD_PROJECT_NUM;
+    }
+
+    if (typeof config.projectId === 'undefined') {
+      // Queue the work to acquire the projectNumber (potentially from the
+      // network.)
+      require('./lib/utils.js').getProjectNumber(function(err, project) {
+        if (err) {
+          // Fatal error. Disable the agent.
+          logger.error('Unable to acquire the project number from metadata ' +
+            'service. Please provide a valid project number as an env. ' +
+            'variable, or through config.projectId passed to start().' +
+            err);
+          publicAgent.stop();
+          return;
+        }
+        config.projectId = project;
+      });
+    } else if (typeof config.projectId !== 'string') {
+      logger.error('config.projectId, if provided, must be a string. '+
+        'Disabling trace agent.');
+      return publicAgent;
+    }
+
+    agent = require('./lib/trace-agent.js').get(config, logger);
     return publicAgent; // for chaining
   },
 
   stop: function() {
-    if (agent !== phantomTraceAgent) {
+    if (this.isActive()) {
       agent.stop();
       agent = phantomTraceAgent;
     }

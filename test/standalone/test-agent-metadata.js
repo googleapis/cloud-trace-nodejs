@@ -18,26 +18,38 @@
 
 var assert = require('assert');
 var nock = require('nock');
+var agent = require('../..');
+
 nock.disableNetConnect();
 
 delete process.env.GCLOUD_PROJECT_NUM;
 
-describe('agent stops gracefully', function() {
+describe('agent interaction with metadata service', function() {
 
   it('should stop when the project number cannot be acquired', function(done) {
-    this.timeout(4000);
-
     var scope = nock('http://metadata')
                 .get('/computeMetadata/v1/project/numeric-project-id')
-                .reply(200, '1729');
+                .reply(404, 'foo');
 
-    var config = {enabled: true, logLevel: 0};
-    require('../..').start(config);
+    agent.start({logLevel: 0});
     setTimeout(function() {
-      assert.strictEqual(config.enabled, false);
+      assert.strictEqual(agent.isActive(), false);
       scope.done();
       done();
-    }, 2000);
+    }, 500);
+    agent.stop();
   });
 
+  it('should not query metadata service when config.projectId is set',
+    function() {
+      agent.start({projectId: 0, logLevel: 0});
+      agent.stop();
+    });
+
+  it('should not query metadata service when env. var. is set', function() {
+    process.env.GCLOUD_PROJECT_NUM=0;
+    agent.start({logLevel: 0});
+    agent.stop();
+    delete process.env.GCLOUD_PROJECT_NUM;
+  });
 });
