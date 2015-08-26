@@ -23,11 +23,12 @@ var path = require('path');
 var tests = {
   http: 'http/http-performance-runner.js',
   express: 'express/express-performance-runner.js',
-  mongo: 'mongo/mongo-performance-runner.js'
+  mongo: 'mongo/mongo-performance-runner.js',
+  restify: 'restify/restify-performance-runner.js'
 };
 
 if (process.argv.length < 3) {
-  console.log('Please specify framework to test: [express, http, mongo]');
+  console.log('Please specify framework to test: [express, http, mongo, restify]');
   return;
 }
 
