@@ -62,7 +62,7 @@ var publicAgent = {
 
   start: function(projectConfig) {
     if (this.isActive()) { // already started.
-      return publicAgent;
+      return this;
     }
 
     var util = require('util');
@@ -72,7 +72,7 @@ var publicAgent = {
     var logger = new Logger(config.logLevel, '@google/cloud-trace');
     if (!semver.satisfies(process.versions.node, '>=0.12')) {
       logger.error('Tracing is only supported on Node versions >=0.12');
-      return publicAgent;
+      return this;
     }
 
     if (typeof config.projectId === 'undefined' &&
@@ -98,11 +98,11 @@ var publicAgent = {
     } else if (typeof config.projectId !== 'string') {
       logger.error('config.projectId, if provided, must be a string. '+
         'Disabling trace agent.');
-      return publicAgent;
+      return this;
     }
 
     agent = require('./lib/trace-agent.js').get(config, logger);
-    return publicAgent; // for chaining
+    return this; // for chaining
   },
 
   stop: function() {
