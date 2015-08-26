@@ -24,7 +24,50 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
 var assert = require('assert');
 var agent = require('../..');
 
-describe('module', function() {
+
+describe('index.js', function() {
+
+  it('should be harmless to stop before a start', function() {
+    agent.stop();
+    agent.stop();
+    agent.stop();
+  });
+
+  function wrapTest(nodule, property) {
+    agent.stop(); // harmless to stop before a start.
+    assert(!nodule[property].__unwrap,
+      property + ' already wrapped before start');
+    agent.start();
+    assert(nodule[property].__unwrap,
+      property + ' should get wrapped on start');
+    agent.stop();
+    assert(!nodule[property].__unwrap,
+      property + ' should get unwrapped on stop');
+    agent.start();
+    assert(nodule[property].__unwrap,
+      property + ' should get wrapped on start');
+    agent.stop();
+    assert(!nodule[property].__unwrap,
+      property + ' should get unwrapped on stop');
+  }
+
+  it('should wrap/unwrap module._load on start/stop', function() {
+    wrapTest(require('module'), '_load');
+  });
+
+  it('should wrap/unwrap http on start/stop', function() {
+    agent.start(); // agent needs to be started before the first require.
+    var http = require('http');
+    wrapTest(http, 'request');
+    agent.stop();
+  });
+
+  it('should wrap/unwrap express on start/stop', function() {
+    agent.start();
+    var express = require('express');
+    wrapTest(express.application, 'lazyrouter');
+    agent.stop();
+  });
 
   it('should have equivalent enabled and disabled structure', function() {
     agent.start();
