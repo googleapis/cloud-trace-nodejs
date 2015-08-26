@@ -86,8 +86,10 @@ function assertDurationCorrect(predicate) {
   predicate = predicate || function(span) { return span.name !== 'outer'; };
   var span = getMatchingSpan(predicate);
   var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
-  assert(duration > SERVER_WAIT * (1 - FORGIVENESS));
-  assert(duration < SERVER_WAIT * (1 + FORGIVENESS));
+  assert(duration > SERVER_WAIT * (1 - FORGIVENESS),
+      'Duration was ' + duration + ', expected ' + SERVER_WAIT);
+  assert(duration < SERVER_WAIT * (1 + FORGIVENESS),
+      'Duration was ' + duration + ', expected ' + SERVER_WAIT);
 }
 
 function doRequest(method, done, tracePredicate, path) {
