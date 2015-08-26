@@ -20,7 +20,7 @@
 // Start docker daemon
 //   ex) docker -d
 // Run a mongo image binding the mongo port
-//   ex) docker run -p 28001:27017 -d mongo
+//   ex) docker run -p 27017:27017 -d mongo
 
 var traceAgent;
 if (process.argv[2] === '-i') {
@@ -61,9 +61,9 @@ var runInTransaction = function(fn) {
 var work = function(endTransaction) {
   var responses = 0;
 
-  mongoose.connect('mongodb://localhost:28001/testdb', function(err) {
+  mongoose.connect('mongodb://localhost:27017/testdb', function(err) {
     if (err) {
-      console.log('Skipping: no mongo server found at localhost:28001.');
+      console.log('Skipping: no mongo server found at localhost:27017.');
       process.exit(0);
     }
     var start = process.hrtime();
