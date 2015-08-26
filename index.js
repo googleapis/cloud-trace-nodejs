@@ -17,6 +17,8 @@
 'use strict';
 
 var OpaqueSpan = require('./lib/opaque-span.js');
+var Logger = require('./lib/logger.js');
+var semver = require('semver');
 
 /**
  * Phantom implementation of the trace agent. This allows API users to decouple
@@ -55,7 +57,12 @@ var publicAgent = {
       var config = {};
       util._extend(config, require('./config.js'));
       util._extend(config, projectConfig);
-      agent = require('./lib/trace-agent.js').get(config);
+      var logger = new Logger(config.logLevel, '@google/cloud-trace');
+      if (!semver.satisfies(process.versions.node, '>=0.12')) {
+        logger.error('Tracing is only supported on Node versions >=0.12');
+        return phantomTraceAgent;
+      }
+      agent = require('./lib/trace-agent.js').get(config, logger);
 
       if (!config.projectId) {
         // Queue the work to acquire the projectNumber (potentially from the
