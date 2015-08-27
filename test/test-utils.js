@@ -65,40 +65,6 @@ describe('utils', function() {
       assert(typeof result === 'function');
     });
 
-    // TODO: need to implement. This will be simpler if we could pass
-    // in a (mock) authClient to the request factory.
-    //
-    // it('returned function should attempt to get credentials on first use',
-    //   function(done) {
-    //     var request = auth.authorizedRequestFactory(['fake-scope']);
-    //     // process.env.GOOGLE_APPLICATION_CREDENTIALS =
-    //     //   __dirname + '/fixtures/fake-key.json';
-
-    //     var authScope = nock('https://accounts.google.com/')
-    //                       .post('/o/oauth2/token')
-    //                       .reply(200, {
-    //                         access_token: '1/fake-token',
-    //                         token_type: 'Bearer',
-    //                         expires_in: 60
-    //                       });
-    //     var scope = nock('http://foo')
-    //                   .get('/bar')
-    //                   .reply(200, {qux: 1});
-
-    //     request('http://foo/bar', function(err, response, body) {
-    //       console.log(err);
-    //       assert.ok(!err);
-    //       assert.ok(body);
-    //       assert.ok(response);
-
-    //       assert.deepEqual(body, {qux: 1});
-
-    //       scope.done();
-    //       authScope.done();
-    //       done();
-    //     });
-    //   });
-
   });
 
   describe('requestWithRetry', function() {
