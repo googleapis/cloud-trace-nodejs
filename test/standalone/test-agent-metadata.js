@@ -26,30 +26,48 @@ delete process.env.GCLOUD_PROJECT_NUM;
 
 describe('agent interaction with metadata service', function() {
 
+  afterEach(function() {
+    agent.stop();
+  });
+
   it('should stop when the project number cannot be acquired', function(done) {
-    var scope = nock('http://metadata')
+    nock.disableNetConnect();
+    var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/numeric-project-id')
                 .reply(404, 'foo');
 
     agent.start({logLevel: 0});
     setTimeout(function() {
-      assert.strictEqual(agent.isActive(), false);
+      assert.ok(!agent.isActive());
       scope.done();
       done();
     }, 500);
-    agent.stop();
+  });
+
+  it('should activate with projectId from metadata service', function(done) {
+    nock.disableNetConnect();
+    var scope = nock('http://metadata.google.internal')
+                .get('/computeMetadata/v1/project/numeric-project-id')
+                .reply(200, '1234');
+    agent.start({logLevel: 0});
+    setTimeout(function() {
+      assert.ok(agent.isActive());
+      scope.done();
+      done();
+    }, 500);
   });
 
   it('should not query metadata service when config.projectId is set',
     function() {
+      nock.disableNetConnect();
       agent.start({projectId: 0, logLevel: 0});
-      agent.stop();
     });
 
   it('should not query metadata service when env. var. is set', function() {
+    nock.disableNetConnect();
     process.env.GCLOUD_PROJECT_NUM=0;
     agent.start({logLevel: 0});
-    agent.stop();
     delete process.env.GCLOUD_PROJECT_NUM;
   });
+
 });

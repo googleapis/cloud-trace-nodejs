@@ -19,12 +19,6 @@ var nock = require('nock');
 var assert = require('assert');
 
 var utils = require('../lib/utils.js');
-// var auth = proxyquire('../lib/auth.js', {
-//   'google-auth-library': {
-//     GoogleAuth: StubGoogleAuth
-//   });
-// function StubGoogleAuth() {
-// }
 
 nock.disableNetConnect();
 
@@ -35,30 +29,33 @@ describe('utils', function() {
 
   describe('getProjectNumber', function() {
 
-    it('should check the env. var. first', function(done) {
-      process.env.GCLOUD_PROJECT_NUM='789';
-      utils.getProjectNumber(function(err, project) {
-        assert.ok(!err);
-        assert.strictEqual(project, '789');
-        done();
-      });
-    });
-
     it('should be able to get project number from metadata service',
       function(done) {
-        var scope = nock('http://metadata')
+        var scope = nock('http://metadata.google.internal')
                       .get('/computeMetadata/v1/project/numeric-project-id')
                       .reply(200, '567');
-        var num = process.env.GCLOUD_PROJECT_NUM;
-        delete process.env.GCLOUD_PROJECT_NUM;
         utils.getProjectNumber(function(err, project) {
-          process.env.GCLOUD_PROJECT_NUM = num;
           assert.ok(!err);
           assert.strictEqual(project, '567');
           scope.done();
           done();
         });
       });
+
+    it('should accept an optional headers parameter', function(done) {
+      var scope =
+        nock('http://metadata.google.internal', {
+            reqheaders: {'Flux': 'Capacitor'}
+          })
+          .get('/computeMetadata/v1/project/numeric-project-id')
+          .reply(200, '789');
+      utils.getProjectNumber({'Flux': 'Capacitor'}, function(err, project) {
+        assert.ok(!err);
+        assert.strictEqual(project, '789');
+        scope.done();
+        done();
+      });
+    });
   });
 
   describe('authorizedRequestFactory', function() {
