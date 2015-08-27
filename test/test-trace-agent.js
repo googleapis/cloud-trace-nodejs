@@ -16,6 +16,8 @@
 
  'use strict';
 
+ var constants = require('../lib/constants.js');
+
 if (!process.env.GCLOUD_PROJECT_NUM) {
   console.log('The GCLOUD_PROJECT_NUM environment variable must be set.');
   process.exit(1);
@@ -37,16 +39,12 @@ describe('Trace Agent', function() {
     it('should work correctly with various inputs', function() {
       assert.ok(!agent.isTraceAPIRequest());
       assert.ok(!agent.isTraceAPIRequest({}));
-      assert.ok(!agent.isTraceAPIRequest({
-          headers: {
-            'Foo': agent.TRACE_API_HEADER_NAME
-          }
-        }));
-      assert.ok(agent.isTraceAPIRequest({
-          headers: {
-            'X-Cloud-Trace-Agent': 'something'
-          }
-        }));
+
+      var headers = { 'Foo': constants.TRACE_API_HEADER_NAME };
+      assert.ok(!agent.isTraceAPIRequest({ headers: headers }));
+
+      headers[constants.TRACE_API_HEADER_NAME] = 'something';
+      assert.ok(agent.isTraceAPIRequest({ headers: headers }));
     });
   });
 
