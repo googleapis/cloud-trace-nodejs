@@ -63,6 +63,27 @@ describe('test-trace-http', function() {
     );
   });
 
+  it('should accurately measure get time, error', function(done) {
+    var server = http.Server(function(req, res) {
+      setTimeout(function() {
+        res.writeHead(200);
+        res.end(common.serverRes);
+      }, 10000);
+    });
+    server.timeout = common.serverWait;
+    server.listen(common.serverPort, common.runInTransaction.bind(null,
+      function(endTransaction) {
+        var req = http.get({port: common.serverPort});
+        req.on('error', function() {
+          endTransaction();
+          common.assertDurationCorrect();
+          server.close();
+          done();
+        });
+      })
+    );
+  });
+
   it('should accurately measure get time, event emitter', function(done) {
     server.listen(common.serverPort, common.runInTransaction.bind(null,
       function(endTransaction) {
