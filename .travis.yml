@@ -10,3 +10,6 @@ services:
 
 env:
   - GCLOUD_PROJECT_NUM=0
+
+after_success:
+  - ./bin/run-coverage.sh
