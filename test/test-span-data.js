@@ -95,7 +95,7 @@ describe('SpanData', function() {
       var span = agent.createRootSpanData('hi');
       span.createChildSpanData('sub');
       span.close();
-      var traces = agent.traceWriter.buffer_;
+      var traces = agent.traceWriter.buffer_.map(JSON.parse);
       for (var i = 0; i < traces.length; i++) {
         for (var j = 0; j < traces[i].spans.length; j++) {
           assert.notEqual(traces[i].spans[j].endTime, '');

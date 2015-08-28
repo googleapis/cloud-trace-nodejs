@@ -46,7 +46,7 @@ function cleanTraces() {
 }
 
 function getTraces() {
-  return agent.traceWriter.buffer_;
+  return agent.traceWriter.buffer_.map(JSON.parse);
 }
 
 function getMatchingSpan(predicate) {
