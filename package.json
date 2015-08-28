@@ -41,7 +41,7 @@
     "istanbul": "^0.3.17",
     "jshint": "^2.7.0",
     "mocha": "^2.2.4",
-    "mongodb": "^2.0.39",
+    "mongodb-core": "^1.2.10",
     "mongoose": "^4.1.1",
     "nock": "^1.9.0",
     "proxyquire": "^1.4.0",

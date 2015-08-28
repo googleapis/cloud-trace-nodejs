@@ -25,6 +25,7 @@ var agent = require('..').start().private_();
 var TraceLabels = require('../lib/trace-labels.js');
 var assert = require('assert');
 var cls = require('../lib/cls.js');
+var constants = require('../lib/constants.js');
 
 describe('SpanData', function() {
 
@@ -55,6 +56,25 @@ describe('SpanData', function() {
       assert.ok(!data.span.isClosed());
       data.close();
       assert.ok(data.span.isClosed());
+    });
+  });
+
+  describe('addContextToHeaders', function() {
+    it('adds context to headers', function() {
+      cls.getNamespace().run(function() {
+        var data = agent.createRootSpanData('name', 1, 2);
+        var spanId = data.span.spanId;
+        data.options = 1;
+        var options = {
+          headers: {}
+        };
+        data.addContextToHeaders(options.headers);
+        var parsed = agent.parseContextFromHeader(
+            options.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+        assert.equal(parsed.traceId, 1);
+        assert.equal(parsed.spanId, spanId);
+        assert.equal(parsed.options, 1);
+      });
     });
   });
 

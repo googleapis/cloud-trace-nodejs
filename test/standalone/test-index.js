@@ -75,6 +75,39 @@ describe('index.js', function() {
     agent.stop();
   });
 
+  it('should wrap/unwrap hapi on start/stop', function() {
+    agent.start();
+    var hapi = require('hapi');
+    wrapTest(hapi.Server.prototype, 'connection');
+    agent.stop();
+  });
+
+  it('should wrap/unwrap mongodb-core on start/stop', function() {
+    agent.start();
+    var mongo = require('mongodb-core');
+    wrapTest(mongo.Server.prototype, 'command');
+    wrapTest(mongo.Server.prototype, 'insert');
+    wrapTest(mongo.Server.prototype, 'update');
+    wrapTest(mongo.Server.prototype, 'remove');
+    wrapTest(mongo.Cursor.prototype, 'next');
+    agent.stop();
+  });
+
+  it('should wrap/unwrap redis on start/stop', function() {
+    agent.start();
+    var redis = require('redis');
+    wrapTest(redis.RedisClient.prototype, 'send_command');
+    wrapTest(redis, 'createClient');
+    agent.stop();
+  });
+
+  it('should wrap/unwrap restify on start/stop', function() {
+    agent.start();
+    var restify = require('restify');
+    wrapTest(restify, 'createServer');
+    agent.stop();
+  });
+
   it('should have equivalent enabled and disabled structure', function() {
     agent.start();
     assert.equal(typeof agent, 'object');
