@@ -2,6 +2,7 @@
 
 [![NPM Version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
+[![Test Coverage][coveralls-image]][coveralls-url]
 [![Dependency Status][david-image]][david-url]
 [![devDependency Status][david-dev-image]][david-dev-url]
 
@@ -20,6 +21,8 @@ deprecation policy, and may be changed without notice.
 [npm-url]: https://npmjs.org/package/@google/cloud-trace
 [travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
 [travis-url]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs
+[coveralls-image]: https://img.shields.io/coveralls/GoogleCloudPlatform/cloud-trace-nodejs/master.svg
+[coveralls-url]: https://coveralls.io/r/GoogleCloudPlatform/cloud-trace-nodejs?branch=master
 [david-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs.svg
 [david-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs
 [david-dev-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs/dev-status.svg

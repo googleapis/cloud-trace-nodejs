@@ -17,7 +17,8 @@
 'use strict';
 
 var OpaqueSpan = require('./lib/opaque-span.js');
-var Logger = require('./lib/logger.js');
+var common = require('@google/cloud-diagnostics-common');
+var Logger = common.logger;
 var semver = require('semver');
 
 /**
@@ -83,7 +84,7 @@ var publicAgent = {
     if (typeof config.projectId === 'undefined') {
       // Queue the work to acquire the projectNumber (potentially from the
       // network.)
-      require('./lib/utils.js').getProjectNumber(function(err, project) {
+      common.utils.getProjectNumber(function(err, project) {
         if (err) {
           // Fatal error. Disable the agent.
           logger.error('Unable to acquire the project number from metadata ' +

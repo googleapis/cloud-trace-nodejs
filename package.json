@@ -52,9 +52,8 @@
     "tmp": "0.0.26"
   },
   "dependencies": {
+    "@google/cloud-diagnostics-common": "^0.1.1",
     "continuation-local-storage": "^3.1.4",
-    "google-auth-library": "^0.9.5",
-    "request": "^2.55.0",
     "semver": "^5.0.1",
     "shimmer": "^1.0.0",
     "uuid": "^2.0.1"
