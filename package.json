@@ -6,6 +6,7 @@
   "scripts": {
     "test": "./bin/run-test.sh",
     "coverage": "./bin/run-coverage.sh",
+    "bump": "./bin/run-bump.sh",
     "closure": "./node_modules/.bin/closure-npc"
   },
   "keywords": [
