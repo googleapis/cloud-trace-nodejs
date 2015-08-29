@@ -48,8 +48,8 @@ var publicAgent = {
     return agent.startSpan(name, labels);
   },
 
-  endSpan: function(opaque) {
-    return agent.end(opaque);
+  endSpan: function(opaque, labels) {
+    return agent.endSpan(opaque, labels);
   },
 
   setTransactionName: function(name) {
