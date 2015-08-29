@@ -30,8 +30,7 @@ describe('redis', function() {
   beforeEach(function(done) {
     client = redis.createClient();
     client.on('error', function(err) {
-      console.log('Skipping: no redis server found at localhost:6379.');
-      process.exit(0);
+      assert(false, 'Skipping: no redis server found at localhost:6379.');
     });
     client.set('beforeEach', 42, function() {
       common.cleanTraces();
