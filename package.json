@@ -48,6 +48,7 @@
     "proxyquire": "^1.4.0",
     "q": "^1.4.1",
     "redis": "^0.12.1",
+    "request": "^2.61.0",
     "restify": "^3.0.3",
     "timekeeper": "0.0.5",
     "tmp": "0.0.26"

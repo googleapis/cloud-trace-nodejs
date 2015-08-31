@@ -34,6 +34,7 @@ describe('agent interaction with metadata service', function() {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/numeric-project-id')
+                .times(2)
                 .reply(404, 'foo');
 
     agent.start({logLevel: 0});
@@ -48,10 +49,12 @@ describe('agent interaction with metadata service', function() {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/numeric-project-id')
+                .times(2)
                 .reply(200, '1234');
     agent.start({logLevel: 0});
     setTimeout(function() {
       assert.ok(agent.isActive());
+      assert.equal(agent.private_().config().projectId, '1234');
       scope.done();
       done();
     }, 500);
