@@ -23,6 +23,7 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
 
 var assert = require('assert');
 var agent = require('../..');
+var cls = require('../../lib/cls.js');
 
 describe('index.js', function() {
 
@@ -119,6 +120,45 @@ describe('index.js', function() {
     assert.equal(typeof agent.startSpan, 'function');
     assert.equal(typeof agent.setTransactionName, 'function');
     assert.equal(typeof agent.addTransactionLabel, 'function');
+  });
+
+  it('should allow start and end span calls when disabled', function() {
+    agent.stop();
+    var span = agent.startSpan();
+    agent.endSpan(span);
+    assert(span);
+  });
+
+  it('should produce real spans when enabled', function() {
+    agent.start();
+    cls.getNamespace().run(function() {
+      agent.private_().createRootSpanData('root', 1, 2);
+      var span = agent.startSpan('sub');
+      agent.endSpan(span);
+      assert.equal(span.spanData_.span.name, 'sub');
+      agent.stop();
+    });
+  });
+
+  it('should not break with no root span', function() {
+    agent.start();
+    var span = agent.startSpan();
+    agent.setTransactionName('noop');
+    agent.addTransactionLabel('noop', 'noop');
+    agent.endSpan(span);
+    agent.stop();
+  });
+
+  it('should set transaction name and labels', function() {
+    agent.start();
+    cls.getNamespace().run(function() {
+      var span = agent.private_().createRootSpanData('root', 1, 2);
+      agent.setTransactionName('root2');
+      agent.addTransactionLabel('key', 'value');
+      assert.equal(span.span.name, 'root2');
+      assert.equal(span.span.labels.key, 'value');
+      agent.stop();
+    });
   });
 
 });

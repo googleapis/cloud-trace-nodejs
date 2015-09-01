@@ -118,6 +118,13 @@ describe('test-trace-mongodb', function() {
       });
     });
   });
+
+  it('should not break if no parent transaction', function(done) {
+    Simple.remove({f1: 'sim'}, function(err, res) {
+      assert(!err);
+      done();
+    });
+  });
 });
 
 function mongoPredicate(id, span) {

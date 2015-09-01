@@ -78,6 +78,19 @@ describe('redis', function() {
       });
     });
   });
+
+  it('should not break on invalid command', function(done) {
+    common.runInTransaction(function(endTransaction) {
+      assert.throws(function() {
+        client.send_command(5);
+      }, function(err) {
+        assert(err);
+        endTransaction();
+        done();
+        return true;
+      });
+    });
+  });
 });
 
 function redisPredicate(id, span) {

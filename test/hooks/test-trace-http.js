@@ -63,6 +63,29 @@ describe('test-trace-http', function() {
     );
   });
 
+  it('should not break with no target', function(done) {
+    server.listen(common.serverPort, common.runInTransaction.bind(null,
+      function(endTransaction) {
+        http.get().on('error', function(err) {
+          endTransaction();
+          done();
+        });
+      })
+    );
+  });
+
+  it('should accurately measure get time, string url', function(done) {
+    server.listen(common.serverPort, common.runInTransaction.bind(null,
+      function(endTransaction) {
+        http.get('http://localhost:' + common.serverPort);
+        setTimeout(function() {
+          endTransaction();
+          done();
+        }, common.serverWait * 1.5);
+      })
+    );
+  });
+
   it('should accurately measure get time, error', function(done) {
     var server = http.Server(function(req, res) {
       setTimeout(function() {
