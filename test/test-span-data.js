@@ -66,7 +66,14 @@ describe('SpanData', function() {
       data.close();
       var stack = data.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.ok(stack);
-      assert.ok(stack.indexOf('createRootSpanData') !== -1);
+      assert.ok(typeof stack === 'string');
+      var frames = JSON.parse(stack);
+      assert.ok(frames && frames.stack_frame);
+      assert.ok(Array.isArray(frames.stack_frame));
+      assert.ok(frames.stack_frame.some(function(frame) {
+        return frame.method_name &&
+               frame.method_name.indexOf('createRootSpanData') !== -1;
+      }));
     });
   });
 
