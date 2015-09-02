@@ -96,9 +96,11 @@ var publicAgent = {
         }
         config.projectId = project;
       });
+    } else if (typeof config.projectId === 'number') {
+      config.projectId = config.projectId.toString();
     } else if (typeof config.projectId !== 'string') {
-      logger.error('config.projectId, if provided, must be a string. '+
-        'Disabling trace agent.');
+      logger.error('config.projectId, if provided, must be' +
+        ' a string or number. Disabling trace agent.');
       return this;
     }
 

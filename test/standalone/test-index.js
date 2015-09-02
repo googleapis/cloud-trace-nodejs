@@ -33,10 +33,11 @@ describe('index.js', function() {
     agent.stop();
   });
 
-  it('should complain when config.projectId is not a string', function() {
+  it('should complain when config.projectId is not a string or number', function() {
     agent.start({projectId: 0, enabled: true, logLevel: 0});
-    assert.strictEqual(agent.isActive(), false);
-    agent.start({projectId: 1001, enabled: true, logLevel: 0});
+    assert.strictEqual(agent.isActive(), true);
+    agent.stop();
+    agent.start({projectId: {test: false}, enabled: true, logLevel: 0});
     assert.strictEqual(agent.isActive(), false);
   });
 
