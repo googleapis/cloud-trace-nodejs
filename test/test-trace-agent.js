@@ -68,6 +68,16 @@ describe('Trace Agent', function() {
         assert.equal(parsed.options, 1);
       });
     });
+
+    it('noop on nullSpan', function() {
+      cls.getNamespace().run(function() {
+        var options = {
+          headers: {}
+        };
+        agent.addContextToHeaders(OpaqueSpan.nullSpan, options.headers);
+        assert.equal(options.headers[constants.TRACE_CONTEXT_HEADER_NAME], undefined);
+      });
+    });
   });
 
   describe('parseContextFromHeader', function() {

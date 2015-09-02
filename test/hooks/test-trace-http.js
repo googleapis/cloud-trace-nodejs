@@ -16,6 +16,7 @@
 'use strict';
 
 var common = require('./common.js');
+var constants = require('../../lib/constants.js');
 
 var assert = require('assert');
 var http = require('http');
@@ -53,10 +54,28 @@ describe('test-trace-http', function() {
   it('should accurately measure get time, no callback', function(done) {
     server.listen(common.serverPort, common.runInTransaction.bind(null,
       function(endTransaction) {
-        http.get({port: common.serverPort});
+        http.get({port: common.serverPort, headers: {}});
         setTimeout(function() {
           endTransaction();
           common.assertDurationCorrect();
+          done();
+        }, common.serverWait * 1.5);
+      })
+    );
+  });
+
+  it('should not trace api requests', function(done) {
+    server.listen(common.serverPort, common.runInTransaction.bind(null,
+      function(endTransaction) {
+        var headers = {};
+        headers[constants.TRACE_API_HEADER_NAME] = 'yay';
+        http.get({port: common.serverPort, headers: headers});
+        setTimeout(function() {
+          endTransaction();
+          // The only trace present should be the outer transaction
+          var traces = common.getTraces();
+          assert.equal(traces.length, 1);
+          assert.equal(traces[0].spans[0].name, 'outer');
           done();
         }, common.serverWait * 1.5);
       })
