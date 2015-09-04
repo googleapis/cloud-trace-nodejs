@@ -17,6 +17,7 @@
 
 var common = require('./common.js');
 var constants = require('../../lib/constants.js');
+var TraceLabels = require('../../lib/trace-labels.js');
 
 var assert = require('assert');
 var http = require('http');
@@ -119,6 +120,13 @@ describe('test-trace-http', function() {
         req.on('error', function() {
           endTransaction();
           common.assertDurationCorrect();
+          var span = common.getMatchingSpan(function(span) { 
+            return span.name !== 'outer'; 
+          });
+          assert.equal(span.labels[TraceLabels.ERROR_DETAILS_NAME],
+              'Error');
+          assert.equal(span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
+              'socket hang up');
           server.close();
           done();
         });
