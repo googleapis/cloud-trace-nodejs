@@ -73,7 +73,11 @@ describe('index.js', function() {
   it('should wrap/unwrap express on start/stop', function() {
     agent.start();
     var express = require('express');
-    wrapTest(express.application, 'lazyrouter');
+    var patchedMethods = require('methods');
+    patchedMethods.push('use', 'route', 'param', 'all');
+    patchedMethods.forEach(function(method) {
+      wrapTest(express.application, method);
+    });
     agent.stop();
   });
 
