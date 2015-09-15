@@ -118,20 +118,29 @@ describe('index.js', function() {
     agent.start();
     assert.equal(typeof agent, 'object');
     assert.equal(typeof agent.startSpan, 'function');
+    assert.equal(typeof agent.endSpan, 'function');
+    assert.equal(typeof agent.runInSpan, 'function');
     assert.equal(typeof agent.setTransactionName, 'function');
     assert.equal(typeof agent.addTransactionLabel, 'function');
     agent.stop();
     assert.equal(typeof agent, 'object');
     assert.equal(typeof agent.startSpan, 'function');
+    assert.equal(typeof agent.endSpan, 'function');
+    assert.equal(typeof agent.runInSpan, 'function');
     assert.equal(typeof agent.setTransactionName, 'function');
     assert.equal(typeof agent.addTransactionLabel, 'function');
   });
 
-  it('should allow start and end span calls when disabled', function() {
+  it('should allow start, end, runIn span calls when disabled', function() {
     agent.stop();
     var span = agent.startSpan();
     agent.endSpan(span);
     assert(span);
+    var reached = false;
+    agent.runInSpan('custom', function() {
+      reached = true;
+    });
+    assert(reached);
   });
 
   it('should produce real spans when enabled', function() {
@@ -142,6 +151,59 @@ describe('index.js', function() {
       agent.endSpan(span);
       assert.equal(span.spanData_.span.name, 'sub');
       agent.stop();
+    });
+  });
+
+  it('should produce real spans runInSpan sync', function() {
+    agent.start();
+    cls.getNamespace().run(function() {
+      var root = agent.private_().createRootSpanData('root', 1, 0);
+      var testLabel = {
+        key: 'key',
+        value: 'val'
+      };
+      agent.runInSpan('sub', [testLabel], function() {});
+      root.close();
+      var spanPredicate = function(spanData) {
+        return spanData.spans[1].name === 'sub';
+      };
+      var matchingSpans = agent.private_().traceWriter.buffer_
+                            .map(JSON.parse)
+                            .filter(spanPredicate);
+      assert.equal(matchingSpans.length, 1);
+      assert.equal(matchingSpans[0].spans[1].labels.key, 'val');
+      agent.stop();
+    });
+  });
+
+  it('should produce real spans runInSpan async', function(done) {
+    agent.start();
+    cls.getNamespace().run(function() {
+      var root = agent.private_().createRootSpanData('root', 1, 0);
+      var testLabel = {
+        key: 'key',
+        value: 'val'
+      };
+      agent.runInSpan('sub', function(endSpan) {
+        setTimeout(function() {
+          endSpan([testLabel]);
+          root.close();
+          var spanPredicate = function(spanData) {
+            return spanData.spans[1].name === 'sub';
+          };
+          var matchingSpans = agent.private_().traceWriter.buffer_
+                                .map(JSON.parse)
+                                .filter(spanPredicate);
+          assert.equal(matchingSpans.length, 1);
+          var span = matchingSpans[0].spans[1];
+          var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
+          assert(duration > 190);
+          assert(duration < 210);
+          assert.equal(span.labels.key, 'val');
+          agent.stop();
+          done();
+        }, 200);
+      });
     });
   });
 
