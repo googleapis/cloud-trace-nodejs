@@ -18,7 +18,6 @@
 
 var OpaqueSpan = require('./lib/opaque-span.js');
 var common = require('@google/cloud-diagnostics-common');
-var Logger = common.logger;
 var semver = require('semver');
 
 /**
@@ -70,7 +69,7 @@ var publicAgent = {
     var config = {};
     util._extend(config, require('./config.js'));
     util._extend(config, projectConfig);
-    var logger = new Logger(config.logLevel, '@google/cloud-trace');
+    var logger = common.logger.create(config.logLevel, '@google/cloud-trace');
     if (!semver.satisfies(process.versions.node, '>=0.12')) {
       logger.error('Tracing is only supported on Node versions >=0.12');
       return this;
