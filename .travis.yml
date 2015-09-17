@@ -2,8 +2,8 @@ language: node_js
 
 node_js:
   - "0.12"
+  - "2"
   - "4"
-  - "iojs"
 
 services:
   - mongodb
