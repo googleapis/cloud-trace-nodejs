@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "Node.js Support for Google Cloud Trace",
   "main": "index.js",
+  "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
     "test": "./bin/run-test.sh",
     "coverage": "./bin/run-coverage.sh",
