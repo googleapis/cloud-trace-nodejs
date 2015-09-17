@@ -158,11 +158,8 @@ describe('index.js', function() {
     agent.start();
     cls.getNamespace().run(function() {
       var root = agent.private_().createRootSpanData('root', 1, 0);
-      var testLabel = {
-        key: 'key',
-        value: 'val'
-      };
-      agent.runInSpan('sub', [testLabel], function() {});
+      var testLabel = { key: 'val' };
+      agent.runInSpan('sub', testLabel, function() {});
       root.close();
       var spanPredicate = function(spanData) {
         return spanData.spans[1].name === 'sub';
@@ -180,13 +177,10 @@ describe('index.js', function() {
     agent.start();
     cls.getNamespace().run(function() {
       var root = agent.private_().createRootSpanData('root', 1, 0);
-      var testLabel = {
-        key: 'key',
-        value: 'val'
-      };
+      var testLabel = { key: 'val' };
       agent.runInSpan('sub', function(endSpan) {
         setTimeout(function() {
-          endSpan([testLabel]);
+          endSpan(testLabel);
           root.close();
           var spanPredicate = function(spanData) {
             return spanData.spans[1].name === 'sub';
