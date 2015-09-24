@@ -21,7 +21,7 @@ module.exports = {
   logLevel: process.env.hasOwnProperty('GCLOUD_LOG_LEVEL') ?
     process.env.GCLOUD_LOG_LEVEL : 1,
 
-  enabled: !process.env.GCLOUD_TRACE_DISABLE || true,
+  enabled: !process.env.hasOwnProperty('GCLOUD_TRACE_DISABLE'),
 
   // Valid entries are:
   // 'express', 'hapi', 'http', 'mongodb-core', restify'
