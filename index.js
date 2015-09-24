@@ -42,6 +42,23 @@ var phantomTraceAgent = {
 /** @private */
 var agent = phantomTraceAgent;
 
+var initConfig = function(projectConfig) {
+  var util = require('util');
+  var config = {};
+  util._extend(config, require('./config.js'));
+  util._extend(config, projectConfig);
+  if (process.env.hasOwnProperty('GCLOUD_LOG_LEVEL')) {
+    config.logLevel = process.env.GCLOUD_LOG_LEVEL;
+  }
+  if (process.env.hasOwnProperty('GCLOUD_TRACE_DISABLE')) {
+    config.enabled = false;
+  }
+  if (process.env.hasOwnProperty('GCLOUD_PROJECT_NUM')) {
+    config.projectId = process.env.GCLOUD_PROJECT_NUM;
+  }
+  return config;
+};
+
 /**
  * The singleton public agent. This is the public API of the module.
  */
@@ -75,19 +92,14 @@ var publicAgent = {
       return this;
     }
 
-    var util = require('util');
-    var config = {};
-    util._extend(config, require('./config.js'));
-    util._extend(config, projectConfig);
+    var config = initConfig(projectConfig);
+    if (!config.enabled) {
+      return this;
+    }
     var logger = common.logger.create(config.logLevel, '@google/cloud-trace');
     if (!semver.satisfies(process.versions.node, '>=0.12')) {
       logger.error('Tracing is only supported on Node versions >=0.12');
       return this;
-    }
-
-    if (typeof config.projectId === 'undefined' &&
-        process.env.GCLOUD_PROJECT_NUM) {
-      config.projectId = process.env.GCLOUD_PROJECT_NUM;
     }
 
     if (typeof config.projectId === 'undefined') {
