@@ -22,6 +22,7 @@ var fs = require('fs');
 var glob = require('glob');
 var path = require('path');
 var tmp = require('tmp');
+var semver = require('semver');
 
 if (process.argv.length === 4 && process.argv[2] === '-p') {
   process.env.GCLOUD_PROJECT_NUM = process.argv[3];
@@ -34,13 +35,15 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
 
 // Setup
 var node_dir = tmp.dirSync().name;
-cp.execFileSync('git', ['clone', '--branch', 'v2.5.0',
+cp.execFileSync('git', ['clone', '--branch', process.version,
     'https://github.com/nodejs/node.git', '--depth', '1', node_dir]);
 fs.mkdirSync(path.join(node_dir, 'test', 'tmp'));
 console.log('Turning off global checks');
 cp.execFileSync('sed', ['-i', 's/exports.globalCheck = true/' +
     'exports.globalCheck = false/g', path.join(node_dir, 'test', 'common.js')]);
-var test_glob = path.join(node_dir, 'test', 'parallel', 'test-http*.js');
+var test_glob = semver.satisfies(process.version, '0.12.x') ?
+    path.join(node_dir, 'test', 'simple', 'test-http*.js') :
+    path.join(node_dir, 'test', 'parallel', 'test-http*.js');
 
 // Run tests
 console.log('Running tests');
