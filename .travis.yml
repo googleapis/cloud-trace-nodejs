@@ -10,6 +10,9 @@ services:
   - mongodb
   - redis-server
 
+before_install:
+  - mysql -e "create database IF NOT EXISTS test;" -uroot
+
 env:
   - GCLOUD_PROJECT_NUM=0
 

@@ -29,11 +29,12 @@ var express = require('../hooks/fixtures/express4');
 var http = require('http');
 var mongoose = require('../hooks/fixtures/mongoose4');
 var redis = require('../hooks/fixtures/redis2');
+var mysql = require('../hooks/fixtures/mysql2');
 var warnCount = 0;
 var oldWarn = agent.logger.warn;
 var newWarn = function(error) {
   if (error.indexOf('redis') !== -1 || error.indexOf('mongo') !== -1 ||
-      error.indexOf('http') !== -1) {
+      error.indexOf('http') !== -1 || error.indexOf('mysql') !== -1) {
     warnCount++;
   }
 };
@@ -101,6 +102,35 @@ describe('express + dbs', function() {
     var server = app.listen(common.serverPort + 2, function() {
       http.get({port: common.serverPort + 2}, function(res) {
         http.get({port: common.serverPort + 2}, function(res) {
+          server.close();
+          common.cleanTraces();
+          assert.equal(warnCount, 2);
+          done();
+        });
+      });
+    });
+  });
+
+  it('mysql should not warn', function(done) {
+    var app = express();
+    app.get('/', function (req, res) {
+      var pool = mysql.createPool({
+        host     : 'localhost',
+        user     : 'travis',
+        password : '',
+        database : 'test'
+      });
+      http.get('http://www.google.com/', function() {
+        pool.getConnection(function(err, conn) {
+          conn.query('SHOW COLUMNS FROM t', function(err) {
+            res.sendStatus(200);
+          });
+        });
+      });
+    });
+    var server = app.listen(common.serverPort + 3, function() {
+      http.get({port: common.serverPort + 3}, function(res) {
+        http.get({port: common.serverPort + 3}, function(res) {
           server.close();
           common.cleanTraces();
           assert.equal(warnCount, 2);
