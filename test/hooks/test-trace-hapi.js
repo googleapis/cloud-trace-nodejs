@@ -18,7 +18,7 @@
 var common = require('./common.js');
 
 var assert = require('assert');
-var hapi = require('hapi');
+var hapi = require('./fixtures/hapi8');
 
 var server;
 

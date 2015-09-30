@@ -16,7 +16,7 @@
 'use strict';
 
 var common = require('./common.js');
-var restify = require('restify');
+var restify = require('./fixtures/restify3');
 
 var server;
 

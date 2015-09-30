@@ -17,15 +17,14 @@
 
 var assert = require('assert');
 var Module = require('module');
+var semver = require('semver');
 var findModuleVersion = require('../../lib/hooks/index.js').findModuleVersion;
 
 describe('findModuleVersion', function() {
   it('should correctly find package.json for userspace packages', function() {
-    assert.equal(findModuleVersion('express', module, Module._load), '4.13.3');
-    assert.equal(findModuleVersion('hapi', module, Module._load), '8.8.1');
-    assert.equal(findModuleVersion('mongodb-core', module, Module._load), '1.2.14');
-    assert.equal(findModuleVersion('redis', module, Module._load), '0.12.1');
-    assert.equal(findModuleVersion('restify', module, Module._load), '3.0.3');
+    var pjson = require('../../package.json');
+    assert(semver.satisfies(findModuleVersion('glob', module, Module._load),
+        pjson.devDependencies.glob));
   });
 
   it('should not break for core packages', function() {

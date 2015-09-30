@@ -64,7 +64,7 @@ describe('index.js', function() {
 
   it('should wrap/unwrap express on start/stop', function() {
     agent.start();
-    var express = require('express');
+    var express = require('../hooks/fixtures/express4');
     var patchedMethods = require('methods');
     patchedMethods.push('use', 'route', 'param', 'all');
     patchedMethods.forEach(function(method) {
@@ -75,14 +75,14 @@ describe('index.js', function() {
 
   it('should wrap/unwrap hapi on start/stop', function() {
     agent.start();
-    var hapi = require('hapi');
+    var hapi = require('../hooks/fixtures/hapi8');
     wrapTest(hapi.Server.prototype, 'connection');
     agent.stop();
   });
 
   it('should wrap/unwrap mongodb-core on start/stop', function() {
     agent.start();
-    var mongo = require('mongodb-core');
+    var mongo = require('../hooks/fixtures/mongodb-core1');
     wrapTest(mongo.Server.prototype, 'command');
     wrapTest(mongo.Server.prototype, 'insert');
     wrapTest(mongo.Server.prototype, 'update');
@@ -93,7 +93,7 @@ describe('index.js', function() {
 
   it('should wrap/unwrap redis on start/stop', function() {
     agent.start();
-    var redis = require('redis');
+    var redis = require('../hooks/fixtures/redis0.12');
     wrapTest(redis.RedisClient.prototype, 'send_command');
     wrapTest(redis, 'createClient');
     agent.stop();
@@ -101,7 +101,7 @@ describe('index.js', function() {
 
   it('should wrap/unwrap restify on start/stop', function() {
     agent.start();
-    var restify = require('restify');
+    var restify = require('../hooks/fixtures/restify3');
     wrapTest(restify, 'createServer');
     agent.stop();
   });

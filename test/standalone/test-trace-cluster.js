@@ -18,7 +18,7 @@
 
 var common = require('../hooks/common.js');
 var cluster = require('cluster');
-var express = require('express');
+var express = require('../hooks/fixtures/express4');
 
 describe('test-trace-cluster', function() {
   it('should not interfere with express span', function(done) {

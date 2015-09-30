@@ -16,7 +16,7 @@
 'use strict';
 
 var common = require('./common.js');
-var express = require('express');
+var express = require('./fixtures/express4');
 
 var server;
 

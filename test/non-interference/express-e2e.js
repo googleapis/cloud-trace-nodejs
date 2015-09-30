@@ -34,7 +34,7 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
   process.exit(1);
 }
 if (!semver.satisfies(process.version, SUPPORTED_VERSIONS)) {
-  console.log('Express tests do not pass on Node.js 4.0');
+  console.log('Express tests do not pass on Node.js 4.0 yet');
   process.exit(0);
 }
 

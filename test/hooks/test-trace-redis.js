@@ -23,7 +23,7 @@
 var common = require('./common.js');
 
 var assert = require('assert');
-var redis = require('redis');
+var redis = require('./fixtures/redis0.12');
 
 var client;
 describe('redis', function() {

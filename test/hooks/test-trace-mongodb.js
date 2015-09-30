@@ -23,7 +23,7 @@
 var common = require('./common.js');
 
 var assert = require('assert');
-var mongoose = require('mongoose');
+var mongoose = require('./fixtures/mongoose4');
 var Schema = mongoose.Schema;
 
 var simpleSchema = new Schema({

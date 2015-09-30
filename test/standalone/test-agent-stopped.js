@@ -25,7 +25,7 @@ describe('express', function() {
   it('should not break if no project number is found', function(done) {
     var agent = require('../..');
     agent.start();
-    var app = require('express')();
+    var app = require('../hooks/fixtures/express4')();
     agent.stop();
     app.get('/', function (req, res) {
       res.send('hi');
@@ -48,7 +48,7 @@ describe('hapi', function() {
   it('should not break if no project number is found', function(done) {
     var agent = require('../..');
     agent.start();
-    var hapi = require('hapi');
+    var hapi = require('../hooks/fixtures/hapi8');
     var server = new hapi.Server();
     server.connection({ port: 8081 });
     agent.stop();
@@ -77,7 +77,7 @@ describe('restify', function() {
   it('should not break if no project number is found', function(done) {
     var agent = require('../..');
     agent.start();
-    var restify = require('restify');
+    var restify = require('../hooks/fixtures/restify3');
     var server = restify.createServer();
     agent.stop();
     server.get('/', function (req, res, next) {
