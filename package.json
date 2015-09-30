@@ -50,6 +50,7 @@
   "dependencies": {
     "@google/cloud-diagnostics-common": "^0.2.1",
     "continuation-local-storage": "^3.1.4",
+    "grpc": "git://github.com/grpc/grpc.git",
     "methods": "^1.1.1",
     "semver": "^5.0.1",
     "shimmer": "^1.0.0",

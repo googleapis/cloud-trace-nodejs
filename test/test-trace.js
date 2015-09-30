@@ -24,8 +24,8 @@ describe('Trace', function() {
 
   it('has correct default values', function() {
     var trace = new Trace('project', 'trace');
-    assert.equal(trace.traceId, 'trace');
-    assert.equal(trace.projectId, 'project');
+    assert.equal(trace.trace_id, 'trace');
+    assert.equal(trace.project_id, 'project');
     assert.equal(trace.spans.length, 0);
   });
 });

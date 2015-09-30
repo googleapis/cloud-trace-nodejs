@@ -47,7 +47,7 @@ function cleanTraces() {
 }
 
 function getTraces() {
-  return agent.traceWriter.buffer_.map(JSON.parse);
+  return agent.traceWriter.buffer_;
 }
 
 function getMatchingSpan(predicate) {
@@ -69,6 +69,12 @@ function getMatchingSpans(predicate) {
   return list;
 }
 
+function timestampDifferenceMillis(ts1, ts2) {
+  var m1 = ts1.seconds * 1e3 + ts1.nanos / 1e6;
+  var m2 = ts2.seconds * 1e3 + ts2.nanos / 1e6;
+  return m1 - m2;
+}
+
 /**
  * Verifies that the duration of the span captured
  * by the tracer matching the predicate `predicate`
@@ -86,7 +92,7 @@ function assertDurationCorrect(predicate) {
   // by the harness itself
   predicate = predicate || function(span) { return span.name !== 'outer'; };
   var span = getMatchingSpan(predicate);
-  var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
+  var duration = timestampDifferenceMillis(span.end_time, span.start_time);
   assert(duration > SERVER_WAIT * (1 - FORGIVENESS),
       'Duration was ' + duration + ', expected ' + SERVER_WAIT);
   assert(duration < SERVER_WAIT * (1 + FORGIVENESS),

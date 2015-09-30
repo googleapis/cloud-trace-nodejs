@@ -25,6 +25,12 @@ var assert = require('assert');
 var agent = require('../..');
 var cls = require('../../lib/cls.js');
 
+function timestampDifferenceMillis(ts1, ts2) {
+  var m1 = ts1.seconds * 1e3 + ts1.nanos / 1e6;
+  var m2 = ts2.seconds * 1e3 + ts2.nanos / 1e6;
+  return m1 - m2;
+}
+
 describe('index.js', function() {
 
   it('should be harmless to stop before a start', function() {
@@ -166,7 +172,6 @@ describe('index.js', function() {
         return spanData.spans[1].name === 'sub';
       };
       var matchingSpans = agent.private_().traceWriter.buffer_
-                            .map(JSON.parse)
                             .filter(spanPredicate);
       assert.equal(matchingSpans.length, 1);
       assert.equal(matchingSpans[0].spans[1].labels.key, 'val');
@@ -187,11 +192,10 @@ describe('index.js', function() {
             return spanData.spans[1].name === 'sub';
           };
           var matchingSpans = agent.private_().traceWriter.buffer_
-                                .map(JSON.parse)
                                 .filter(spanPredicate);
           assert.equal(matchingSpans.length, 1);
           var span = matchingSpans[0].spans[1];
-          var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
+          var duration = timestampDifferenceMillis(span.end_time, span.start_time);
           assert(duration > 190);
           assert(duration < 210);
           assert.equal(span.labels.key, 'val');
