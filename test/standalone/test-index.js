@@ -123,6 +123,15 @@ describe('index.js', function() {
     assert.equal(typeof agent.addTransactionLabel, 'function');
   });
 
+  it('should throw if get called before start', function() {
+    assert.throws(function() { agent.get(); }, Error);
+  });
+
+  it('should return the initialized agent on get', function() {
+    agent.start();
+    assert.equal(agent.get(), agent);
+  });
+
   it('should allow start, end, runIn span calls when disabled', function() {
     agent.stop();
     var span = agent.startSpan();

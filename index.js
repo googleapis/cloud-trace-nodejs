@@ -129,6 +129,13 @@ var publicAgent = {
     return this; // for chaining
   },
 
+  get: function() {
+    if (this.isActive()) {
+      return this;
+    }
+    throw new Error('The agent must be initialized by calling start.');
+  },
+
   stop: function() {
     if (this.isActive()) {
       agent.stop();
