@@ -34,6 +34,12 @@ module.exports = {
   // See `bufferSize`.
   flushDelaySeconds: 30,
 
+  // If false, traces will be published as soon as `bufferSize` traces have
+  // been collected if this occurs before `flushDelaySeconds`.
+  // If true, traces will flush every `flushDelaySeconds` and additional
+  // traces beyond `bufferSize` will be dropped.
+  samplingEnabled: false,
+
   // The number of transactions we buffer before we publish to the Cloud Trace
   // API, unless we hit `flushDelaySeconds` first.
   bufferSize: 1000
