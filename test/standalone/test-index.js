@@ -161,7 +161,7 @@ describe('index.js', function() {
       var root = agent.private_().createRootSpanData('root', 1, 0);
       var testLabel = { key: 'val' };
       agent.runInSpan('sub', testLabel, function() {});
-      root.close();
+      root.spanData_.close();
       var spanPredicate = function(spanData) {
         return spanData.spans[1].name === 'sub';
       };
@@ -182,7 +182,7 @@ describe('index.js', function() {
       agent.runInSpan('sub', function(endSpan) {
         setTimeout(function() {
           endSpan(testLabel);
-          root.close();
+          root.spanData_.close();
           var spanPredicate = function(spanData) {
             return spanData.spans[1].name === 'sub';
           };
@@ -214,11 +214,11 @@ describe('index.js', function() {
   it('should set transaction name and labels', function() {
     agent.start();
     cls.getNamespace().run(function() {
-      var span = agent.private_().createRootSpanData('root', 1, 2);
+      var opaque = agent.private_().createRootSpanData('root', 1, 2);
       agent.setTransactionName('root2');
       agent.addTransactionLabel('key', 'value');
-      assert.equal(span.span.name, 'root2');
-      assert.equal(span.span.labels.key, 'value');
+      assert.equal(opaque.spanData_.span.name, 'root2');
+      assert.equal(opaque.spanData_.span.labels.key, 'value');
       agent.stop();
     });
   });

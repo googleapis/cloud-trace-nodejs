@@ -106,9 +106,9 @@ function doRequest(method, done, tracePredicate, path) {
 
 function runInTransaction(fn) {
   cls.getNamespace().run(function() {
-    var span = agent.createRootSpanData('outer');
+    var opaque = agent.createRootSpanData('outer');
     fn(function() {
-      span.close();
+      opaque.spanData_.close();
     });
   });
 }

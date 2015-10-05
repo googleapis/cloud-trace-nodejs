@@ -34,11 +34,12 @@ module.exports = {
   // See `bufferSize`.
   flushDelaySeconds: 30,
 
-  // If false, traces will be published as soon as `bufferSize` traces have
-  // been collected if this occurs before `flushDelaySeconds`.
-  // If true, traces will flush every `flushDelaySeconds` and additional
-  // traces beyond `bufferSize` will be dropped.
-  samplingEnabled: false,
+  // An upper bound on the number of traces to gather each second. If set to
+  // -1, all traces will be reported. Sampling rates greater than 1000 are not
+  // supported and will result in at most 1000 samples per second.
+  // Note: `samplingRate` should never be set to 0. To disable tracing, use
+  // `enabled` above.
+  samplingRate: -1,
 
   // The number of transactions we buffer before we publish to the Cloud Trace
   // API, unless we hit `flushDelaySeconds` first.

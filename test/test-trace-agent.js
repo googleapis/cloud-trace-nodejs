@@ -54,13 +54,13 @@ describe('Trace Agent', function() {
   describe('addContextToHeaders', function() {
     it('adds context to headers', function() {
       cls.getNamespace().run(function() {
-        var data = agent.createRootSpanData('name', 1, 2);
-        var spanId = data.span.spanId;
-        data.options = 1;
+        var opaque = agent.createRootSpanData('name', 1, 2);
+        var spanId = opaque.spanData_.span.spanId;
+        opaque.spanData_.options = 1;
         var options = {
           headers: {}
         };
-        agent.addContextToHeaders(new OpaqueSpan(data), options.headers);
+        agent.addContextToHeaders(opaque, options.headers);
         var parsed = agent.parseContextFromHeader(
             options.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
         assert.equal(parsed.traceId, 1);
