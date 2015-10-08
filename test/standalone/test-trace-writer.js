@@ -31,7 +31,7 @@ process.env.GCLOUD_PROJECT_NUM = 0;
 
 var queueSpans = function(n, privateAgent) {
   for (var i = 0; i < n; i++) {
-    privateAgent.createRootSpanData('name', 1, 0).spanData_.close();
+    privateAgent.createRootSpanData('name', 1, 0).close();
   }
 };
 

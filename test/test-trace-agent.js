@@ -26,7 +26,7 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
 var assert = require('assert');
 var config = require('../config.js');
 var file = require('../lib/trace-agent.js');
-var OpaqueSpan = require('../lib/opaque-span.js');
+var SpanData = require('../lib/span-data.js');
 var agent = file.get(config);
 var constants = require('../lib/constants.js');
 var cls = require('../lib/cls.js');
@@ -54,13 +54,13 @@ describe('Trace Agent', function() {
   describe('addContextToHeaders', function() {
     it('adds context to headers', function() {
       cls.getNamespace().run(function() {
-        var opaque = agent.createRootSpanData('name', 1, 2);
-        var spanId = opaque.spanData_.span.spanId;
-        opaque.spanData_.options = 1;
+        var spanData = agent.createRootSpanData('name', 1, 2);
+        var spanId = spanData.span.spanId;
+        spanData.options = 1;
         var options = {
           headers: {}
         };
-        agent.addContextToHeaders(opaque, options.headers);
+        agent.addContextToHeaders(spanData, options.headers);
         var parsed = agent.parseContextFromHeader(
             options.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
         assert.equal(parsed.traceId, 1);
@@ -74,7 +74,7 @@ describe('Trace Agent', function() {
         var options = {
           headers: {}
         };
-        agent.addContextToHeaders(OpaqueSpan.nullSpan, options.headers);
+        agent.addContextToHeaders(SpanData.nullSpan, options.headers);
         assert.equal(options.headers[constants.TRACE_CONTEXT_HEADER_NAME], undefined);
       });
     });

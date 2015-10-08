@@ -16,7 +16,7 @@
 
 'use strict';
 
-var OpaqueSpan = require('./lib/opaque-span.js');
+var SpanData = require('./lib/span-data.js');
 var common = require('@google/cloud-diagnostics-common');
 var semver = require('semver');
 
@@ -27,8 +27,8 @@ var semver = require('semver');
  * @private
  */
 var phantomTraceAgent = {
-  startSpan: function() { return OpaqueSpan.nullSpan; },
-  endSpan: function(opaque) { opaque.end(); },
+  startSpan: function() { return SpanData.nullSpan; },
+  endSpan: function(spanData) { spanData.close(); },
   runInSpan: function(name, labels, fn) {
     if (typeof(labels) === 'function') {
       fn = labels;
@@ -71,8 +71,8 @@ var publicAgent = {
     return agent.startSpan(name, labels);
   },
 
-  endSpan: function(opaque, labels) {
-    return agent.endSpan(opaque, labels);
+  endSpan: function(spanData, labels) {
+    return agent.endSpan(spanData, labels);
   },
 
   runInSpan: function(name, labels, fn) {
