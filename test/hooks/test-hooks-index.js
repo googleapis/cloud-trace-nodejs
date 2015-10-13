@@ -18,21 +18,25 @@
 var assert = require('assert');
 var Module = require('module');
 var semver = require('semver');
-var findModuleVersion = require('../../lib/hooks/index.js').findModuleVersion;
+var index = require('../../lib/hooks/index.js');
+var findModulePath = index.findModulePath;
+var findModuleVersion = index.findModuleVersion;
 
 describe('findModuleVersion', function() {
   it('should correctly find package.json for userspace packages', function() {
     var pjson = require('../../package.json');
-    assert(semver.satisfies(findModuleVersion('glob', module, Module._load),
+    var modulePath = findModulePath('glob', module);
+    assert(semver.satisfies(findModuleVersion(modulePath, Module._load),
         pjson.devDependencies.glob));
   });
 
   it('should not break for core packages', function() {
-    assert(!findModuleVersion('http', module, Module._load));
+    var modulePath = findModulePath('http', module);
+    assert.equal(findModuleVersion(modulePath, Module._load), process.version);
   });
 
   it('should work with namespaces', function() {
-    assert.equal(findModuleVersion(
-        '@google/cloud-diagnostics-common', module, Module._load), '0.2.0');
+    var modulePath = findModulePath('@google/cloud-diagnostics-common', module);
+    assert.equal(findModuleVersion(modulePath, Module._load), '0.2.0');
   });
 });
