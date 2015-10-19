@@ -34,6 +34,14 @@ module.exports = {
   // See `bufferSize`.
   flushDelaySeconds: 30,
 
+  // If paths are present in this array, then these paths will be ignored before
+  // `samplingRate` based decisions are made. Paths must include a leading
+  // forward slash and be of the form:
+  //   /componentOne/componentTwo/...
+  // Paths can additionally be classified by regex in which case any path matching
+  // any provided regex will be ignored.
+  ignoreUrls: [],
+
   // An upper bound on the number of traces to gather each second. If set to
   // -1, all traces will be reported. Sampling rates greater than 1000 are not
   // supported and will result in at most 1000 samples per second.
