@@ -22,6 +22,14 @@ module.exports = {
 
   enabled: true,
 
+  // If true, information about query parameters and results will be
+  // attached to spans representating database operations.
+  enhancedDatabaseReporting: false,
+
+  // The maximum result size in characters to report on database spans if
+  // `enhancedDatabaseReporting` is enabled.
+  databaseResultReportingSize: 127,
+
   // Valid entries are:
   // 'express', 'hapi', 'http', 'mongodb-core', restify'
   excludedHooks: [],
