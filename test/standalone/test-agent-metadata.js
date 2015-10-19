@@ -19,6 +19,7 @@
 var assert = require('assert');
 var nock = require('nock');
 var agent = require('../..');
+var traceLabels = require('../../lib/trace-labels.js');
 
 nock.disableNetConnect();
 
@@ -73,4 +74,55 @@ describe('agent interaction with metadata service', function() {
     delete process.env.GCLOUD_PROJECT_NUM;
   });
 
+  it('should attach hostname to spans when provided', function(done) {
+    nock.disableNetConnect();
+    var scope = nock('http://metadata.google.internal')
+                .get('/computeMetadata/v1/instance/hostname')
+                .times(1)
+                .reply(200, 'host');
+
+    agent.start({projectId: 0, logLevel: 0});
+    setTimeout(function() {
+      agent.private_().namespace.run(function() {
+        var spanData = agent.private_().createRootSpanData('name', 5, 0);
+        spanData.close();
+        assert.equal(spanData.span.labels[traceLabels.GCE_HOSTNAME], 'host');
+        scope.done();
+        done();
+      });
+    }, 500);
+  });
+
+  it('should attach instance id to spans when provided', function(done) {
+    nock.disableNetConnect();
+    var scope = nock('http://metadata.google.internal')
+                .get('/computeMetadata/v1/instance/id')
+                .times(1)
+                .reply(200, '1729');
+
+    agent.start({projectId: 0, logLevel: 0});
+    setTimeout(function() {
+      agent.private_().namespace.run(function() {
+        var spanData = agent.private_().createRootSpanData('name', 5, 0);
+        spanData.close();
+        assert.equal(spanData.span.labels[traceLabels.GCE_INSTANCE_ID], 1729);
+        scope.done();
+        done();
+      });
+    }, 500);
+  });
+
+  it('shouldn\'t add id or hostname labels if not present', function(done) {
+    nock.disableNetConnect();
+    agent.start({projectId: 0, logLevel: 0});
+    setTimeout(function() {
+      agent.private_().namespace.run(function() {
+        var spanData = agent.private_().createRootSpanData('name', 5, 0);
+        spanData.close();
+        assert(!spanData.span.labels[traceLabels.GCE_HOSTNAME]);
+        assert(!spanData.span.labels[traceLabels.GCE_INSTANCE_ID]);
+        done();
+      });
+    }, 500);
+  });
 });

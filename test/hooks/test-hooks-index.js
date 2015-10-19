@@ -37,6 +37,6 @@ describe('findModuleVersion', function() {
 
   it('should work with namespaces', function() {
     var modulePath = findModulePath('@google/cloud-diagnostics-common', module);
-    assert.equal(findModuleVersion(modulePath, Module._load), '0.2.0');
+    assert.equal(findModuleVersion(modulePath, Module._load), '0.2.1');
   });
 });

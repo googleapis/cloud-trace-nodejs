@@ -55,8 +55,10 @@ glob(test_glob, function(err, files) {
   for (testCount = 0; testCount < files.length; testCount++) {
     // parser-bad-ref: Relies on valgrind gc
     // max-headers-count: Breaks because we introduce new headers
+    // parser-free: Breaks because we send outgoing http on startup
     if (files[testCount].indexOf('parser-bad-ref') !== -1 ||
-        files[testCount].indexOf('max-headers-count') !== -1) {
+        files[testCount].indexOf('max-headers-count') !== -1 ||
+        files[testCount].indexOf('parser-free') !== -1) {
       console.log('Skipped: ' + files[testCount]);
       continue;
     }

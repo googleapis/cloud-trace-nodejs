@@ -102,6 +102,22 @@ var publicAgent = {
       return this;
     }
 
+    common.utils.getHostname(function(err, hostname) {
+      if (err) {
+        logger.info('Unable to retrieve GCE hostname.', err);
+      } else {
+        config.hostname = hostname;
+      }
+    });
+
+    common.utils.getInstanceId(function(err, instanceId) {
+      if (err) {
+        logger.info('Unable to retrieve GCE instance id.', err);
+      } else {
+        config.instanceId = instanceId;
+      }
+    });
+
     if (typeof config.projectId === 'undefined') {
       // Queue the work to acquire the projectNumber (potentially from the
       // network.)

@@ -53,6 +53,4 @@ module.exports = {
   // API, unless we hit `flushDelaySeconds` first.
   bufferSize: 1000
 
-  // TODO: add support for sampling / throttling trace capture. E.g. limit trace
-  // to 1 QPS, etc.
 };
