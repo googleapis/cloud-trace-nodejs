@@ -37,6 +37,8 @@ describe('findModuleVersion', function() {
 
   it('should work with namespaces', function() {
     var modulePath = findModulePath('@google/cloud-diagnostics-common', module);
-    assert.equal(findModuleVersion(modulePath, Module._load), '0.2.1');
+    var truePackage =
+      require('../../node_modules/@google/cloud-diagnostics-common/package.json');
+    assert.equal(findModuleVersion(modulePath, Module._load), truePackage.version);
   });
 });

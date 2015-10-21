@@ -23,71 +23,64 @@
 var common = require('./common.js');
 
 var assert = require('assert');
-var redis = require('./fixtures/redis0.12');
+var versions = {
+  redis0: require('./fixtures/redis0.12'),
+  redis2: require('./fixtures/redis2')
+};
 
 var client;
-describe('redis', function() {
-  beforeEach(function(done) {
-    client = redis.createClient();
-    client.on('error', function(err) {
-      assert(false, 'Skipping: no redis server found at localhost:6379.');
-    });
-    client.set('beforeEach', 42, function() {
-      common.cleanTraces();
-      done();
-    });
-  });
-
-  afterEach(function(done) {
-    client.quit(function() {
-      common.cleanTraces();
-      done();
-    });
-  });
-
-  it('should accurately measure get time', function(done) {
-    common.runInTransaction(function(endTransaction) {
-      client.get('beforeEach', function(err, n) {
-        endTransaction();
-        assert.equal(n, 42);
-        var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-get'));
-        assert(trace);
+Object.keys(versions).forEach(function(version) {
+  var redis = versions[version];
+  describe(version, function() {
+    beforeEach(function(done) {
+      client = redis.createClient();
+      client.on('error', function(err) {
+        assert(false, 'Skipping: no redis server found at localhost:6379.');
+      });
+      client.set('beforeEach', 42, function() {
+        common.cleanTraces();
         done();
       });
     });
-  });
 
-  it('should accurately measure set time', function(done) {
-    common.runInTransaction(function(endTransaction) {
-      client.set('key', 'val', function(err) {
-        endTransaction();
-        var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-set'));
-        assert(trace);
+    afterEach(function(done) {
+      client.quit(function() {
+        common.cleanTraces();
         done();
       });
     });
-  });
 
-  it('should accurately measure hset time', function(done) {
-    common.runInTransaction(function(endTransaction) {
-      client.hset('key', 'val', function(err) {
-        endTransaction();
-        var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
-        assert(trace);
-        done();
+    it('should accurately measure get time', function(done) {
+      common.runInTransaction(function(endTransaction) {
+        client.get('beforeEach', function(err, n) {
+          endTransaction();
+          assert.equal(n, 42);
+          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-get'));
+          assert(trace);
+          done();
+        });
       });
     });
-  });
 
-  it('should not break on invalid command', function(done) {
-    common.runInTransaction(function(endTransaction) {
-      assert.throws(function() {
-        client.send_command(5);
-      }, function(err) {
-        assert(err);
-        endTransaction();
-        done();
-        return true;
+    it('should accurately measure set time', function(done) {
+      common.runInTransaction(function(endTransaction) {
+        client.set('key', 'val', function(err) {
+          endTransaction();
+          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-set'));
+          assert(trace);
+          done();
+        });
+      });
+    });
+
+    it('should accurately measure hset time', function(done) {
+      common.runInTransaction(function(endTransaction) {
+        client.hset('key', 'val', function(err) {
+          endTransaction();
+          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
+          assert(trace);
+          done();
+        });
       });
     });
   });
