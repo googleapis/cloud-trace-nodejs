@@ -35,7 +35,7 @@ Object.keys(versions).forEach(function(version) {
     beforeEach(function(done) {
       client = redis.createClient();
       client.on('error', function(err) {
-        assert(false, 'Skipping: no redis server found at localhost:6379.');
+        assert(false, 'redis error ' + err);
       });
       client.set('beforeEach', 42, function() {
         common.cleanTraces();

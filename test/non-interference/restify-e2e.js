@@ -40,7 +40,7 @@ if (!semver.satisfies(process.version, SUPPORTED_VERSIONS)) {
 
 // Setup
 var restify_dir = tmp.dirSync().name;
-cp.execFileSync('git', ['clone', '--branch', 'v4.0.0',
+cp.execFileSync('git', ['clone', '--branch', 'v3.0.3',
     'https://github.com/restify/node-restify.git', '--depth', '1', restify_dir]);
 var test_glob = path.join(restify_dir, 'test', '*.test.js');
 process.chdir(restify_dir);
@@ -51,7 +51,7 @@ cp.execFileSync('sed', ['-i', 's/"restify"/"r"/', 'package.json']);
 
 // Install restify as it's own dependency
 console.log('Installing restify dependencies');
-cp.execFileSync('npm', ['install', '--save', 'restify@4.0.0']);
+cp.execFileSync('npm', ['install', '--save', 'restify@3.0.3']);
 cp.execFileSync('npm', ['install']);
 
 // Reformat tests to use newly installed restify

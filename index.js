@@ -104,7 +104,11 @@ var publicAgent = {
 
     common.utils.getHostname(function(err, hostname) {
       if (err) {
-        logger.info('Unable to retrieve GCE hostname.', err);
+        if (err.code !== 'ENOTFOUND') {
+          // We are running on GCP.
+          logger.warn('Unable to retrieve GCE hostname.', err);
+        }
+        config.hostname = require('os').hostname();
       } else {
         config.hostname = hostname;
       }
@@ -112,7 +116,10 @@ var publicAgent = {
 
     common.utils.getInstanceId(function(err, instanceId) {
       if (err) {
-        logger.info('Unable to retrieve GCE instance id.', err);
+        if (err.code !== 'ENOTFOUND') {
+          // We are running on GCP.
+          logger.warn('Unable to retrieve GCE instance id.', err);
+        }
       } else {
         config.instanceId = instanceId;
       }

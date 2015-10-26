@@ -42,7 +42,7 @@ describe('test-trace-mongodb', function() {
       f3: 42
     });
     mongoose.connect('mongodb://localhost:27017/testdb', function(err) {
-      assert(!err, 'Skipping: no mongo server found at localhost:27017.');
+      assert(!err, 'Skipping: error connecting to mongo at localhost:27017.');
       sim.save(function(err) {
         assert(!err);
         common.cleanTraces();

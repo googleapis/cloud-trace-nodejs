@@ -119,7 +119,8 @@ describe('agent interaction with metadata service', function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
         spanData.close();
-        assert(!spanData.span.labels[traceLabels.GCE_HOSTNAME]);
+        assert(spanData.span.labels[traceLabels.GCE_HOSTNAME],
+            require('os').hostname());
         assert(!spanData.span.labels[traceLabels.GCE_INSTANCE_ID]);
         done();
       });
