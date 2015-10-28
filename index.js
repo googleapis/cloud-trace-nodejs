@@ -47,6 +47,9 @@ var initConfig = function(projectConfig) {
   var config = {};
   util._extend(config, require('./config.js'));
   util._extend(config, projectConfig);
+  if (process.env.hasOwnProperty('GCLOUD_TRACE_CONFIG')) {
+    util._extend(config, require(process.env.GCLOUD_TRACE_CONFIG));
+  }
   if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
     config.logLevel = process.env.GCLOUD_TRACE_LOGLEVEL;
   }
