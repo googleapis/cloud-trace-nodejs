@@ -15,6 +15,9 @@
  */
 'use strict';
 
+var traceLabels = require('../../lib/trace-labels.js');
+var http = require('http');
+var assert = require('assert');
 var common = require('./common.js');
 var restify = require('./fixtures/restify3');
 
@@ -117,6 +120,28 @@ describe('test-trace-restify', function() {
     });
     server.listen(common.serverPort, function(){
       common.doRequest('GET', done, restifyPredicate);
+    });
+  });
+
+  it('should have proper labels', function(done) {
+    server = restify.createServer();
+    server.get('/', function (req, res, next) {
+      res.writeHead(200, {
+        'Content-Type': 'text/plain'
+      });
+      res.write(common.serverRes);
+      res.end();
+      return next();
+    });
+    server.listen(common.serverPort, function(){
+      http.get({port: common.serverPort}, function(res) {
+        var labels = common.getMatchingSpan(restifyPredicate).labels;
+        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
+        assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
+        assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
+        assert(labels[traceLabels.HTTP_SOURCE_IP]);
+        done();
+      });
     });
   });
 });

@@ -17,6 +17,8 @@
 
 var common = require('./common.js');
 
+var traceLabels = require('../../lib/trace-labels.js');
+var http = require('http');
 var assert = require('assert');
 var hapi = require('./fixtures/hapi8');
 
@@ -160,6 +162,28 @@ describe('test-trace-hapi', function() {
         done();
       };
       common.doRequest('GET', cb, hapiPredicate);
+    });
+  });
+
+  it('should have proper labels', function(done) {
+    server = new hapi.Server();
+    server.connection({ port: common.serverPort });
+    server.route({
+      method: 'GET',
+      path: '/',
+      handler: function(req, reply) {
+        reply(common.serverRes);
+      }
+    });
+    server.start(function() {
+      http.get({port: common.serverPort}, function(res) {
+        var labels = common.getMatchingSpan(hapiPredicate).labels;
+        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
+        assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
+        assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
+        assert(labels[traceLabels.HTTP_SOURCE_IP]);
+        done();
+      });
     });
   });
 });

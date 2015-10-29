@@ -15,6 +15,9 @@
  */
 'use strict';
 
+var traceLabels = require('../../lib/trace-labels.js');
+var http = require('http');
+var assert = require('assert');
 var common = require('./common.js');
 var express = require('./fixtures/express4');
 
@@ -121,6 +124,23 @@ describe('test-trace-express', function() {
     });
     server = app.listen(common.serverPort, function() {
       common.doRequest('GET', done, expressPredicate);
+    });
+  });
+
+  it('should have proper labels', function(done) {
+    var app = express();
+    app.get('/', function (req, res) {
+      res.send(common.serverRes);
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort}, function(res) {
+        var labels = common.getMatchingSpan(expressPredicate).labels;
+        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
+        assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
+        assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost/');
+        assert(labels[traceLabels.HTTP_SOURCE_IP]);
+        done();
+      });
     });
   });
 });
