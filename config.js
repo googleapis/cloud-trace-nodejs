@@ -42,11 +42,10 @@ module.exports = {
   // any provided regex will be ignored.
   ignoreUrls: [],
 
-  // An upper bound on the number of traces to gather each second. If set to
-  // -1, all traces will be reported. Sampling rates greater than 1000 are not
-  // supported and will result in at most 1000 samples per second.
-  // Note: `samplingRate` should never be set to 0. To disable tracing, use
-  // `enabled` above.
+  // An upper bound on the number of traces to gather each second. If set to 0,
+  // sampling is disabled and all traces are recorded. Sampling rates greater
+  // than 1000 are not supported and will result in at most 1000 samples per
+  // second.
   samplingRate: 10,
 
   // The number of transactions we buffer before we publish to the Cloud Trace
