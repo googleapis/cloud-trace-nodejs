@@ -47,7 +47,7 @@ module.exports = {
   // supported and will result in at most 1000 samples per second.
   // Note: `samplingRate` should never be set to 0. To disable tracing, use
   // `enabled` above.
-  samplingRate: -1,
+  samplingRate: 10,
 
   // The number of transactions we buffer before we publish to the Cloud Trace
   // API, unless we hit `flushDelaySeconds` first.

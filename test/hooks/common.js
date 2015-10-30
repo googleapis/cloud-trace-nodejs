@@ -20,7 +20,7 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
   process.exit(1);
 }
 
-var agent = require('../..').start().private_();
+var agent = require('../..').start({ samplingRate: -1 }).private_();
 // We want to disable publishing to avoid conflicts with production.
 agent.traceWriter.publish_ = function() {};
 

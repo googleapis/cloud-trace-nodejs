@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var agent = require('../..').start({ignoreUrls: ['/test']});
+var agent = require('../..').start({ignoreUrls: ['/test'], samplingRate: -1});
 
 var assert = require('assert');
 var http = require('http');

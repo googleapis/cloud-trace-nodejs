@@ -21,7 +21,7 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
   process.exit(1);
 }
 
-var agent = require('..').start().private_();
+var agent = require('..').start({ samplingRate: -1 }).private_();
 var TraceLabels = require('../lib/trace-labels.js');
 var assert = require('assert');
 var cls = require('../lib/cls.js');
