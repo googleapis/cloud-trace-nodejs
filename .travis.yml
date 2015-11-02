@@ -1,3 +1,5 @@
+sudo: false
+
 language: node_js
 
 node_js:
@@ -16,5 +18,5 @@ before_install:
 env:
   - GCLOUD_PROJECT_NUM=0
 
-after_success:
-  - ./bin/run-coverage.sh
+script:
+  - ./bin/run-test.sh -c
