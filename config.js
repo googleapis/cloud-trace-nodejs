@@ -40,7 +40,8 @@ module.exports = {
   //   /componentOne/componentTwo/...
   // Paths can additionally be classified by regex in which case any path matching
   // any provided regex will be ignored.
-  ignoreUrls: [],
+  // We ignore the health checker probes (/_ah/health) by default.
+  ignoreUrls: [ '/_ah/health' ],
 
   // An upper bound on the number of traces to gather each second. If set to 0,
   // sampling is disabled and all traces are recorded. Sampling rates greater
