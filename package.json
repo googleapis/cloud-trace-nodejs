@@ -6,7 +6,7 @@
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
     "test": "./bin/run-test.sh",
-    "coverage": "./bin/run-coverage.sh",
+    "coverage": "./bin/run-test.sh -c",
     "bump": "./bin/run-bump.sh",
     "closure": "./node_modules/.bin/closure-npc"
   },
