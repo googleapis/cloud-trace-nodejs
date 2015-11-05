@@ -76,6 +76,7 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure hset time', function(done) {
       common.runInTransaction(function(endTransaction) {
+        // Test error case as hset requires 3 parameters
         client.hset('key', 'val', function(err) {
           endTransaction();
           var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
