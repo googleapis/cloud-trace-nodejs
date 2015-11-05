@@ -27,7 +27,7 @@ module.exports = {
   excludedHooks: [],
 
   // @type {number} max number of frames to include on traces (0 disables)
-  stackTraceLimit: 0,
+  stackTraceLimit: 10,
 
   // We buffer the captured traces for `flushDelaySeconds` before publishing
   // to the Cloud Trace API; unless the buffer fills up before then.
