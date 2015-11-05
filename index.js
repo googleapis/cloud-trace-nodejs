@@ -105,6 +105,10 @@ var publicAgent = {
       return this;
     }
 
+    if (config.projectId) {
+      logger.info('Locally provided ProjectId: ' + config.projectId);
+    }
+
     common.utils.getHostname(function(err, hostname) {
       if (err) {
         if (err.code !== 'ENOTFOUND') {
