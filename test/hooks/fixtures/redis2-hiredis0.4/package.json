@@ -1,0 +1,9 @@
+{
+  "name": "redis2",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "hiredis": "^0.4.1",
+    "redis": "^2.2.5"
+  }
+}
