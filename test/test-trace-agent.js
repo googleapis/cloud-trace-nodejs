@@ -38,16 +38,16 @@ describe('Trace Agent', function() {
     assert.strictEqual(agent, agent2);
   });
 
-  describe('isTraceAPIRequest', function() {
+  describe('isTraceAgentRequest', function() {
     it('should work correctly with various inputs', function() {
-      assert.ok(!agent.isTraceAPIRequest());
-      assert.ok(!agent.isTraceAPIRequest({}));
+      assert.ok(!agent.isTraceAgentRequest());
+      assert.ok(!agent.isTraceAgentRequest({}));
 
-      var headers = { 'Foo': constants.TRACE_API_HEADER_NAME };
-      assert.ok(!agent.isTraceAPIRequest({ headers: headers }));
+      var headers = { 'Foo': constants.TRACE_IGNORE_HEADER };
+      assert.ok(!agent.isTraceAgentRequest({ headers: headers }));
 
-      headers[constants.TRACE_API_HEADER_NAME] = 'something';
-      assert.ok(agent.isTraceAPIRequest({ headers: headers }));
+      headers[constants.TRACE_IGNORE_HEADER] = 'something';
+      assert.ok(agent.isTraceAgentRequest({ headers: headers }));
     });
   });
 

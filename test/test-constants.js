@@ -16,10 +16,12 @@
 
 'use strict';
 
-module.exports = {
-  /** @const {string} header that carries trace context across Google infrastructure. */
-  TRACE_CONTEXT_HEADER_NAME: 'X-Cloud-Trace-Context',
+var assert = require('assert');
+var constants = require('../lib/constants.js');
 
-  /** @const {string} header that is used to identify outgoing http made by the agent. */
-  TRACE_AGENT_REQUEST_HEADER: 'X-Cloud-Trace-Agent-Request'
-};
+describe('constants', function() {
+  it('has correct values', function() {
+    assert.equal(constants.TRACE_CONTEXT_HEADER_NAME, 'X-Cloud-Trace-Context');
+    assert.equal(constants.TRACE_AGENT_REQUEST_HEADER, 'X-Cloud-Trace-Agent-Request');
+  });
+});
