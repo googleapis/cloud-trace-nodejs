@@ -19,6 +19,7 @@
 var SpanData = require('./lib/span-data.js');
 var common = require('@google/cloud-diagnostics-common');
 var semver = require('semver');
+var constants = require('./lib/constants.js');
 
 /**
  * Phantom implementation of the trace agent. This allows API users to decouple
@@ -109,7 +110,10 @@ var publicAgent = {
       logger.info('Locally provided ProjectId: ' + config.projectId);
     }
 
-    common.utils.getHostname(function(err, hostname) {
+    var headers = {};
+    headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
+
+    common.utils.getHostname(headers, function(err, hostname) {
       if (err) {
         if (err.code !== 'ENOTFOUND') {
           // We are running on GCP.
@@ -121,7 +125,7 @@ var publicAgent = {
       }
     });
 
-    common.utils.getInstanceId(function(err, instanceId) {
+    common.utils.getInstanceId(headers, function(err, instanceId) {
       if (err) {
         if (err.code !== 'ENOTFOUND') {
           // We are running on GCP.
@@ -135,7 +139,7 @@ var publicAgent = {
     if (typeof config.projectId === 'undefined') {
       // Queue the work to acquire the projectNumber (potentially from the
       // network.)
-      common.utils.getProjectNumber(function(err, project) {
+      common.utils.getProjectNumber(headers, function(err, project) {
         if (err) {
           // Fatal error. Disable the agent.
           logger.error('Unable to acquire the project number from metadata ' +

@@ -43,10 +43,10 @@ describe('Trace Agent', function() {
       assert.ok(!agent.isTraceAgentRequest());
       assert.ok(!agent.isTraceAgentRequest({}));
 
-      var headers = { 'Foo': constants.TRACE_IGNORE_HEADER };
+      var headers = { 'Foo': constants.TRACE_AGENT_REQUEST_HEADER};
       assert.ok(!agent.isTraceAgentRequest({ headers: headers }));
 
-      headers[constants.TRACE_IGNORE_HEADER] = 'something';
+      headers[constants.TRACE_AGENT_REQUEST_HEADER] = 'something';
       assert.ok(agent.isTraceAgentRequest({ headers: headers }));
     });
   });
