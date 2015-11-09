@@ -19,128 +19,135 @@ var traceLabels = require('../../lib/trace-labels.js');
 var http = require('http');
 var assert = require('assert');
 var common = require('./common.js');
-var restify = require('./fixtures/restify3');
+var versions = {
+  restify3: require('./fixtures/restify3'),
+  restify4: require('./fixtures/restify4')
+};
 
 var server;
 
-describe('test-trace-restify', function() {
-  afterEach(function() {
-    common.cleanTraces();
-    server.close();
-  });
+Object.keys(versions).forEach(function(version) {
+  var restify = versions[version];
 
-  it('should accurately measure get time, get', function(done) {
-    server = restify.createServer();
-    server.get('/', function (req, res, next) {
-      setTimeout(function() {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain'
-        });
-        res.write(common.serverRes);
-        res.end();
-        return next();
-      }, common.serverWait);
+  describe(version, function() {
+    afterEach(function() {
+      common.cleanTraces();
+      server.close();
     });
-    server.listen(common.serverPort, function(){
-      common.doRequest('GET', done, restifyPredicate);
-    });
-  });
 
-  it('should accurately measure get time, post', function(done) {
-    server = restify.createServer();
-    server.post('/', function (req, res, next) {
-      setTimeout(function() {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain'
-        });
-        res.write(common.serverRes);
-        res.end();
-        return next();
-      }, common.serverWait);
-    });
-    server.listen(common.serverPort, function(){
-      common.doRequest('POST', done, restifyPredicate);
-    });
-  });
-
-  it('should accurately measure get time, multiple handlers', function(done) {
-    server = restify.createServer();
-    server.get('/', function (req, res, next) {
-      setTimeout(function() {
-        return next();
-      }, common.serverWait / 2);
-    }, function (req, res, next) {
-      setTimeout(function() {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain'
-        });
-        res.write(common.serverRes);
-        res.end();
-        return next();
-      }, common.serverWait / 2);
-    });
-    server.listen(common.serverPort, function(){
-      common.doRequest('GET', done, restifyPredicate);
-    });
-  });
-
-  it('should accurately measure get time, regex path', function(done) {
-    server = restify.createServer();
-    server.get(/\/([^&=?]*)/, function (req, res, next) {
-      setTimeout(function() {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain'
-        });
-        res.write(common.serverRes);
-        res.end();
-        return next();
-      }, common.serverWait);
-    });
-    server.listen(common.serverPort, function(){
-      common.doRequest('GET', done, restifyPredicate);
-    });
-  });
-
-  it('should accurately measure get time, use and get', function(done) {
-    server = restify.createServer();
-    server.use(function (req, res, next) {
-      setTimeout(function() {
-        return next();
-      }, common.serverWait / 2);
-    });
-    server.get('/', function (req, res, next) {
-      setTimeout(function() {
-        res.writeHead(200, {
-          'Content-Type': 'text/plain'
-        });
-        res.write(common.serverRes);
-        res.end();
-        return next();
-      }, common.serverWait / 2);
-    });
-    server.listen(common.serverPort, function(){
-      common.doRequest('GET', done, restifyPredicate);
-    });
-  });
-
-  it('should have proper labels', function(done) {
-    server = restify.createServer();
-    server.get('/', function (req, res, next) {
-      res.writeHead(200, {
-        'Content-Type': 'text/plain'
+    it('should accurately measure get time, get', function(done) {
+      server = restify.createServer();
+      server.get('/', function (req, res, next) {
+        setTimeout(function() {
+          res.writeHead(200, {
+            'Content-Type': 'text/plain'
+          });
+          res.write(common.serverRes);
+          res.end();
+          return next();
+        }, common.serverWait);
       });
-      res.write(common.serverRes);
-      res.end();
-      return next();
+      server.listen(common.serverPort, function(){
+        common.doRequest('GET', done, restifyPredicate);
+      });
     });
-    server.listen(common.serverPort, function(){
-      http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(restifyPredicate).labels;
-        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
-        assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
-        assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
-        assert(labels[traceLabels.HTTP_SOURCE_IP]);
-        done();
+
+    it('should accurately measure get time, post', function(done) {
+      server = restify.createServer();
+      server.post('/', function (req, res, next) {
+        setTimeout(function() {
+          res.writeHead(200, {
+            'Content-Type': 'text/plain'
+          });
+          res.write(common.serverRes);
+          res.end();
+          return next();
+        }, common.serverWait);
+      });
+      server.listen(common.serverPort, function(){
+        common.doRequest('POST', done, restifyPredicate);
+      });
+    });
+
+    it('should accurately measure get time, multiple handlers', function(done) {
+      server = restify.createServer();
+      server.get('/', function (req, res, next) {
+        setTimeout(function() {
+          return next();
+        }, common.serverWait / 2);
+      }, function (req, res, next) {
+        setTimeout(function() {
+          res.writeHead(200, {
+            'Content-Type': 'text/plain'
+          });
+          res.write(common.serverRes);
+          res.end();
+          return next();
+        }, common.serverWait / 2);
+      });
+      server.listen(common.serverPort, function(){
+        common.doRequest('GET', done, restifyPredicate);
+      });
+    });
+
+    it('should accurately measure get time, regex path', function(done) {
+      server = restify.createServer();
+      server.get(/\/([^&=?]*)/, function (req, res, next) {
+        setTimeout(function() {
+          res.writeHead(200, {
+            'Content-Type': 'text/plain'
+          });
+          res.write(common.serverRes);
+          res.end();
+          return next();
+        }, common.serverWait);
+      });
+      server.listen(common.serverPort, function(){
+        common.doRequest('GET', done, restifyPredicate);
+      });
+    });
+
+    it('should accurately measure get time, use and get', function(done) {
+      server = restify.createServer();
+      server.use(function (req, res, next) {
+        setTimeout(function() {
+          return next();
+        }, common.serverWait / 2);
+      });
+      server.get('/', function (req, res, next) {
+        setTimeout(function() {
+          res.writeHead(200, {
+            'Content-Type': 'text/plain'
+          });
+          res.write(common.serverRes);
+          res.end();
+          return next();
+        }, common.serverWait / 2);
+      });
+      server.listen(common.serverPort, function(){
+        common.doRequest('GET', done, restifyPredicate);
+      });
+    });
+
+    it('should have proper labels', function(done) {
+      server = restify.createServer();
+      server.get('/', function (req, res, next) {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+        res.write(common.serverRes);
+        res.end();
+        return next();
+      });
+      server.listen(common.serverPort, function(){
+        http.get({port: common.serverPort}, function(res) {
+          var labels = common.getMatchingSpan(restifyPredicate).labels;
+          assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
+          assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
+          assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
+          assert(labels[traceLabels.HTTP_SOURCE_IP]);
+          done();
+        });
       });
     });
   });
