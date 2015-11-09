@@ -65,6 +65,7 @@ describe('Trace Agent', function() {
             options.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
         assert.equal(parsed.traceId, 1);
         assert.equal(parsed.spanId, spanId);
+        assert.equal(typeof parsed.spanId, 'number');
         assert.equal(parsed.options, 1);
       });
     });
@@ -87,7 +88,7 @@ describe('Trace Agent', function() {
           '123456/667;o=1');
         assert(result);
         assert.equal(result.traceId, '123456');
-        assert.equal(result.spanId, '667');
+        assert.equal(result.spanId, 667);
         assert.equal(result.options, '1');
       });
 
@@ -96,7 +97,7 @@ describe('Trace Agent', function() {
           '123456/667');
         assert(result);
         assert.equal(result.traceId, '123456');
-        assert.equal(result.spanId, '667');
+        assert.equal(result.spanId, 667);
         assert(!result.options);
       });
 
@@ -126,7 +127,8 @@ describe('Trace Agent', function() {
         undefined,
         'o=1;123456',
         '123;456;o=1',
-        '123/o=1;456'
+        '123/o=1;456',
+        '123/abc/o=1'
       ];
       inputs.forEach(function(s) {
         it('should reject ' + s, function() {
