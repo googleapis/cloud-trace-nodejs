@@ -74,6 +74,12 @@ We are working on expanding the types of frameworks and services we can do autom
 
 We also have an API that lets you add custom spans to the traces automatically. This can be useful if your application does sizable synchronous or asynchronous work that is not using an existing IO or RPC module.
 
+### (Optional) Trace Configuration
+
+The trace agent can be configured by passing a configurations object to the agent `start` method. This configuration option accepts all values in the [default configuration](config.js).
+
+One configuration option of note is `enhancedDatabaseReporting`. Setting this option to `true` will cause database operations for redis and MongoDB to record query summaries and results as labels on reported trace spans.
+
 ### (Optional) Custom Tracing API
 
 Our goal is for the trace agent to automatically trace all the popular Node.js web frameworks, as well as RPC and persistence layers. However, you may still want to create custom spans to add additional details if your application does sizable on- or off-CPU work inside a request. We do provide an API to enable that.
