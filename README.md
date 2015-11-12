@@ -1,4 +1,4 @@
-# Google Cloud Trace
+# Google Cloud Trace for Node.js
 
 [![NPM Version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
@@ -6,34 +6,67 @@
 [![Dependency Status][david-image]][david-url]
 [![devDependency Status][david-dev-image]][david-dev-url]
 
-## Overview
+> *This module is experimental, and should be used by early adopters. This module uses APIs there may be undocumented and may be subject to change without notice.*
 
-*This module is experimental, and should be used by early adopters. This module uses APIs there may be undocumented and may be subject to change without notice.*
-
-[Cloud Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data from your applications and displays it in near real-time in the [Google Developers Console](https://console.developers.google.com/?_ga=1.258049870.576536942.1443543237). This module provides Cloud Trace support for Node.js applications.
+This module provides Cloud Trace support for Node.js applications. [Google Cloud Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Developers Console](https://console.developers.google.com/?_ga=1.258049870.576536942.1443543237).
 
 ![Cloud Trace Overview](doc/images/cloud-trace-overview-page.png)
 
 ## Prerequisites
-1. You are using / deploying-with Node.js version 0.12 or greater.
-1. You need to have created a project on GCP. You don't necessarily have to deploy your app to GCP, but traces must be attributed to a project to be viewed.
+
+1. Your application will need to be using Node.js version 0.12 or greater.
+1. You will need a [Google Cloud Platform Project](https://console.developers.google.com/project?_ga=1.258049870.576536942.1443543237). Your application can run anywhere, but the trace data is associated with a particular project.
 1. [Enable the Trace API](https://console.developers.google.com/flows/enableapi?apiid=cloudtrace) for your project.
-1. (Only if you are deploying to Google Compute Engine) Your VM instances need to be created with the 'Allow API access' checkbox selected (see screenshot). If you already have VMs that were created without API access, you will additionally need to follow the instructions in the *Running elsewhere* section.
+
+## Installation
+
+1. Install with [`npm`](https://www.npmjs.com) or add to your [`package.json`](https://docs.npmjs.com/files/package.json#dependencies).
+
+        npm install --save @google/cloud-trace
+
+2. Include the library at the *top of the main script of your application*. It's important that Cloud Trace is the first thing executed so that it can accurately gather data:
+
+        require('@google/cloud-trace').start({projectId: 'your-project-id'});
+
+Your project ID is visible in [Google Cloud Platform Project](https://console.developers.google.com/project?_ga=1.258049870.576536942.1443543237), it may be something like `particular-future-12345`. If your application is [running on Google Cloud Platform](running-on-google-cloud-platform), you don't need to specify the project ID.
+
+## Running on Google Cloud Platform
+
+There are three different services that can host Node.js application to Google Cloud Platform.
+
+### Google App Engine Managed VMs
+
+If you are using [Google App Engine Managed VMs](https://cloud.google.com/appengine/docs/managed-vms/), you do not have to do any additional configuration.
+
+### Google Compute Engine
+
+Your VM instances need to be created with `cloud-platform` scope if created via [gcloud](https://cloud.google.com/sdk) or the 'Allow API access' checkbox selected if created via the [console](https://console.developers.google.com) (see screenshot).
 
 ![GCE API](doc/images/gce.png?raw=true)
 
-## Running on Google Cloud Platform
-1. Install the module, and save it as a dependency in your `package.json`:
+If you already have VMs that were created without API access and do not wish to recreate it, you can follow the instructions for using a service account under [running elsewhere](#running-elsewhere).
 
-   `npm install --save @google/cloud-trace`
-1. Ensure that the trace agent gets loaded **as the first thing** during your application's startup. You can add the following line as to load the trace agent module in your startup script. For example, if your startup script is `server.js`, add the following as the *very first line* to `server.js`:
+### Google Container Engine
 
-   ``` javascript
-   // Activate Google cloud trace agent (*must be first line of the app*)
-   require('@google/cloud-trace').start();
-   ```
+Container Engine nodes need to also be created with the `cloud-platform` scope, which is configurable during cluster creation. Alternatively, you can follow the instructions for using a service account under [running elsewhere](#running-elsewhere). It's recommended that you store the service account credentials as [Kubernetes Secret](http://kubernetes.io/v1.1/docs/user-guide/secrets.html).
 
-Deploy your application to Google Cloud and start sending some requests towards your application. In about 30 seconds or so, you should see trace data gathered in the Monitoring -> Traces view in your Google Cloud console:
+## Running elsewhere
+
+If your application is running outside of Google Cloud Platform, such as locally, on-premise, or on another cloud provider, you can still use Cloud Trace.
+
+1. You will need to specify your project ID when starting the trace agent.
+
+        require('@google/cloud-trace').start({projectId: 'your-project-id'});
+
+2. You will need to provide service account credentials to your application. The recommended way is via [Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials).
+
+  1. [Create a new JSON service account key](https://console.developers.google.com/apis/credentials/serviceaccountkey).
+  2. Copy the key somewhere your application can access it. Be sure not to expose the key publicly.
+  3. Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the full path to the key. The trace agent will automatically look for this environment variable.
+
+## Viewing your traces
+
+Run your application and start sending some requests towards your application. In about 30 seconds or so, you should see trace data gathered in the [Operations -> Traces view](https://console.developers.google.com/traces/overview) in the console:
 
 ![Trace List](doc/images/tracelist.png?raw=true)
 
@@ -45,91 +78,95 @@ Note: When you open on up the traces view under the monitoring header, you may s
 
 ![Trace Warning](doc/images/butterbar.png?raw=true)
 
-## Running elsewhere
+## What gets traced
 
-If you want to run your application somewhere other than Google Cloud Platform, or if you GCE VMs were created without API access, you will need to take two additional steps:
-
-1. Provide your project-number at the time you start the trace agent. Your project number can be found in the developer console by clicking gear in the upper left hand corner and looking at Project information:
-
-   ```javascript
-   // Activate Google cloud trace agent (*must be first line of the app*)
-   require('@google/cloud-trace').start({projectId: 'your-project-number-here'});
-   ```
-1. Provide credentials to authenticate with the Trace API.
-  * Provide credentials via the environment variable GOOGLE\_APPLICATION\_CREDENTIALS. The simplest way to get a credential for this purpose is to create a service account using the Google Developers Console in the section APIs & Auth, in the sub-section Credentials. Create a service account (Create New ClientID under the OAuth heading) or choose an existing one and select Generate new JSON key. Set the environment variable GOOGLE\_APPLICATION\_CREDENTIALS to the path of the JSON file downloaded.
-
-## Details
-
-The trace agent can do automatic tracing of the following http frameworks:
+The trace agent can do automatic tracing of HTTP requests when using these frameworks:
 * express v4+
 * restify v3+ (experimental)
 * hapi v8 (experimental)
 
-We will do automatic tracing of the following kinds of RPCs performed by your application:
+The agent will also automatic trace of the following kinds of RPCs:
 * Outbound HTTP requests
 * MongoDB v2+
 * Redis v0.12+ (experimental)
 
-We are working on expanding the types of frameworks and services we can do automatic tracing for. We are also interested in hearing your feedback on what other frameworks, or versions, you would like to see supported. This would help us prioritize support going forward.
+You can use the [Custom Tracing API](#custom-tracing-api) to trace other processes in your application.
 
-We also have an API that lets you add custom spans to the traces automatically. This can be useful if your application does sizable synchronous or asynchronous work that is not using an existing IO or RPC module.
+We are working on expanding the types of frameworks and services we can do automatic tracing for. We are also interested in hearing your feedback on what other frameworks, or versions, you would like to see supported. This would help us prioritize support going forward. If you want support for a particular framework or RPC, please file a bug or +1 an existing bug.
 
-### (Optional) Trace Configuration
+## Advanced trace configuration
 
 The trace agent can be configured by passing a configurations object to the agent `start` method. This configuration option accepts all values in the [default configuration](config.js).
 
 One configuration option of note is `enhancedDatabaseReporting`. Setting this option to `true` will cause database operations for redis and MongoDB to record query summaries and results as labels on reported trace spans.
 
-### (Optional) Custom Tracing API
+## Custom Tracing API
 
-Our goal is for the trace agent to automatically trace all the popular Node.js web frameworks, as well as RPC and persistence layers. However, you may still want to create custom spans to add additional details if your application does sizable on- or off-CPU work inside a request. We do provide an API to enable that.
+The custom tracing API can be used to add custom spans to trace. A *span* is a particular unit of work within a trace, such as an RPC request. Currently, you can only use the custom tracing API inside the following web frameworks: `express`, `hapi`, `restify`.
 
-We only support custom spans inside existing top-level request-handling framework (e.g. express, hapi, etc.).
-
-The API for creating custom spans and modifying transaction metadata is exposed through the agent returned by requiring the module:
+The API is exposed by the `agent` returned when starting Cloud Trace:
 
 ```javascript
   var agent = require('@google/cloud-trace').start();
 ```
 
-Starting a new custom span. This command optionally takes an object of key value pairs which specify labels to be attached to the span:
+You can either use the `startSpan` and `endSpan` API, or use the `runInSpan` function that uses a callback-style.
+
+### Start & end
+
+To start a new span, use `agent.startSpan`. Each span requires a name, and you can optionally specify labels.
 
 ```javascript
-  var opaque = agent.startSpan('name', {key: 'my value'});
+  var span = agent.startSpan('name', {label: 'value'});
 ```
 
-Ending a custom span. This command optionally takes an object of key value pairs which specify labels to be attached to the span:
+Once your work is complete, you can end the span with `agent.endSpan`. You can again optionally associate labels with the span:
 
 ```javascript
-  agent.endSpan(opaque, {key: 'my value'});
+  agent.endSpan(span, {label2: 'value'});
 ```
 
-Alternatively, we also support a mocha-style interface that might be a bit more convenient to use. The runInSpan method takes a function to execute inside a custom span with the provided name. The function may be synchronous or asynchronous. If it is asynchronous, it must accept a 'endSpan' function as an argument that should be called once the asynchronous work has completed.
+### Run in span
+
+`agent.runInSpan` takes a function to execute inside a custom span with the given name. The function may be synchronous or asynchronous. If it is asynchronous, it must accept a 'endSpan' function as an argument that should be called once the asynchronous work has completed.
 
 ```javascript
-  agent.runInSpan('name', {key: 'my value'}, function() {
+  agent.runInSpan('name', {label: 'value'}, function() {
     doSynchronousWork();
   });
 
-  agent.runInSpan('name', {key: 'my value'}, function(endSpan) {
+  agent.runInSpan('name', {label: 'value'}, function(endSpan) {
     doAsyncWork(function(result) {
       processResult(result);
-      endSpan({key2: 'my value2'});
+      endSpan({label2: 'value'});
     });
   });
 ```
 
-It is possible to rename the current top-level request transaction, to give it a more meaningful name. By default we use the name of the express (or hapi/restify) route as the transaction name:
+### Changing trace properties
+
+It is possible to rename and add labels to current trace. This can be use to give it a more meaningful name or add additional metata.
+
+By default we use the name of the express (or hapi/restify) route as the transaction name, but it can be change using `agent.setTransactionName`:
 
 ```javascript
   agent.setTransactionName('new name');
 ```
 
-Adding a label to the current top-level request transaction:
+You can add additional labels using `agent.addTransactionLabel`:
 
 ```javascript
-  agent.addTransactionLabel('label-key', 'label-value');
+  agent.addTransactionLabel('label', 'value');
 ```
+
+## Contributing changes
+
+* See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Licensing
+
+* See [LICENSE](LICENSE)
+
 
 [npm-image]: https://badge.fury.io/js/%40google%2Fcloud-trace.svg
 [npm-url]: https://npmjs.org/package/@google/cloud-trace
