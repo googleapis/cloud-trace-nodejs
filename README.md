@@ -15,7 +15,7 @@ This module provides Cloud Trace support for Node.js applications. [Google Cloud
 ## Prerequisites
 
 1. Your application will need to be using Node.js version 0.12 or greater.
-1. You will need a [Google Cloud Platform Project](https://console.developers.google.com/project?_ga=1.258049870.576536942.1443543237). Your application can run anywhere, but the trace data is associated with a particular project.
+1. You will need a project in the [Google Developers Console](https://console.developers.google.com/project?_ga=1.258049870.576536942.1443543237). Your application can run anywhere, but the trace data is associated with a particular project.
 1. [Enable the Trace API](https://console.developers.google.com/flows/enableapi?apiid=cloudtrace) for your project.
 
 ## Installation
@@ -28,7 +28,7 @@ This module provides Cloud Trace support for Node.js applications. [Google Cloud
 
         require('@google/cloud-trace').start({projectId: 'your-project-id'});
 
-Your project ID is visible in [Google Cloud Platform Project](https://console.developers.google.com/project?_ga=1.258049870.576536942.1443543237), it may be something like `particular-future-12345`. If your application is [running on Google Cloud Platform](running-on-google-cloud-platform), you don't need to specify the project ID.
+Your project ID is visible in the [Google Developers Console Console](https://console.developers.google.com/project?_ga=1.258049870.576536942.1443543237), it may be something like `particular-future-12345`. If your application is [running on Google Cloud Platform](running-on-google-cloud-platform), you don't need to specify the project ID.
 
 ## Running on Google Cloud Platform
 
