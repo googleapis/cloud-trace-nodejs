@@ -191,6 +191,4 @@ var publicAgent = {
   private_: function() { return agent; }
 };
 
-// TODO: if the module was --require'd on the command line, auto-start the agent
-
-module.exports = publicAgent;
+module.exports = global._google_trace_agent = publicAgent;
