@@ -159,6 +159,13 @@ var publicAgent = {
       return this;
     }
 
+    if (process.env.GAE_MODULE_NAME) {
+      config.gae_module_name = process.env.GAE_MODULE_NAME;
+    }
+    if (process.env.GAE_MODULE_VERSION) {
+      config.gae_module_version = process.env.GAE_MODULE_VERSION;
+    }
+
     agent = require('./lib/trace-agent.js').get(config, logger);
     return this; // for chaining
   },

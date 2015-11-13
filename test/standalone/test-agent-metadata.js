@@ -126,4 +126,41 @@ describe('agent interaction with metadata service', function() {
       });
     }, 500);
   });
+
+  it('should attach gae_module labels when available', function(done) {
+    process.env.GAE_MODULE_NAME = 'foo';
+    process.env.GAE_MODULE_VERSION = '1';
+    agent.start({projectId: 0, logLevel: 0});
+    setTimeout(function() {
+      agent.private_().namespace.run(function() {
+        var spanData = agent.private_().createRootSpanData('name', 5, 0);
+        spanData.close();
+        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME], 'foo');
+        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_VERSION], '1');
+        done();
+      });
+    }, 500);
+  });
+
+  it('gae_module_name should default to the hostname when env. var absent',
+    function(done) {
+      nock.disableNetConnect();
+      var scope = nock('http://metadata.google.internal')
+                  .get('/computeMetadata/v1/instance/hostname')
+                  .times(1)
+                  .reply(200, 'host');
+
+      delete process.env.GAE_MODULE_NAME;
+      agent.start({projectId: 0, logLevel: 0});
+      setTimeout(function() {
+        agent.private_().namespace.run(function() {
+          var spanData = agent.private_().createRootSpanData('name', 5, 0);
+          spanData.close();
+          assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME],
+            'host');
+          scope.done();
+          done();
+        });
+      }, 500);
+    });
 });
