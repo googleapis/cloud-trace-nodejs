@@ -165,6 +165,9 @@ var publicAgent = {
     if (process.env.GAE_MODULE_VERSION) {
       config.gae_module_version = process.env.GAE_MODULE_VERSION;
     }
+    if (process.env.GAE_MINOR_VERSION) {
+      config.gae_minor_version = process.env.GAE_MINOR_VERSION;
+    }
 
     agent = require('./lib/trace-agent.js').get(config, logger);
     return this; // for chaining

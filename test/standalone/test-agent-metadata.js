@@ -129,14 +129,38 @@ describe('agent interaction with metadata service', function() {
 
   it('should attach gae_module labels when available', function(done) {
     process.env.GAE_MODULE_NAME = 'foo';
-    process.env.GAE_MODULE_VERSION = '1';
+    process.env.GAE_MODULE_VERSION = '20151119t120000';
+    process.env.GAE_MINOR_VERSION = '91992';
     agent.start({projectId: 0, logLevel: 0});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
         spanData.close();
         assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME], 'foo');
-        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_VERSION], '1');
+        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_VERSION],
+          '20151119t120000');
+        assert.equal(spanData.span.labels[traceLabels.GAE_VERSION],
+          'foo:20151119t120000.91992');
+        done();
+      });
+    }, 500);
+  });
+
+  it('should omit module name from gae_version label when default', function(done) {
+    process.env.GAE_MODULE_NAME = 'default';
+    process.env.GAE_MODULE_VERSION = '20151119t130000';
+    process.env.GAE_MINOR_VERSION = '81818';
+    agent.start({projectId: 0, logLevel: 0});
+    setTimeout(function() {
+      agent.private_().namespace.run(function() {
+        var spanData = agent.private_().createRootSpanData('name', 5, 0);
+        spanData.close();
+        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME],
+          'default');
+        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_VERSION],
+          '20151119t130000');
+        assert.equal(spanData.span.labels[traceLabels.GAE_VERSION],
+          '20151119t130000.81818');
         done();
       });
     }, 500);
