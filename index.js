@@ -113,29 +113,6 @@ var publicAgent = {
     var headers = {};
     headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
-    common.utils.getHostname(headers, function(err, hostname) {
-      if (err) {
-        if (err.code !== 'ENOTFOUND') {
-          // We are running on GCP.
-          logger.warn('Unable to retrieve GCE hostname.', err);
-        }
-        config.hostname = require('os').hostname();
-      } else {
-        config.hostname = hostname;
-      }
-    });
-
-    common.utils.getInstanceId(headers, function(err, instanceId) {
-      if (err) {
-        if (err.code !== 'ENOTFOUND') {
-          // We are running on GCP.
-          logger.warn('Unable to retrieve GCE instance id.', err);
-        }
-      } else {
-        config.instanceId = instanceId;
-      }
-    });
-
     if (typeof config.projectId === 'undefined') {
       // Queue the work to acquire the projectNumber (potentially from the
       // network.)
@@ -157,16 +134,6 @@ var publicAgent = {
       logger.error('config.projectId, if provided, must be' +
         ' a string or number. Disabling trace agent.');
       return this;
-    }
-
-    if (process.env.GAE_MODULE_NAME) {
-      config.gae_module_name = process.env.GAE_MODULE_NAME;
-    }
-    if (process.env.GAE_MODULE_VERSION) {
-      config.gae_module_version = process.env.GAE_MODULE_VERSION;
-    }
-    if (process.env.GAE_MINOR_VERSION) {
-      config.gae_minor_version = process.env.GAE_MINOR_VERSION;
     }
 
     agent = require('./lib/trace-agent.js').get(config, logger);
