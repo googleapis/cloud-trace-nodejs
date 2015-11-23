@@ -27,8 +27,8 @@ var express = require('./fixtures/express4');
 var http = require('http');
 var mongoose = require('./fixtures/mongoose4');
 var agent = require('../..').get().private_();
-var oldWarn = agent.logger.warn;
-agent.logger.warn = function(error) {
+var oldDebug = agent.logger.debug;
+agent.logger.debug = function(error) {
   assert(error.indexOf('mongo') === -1, error);
 };
 
@@ -50,7 +50,7 @@ describe('mongodb + express', function() {
       http.get({port: common.serverPort}, function(res) {
         server.close();
         common.cleanTraces();
-        agent.logger.warn = oldWarn;
+        agent.logger.debug = oldDebug;
         done();
       });
     });

@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var agent = require('../..').start({samplingRate: -1});
+var agent = require('../..').start({samplingRate: 0});
 
 var assert = require('assert');
 var http = require('http');

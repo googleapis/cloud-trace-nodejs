@@ -20,7 +20,7 @@ if (!process.env.GCLOUD_PROJECT_NUM) {
   process.exit(1);
 }
 
-var config = { enhancedDatabaseReporting: true, samplingRate: -1 };
+var config = { enhancedDatabaseReporting: true, samplingRate: 0 };
 var agent = require('../..').start(config).private_();
 // We want to disable publishing to avoid conflicts with production.
 agent.traceWriter.publish_ = function() {};

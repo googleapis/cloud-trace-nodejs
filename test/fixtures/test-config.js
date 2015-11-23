@@ -16,7 +16,7 @@
 'use strict';
 
 module.exports = {
-  logLevel: 2,
+  logLevel: 4,
 
   stackTraceLimit: 1,
 

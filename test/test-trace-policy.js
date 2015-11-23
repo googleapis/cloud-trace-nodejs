@@ -21,14 +21,14 @@ var tracingPolicy = require('../lib/tracing-policy.js');
 
 describe('FilterPolicy', function() {
   it('should not allow filtered urls', function() {
-    var policy = tracingPolicy.createTracePolicy({samplingRate: -1,
+    var policy = tracingPolicy.createTracePolicy({samplingRate: 0,
       ignoreUrls: ['/_ah/health', /\/book*/]});
     assert(!policy.shouldTrace(null, '/_ah/health'));
     assert(!policy.shouldTrace(null, '/book/test'));
   });
 
   it('should allow non-filtered urls', function() {
-    var policy = tracingPolicy.createTracePolicy({samplingRate: -1,
+    var policy = tracingPolicy.createTracePolicy({samplingRate: 0,
       ignoreUrls: ['/_ah/health']});
     assert(policy.shouldTrace(null, '/_ah/background'));
   });

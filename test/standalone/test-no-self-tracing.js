@@ -19,7 +19,7 @@
 var assert = require('assert');
 var nock = require('nock');
 var request = require('request');
-var newWarn = function(error) {
+var newDebug = function(error) {
   if (error.indexOf('http') !== -1) {
     assert(false, error);
   }
@@ -36,10 +36,10 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/project/numeric-project-id').reply(200);
     var agent = require('../..').start();
     require('http'); // Must require http to force patching of the module
-    var oldWarn = agent.private_().logger.warn;
-    agent.private_().logger.warn = newWarn;
+    var oldDebug = agent.private_().logger.debug;
+    agent.private_().logger.debug = newDebug;
     setTimeout(function() {
-      agent.private_().logger.warn = oldWarn;
+      agent.private_().logger.debug = oldDebug;
       scope.done();
       agent.stop();
       done();
@@ -56,13 +56,13 @@ describe('test-no-self-tracing', function() {
     var agent = require('../..').start({ projectId: 0, bufferSize: 1 });
     agent.private_().traceWriter.request_ = request;
     require('http'); // Must require http to force patching of the module
-    var oldWarn = agent.private_().logger.warn;
-    agent.private_().logger.warn = newWarn;
+    var oldDebug = agent.private_().logger.debug;
+    agent.private_().logger.debug = newDebug;
     agent.private_().namespace.run(function() {
       agent.private_().createRootSpanData('hi').close();
       setTimeout(function() {
         assert.equal(agent.private_().traceWriter.buffer_.length, 0);
-        agent.private_().logger.warn = oldWarn;
+        agent.private_().logger.debug = oldDebug;
         metadataScope.done();
         apiScope.done();
         agent.stop();

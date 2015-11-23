@@ -51,7 +51,7 @@ describe('tracewriter publishing', function() {
           assert.equal(JSON.stringify(body), JSON.stringify(parsedOriginal));
           return true;
         }).reply(200);
-    var privateAgent = agent.start({bufferSize: 2, samplingRate: -1}).private_();
+    var privateAgent = agent.start({bufferSize: 2, samplingRate: 0}).private_();
     privateAgent.traceWriter.request_ = request; // Avoid authing
     cls.getNamespace().run(function() {
       queueSpans(2, privateAgent);
