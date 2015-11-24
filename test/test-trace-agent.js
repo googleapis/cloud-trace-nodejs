@@ -55,7 +55,7 @@ describe('Trace Agent', function() {
     it('adds context to headers', function() {
       cls.getNamespace().run(function() {
         var spanData = agent.createRootSpanData('name', 1, 2);
-        var spanId = spanData.span.spanId;
+        var spanId = spanData.span.span_id;
         spanData.options = 1;
         var options = {
           headers: {}

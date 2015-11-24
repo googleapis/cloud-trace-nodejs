@@ -32,8 +32,8 @@ describe('SpanData', function() {
     cls.getNamespace().run(function() {
       var spanData = agent.createRootSpanData('name', 1, 2);
       assert.ok(spanData.trace);
-      assert.equal(spanData.trace.traceId, 1);
-      assert.ok(spanData.span.spanId);
+      assert.equal(spanData.trace.trace_id, 1);
+      assert.ok(spanData.span.span_id);
       assert.equal(spanData.span.name, 'name');
     });
   });
@@ -45,7 +45,7 @@ describe('SpanData', function() {
       assert.equal(child.span.name, 'name2');
       assert.equal(child.span.parentSpanId, spanData.span.spanId);
       assert.ok(child.trace);
-      assert.equal(child.trace.traceId, 1);
+      assert.equal(child.trace.trace_id, 1);
     });
   });
 
@@ -82,7 +82,7 @@ describe('SpanData', function() {
       var spanData = agent.createRootSpanData('hi');
       spanData.createChildSpanData('sub');
       spanData.close();
-      var traces = agent.traceWriter.buffer_.map(JSON.parse);
+      var traces = agent.traceWriter.buffer_;
       for (var i = 0; i < traces.length; i++) {
         for (var j = 0; j < traces[i].spans.length; j++) {
           assert.notEqual(traces[i].spans[j].endTime, '');

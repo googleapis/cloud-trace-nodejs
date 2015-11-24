@@ -30,11 +30,12 @@ describe('TraceSpan', function() {
     var time = new Date();
     tk.freeze(time);
     var span = new TraceSpan('name', 1, 2);
-    assert.equal(span.startTime, time.toISOString());
-    assert.equal(span.spanId, 1);
-    assert.equal(span.parentSpanId, 2);
+    assert.equal(span.start_time.seconds, TraceSpan.getTimestamp(time).seconds);
+    assert.equal(span.start_time.nanos, TraceSpan.getTimestamp(time).nanos);
+    assert.equal(span.span_id, 1);
+    assert.equal(span.parent_span_id, 2);
     assert.equal(span.name, 'name');
-    assert.equal(span.kind, 'RPC_CLIENT');
+    assert.equal(span.kind, 2);
   });
 
   it('converts label values to strings', function() {
@@ -47,12 +48,13 @@ describe('TraceSpan', function() {
 
   it('closes', function() {
     var span = new TraceSpan('name', 1, 0);
-    assert.equal(span.endTime, '');
+    assert.equal(span.endTime, null);
     var time = new Date();
     tk.freeze(time);
     assert.ok(!span.isClosed());
     span.close();
-    assert.equal(span.endTime, time.toISOString());
+    assert.equal(span.end_time.seconds, TraceSpan.getTimestamp(time).seconds);
+    assert.equal(span.end_time.nanos, TraceSpan.getTimestamp(time).nanos);
     assert.ok(span.isClosed());
   });
 });
