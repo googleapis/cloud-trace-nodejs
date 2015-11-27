@@ -166,7 +166,8 @@ describe('agent interaction with metadata service', function() {
     }, 500);
   });
 
-  it('gae_module_name should default to the hostname when env. var absent',
+  it('gae_module_name should default to the metadata hostname if env. var. ' +
+     'absent',
     function(done) {
       nock.disableNetConnect();
       var scope = nock('http://metadata.google.internal')
@@ -182,6 +183,28 @@ describe('agent interaction with metadata service', function() {
           spanData.close();
           assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME],
             'host');
+          scope.done();
+          done();
+        });
+      }, 500);
+    });
+
+  it('gae_module_name should default to the local hostname as last resort',
+    function(done) {
+      nock.disableNetConnect();
+      var scope = nock('http://metadata.google.internal')
+                  .get('/computeMetadata/v1/instance/hostname')
+                  .times(1)
+                  .reply(404);
+
+      delete process.env.GAE_MODULE_NAME;
+      agent.start({projectId: 0, logLevel: 0});
+      setTimeout(function() {
+        agent.private_().namespace.run(function() {
+          var spanData = agent.private_().createRootSpanData('name', 5, 0);
+          spanData.close();
+          assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME],
+            require('os').hostname());
           scope.done();
           done();
         });
