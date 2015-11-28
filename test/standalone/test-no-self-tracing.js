@@ -43,7 +43,7 @@ describe('test-no-self-tracing', function() {
       scope.done();
       agent.stop();
       done();
-    }, 40); // Need to wait for metadata access attempt
+    }, 200); // Need to wait for metadata access attempt
   });
 
   it('should not trace publishes', function(done) {
@@ -67,7 +67,7 @@ describe('test-no-self-tracing', function() {
         apiScope.done();
         agent.stop();
         done();
-      }, 20); // Need to wait for publish attempt
+      }, 200); // Need to wait for publish attempt
     });
   });
 });
