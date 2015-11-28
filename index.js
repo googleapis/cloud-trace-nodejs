@@ -16,6 +16,10 @@
 
 'use strict';
 
+// Load continuation-local-storage first to ensure the core async APIs get
+// patched before any user-land modules get loaded.
+require('continuation-local-storage');
+
 var SpanData = require('./lib/span-data.js');
 var common = require('@google/cloud-diagnostics-common');
 var semver = require('semver');
