@@ -25,8 +25,9 @@ var common = require('./common.js');
 var assert = require('assert');
 var versions = {
   redis0: require('./fixtures/redis0.12'),
-  redis2: require('./fixtures/redis2'),
-  redisHiredis: require('./fixtures/redis2-hiredis0.4')
+  redis2dot3: require('./fixtures/redis2.3'),
+  redis2dotx: require('./fixtures/redis2.x'),
+  redisHiredis: require('./fixtures/redis2.3-hiredis0.4')
 };
 
 var client;

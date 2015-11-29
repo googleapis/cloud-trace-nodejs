@@ -41,7 +41,7 @@ describe('should not break without project num', function() {
 
   it('redis', function(done) {
     var agent = require('../..').start();
-    var redis = require('../hooks/fixtures/redis2');
+    var redis = require('../hooks/fixtures/redis2.3');
     var client = redis.createClient();
     client.set('i', 1, function() {
       client.quit(function() {
