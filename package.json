@@ -1,6 +1,6 @@
 {
   "name": "@google/cloud-trace",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Node.js Support for Google Cloud Trace",
   "main": "index.js",
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
