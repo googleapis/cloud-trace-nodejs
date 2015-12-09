@@ -42,7 +42,10 @@ function run {
 run test test/hooks
 for test in test/standalone/test-*.js ;
 do
-  run "${test}"
+  if [[ ! $(node --version) =~ v0\.12\..* || ! "${test}" =~ .*trace\-koa\.js ]]
+  then
+    run "${test}"
+  fi
 done
 
 # Conditionally publish coverage
