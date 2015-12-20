@@ -8,15 +8,15 @@
 
 > *This module is experimental, and should be used by early adopters. This module uses APIs there may be undocumented and may be subject to change without notice.*
 
-This module provides Cloud Trace support for Node.js applications. [Google Cloud Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Developers Console](https://console.developers.google.com/?_ga=1.258049870.576536942.1443543237).
+This module provides Cloud Trace support for Node.js applications. [Google Cloud Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console](https://console.cloud.google.com/?_ga=1.258049870.576536942.1443543237).
 
 ![Cloud Trace Overview](doc/images/cloud-trace-overview-page.png)
 
 ## Prerequisites
 
 1. Your application will need to be using Node.js version 0.12 or greater.
-1. You will need a project in the [Google Developers Console](https://console.developers.google.com/project?_ga=1.258049870.576536942.1443543237). Your application can run anywhere, but the trace data is associated with a particular project.
-1. [Enable the Trace API](https://console.developers.google.com/flows/enableapi?apiid=cloudtrace) for your project.
+1. You will need a project in the [Google Developers Console](https://console.cloud.google.com/project?_ga=1.258049870.576536942.1443543237). Your application can run anywhere, but the trace data is associated with a particular project.
+1. [Enable the Trace API](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) for your project.
 
 ## Installation
 
@@ -28,7 +28,7 @@ This module provides Cloud Trace support for Node.js applications. [Google Cloud
 
         require('@google/cloud-trace').start({projectId: 'your-project-id'});
 
-Your project ID is visible in the [Google Developers Console Console](https://console.developers.google.com/project?_ga=1.258049870.576536942.1443543237), it may be something like `particular-future-12345`. If your application is [running on Google Cloud Platform](running-on-google-cloud-platform), you don't need to specify the project ID.
+Your project ID is visible in the [Google Cloud Console Console](https://console.cloud.google.com/project?_ga=1.258049870.576536942.1443543237), it may be something like `particular-future-12345`. If your application is [running on Google Cloud Platform](running-on-google-cloud-platform), you don't need to specify the project ID.
 
 ## Running on Google Cloud Platform
 
@@ -40,7 +40,7 @@ If you are using [Google App Engine Managed VMs](https://cloud.google.com/appeng
 
 ### Google Compute Engine
 
-Your VM instances need to be created with `cloud-platform` scope if created via [gcloud](https://cloud.google.com/sdk) or the 'Allow API access' checkbox selected if created via the [console](https://console.developers.google.com) (see screenshot).
+Your VM instances need to be created with `cloud-platform` scope if created via [gcloud](https://cloud.google.com/sdk) or the 'Allow API access' checkbox selected if created via the [console](https://console.cloud.google.com) (see screenshot).
 
 ![GCE API](doc/images/gce.png?raw=true)
 
@@ -60,13 +60,13 @@ If your application is running outside of Google Cloud Platform, such as locally
 
 2. You will need to provide service account credentials to your application. The recommended way is via [Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials).
 
-  1. [Create a new JSON service account key](https://console.developers.google.com/apis/credentials/serviceaccountkey).
+  1. [Create a new JSON service account key](https://console.cloud.google.com/apis/credentials/serviceaccountkey).
   2. Copy the key somewhere your application can access it. Be sure not to expose the key publicly.
   3. Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the full path to the key. The trace agent will automatically look for this environment variable.
 
 ## Viewing your traces
 
-Run your application and start sending some requests towards your application. In about 30 seconds or so, you should see trace data gathered in the [Operations -> Traces view](https://console.developers.google.com/traces/overview) in the console:
+Run your application and start sending some requests towards your application. In about 30 seconds or so, you should see trace data gathered in the [Operations -> Traces view](https://console.cloud.google.com/traces/overview) in the console:
 
 ![Trace List](doc/images/tracelist.png?raw=true)
 
