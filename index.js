@@ -51,7 +51,7 @@ var agent = phantomTraceAgent;
 var initConfig = function(projectConfig) {
   var util = require('util');
   var config = {};
-  util._extend(config, require('./config.js'));
+  util._extend(config, require('./config.js').trace);
   util._extend(config, projectConfig);
   if (process.env.hasOwnProperty('GCLOUD_DIAGNOSTICS_CONFIG')) {
     var c = require(path.resolve(process.env.GCLOUD_DIAGNOSTICS_CONFIG));

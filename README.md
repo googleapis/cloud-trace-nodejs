@@ -30,6 +30,14 @@ This module provides Cloud Trace support for Node.js applications. [Google Cloud
 
 Your project ID is visible in the [Google Cloud Console Console](https://console.cloud.google.com/project?_ga=1.258049870.576536942.1443543237), it may be something like `particular-future-12345`. If your application is [running on Google Cloud Platform](running-on-google-cloud-platform), you don't need to specify the project ID.
 
+## Configuration
+
+See [the default configuration](config.js) for a list of possible configuration options. These options can be passed to the agent through the object argument to the start command shown above:
+
+         require('@google/cloud-trace').start({projectId: 'your-project-id', samplingRate: 500});
+
+Alternatively, you can provide configuration through a config file. This can be useful if you want to load our module using `--require` on the command line instead of editing your main script. You can start by copying the default config file and modifying it to suit your needs. The `GCLOUD_DIAGNOSTICS_CONFIG` environment variable should point to your configuration file.
+
 ## Running on Google Cloud Platform
 
 There are three different services that can host Node.js application to Google Cloud Platform.
