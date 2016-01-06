@@ -23,20 +23,15 @@ var assert = require('assert');
 
 // Fixtures configuration:
 // { logLevel: 4, stackTraceLimit: 1 };
-process.env.GCLOUD_TRACE_CONFIG =
-  path.join(__dirname, '..', 'fixtures', 'test-config.js');
+process.env.GCLOUD_TRACE_CONFIG = path.join('fixtures', 'test-config.js');
 
-process.env.GCLOUD_TRACE_LOGLEVEL = 2;
+process.chdir('test');
 
-var agent = require('../..').start({logLevel: 3, stackTraceLimit: 2,
-  flushDelaySeconds: 31});
+var agent = require('../..').start();
 
-describe('should respect config load order', function() {
-  it('should order Default -> start -> env config -> env specific', function() {
+describe('relative config', function() {
+  it('should load trace config from relative path', function() {
     var config = agent.private_().config_;
-    assert.equal(config.logLevel, 2);
-    assert.equal(config.stackTraceLimit, 1);
-    assert.equal(config.flushDelaySeconds, 31);
-    assert.equal(config.samplingRate, 10);
+    assert.equal(config.logLevel, 4);
   });
 });

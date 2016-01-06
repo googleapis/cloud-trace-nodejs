@@ -24,6 +24,7 @@ var SpanData = require('./lib/span-data.js');
 var common = require('@google/cloud-diagnostics-common');
 var semver = require('semver');
 var constants = require('./lib/constants.js');
+var path = require('path');
 
 /**
  * Phantom implementation of the trace agent. This allows API users to decouple
@@ -53,7 +54,7 @@ var initConfig = function(projectConfig) {
   util._extend(config, require('./config.js'));
   util._extend(config, projectConfig);
   if (process.env.hasOwnProperty('GCLOUD_TRACE_CONFIG')) {
-    util._extend(config, require(process.env.GCLOUD_TRACE_CONFIG));
+    util._extend(config, require(path.resolve(process.env.GCLOUD_TRACE_CONFIG)));
   }
   if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
     config.logLevel = process.env.GCLOUD_TRACE_LOGLEVEL;
