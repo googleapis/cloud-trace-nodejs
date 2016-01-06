@@ -23,7 +23,8 @@ var assert = require('assert');
 
 // Fixtures configuration:
 // { logLevel: 4, stackTraceLimit: 1 };
-process.env.GCLOUD_TRACE_CONFIG = path.join('test', 'fixtures', 'test-config.json');
+process.env.GCLOUD_DIAGNOSTICS_CONFIG =
+  path.join('test', 'fixtures', 'test-config.json');
 
 var agent = require('../..').start();
 
