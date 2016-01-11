@@ -16,6 +16,8 @@
 
 'use strict';
 
+var filesLoadedBeforeTrace = Object.keys(require.cache);
+
 // Load continuation-local-storage first to ensure the core async APIs get
 // patched before any user-land modules get loaded.
 require('continuation-local-storage');
@@ -25,6 +27,17 @@ var common = require('@google/cloud-diagnostics-common');
 var semver = require('semver');
 var constants = require('./lib/constants.js');
 var path = require('path');
+
+var modulesLoadedBeforeTrace = [];
+var moduleRegex =
+  new RegExp('.*?node_modules\\' + path.sep + '([^\\' + path.sep + ']*).*');
+for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
+  var matches = moduleRegex.exec(filesLoadedBeforeTrace[i]);
+  if (matches && matches.length > 1 &&
+      modulesLoadedBeforeTrace.indexOf(matches[1]) === -1) {
+    modulesLoadedBeforeTrace.push(matches[1]);
+  }
+}
 
 /**
  * Phantom implementation of the trace agent. This allows API users to decouple
@@ -121,6 +134,12 @@ var publicAgent = {
     var headers = {};
     headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
+    if (modulesLoadedBeforeTrace.length > 0) {
+      logger.warn('Tracing might not work as the following modules ' +
+        ' were loaded before the trace agent was initialized: ' +
+        JSON.stringify(modulesLoadedBeforeTrace));
+    }
+
     if (typeof config.projectId === 'undefined') {
       // Queue the work to acquire the projectNumber (potentially from the
       // network.)
@@ -172,6 +191,6 @@ var publicAgent = {
 module.exports = global._google_trace_agent = publicAgent;
 
 // If the module was --require'd from the command line, start the agent.
-if (module.parent.id === 'internal/preload') {
+if (module.parent && module.parent.id === 'internal/preload') {
   module.exports.start();
 }
