@@ -21,7 +21,7 @@ var constants = require('../lib/constants.js');
 
 describe('constants', function() {
   it('has correct values', function() {
-    assert.equal(constants.TRACE_CONTEXT_HEADER_NAME, 'X-Cloud-Trace-Context');
-    assert.equal(constants.TRACE_AGENT_REQUEST_HEADER, 'X-Cloud-Trace-Agent-Request');
+    assert.equal(constants.TRACE_CONTEXT_HEADER_NAME, 'x-cloud-trace-context');
+    assert.equal(constants.TRACE_AGENT_REQUEST_HEADER, 'x-cloud-trace-agent-request');
   });
 });
