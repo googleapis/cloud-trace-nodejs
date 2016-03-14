@@ -143,6 +143,34 @@ describe('test-trace-express', function() {
       });
     });
   });
+
+  it('should handle thrown errors from get', function(done) {
+    var app = express();
+    app.get('/', function(req, res) {
+      throw common.serverRes;
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort}, function(res) {
+        var labels = common.getMatchingSpan(expressPredicate).labels;
+        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
+        done();
+      });
+    });
+  });
+
+  it('should handle thrown errors from middleware', function(done) {
+    var app = express();
+    app.use(function(req, res, next) {
+      throw common.serverRes;
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort}, function(res) {
+        var labels = common.getMatchingSpan(expressPredicate).labels;
+        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
+        done();
+      });
+    });
+  });
 });
 
 function expressPredicate(span) {
