@@ -114,6 +114,8 @@ var publicAgent = {
 
   start: function(projectConfig) {
     if (this.isActive()) { // already started.
+      agent.logger.warn('Calling start on already started agent.' +
+        'New configuration will be ignored.');
       return this;
     }
 
