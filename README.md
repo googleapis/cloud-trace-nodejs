@@ -66,11 +66,9 @@ If your application is running outside of Google Cloud Platform, such as locally
 
         require('@google/cloud-trace').start({projectId: 'your-project-id'});
 
-2. You will need to provide service account credentials to your application. The recommended way is via [Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials).
+2. You will need to provide service account credentials to your application. The recommended way is via [Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials). These can be provisioned by executing the following command:
 
-  1. [Create a new JSON service account key](https://console.cloud.google.com/apis/credentials/serviceaccountkey).
-  2. Copy the key somewhere your application can access it. Be sure not to expose the key publicly.
-  3. Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the full path to the key. The trace agent will automatically look for this environment variable.
+        gcloud beta auth application-default login
 
 ## Viewing your traces
 
