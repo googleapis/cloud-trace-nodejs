@@ -65,7 +65,7 @@ describe('Trace Agent', function() {
             options.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
         assert.equal(parsed.traceId, 1);
         assert.equal(parsed.spanId, spanId);
-        assert.equal(typeof parsed.spanId, 'number');
+        assert.equal(typeof parsed.spanId, 'string');
         assert.equal(parsed.options, 1);
       });
     });
@@ -89,6 +89,16 @@ describe('Trace Agent', function() {
         assert(result);
         assert.equal(result.traceId, '123456');
         assert.equal(result.spanId, 667);
+        assert.equal(result.options, '1');
+      });
+
+      it('should return expected values:' +
+          '123456/123456123456123456123456123456123456;o=1', function() {
+        var result = agent.parseContextFromHeader(
+          '123456/123456123456123456123456123456123456;o=1');
+        assert(result);
+        assert.equal(result.traceId, '123456');
+        assert.equal(result.spanId, '123456123456123456123456123456123456');
         assert.equal(result.options, '1');
       });
 
