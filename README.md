@@ -24,7 +24,7 @@ This module provides Cloud Trace support for Node.js applications. [Google Cloud
 
         npm install --save @google/cloud-trace
 
-2. Include the library at the *top of the main script of your application*. It's important that Cloud Trace is the first thing executed so that it can accurately gather data:
+2. Include and start the library at the *top of the main script of your application*. It's important that Cloud Trace is the first thing executed so that it can accurately gather data:
 
         require('@google/cloud-trace').start({projectId: 'your-project-id'});
 
