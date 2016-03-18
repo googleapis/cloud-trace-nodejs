@@ -20,18 +20,25 @@ var common = require('./common.js');
 var traceLabels = require('../../lib/trace-labels.js');
 var http = require('http');
 var assert = require('assert');
+var semver = require('semver');
 
 var server;
 
 var versions = {
-  hapi8: require('./fixtures/hapi8'),
-  hapi9: require('./fixtures/hapi9'),
-  hapi10: require('./fixtures/hapi10'),
-  hapi11: require('./fixtures/hapi11')
+  hapi8: './fixtures/hapi8',
+  hapi9: './fixtures/hapi9',
+  hapi10: './fixtures/hapi10',
+  hapi11: './fixtures/hapi11',
+  hapi12: './fixtures/hapi12',
+  hapi13: './fixtures/hapi13'
 };
 
 Object.keys(versions).forEach(function(version) {
-  var hapi = versions[version];
+  if (version.substring(4) > 10 && semver.satisfies(process.version, '<4')) {
+    // v11 started using ES6 features (const)
+    return;
+  }
+  var hapi = require(versions[version]);
   describe(version, function() {
     afterEach(function(done) {
       common.cleanTraces();
@@ -124,6 +131,7 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure get time, after + get', function(done) {
       if (version.substring(4) > 10) {
+        // after was removed in v11 https://github.com/hapijs/hapi/issues/2850
         return done();
       }
       var afterSuccess = false;
