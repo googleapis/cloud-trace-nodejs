@@ -20,72 +20,26 @@ var common = require('./common.js');
 var traceLabels = require('../../lib/trace-labels.js');
 var http = require('http');
 var assert = require('assert');
-var hapi = require('./fixtures/hapi8');
 
 var server;
 
-describe('test-trace-hapi', function() {
-  afterEach(function() {
-    common.cleanTraces();
-    server.stop();
-  });
+var versions = {
+  hapi8: require('./fixtures/hapi8'),
+  hapi9: require('./fixtures/hapi9'),
+  hapi10: require('./fixtures/hapi10')
+};
 
-  it('should accurately measure get time, get', function(done) {
-    server = new hapi.Server();
-    server.connection({ port: common.serverPort });
-    server.route({
-      method: 'GET',
-      path: '/',
-      handler: function(req, reply) {
-        setTimeout(function() {
-          reply(common.serverRes);
-        }, common.serverWait);
-      }
+Object.keys(versions).forEach(function(version) {
+  var hapi = versions[version];
+  describe(version, function() {
+    afterEach(function(done) {
+      common.cleanTraces();
+      server.stop(done);
     });
-    server.start(function() {
-      common.doRequest('GET', done, hapiPredicate);
-    });
-  });
 
-  it('should accurately measure get time, post', function(done) {
-    server = new hapi.Server();
-    server.connection({ port: common.serverPort });
-    server.route({
-      method: 'POST',
-      path: '/',
-      handler: function(req, reply) {
-        setTimeout(function() {
-          reply(common.serverRes);
-        }, common.serverWait);
-      }
-    });
-    server.start(function() {
-      common.doRequest('POST', done, hapiPredicate);
-    });
-  });
-
-  it('should accurately measure get time, custom handlers', function(done) {
-    server = new hapi.Server();
-    server.connection({ port: common.serverPort });
-    server.handler('custom', function(route, options) {
-      return function(requeset, reply) {
-        setTimeout(function() {
-          reply(options.val);
-        }, common.serverWait);
-      };
-    });
-    server.route({
-      method: 'GET',
-      path: '/',
-      handler: { custom: { val: common.serverRes } }
-    });
-    server.start(function() {
-      common.doRequest('GET', done, hapiPredicate);
-    });
-  });
-
-  it('should accurately measure get time, custom plugin', function(done) {
-    var plugin = function(server, options, next) {
+    it('should accurately measure get time, get', function(done) {
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
       server.route({
         method: 'GET',
         path: '/',
@@ -95,94 +49,148 @@ describe('test-trace-hapi', function() {
           }, common.serverWait);
         }
       });
-      return next();
-    };
-    plugin.attributes = {
-      name: 'plugin',
-      version: '1.0.0'
-    };
-    server = new hapi.Server();
-    server.connection({ port: common.serverPort });
-    server.register({
-      register: plugin,
-      options : {}
-    }, function(err) {
-      assert(!err);
       server.start(function() {
         common.doRequest('GET', done, hapiPredicate);
       });
     });
-  });
 
-  it('should accurately measure get time, after + get', function(done) {
-    var afterSuccess = false;
-    server = new hapi.Server();
-    server.connection({ port: common.serverPort });
-    server.after(function(server, next) {
-      afterSuccess = true;
-      next();
+    it('should accurately measure get time, post', function(done) {
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.route({
+        method: 'POST',
+        path: '/',
+        handler: function(req, reply) {
+          setTimeout(function() {
+            reply(common.serverRes);
+          }, common.serverWait);
+        }
+      });
+      server.start(function() {
+        common.doRequest('POST', done, hapiPredicate);
+      });
     });
-    server.route({
-      method: 'GET',
-      path: '/',
-      handler: function(req, reply) {
-        setTimeout(function() {
-          reply(common.serverRes);
-        }, common.serverWait);
-      }
-    });
-    server.start(function() {
-      assert(afterSuccess);
-      common.doRequest('GET', done, hapiPredicate);
-    });
-  });
 
-  it('should accurately measure get time, extension + get', function(done) {
-    var extensionSuccess = false;
-    server = new hapi.Server();
-    server.connection({ port: common.serverPort });
-    server.ext('onRequest', function(request, reply) {
-      setTimeout(function() {
-        extensionSuccess = true;
-        return reply.continue();
-      }, common.serverWait / 2);
+    it('should accurately measure get time, custom handlers', function(done) {
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.handler('custom', function(route, options) {
+        return function(requeset, reply) {
+          setTimeout(function() {
+            reply(options.val);
+          }, common.serverWait);
+        };
+      });
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: { custom: { val: common.serverRes } }
+      });
+      server.start(function() {
+        common.doRequest('GET', done, hapiPredicate);
+      });
     });
-    server.route({
-      method: 'GET',
-      path: '/',
-      handler: function(req, reply) {
-        setTimeout(function() {
-          reply(common.serverRes);
-        }, common.serverWait / 2);
-      }
-    });
-    server.start(function() {
-      var cb = function() {
-        assert(extensionSuccess);
-        done();
+
+    it('should accurately measure get time, custom plugin', function(done) {
+      var plugin = function(server, options, next) {
+        server.route({
+          method: 'GET',
+          path: '/',
+          handler: function(req, reply) {
+            setTimeout(function() {
+              reply(common.serverRes);
+            }, common.serverWait);
+          }
+        });
+        return next();
       };
-      common.doRequest('GET', cb, hapiPredicate);
+      plugin.attributes = {
+        name: 'plugin',
+        version: '1.0.0'
+      };
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.register({
+        register: plugin,
+        options : {}
+      }, function(err) {
+        assert(!err);
+        server.start(function() {
+          common.doRequest('GET', done, hapiPredicate);
+        });
+      });
     });
-  });
 
-  it('should have proper labels', function(done) {
-    server = new hapi.Server();
-    server.connection({ port: common.serverPort });
-    server.route({
-      method: 'GET',
-      path: '/',
-      handler: function(req, reply) {
-        reply(common.serverRes);
-      }
+    it('should accurately measure get time, after + get', function(done) {
+      var afterSuccess = false;
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.after(function(server, next) {
+        afterSuccess = true;
+        next();
+      });
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: function(req, reply) {
+          setTimeout(function() {
+            reply(common.serverRes);
+          }, common.serverWait);
+        }
+      });
+      server.start(function() {
+        assert(afterSuccess);
+        common.doRequest('GET', done, hapiPredicate);
+      });
     });
-    server.start(function() {
-      http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(hapiPredicate).labels;
-        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
-        assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
-        assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
-        assert(labels[traceLabels.HTTP_SOURCE_IP]);
-        done();
+
+    it('should accurately measure get time, extension + get', function(done) {
+      var extensionSuccess = false;
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.ext('onRequest', function(request, reply) {
+        setTimeout(function() {
+          extensionSuccess = true;
+          return reply.continue();
+        }, common.serverWait / 2);
+      });
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: function(req, reply) {
+          setTimeout(function() {
+            reply(common.serverRes);
+          }, common.serverWait / 2);
+        }
+      });
+      server.start(function() {
+        var cb = function() {
+          assert(extensionSuccess);
+          done();
+        };
+        common.doRequest('GET', cb, hapiPredicate);
+      });
+    });
+
+    it('should have proper labels', function(done) {
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: function(req, reply) {
+          reply(common.serverRes);
+        }
+      });
+      server.start(function() {
+        http.get({port: common.serverPort}, function(res) {
+          var labels = common.getMatchingSpan(hapiPredicate).labels;
+          assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
+          assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
+          assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
+          assert(labels[traceLabels.HTTP_SOURCE_IP]);
+          done();
+        });
       });
     });
   });
