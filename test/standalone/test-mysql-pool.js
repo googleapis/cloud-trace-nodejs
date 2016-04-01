@@ -28,7 +28,7 @@ if (semver.satisfies(process.version, '>=4')) {
       var server = new Hapi.Server();
       server.connection({ port: common.serverPort });
       server.register({
-        register: require('hapi-plugin-mysql'),
+        register: require('../hooks/fixtures/hapi-plugin-mysql3'),
         options: {
           host     : 'localhost',
           user     : 'travis',
