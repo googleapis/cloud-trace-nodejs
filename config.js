@@ -32,7 +32,7 @@ module.exports = {
     databaseResultReportingSize: 127,
 
     // Valid entries are:
-    // 'express', 'hapi', 'http', 'mongodb-core', restify'
+    // 'express', 'hapi', 'http', 'restify'
     excludedHooks: [],
 
     // @type {number} max number of frames to include on traces (0 disables)
@@ -55,7 +55,7 @@ module.exports = {
     // An upper bound on the number of traces to gather each second. If set to 0,
     // sampling is disabled and all traces are recorded. Sampling rates greater
     // than 1000 are not supported and will result in at most 1000 samples per
-    // second.
+    // second. Some Google Cloud environments may override this rate.
     samplingRate: 10,
 
     // The number of transactions we buffer before we publish to the Cloud Trace
