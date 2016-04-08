@@ -39,7 +39,7 @@ module.exports = {
     stackTraceLimit: 10,
 
     // We buffer the captured traces for `flushDelaySeconds` before publishing
-    // to the Cloud Trace API; unless the buffer fills up before then.
+    // to the trace API; unless the buffer fills up before then.
     // See `bufferSize`.
     flushDelaySeconds: 30,
 
@@ -58,7 +58,7 @@ module.exports = {
     // second. Some Google Cloud environments may further limit this rate.
     samplingRate: 10,
 
-    // The number of transactions we buffer before we publish to the Cloud Trace
+    // The number of transactions we buffer before we publish to the trace
     // API, unless we hit `flushDelaySeconds` first.
     bufferSize: 1000
   }

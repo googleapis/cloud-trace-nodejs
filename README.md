@@ -1,4 +1,4 @@
-# Google Cloud Trace for Node.js
+# StackDriver Trace for Node.js
 
 [![NPM Version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
@@ -8,9 +8,9 @@
 
 > *This module is experimental, and should be used by early adopters. This module uses APIs there may be undocumented and may be subject to change without notice.*
 
-This module provides Cloud Trace support for Node.js applications. [Google Cloud Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console](https://console.cloud.google.com/?_ga=1.258049870.576536942.1443543237).
+This module provides StackDriver Trace support for Node.js applications. [StackDriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console](https://console.cloud.google.com/?_ga=1.258049870.576536942.1443543237).
 
-![Cloud Trace Overview](doc/images/cloud-trace-overview-page.png)
+![StackDriver Trace Overview](doc/images/cloud-trace-overview-page.png)
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ This module provides Cloud Trace support for Node.js applications. [Google Cloud
 
         npm install --save @google/cloud-trace
 
-2. Include and start the library at the *top of the main script of your application*. It's important that Cloud Trace is the first thing executed so that it can accurately gather data:
+2. Include and start the library at the *top of the main script of your application*. It's important that the trace agent is the first thing executed so that it can accurately gather data:
 
         require('@google/cloud-trace').start({projectId: 'your-project-id'});
 
@@ -42,9 +42,9 @@ Alternatively, you can provide configuration through a config file. This can be 
 
 There are three different services that can host Node.js application to Google Cloud Platform.
 
-### Google App Engine Managed VMs
+### Google App Engine flexible environment
 
-If you are using [Google App Engine Managed VMs](https://cloud.google.com/appengine/docs/managed-vms/), you do not have to do any additional configuration.
+If you are using [Google App Engine flexible environment](https://cloud.google.com/appengine/docs/flexible/), you do not have to do any additional configuration.
 
 ### Google Compute Engine
 
@@ -60,7 +60,7 @@ Container Engine nodes need to also be created with the `cloud-platform` scope, 
 
 ## Running elsewhere
 
-If your application is running outside of Google Cloud Platform, such as locally, on-premise, or on another cloud provider, you can still use Cloud Trace.
+If your application is running outside of Google Cloud Platform, such as locally, on-premise, or on another cloud provider, you can still use StackDriver Trace.
 
 1. You will need to specify your project ID when starting the trace agent.
 
@@ -114,7 +114,7 @@ The trace configuration additionally exposes the `samplingRate` option which set
 
 The custom tracing API can be used to add custom spans to trace. A *span* is a particular unit of work within a trace, such as an RPC request. Currently, you can only use the custom tracing API inside the following web frameworks: `express`, `hapi`, `restify`.
 
-The API is exposed by the `agent` returned when starting Cloud Trace:
+The API is exposed by the `agent` returned by a call to `start`:
 
 ```javascript
   var agent = require('@google/cloud-trace').start();
