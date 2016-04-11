@@ -39,6 +39,8 @@ for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   }
 }
 
+var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
+
 /**
  * Phantom implementation of the trace agent. This allows API users to decouple
  * the enable/disable logic from the calls to the tracing API. The phantom API
@@ -131,6 +133,12 @@ var publicAgent = {
 
     if (config.projectId) {
       logger.info('Locally provided ProjectId: ' + config.projectId);
+    }
+
+    if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
+      logger.error('The value of onUncaughtException should be one of ',
+        onUncaughtExceptionValues);
+      throw new Error('Invalid value for onUncaughtException configuration.');
     }
 
     var headers = {};

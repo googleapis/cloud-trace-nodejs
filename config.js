@@ -60,6 +60,13 @@ module.exports = {
 
     // The number of transactions we buffer before we publish to the trace
     // API, unless we hit `flushDelaySeconds` first.
-    bufferSize: 1000
+    bufferSize: 1000,
+
+    // Specifies the behavior of the trace agent in the case of an uncaught exception.
+    // Possible values are:
+    //   `ignore`: Take no action.
+    //   `flush`: Attempt to publish traces silence the exception.
+    //   `flushAndExit`: Attempt to publish traces and exit the process.
+    onUncaughtException: 'ignore'
   }
 };
