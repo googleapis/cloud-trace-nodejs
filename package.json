@@ -41,7 +41,7 @@
     "istanbul": "^0.4.2",
     "jshint": "^2.9.1",
     "mocha": "^2.2.4",
-    "nock": "^7.2.2",
+    "nock": "^8.0.0",
     "proxyquire": "^1.4.0",
     "request": "^2.61.0",
     "timekeeper": "0.0.5",
