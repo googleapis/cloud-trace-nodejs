@@ -16,8 +16,8 @@
 
 'use strict';
 
-if (!process.env.GCLOUD_PROJECT_NUM) {
-  console.log('The GCLOUD_PROJECT_NUM environment variable must be set.');
+if (!process.env.GCLOUD_PROJECT) {
+  console.log('The GCLOUD_PROJECT environment variable must be set.');
   process.exit(1);
 }
 

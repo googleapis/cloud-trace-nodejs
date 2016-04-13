@@ -22,11 +22,11 @@ var path = require('path');
 var tmp = require('tmp');
 
 if (process.argv.length === 4 && process.argv[2] === '-p') {
-  process.env.GCLOUD_PROJECT_NUM = process.argv[3];
+  process.env.GCLOUD_PROJECT = process.argv[3];
 }
-if (!process.env.GCLOUD_PROJECT_NUM) {
+if (!process.env.GCLOUD_PROJECT) {
   console.log('Project number must be provided with the -p flag or' +
-      ' the GCLOUD_PROJECT_NUM environment variable must be set.');
+      ' the GCLOUD_PROJECT environment variable must be set.');
   process.exit(1);
 }
 
@@ -48,7 +48,7 @@ glob('google-cloud-trace-*.tgz', function(err, files) {
   build.on('close', function(code) {
     if (!code) {
       var test = cp.spawn('docker', ['run', '-w', '/mongo', '-t', 'test', 'node',
-          'test/runner.js', '-e', 'GCLOUD_PROJECT_NUM=' + process.env.GCLOUD_PROJECT_NUM,
+          'test/runner.js', '-e', 'GCLOUD_PROJECT=' + process.env.GCLOUD_PROJECT,
           '-t', 'functional']);
       test.stdout.on('data', function(data) { console.log(data.toString()); });
       test.stderr.on('data', function(data) { console.log(data.toString()); });

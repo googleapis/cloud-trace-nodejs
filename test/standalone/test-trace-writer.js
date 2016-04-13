@@ -27,7 +27,7 @@ nock.disableNetConnect();
 var uri = 'https://cloudtrace.googleapis.com';
 var path = '/v1/projects/0/traces';
 
-process.env.GCLOUD_PROJECT_NUM = 0;
+process.env.GCLOUD_PROJECT = 0;
 
 var queueSpans = function(n, privateAgent) {
   for (var i = 0; i < n; i++) {

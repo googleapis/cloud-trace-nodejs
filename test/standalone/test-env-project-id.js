@@ -16,13 +16,13 @@
 
 'use strict';
 
-process.env.GCLOUD_PROJECT_NUM = 1729;
+process.env.GCLOUD_PROJECT = 1729;
 
 var assert = require('assert');
 var agent = require('../..');
 
 describe('should respect environment variables', function() {
-  it('should respect GCLOUD_PROJECT_NUM', function() {
+  it('should respect GCLOUD_PROJECT', function() {
     agent.start();
     assert.equal(agent.private_().config_.projectId, 1729);
     agent.stop();

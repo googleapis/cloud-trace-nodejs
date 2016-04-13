@@ -25,11 +25,11 @@ var tmp = require('tmp');
 var semver = require('semver');
 
 if (process.argv.length === 4 && process.argv[2] === '-p') {
-  process.env.GCLOUD_PROJECT_NUM = process.argv[3];
+  process.env.GCLOUD_PROJECT = process.argv[3];
 }
-if (!process.env.GCLOUD_PROJECT_NUM) {
+if (!process.env.GCLOUD_PROJECT) {
   console.log('Project number must be provided with the -p flag or' +
-      ' the GCLOUD_PROJECT_NUM environment variable must be set.');
+      ' the GCLOUD_PROJECT environment variable must be set.');
   process.exit(1);
 }
 

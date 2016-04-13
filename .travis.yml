@@ -15,7 +15,7 @@ before_install:
   - mysql -e "create database IF NOT EXISTS test;" -uroot
 
 env:
-  - GCLOUD_PROJECT_NUM=0 CXX=g++-4.8
+  - GCLOUD_PROJECT=0 CXX=g++-4.8
 
 script:
   - ./bin/run-test.sh -c

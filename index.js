@@ -80,8 +80,8 @@ var initConfig = function(projectConfig) {
   if (process.env.hasOwnProperty('GCLOUD_TRACE_DISABLE')) {
     config.enabled = false;
   }
-  if (process.env.hasOwnProperty('GCLOUD_PROJECT_NUM')) {
-    config.projectId = process.env.GCLOUD_PROJECT_NUM;
+  if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
+    config.projectId = process.env.GCLOUD_PROJECT;
   }
   return config;
 };

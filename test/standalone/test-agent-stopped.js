@@ -19,7 +19,7 @@
 var assert = require('assert');
 var http = require('http');
 
-process.env.GCLOUD_PROJECT_NUM = 0;
+process.env.GCLOUD_PROJECT = 0;
 
 describe('express', function() {
   it('should not break if no project number is found', function(done) {

@@ -29,7 +29,7 @@ nock.disableNetConnect();
 
 describe('test-no-self-tracing', function() {
   it('should not trace metadata queries', function(done) {
-    delete process.env.GCLOUD_PROJECT_NUM;
+    delete process.env.GCLOUD_PROJECT;
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
                 .get('/computeMetadata/v1/instance/id').reply(200)
@@ -47,7 +47,7 @@ describe('test-no-self-tracing', function() {
   });
 
   it('should not trace publishes', function(done) {
-    process.env.GCLOUD_PROJECT_NUM = 0;
+    process.env.GCLOUD_PROJECT = 0;
     var metadataScope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
                 .get('/computeMetadata/v1/instance/id').reply(200);

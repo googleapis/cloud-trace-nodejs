@@ -8,14 +8,14 @@
 
 > *This module is experimental, and should be used by early adopters. This module uses APIs there may be undocumented and may be subject to change without notice.*
 
-This module provides StackDriver Trace support for Node.js applications. [StackDriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console](https://console.cloud.google.com/?_ga=1.258049870.576536942.1443543237).
+This module provides StackDriver Trace support for Node.js applications. [StackDriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
 
 ![StackDriver Trace Overview](doc/images/cloud-trace-overview-page.png)
 
 ## Prerequisites
 
 1. Your application will need to be using Node.js version 0.12 or greater.
-1. You will need a project in the [Google Developers Console](https://console.cloud.google.com/project?_ga=1.258049870.576536942.1443543237). Your application can run anywhere, but the trace data is associated with a particular project.
+1. You will need a project in the [Google Developers Console][cloud-console]. Your application can run anywhere, but the trace data is associated with a particular project.
 1. [Enable the Trace API](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) for your project.
 
 ## Installation
@@ -24,17 +24,24 @@ This module provides StackDriver Trace support for Node.js applications. [StackD
 
         npm install --save @google/cloud-trace
 
-2. Include and start the library at the *top of the main script of your application*. It's important that the trace agent is the first thing executed so that it can accurately gather data:
+2. Set the GCLOUD_PROJECT environment variable. You can find your Project ID in the [Google Cloud Developers Console][cloud-console], or by running the command `gcloud projects list`. You can ensure this environment variable is set at startup time by placing it in your startup script in `package.json`:
 
-        require('@google/cloud-trace').start({projectId: 'your-project-id'});
+        "scripts": {
+          "start": "GCLOUD_PROJECT=<YOUR_PROJECT_ID> node server.js",
+        },
 
-Your project ID is visible in the [Google Cloud Console Console](https://console.cloud.google.com/project?_ga=1.258049870.576536942.1443543237), it may be something like `particular-future-12345`. If your application is [running on Google Cloud Platform](running-on-google-cloud-platform), you don't need to specify the project ID.
+3. Include and start the library at the *as the very first action in your application*:
+
+        require('@google/cloud-trace').start();
+
+If you use `--require` in your start up command, make sure that the trace agent is --required first.
+If you are running somewhere other than the Google Cloud Platform, see [running elsewhere](#running-elsewhere).
 
 ## Configuration
 
 See [the default configuration](config.js) for a list of possible configuration options. These options can be passed to the agent through the object argument to the start command shown above:
 
-         require('@google/cloud-trace').start({projectId: 'your-project-id', samplingRate: 500});
+         require('@google/cloud-trace').start({samplingRate: 500});
 
 Alternatively, you can provide configuration through a config file. This can be useful if you want to load our module using `--require` on the command line instead of editing your main script. You can start by copying the default config file and modifying it to suit your needs. The `GCLOUD_DIAGNOSTICS_CONFIG` environment variable should point to your configuration file.
 
@@ -48,7 +55,7 @@ If you are using [Google App Engine flexible environment](https://cloud.google.c
 
 ### Google Compute Engine
 
-Your VM instances need to be created with `cloud-platform` scope if created via [gcloud](https://cloud.google.com/sdk) or the 'Allow API access' checkbox selected if created via the [console](https://console.cloud.google.com) (see screenshot).
+Your VM instances need to be created with `cloud-platform` scope if created via [gcloud](https://cloud.google.com/sdk) or the 'Allow API access' checkbox selected if created via the [console][cloud-console] (see screenshot).
 
 ![GCE API](doc/images/gce.png?raw=true)
 
@@ -64,7 +71,7 @@ If your application is running outside of Google Cloud Platform, such as locally
 
 1. You will need to specify your project ID when starting the trace agent.
 
-        require('@google/cloud-trace').start({projectId: 'your-project-id'});
+        GCLOUD_PROJECT=particular-future-12345 node myapp.js
 
 2. You will need to provide service account credentials to your application. The recommended way is via [Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials). These can be provisioned by executing the following command:
 
@@ -177,7 +184,7 @@ You can add additional labels using `agent.addTransactionLabel`:
 
 * See [LICENSE](LICENSE)
 
-
+[cloud-console]: https://console.cloud.google.com
 [npm-image]: https://badge.fury.io/js/%40google%2Fcloud-trace.svg
 [npm-url]: https://npmjs.org/package/@google/cloud-trace
 [travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
