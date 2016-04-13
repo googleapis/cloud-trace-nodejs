@@ -205,6 +205,27 @@ Object.keys(versions).forEach(function(version) {
         });
       });
     });
+
+    it('should remove trace frames from stack', function(done) {
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: function(req, reply) {
+          reply(common.serverRes);
+        }
+      });
+      server.start(function() {
+        http.get({port: common.serverPort}, function(res) {
+          var labels = common.getMatchingSpan(hapiPredicate).labels;
+          var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+          // Ensure that our middleware is on top of the stack
+          assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
+          done();
+        });
+      });
+    });
   });
 });
 

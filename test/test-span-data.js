@@ -61,7 +61,7 @@ describe('SpanData', function() {
   it('captures stack traces', function() {
     agent.config().stackTraceLimit = 25;
     cls.getNamespace().run(function() {
-      var spanData = agent.createRootSpanData('name', 1, 2);
+      var spanData = agent.createRootSpanData('name', 1, 2, 1);
       assert.ok(!spanData.span.isClosed());
       spanData.close();
       var stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
@@ -70,10 +70,7 @@ describe('SpanData', function() {
       var frames = JSON.parse(stack);
       assert.ok(frames && frames.stack_frame);
       assert.ok(Array.isArray(frames.stack_frame));
-      assert.ok(frames.stack_frame.some(function(frame) {
-        return frame.method_name &&
-               frame.method_name.indexOf('createRootSpanData') !== -1;
-      }));
+      assert.equal(frames.stack_frame[0].method_name, 'Namespace.run [as run]');
     });
   });
 

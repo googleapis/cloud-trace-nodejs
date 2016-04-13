@@ -73,6 +73,26 @@ describe('test-trace-koa', function() {
       });
     });
   });
+
+  it('should remove trace frames from stack', function(done) {
+    var app = koa();
+    app.use(function* () {
+      this.body = yield function(cb) {
+        setTimeout(function() {
+          cb(null, common.serverRes);
+        }, common.serverWait);
+      };
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort}, function(res) {
+        var labels = common.getMatchingSpan(koaPredicate).labels;
+        var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
+        // Ensure that our middleware is on top of the stack
+        assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
+        done();
+      });
+    });
+  });
 });
 
 function koaPredicate(span) {

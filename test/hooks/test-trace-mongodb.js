@@ -21,6 +21,7 @@
 // Run a mongo image binding the mongo port
 //   ex) docker run -p 27017:27017 -d mongo
 var common = require('./common.js');
+var traceLabels = require('../../lib/trace-labels.js');
 
 var assert = require('assert');
 var mongoose = require('./fixtures/mongoose4');
@@ -124,6 +125,22 @@ describe('test-trace-mongodb', function() {
       assert(!err);
       assert(res);
       done();
+    });
+  });
+
+  it('should remove trace frames from stack', function(done) {
+    common.runInTransaction(function(endTransaction) {
+      Simple.findOne({f1: 'sim'}, function(err, res) {
+        endTransaction();
+        assert(!err);
+        var trace = common.getMatchingSpan(mongoPredicate.bind(null, 'mongo-cursor'));
+        var labels = trace.labels;
+        var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+        // Ensure that our patch is on top of the stack
+        assert(
+          stackTrace.stack_frame[0].method_name.indexOf('next_trace') !== -1);
+        done();
+      });
     });
   });
 });

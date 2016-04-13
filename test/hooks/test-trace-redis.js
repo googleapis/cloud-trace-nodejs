@@ -21,6 +21,7 @@
 // Run a redis image binding the redis port
 //   ex) docker run -p 6379:6379 -d redis
 var common = require('./common.js');
+var traceLabels = require('../../lib/trace-labels.js');
 
 var assert = require('assert');
 var versions = {
@@ -82,6 +83,22 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
           assert(trace);
+          done();
+        });
+      });
+    });
+
+    it('should remove trace frames from stack', function(done) {
+      common.runInTransaction(function(endTransaction) {
+        // Test error case as hset requires 3 parameters
+        client.hset('key', 'val', function(err) {
+          endTransaction();
+          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
+          var labels = trace.labels;
+          var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+          // Ensure that our patch is on top of the stack
+          assert(
+            stackTrace.stack_frame[0].method_name.indexOf('send_command_trace') !== -1);
           done();
         });
       });

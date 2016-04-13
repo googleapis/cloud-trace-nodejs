@@ -150,6 +150,27 @@ Object.keys(versions).forEach(function(version) {
         });
       });
     });
+
+    it('should remove trace frames from stack', function(done) {
+      server = restify.createServer();
+      server.get('/', function (req, res, next) {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+        res.write(common.serverRes);
+        res.end();
+        return next();
+      });
+      server.listen(common.serverPort, function() {
+        http.get({port: common.serverPort}, function(res) {
+          var labels = common.getMatchingSpan(restifyPredicate).labels;
+          var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+          // Ensure that our middleware is on top of the stack
+          assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
+          done();
+        });
+      });
+    });
   });
 });
 

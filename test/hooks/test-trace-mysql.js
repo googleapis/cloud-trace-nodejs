@@ -16,6 +16,7 @@
 'use strict';
 
 var common = require('./common.js');
+var traceLabels = require('../../lib/trace-labels.js');
 require('../..').private_().config_.enhancedDatabaseReporting = true;
 var assert = require('assert');
 var mysql = require('./fixtures/mysql2');
@@ -72,6 +73,24 @@ describe('test-trace-mysql', function() {
         });
         assert.equal(spans.length, 1);
         assert.equal(spans[0].labels.sql, 'SELECT * FROM t');
+        done();
+      });
+    });
+  });
+
+  it('should remove trace frames from stack', function(done) {
+    common.runInTransaction(function(endRootSpan) {
+      connection.query('SELECT * FROM t', function(err, res) {
+        endRootSpan();
+        assert(!err);
+        var spans = common.getMatchingSpans(function (span) {
+          return span.name === 'mysql-query';
+        });
+        var labels = spans[0].labels;
+        var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+        // Ensure that our patch is on top of the stack
+        assert(
+          stackTrace.stack_frame[0].method_name.indexOf('createQuery_trace') !== -1);
         done();
       });
     });
