@@ -72,7 +72,7 @@ If your application is running outside of Google Cloud Platform, such as locally
 
 ## Viewing your traces
 
-Run your application and start sending some requests towards your application. In about 30 seconds or so, you should see trace data gathered in the [Operations -> Traces view](https://console.cloud.google.com/traces/overview) in the console:
+Run your application and start sending some requests towards your application. In about 30 seconds or so, you should see trace data gathered in the [STACKDRIVER -> Traces -> Trace List](https://console.cloud.google.com/traces/overview) in the console:
 
 ![Trace List](doc/images/tracelist.png?raw=true)
 
