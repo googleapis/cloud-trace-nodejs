@@ -1,5 +1,30 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-04-18, Version 0.5.0 (Experimental), @matthewloring
+
+### Notable changes
+
+**configuration**:
+  * [[`f2e65a2298`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f2e65a2298)] - GCLOUD_PROJECT instead of GCLOUD_PROJECT_NUM (Matt Loring) 
+  * [[`4903c64452`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4903c64452)] - Attempt to publish traces on unhandled exception (Matt Loring) 
+  * [[`6dc11f2c03`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6dc11f2c03)] - Remove trace span functions from stack traces (Matt Loring) 
+
+**sampling**:
+  * [[`6856141e2a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6856141e2a)] - Enforce sampling policy regardless of headers (Matt Loring)
+
+### Commits
+
+* [[`77f1c198ca`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/77f1c198ca)] - Fix exception handler config to use ignore (Matt Loring) 
+* [[`751807a878`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/751807a878)] - Eliminate failing http test (Matt Loring)
+* [[`f2e65a2298`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f2e65a2298)] - GCLOUD_PROJECT instead of GCLOUD_PROJECT_NUM (Matt Loring) 
+* [[`4903c64452`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4903c64452)] - Attempt to publish traces on unhandled exception (Matt Loring) 
+* [[`ec924812c2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ec924812c2)] - Updated StackDriver and Flexible Env documentation (Matt Loring) 
+* [[`6856141e2a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6856141e2a)] - Enforce sampling policy regardless of headers (Matt Loring) 
+* [[`6dc11f2c03`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6dc11f2c03)] - Remove trace span functions from stack traces (Matt Loring) 
+* [[`e6474b8240`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e6474b8240)] - Update dev dependencies (Matt Loring) 
+* [[`f1e5b72731`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f1e5b72731)] - Update readme screenshots (Matt Loring) 
+* [[`cf94ceefd5`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/cf94ceefd5)] - Remove console.log from grpc (Matt Loring) 
+
 ## 2016-04-06, Version 0.4.0 (Experimental), @matthewloring
 
 ### Notable changes

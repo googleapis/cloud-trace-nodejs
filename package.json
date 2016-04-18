@@ -6,6 +6,7 @@
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
     "test": "./bin/run-test.sh",
+    "changelog": "./bin/run-changelog.sh",
     "coverage": "./bin/run-test.sh -c",
     "bump": "./bin/run-bump.sh",
     "closure": "./node_modules/.bin/closure-npc"
@@ -35,6 +36,7 @@
     "node": ">=0.12"
   },
   "devDependencies": {
+    "changelog-maker": "^2.2.2",
     "closure-npc": "*",
     "coveralls": "^2.11.8",
     "glob": "^7.0.3",
