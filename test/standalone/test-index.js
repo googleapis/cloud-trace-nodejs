@@ -55,6 +55,13 @@ describe('index.js', function() {
     wrapTest(require('module'), '_load');
   });
 
+  it('should not attach exception handler with ignore option', function() {
+    agent.start();
+    // Mocha attaches 1 exception handler
+    assert.equal(process.listeners('uncaughtException').length, 1);
+    agent.stop();
+  });
+
   it('should wrap/unwrap http on start/stop', function() {
     agent.start(); // agent needs to be started before the first require.
     var http = require('http');
