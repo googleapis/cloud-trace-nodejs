@@ -57,10 +57,12 @@ glob(test_glob, function(err, files) {
     // max-headers-count: Breaks because we introduce new headers
     // parser-free: Breaks because we send outgoing http on startup
     // response-splitting: Breaks because we introduce new headers
+    // http-chunk-problem: Relies on shasum of own file
     if (files[testCount].indexOf('parser-bad-ref') !== -1 ||
         files[testCount].indexOf('max-headers-count') !== -1 ||
         files[testCount].indexOf('parser-free') !== -1 ||
-        files[testCount].indexOf('response-splitting') !== -1) {
+        files[testCount].indexOf('response-splitting') !== -1 ||
+        files[testCount].indexOf('http-chunk-problem') !== -1) {
       console.log('Skipped: ' + files[testCount]);
       continue;
     }
