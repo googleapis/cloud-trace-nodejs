@@ -1,5 +1,12 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-04-25, Version 0.5.1 (Experimental), @matthewloring
+
+### Commits
+
+* [[`11d12083dc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/11d12083dc)] - Pin diagnostics common version (Matt Loring) 
+* [[`36ad0ac8fb`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/36ad0ac8fb)] - Remove log of uncaughtException config (Matt Loring)
+
 ## 2016-04-18, Version 0.5.0 (Experimental), @matthewloring
 
 ### Notable changes
