@@ -73,9 +73,13 @@ If your application is running outside of Google Cloud Platform, such as locally
 
         GCLOUD_PROJECT=particular-future-12345 node myapp.js
 
-2. You will need to provide service account credentials to your application. The recommended way is via [Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials). These can be provisioned by executing the following command:
+2. You need to provide service account credentials to your application. The recommended way is via [Application Default Credentials][app-default-credentials].
 
-        gcloud beta auth application-default login
+  1. [Create a new JSON service account key][service-account].
+  2. Copy the key somewhere your application can access it. Be sure not to expose the key publicly.
+  3. Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the full path to the key. The debug agent will automatically look for this environment variable.
+
+3. Alternatively, if you are running your application on a machine where your are using the [`gcloud` command line tools][gcloud-sdk], and are logged using `gcloud beta auth application-default login`, you already have sufficient credentials, and a service account key is not required.
 
 ## Viewing your traces
 
@@ -185,6 +189,9 @@ You can add additional labels using `agent.addTransactionLabel`:
 * See [LICENSE](LICENSE)
 
 [cloud-console]: https://console.cloud.google.com
+[gcloud-sdk]: https://cloud.google.com/sdk/gcloud/
+[app-default-credentials]: https://developers.google.com/identity/protocols/application-default-credentials
+[service-account]: https://console.developers.google.com/apis/credentials/serviceaccountkey
 [npm-image]: https://badge.fury.io/js/%40google%2Fcloud-trace.svg
 [npm-url]: https://npmjs.org/package/@google/cloud-trace
 [travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
