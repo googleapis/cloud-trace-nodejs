@@ -35,7 +35,9 @@ for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var matches = moduleRegex.exec(filesLoadedBeforeTrace[i]);
   if (matches && matches.length > 1 &&
       modulesLoadedBeforeTrace.indexOf(matches[1]) === -1) {
-    modulesLoadedBeforeTrace.push(matches[1]);
+    if (matches[1] !== '@google' && matches[1] !=='cloud-trace') {
+      modulesLoadedBeforeTrace.push(matches[1]);
+    }
   }
 }
 
@@ -144,7 +146,7 @@ var publicAgent = {
     var headers = {};
     headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
-    if (modulesLoadedBeforeTrace.length > 1) {
+    if (modulesLoadedBeforeTrace.length > 0) {
       logger.warn('Tracing might not work as the following modules ' +
         'were loaded before the trace agent was initialized: ' +
         JSON.stringify(modulesLoadedBeforeTrace));
