@@ -144,9 +144,9 @@ var publicAgent = {
     var headers = {};
     headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
-    if (modulesLoadedBeforeTrace.length > 0) {
+    if (modulesLoadedBeforeTrace.length > 1) {
       logger.warn('Tracing might not work as the following modules ' +
-        ' were loaded before the trace agent was initialized: ' +
+        'were loaded before the trace agent was initialized: ' +
         JSON.stringify(modulesLoadedBeforeTrace));
     }
 
