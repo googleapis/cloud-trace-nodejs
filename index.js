@@ -27,15 +27,15 @@ var common = require('@google/cloud-diagnostics-common');
 var semver = require('semver');
 var constants = require('./lib/constants.js');
 var path = require('path');
+var util = require('./lib/util.js');
 
 var modulesLoadedBeforeTrace = [];
-var moduleRegex =
-  new RegExp('.*?node_modules\\' + path.sep + '([^\\' + path.sep + ']*).*');
+
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
-  var matches = moduleRegex.exec(filesLoadedBeforeTrace[i]);
-  if (matches && matches.length > 1 &&
-      modulesLoadedBeforeTrace.indexOf(matches[1]) === -1) {
-    modulesLoadedBeforeTrace.push(matches[1]);
+  var moduleName = util.packageNameFromPath(filesLoadedBeforeTrace[i]);
+  if (moduleName && moduleName !== '@google/cloud-trace' &&
+      modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
+    modulesLoadedBeforeTrace.push(moduleName);
   }
 }
 
@@ -146,7 +146,7 @@ var publicAgent = {
 
     if (modulesLoadedBeforeTrace.length > 0) {
       logger.warn('Tracing might not work as the following modules ' +
-        ' were loaded before the trace agent was initialized: ' +
+        'were loaded before the trace agent was initialized: ' +
         JSON.stringify(modulesLoadedBeforeTrace));
     }
 

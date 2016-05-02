@@ -44,3 +44,16 @@ describe('util.stringifyPrefix', function() {
   });
 });
 
+describe('util.packageNameFromPath', function() {
+  it('should work for standard packages', function() {
+    var path = './appengine-sails/node_modules/testmodule/index.js';
+    assert.equal(util.packageNameFromPath(path),
+      'testmodule');
+  });
+
+  it('should work for namespaced packages', function() {
+    var path = './appengine-sails/node_modules/@google/cloud-trace/index.js';
+    assert.equal(util.packageNameFromPath(path),
+      '@google/cloud-trace');
+  });
+});
