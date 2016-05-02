@@ -34,16 +34,11 @@ var modulesLoadedBeforeTrace = [];
 // Regex: .*?node_modules\/(@[^\/]*\/[^\/]*|[^\/]*).*
 // Tests: https://regex101.com/r/lW2bE3/4
 var moduleRegex = new RegExp(
-  '.*?node_modules'
-  + path.sep +
-  '(@[^'
-  + path.sep +
-  ']*'
-  + path.sep +
-  '[^'
-  + path.sep +
-  ']*|[^'
-  + path.sep +
+  '.*?node_modules' + path.sep +
+  '(@[^' + path.sep +
+  ']*' + path.sep +
+  '[^' + path.sep +
+  ']*|[^' + path.sep +
   ']*).*'
 );
 
