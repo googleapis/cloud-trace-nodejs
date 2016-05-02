@@ -29,11 +29,23 @@ var constants = require('./lib/constants.js');
 var path = require('path');
 
 var modulesLoadedBeforeTrace = [];
-var moduleRegex =
-  new RegExp('.*?node_modules\\' + path.sep + '([^\\' + path.sep + ']*).*');
+
+// Includes support for npm '@org/name' packages
+// Regex: .*?node_modules\/(@[^\/]*\/[^\/]*|[^\/]*).*
+// Tests: https://regex101.com/r/lW2bE3/4
+var moduleRegex = new RegExp(
+  '.*?node_modules' + path.sep +
+  '(@[^' + path.sep +
+  ']*' + path.sep +
+  '[^' + path.sep +
+  ']*|[^' + path.sep +
+  ']*).*'
+);
+
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var matches = moduleRegex.exec(filesLoadedBeforeTrace[i]);
   if (matches && matches.length > 1 &&
+      matches[1] !== '@google/cloud-trace' &&
       modulesLoadedBeforeTrace.indexOf(matches[1]) === -1) {
     modulesLoadedBeforeTrace.push(matches[1]);
   }
@@ -146,7 +158,7 @@ var publicAgent = {
 
     if (modulesLoadedBeforeTrace.length > 0) {
       logger.warn('Tracing might not work as the following modules ' +
-        ' were loaded before the trace agent was initialized: ' +
+        'were loaded before the trace agent was initialized: ' +
         JSON.stringify(modulesLoadedBeforeTrace));
     }
 
