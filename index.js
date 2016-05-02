@@ -34,10 +34,9 @@ var moduleRegex =
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var matches = moduleRegex.exec(filesLoadedBeforeTrace[i]);
   if (matches && matches.length > 1 &&
+      matches[1] !== '@google' &&
       modulesLoadedBeforeTrace.indexOf(matches[1]) === -1) {
-    if (matches[1] !== '@google') {
-      modulesLoadedBeforeTrace.push(matches[1]);
-    }
+    modulesLoadedBeforeTrace.push(matches[1]);
   }
 }
 
