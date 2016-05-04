@@ -18,8 +18,22 @@
 delete process.env.GCLOUD_PROJECT;
 
 var assert = require('assert');
+var write;
 
 describe('should not break without project num', function() {
+  before(function() {
+    // Mute stderr to satiate appveyor
+    write = process.stderr.write;
+    process.stderr.write = function(c, e, cb) {
+      assert(c.indexOf('DeprecationWarning') !== -1);
+      if (cb) {
+        cb();
+      }
+    };
+  });
+  after(function() {
+    process.stderr.write = write;
+  });
   it('mongo', function(done) {
     var agent = require('../..').start();
     var mongoose = require('../hooks/fixtures/mongoose4');
@@ -123,8 +137,8 @@ describe('should not break without project num', function() {
     var mysql = require('../hooks/fixtures/mysql2');
     var pool = mysql.createPool({
       host     : 'localhost',
-      user     : 'travis',
-      password : '',
+      user     : 'root',
+      password : 'Password12!',
       database : 'test'
     });
     pool.getConnection(function(err, conn) {

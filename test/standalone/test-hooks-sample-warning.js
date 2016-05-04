@@ -116,8 +116,8 @@ describe('express + dbs', function() {
     app.get('/', function (req, res) {
       var pool = mysql.createPool({
         host     : 'localhost',
-        user     : 'travis',
-        password : '',
+        user     : 'root',
+        password : 'Password12!',
         database : 'test'
       });
       http.get('http://www.google.com/', function() {

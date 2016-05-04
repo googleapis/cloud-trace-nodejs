@@ -25,11 +25,25 @@ var versions = {
 };
 
 var server;
+var write;
 
 Object.keys(versions).forEach(function(version) {
   var restify = versions[version];
 
   describe(version, function() {
+    before(function() {
+      // Mute stderr to satiate appveyor
+      write = process.stderr.write;
+      process.stderr.write = function(c, e, cb) {
+        assert(c.indexOf('DeprecationWarning') !== -1);
+        if (cb) {
+          cb();
+        }
+      };
+    });
+    after(function() {
+      process.stderr.write = write;
+    });
     afterEach(function() {
       common.cleanTraces();
       server.close();

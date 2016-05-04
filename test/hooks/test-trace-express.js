@@ -22,8 +22,22 @@ var common = require('./common.js');
 var express = require('./fixtures/express4');
 
 var server;
+var write;
 
 describe('test-trace-express', function() {
+  before(function() {
+    // Mute stderr to satiate appveyor
+    write = process.stderr.write;
+    process.stderr.write = function(c, e, cb) {
+      assert.equal(c, 1729);
+      if (cb) {
+        cb();
+      }
+    };
+  });
+  after(function() {
+    process.stderr.write = write;
+  });
   afterEach(function() {
     common.cleanTraces();
     server.close();

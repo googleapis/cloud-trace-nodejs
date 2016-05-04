@@ -14,6 +14,7 @@ services:
 
 before_install:
   - mysql -e "create database IF NOT EXISTS test;" -uroot
+  - echo "USE mysql;\nUPDATE user SET password=PASSWORD('Password12!') WHERE user='root';\nFLUSH PRIVILEGES;\n" | mysql -u root
 
 env:
   - GCLOUD_PROJECT=0 CXX=g++-4.8

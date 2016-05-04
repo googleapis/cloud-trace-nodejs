@@ -18,6 +18,7 @@
 
 var assert = require('assert');
 var util = require('../lib/util.js');
+var path = require('path');
 
 var o = {
   a: 5,
@@ -46,14 +47,23 @@ describe('util.stringifyPrefix', function() {
 
 describe('util.packageNameFromPath', function() {
   it('should work for standard packages', function() {
-    var path = './appengine-sails/node_modules/testmodule/index.js';
-    assert.equal(util.packageNameFromPath(path),
+    var p = path.join('.',
+               'appengine-sails',
+               'node_modules',
+               'testmodule',
+               'index.js');
+    assert.equal(util.packageNameFromPath(p),
       'testmodule');
   });
 
   it('should work for namespaced packages', function() {
-    var path = './appengine-sails/node_modules/@google/cloud-trace/index.js';
-    assert.equal(util.packageNameFromPath(path),
-      '@google/cloud-trace');
+    var p = path.join('.',
+               'appengine-sails',
+               'node_modules',
+               '@google',
+               'cloud-trace',
+               'index.js');
+    assert.equal(util.packageNameFromPath(p),
+      path.join('@google','cloud-trace'));
   });
 });

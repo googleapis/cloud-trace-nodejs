@@ -23,8 +23,8 @@ var mysql = require('./fixtures/mysql2');
 
 var pool = mysql.createPool({
   host     : 'localhost',
-  user     : 'travis',
-  password : '',
+  user     : 'root',
+  password : 'Password12!',
   database : 'test'
 });
 var connection;
