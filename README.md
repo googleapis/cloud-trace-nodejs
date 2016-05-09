@@ -34,14 +34,19 @@ This module provides StackDriver Trace support for Node.js applications. [StackD
 
         require('@google/cloud-trace').start();
 
-If you use `--require` in your start up command, make sure that the trace agent is --required first.
+  If you use `--require` in your start up command, make sure that the trace agent is --required first.
+
+4. If you are running your application locally, or on a machine where you are using the [Google Cloud SDK][gcloud-sdk], make sure to log in with the application default credentials:
+
+        gcloud beta auth application-default login
+
 If you are running somewhere other than the Google Cloud Platform, see [running elsewhere](#running-elsewhere).
 
 ## Configuration
 
 See [the default configuration](config.js) for a list of possible configuration options. These options can be passed to the agent through the object argument to the start command shown above:
 
-         require('@google/cloud-trace').start({samplingRate: 500});
+        require('@google/cloud-trace').start({samplingRate: 500});
 
 Alternatively, you can provide configuration through a config file. This can be useful if you want to load our module using `--require` on the command line instead of editing your main script. You can start by copying the default config file and modifying it to suit your needs. The `GCLOUD_DIAGNOSTICS_CONFIG` environment variable should point to your configuration file.
 
