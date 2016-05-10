@@ -31,8 +31,8 @@ if (semver.satisfies(process.version, '>=4')) {
         register: require('../hooks/fixtures/hapi-plugin-mysql3'),
         options: {
           host     : 'localhost',
-          user     : 'travis',
-          password : '',
+          user     : 'root',
+          password : 'Password12!',
           database : 'test'
         }
       }, function (err) {

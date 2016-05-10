@@ -1,0 +1,40 @@
+# Test against this version of Node.js
+environment:
+  matrix:
+  # node.js
+  # Testing against LTS/Current, 0.12 intentionally omitted to reduce maintenance burden
+  - nodejs_version: "4"
+  - nodejs_version: "6"
+
+services:
+  - mongodb
+  - mysql
+
+# Install scripts. (runs after repo cloning)
+install:
+  # Get the latest stable version of Node.js or io.js
+  - ps: Install-Product node $env:nodejs_version
+  # Install the Redis
+  - nuget install redis-64 -excludeversion
+  - redis-64\tools\redis-server.exe --service-install
+  - redis-64\tools\redis-server.exe --service-start
+  # install modules
+  - npm install
+  # Skip grpc due to https://github.com/nodejs/node/issues/4932
+  - ps: ForEach ($fix in Get-ChildItem -Directory test/hooks/fixtures/*) { if ($fix -notmatch 'grpc*') { cd $fix; npm install --silent } }
+  - ps: cd ..\..\..\..
+  # set GCLOUD_PROJECT
+  - SET GCLOUD_PROJECT=0
+
+before_test:
+  - SET PATH=C:\Program Files\MySql\MySQL Server 5.7\bin;%PATH%
+  - mysqladmin --host=localhost --user=root --password=Password12! create test
+
+# Post-install test scripts.
+test_script:
+  # run tests
+  - ps: node_modules/.bin/mocha test test\hooks --timeout 4000 --R
+  - ps: ForEach ($test in Get-ChildItem test/standalone/test-*.js) { if ($test -notmatch 'grpc*') { node_modules/.bin/mocha $test --timeout 4000 --R; if ($lastexitcode -ne 0) { exit 1 } } }
+
+# Don't actually build using MSBuild
+build: off
