@@ -22,8 +22,6 @@ var common = require('../hooks/common.js');
 var assert = require('assert');
 var express = require('../hooks/fixtures/express4');
 var http = require('http');
-var grpc = require('../hooks/fixtures/grpc0.13');
-var test_proto = grpc.load(__dirname + '/../fixtures/test.proto').nodetest;
 var grcPort = 50051;
 var debugCount = 0;
 agent.logger.debug = function(error) {
@@ -32,37 +30,48 @@ agent.logger.debug = function(error) {
   }
 };
 
-describe('express + grpc', function() {
-  it('grpc should preserve context', function(done) {
-    var app = express();
-    app.get('/', function (req, res) {
-      var client = new test_proto.Tester('localhost:' + grcPort,
-        grpc.credentials.createInsecure());
-      client.test({message: 'hello'}, function(err, grpcRes) {
-        http.get('http://www.google.com/', function(httpRes) {
-          httpRes.on('data', function() {});
-          httpRes.on('end', function() {
-            res.sendStatus(200);
+var versions = {
+  grpc013: require('../hooks/fixtures/grpc0.13'),
+  grpc014: require('../hooks/fixtures/grpc0.14')
+};
+
+Object.keys(versions).forEach(function(version) {
+  var grpc = versions[version];
+  var test_proto = grpc.load(__dirname + '/../fixtures/test.proto').nodetest;
+  describe('express + grpc', function() {
+    it('grpc should preserve context', function(done) {
+      var app = express();
+      app.get('/', function (req, res) {
+        var client = new test_proto.Tester('localhost:' + grcPort,
+          grpc.credentials.createInsecure());
+        client.test({message: 'hello'}, function(err, grpcRes) {
+          http.get('http://www.google.com/', function(httpRes) {
+            httpRes.on('data', function() {});
+            httpRes.on('end', function() {
+              res.sendStatus(200);
+            });
           });
         });
       });
-    });
-    var server = app.listen(common.serverPort, function() {
-      var grpcServer = new grpc.Server();
-      grpcServer.addProtoService(test_proto.Tester.service, {
-        test: function(call, cb) {
-          cb(null, {message: 'world'});
-        }
-      });
-      grpcServer.bind('localhost:' + grcPort,
-        grpc.ServerCredentials.createInsecure());
-      grpcServer.start();
-      http.get({port: common.serverPort}, function(res) {
-        grpcServer.forceShutdown();
-        server.close();
-        assert.equal(common.getTraces().length, 1);
-        assert.equal(debugCount, 1);
-        done();
+      var server = app.listen(common.serverPort, function() {
+        var grpcServer = new grpc.Server();
+        grpcServer.addProtoService(test_proto.Tester.service, {
+          test: function(call, cb) {
+            cb(null, {message: 'world'});
+          }
+        });
+        grpcServer.bind('localhost:' + grcPort,
+          grpc.ServerCredentials.createInsecure());
+        grpcServer.start();
+        http.get({port: common.serverPort}, function(res) {
+          grpcServer.forceShutdown();
+          server.close();
+          assert.equal(common.getTraces().length, 1);
+          assert.equal(debugCount, 1);
+          debugCount = 0;
+          common.cleanTraces();
+          done();
+        });
       });
     });
   });
