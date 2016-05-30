@@ -1,5 +1,22 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-05-30, Version 0.5.2 (Experimental), @matthewloring
+
+### Notable changes
+
+**grpc**:
+  * [[`9f796a5a58`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9f796a5a58)] - Add support for grpc 0.14 context propagation (Matt Loring) 
+
+### Commits
+
+* [[`9f796a5a58`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9f796a5a58)] - Add support for grpc 0.14 context propagation (Matt Loring) 
+* [[`c220566cbc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c220566cbc)] - include app default cred login to installation steps in readme (Justin Beckwith) 
+* [[`544e8073a5`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/544e8073a5)] - Set up windows CI (Matt Loring) 
+* [[`e331cddadd`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e331cddadd)] - Fix module regex for windows (Matt Loring) 
+* [[`2167b16941`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/2167b16941)] - modulesLoadedBeforeTrace check incorrect (Michael Diarmid) 
+* [[`1f52b8feba`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1f52b8feba)] - Add nodejs 6 to travis runs (Matt Loring) 
+* [[`bb75ba33dc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/bb75ba33dc)] - Document service account keys (Matt Loring) 
+
 ## 2016-04-25, Version 0.5.1 (Experimental), @matthewloring
 
 ### Commits
