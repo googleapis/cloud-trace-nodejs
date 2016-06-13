@@ -94,6 +94,9 @@ describe('test-trace-header-context', function() {
       assert.equal(
         req.headers[constants.TRACE_CONTEXT_HEADER_NAME].slice(0, 6),
         context.slice(0, 6));
+      assert.equal(
+        req.headers[constants.TRACE_CONTEXT_HEADER_NAME].slice(8),
+        ';o=1');
       res.send(common.serverRes);
       var traces = common.getTraces();
       assert.equal(traces.length, 2);
