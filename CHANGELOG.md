@@ -1,5 +1,24 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-06-14, Version 0.5.3 (Experimental), @matthewloring
+
+### Notable changes
+
+**grpc**:
+  * [[`069e76c55b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/069e76c55b)] - Add support for pre-release grpc v0.15 (Matt Loring) 
+
+**redis**:
+  * [[`0af3c57915`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0af3c57915)] - Add support for redis 2.6 (Matt Loring) 
+
+### Commits
+
+* [[`afc2ed1690`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/afc2ed1690)] - Set outgoing trace enabled header always (Matt Loring) 
+* [[`069e76c55b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/069e76c55b)] - Add support for pre-release grpc v0.15 (Matt Loring) 
+* [[`370f19c898`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/370f19c898)] - Increase time bound for appveyor slowdown (Matt Loring) 
+* [[`8155cc9600`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8155cc9600)] - Add testing for hiredis 0.5 (Matt Loring) 
+* [[`311998352b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/311998352b)] - Specify disabling options in README (Matt Loring) 
+* [[`0af3c57915`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0af3c57915)] - Add support for redis 2.6 (Matt Loring) 
+
 ## 2016-05-30, Version 0.5.2 (Experimental), @matthewloring
 
 ### Notable changes
