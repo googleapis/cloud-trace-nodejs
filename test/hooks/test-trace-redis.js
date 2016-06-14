@@ -28,7 +28,8 @@ var versions = {
   redis0: require('./fixtures/redis0.12'),
   redis2dot3: require('./fixtures/redis2.3'),
   redis2dotx: require('./fixtures/redis2.x'),
-  redisHiredis: require('./fixtures/redis2.3-hiredis0.4')
+  redisHiredis04: require('./fixtures/redis2.3-hiredis0.4'),
+  redisHiredis05: require('./fixtures/redis2.3-hiredis0.5')
 };
 
 var client;
