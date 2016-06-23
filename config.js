@@ -64,9 +64,19 @@ module.exports = {
 
     // Specifies the behavior of the trace agent in the case of an uncaught exception.
     // Possible values are:
-    //   `ignore`: Take no action.
-    //   `flush`: Attempt to publish traces silence the exception.
-    //   `flushAndExit`: Attempt to publish traces and exit the process.
+    //   `ignore`: Take no action. Note that the process may termiante before all the 
+    //            traces currently buffered have been flushed to the network.
+    //   `flush`: Handle the uncaught exception and attempt to publish the traces to
+    //            the API. Note that if you have other uncaught exception handlers in your
+    //            application, they may chose to terminate the process before the
+    //            buffer has been flushed to the network. Also note that if you have no
+    //            other terminating uncaught exception handlers in your application, the
+    //            error will get swallowed and the application will keep on running.
+    //   `flushAndExit`: Handle the uncaught exception, make a best effort attempt to
+    //            publish the traces to the API, and then terminate the application after
+    //            a delay. Note that presence of other uncaught exception handlers may
+    //            chose to terminate the application before the buffer has been flushed to
+    //            the network.
     onUncaughtException: 'ignore'
   }
 };
