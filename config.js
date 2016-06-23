@@ -71,7 +71,9 @@ module.exports = {
     //            application, they may chose to terminate the process before the
     //            buffer has been flushed to the network. Also note that if you have no
     //            other terminating uncaught exception handlers in your application, the
-    //            error will get swallowed and the application will keep on running.
+    //            error will get swallowed and the application will keep on running. You
+    //            should use this option if you have other uncaught exception handlers
+    //            that you want to be responsible for terminating the application.
     //   `flushAndExit`: Handle the uncaught exception, make a best effort attempt to
     //            publish the traces to the API, and then terminate the application after
     //            a delay. Note that presence of other uncaught exception handlers may
