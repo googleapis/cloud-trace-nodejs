@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package nodetest;
+
+service Tester {
+  rpc TestUnary (TestRequest) returns (TestReply) {}
+  rpc TestClientStream (stream TestRequest) returns (TestReply) {}
+  rpc TestServerStream (TestRequest) returns (stream TestReply) {}
+  rpc TestBidiStream (stream TestRequest) returns (stream TestReply) {}
+}
+
+message TestRequest {
+  int32 n = 1;
+}
+
+message TestReply {
+  int32 n = 1;
+}
