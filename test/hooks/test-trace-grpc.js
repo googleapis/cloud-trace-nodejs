@@ -26,7 +26,8 @@ var traceLabels = require('../../lib/trace-labels.js');
 
 var versions = {
   grpc013: require('./fixtures/grpc0.13'),
-  grpc014: require('./fixtures/grpc0.14')
+  grpc014: require('./fixtures/grpc0.14'),
+  grpc015: require('./fixtures/grpc0.15')
 };
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';
 var grpcPort = 50051;
@@ -224,6 +225,40 @@ Object.keys(versions).forEach(function(version) {
             common.assertDurationCorrect();
             done();
           }, null, {});
+          for (var i = 0; i < 10; ++i) {
+            stream.write({n: i});
+          }
+          stream.end();
+        });
+      });
+    } else {
+      it('should work for new argument orders (unary)', function(done) {
+        common.runInTransaction(function(endTransaction) {
+          client.testUnary({n: 42}, new grpc.Metadata(), {},
+              function(err, result) {
+                endTransaction();
+                assert.ifError(err);
+                assert.strictEqual(result.n, 42);
+                var trace = common.getMatchingSpan(grpcPredicate);
+                assert(trace);
+                common.assertDurationCorrect();
+                done();
+              });
+        });
+      });
+
+      it('should work for new argument orders (stream)', function(done) {
+        common.runInTransaction(function(endTransaction) {
+          var stream = client.testClientStream(new grpc.Metadata(), {},
+              function(err, result) {
+                endTransaction();
+                assert.ifError(err);
+                assert.strictEqual(result.n, 45);
+                var trace = common.getMatchingSpan(grpcPredicate);
+                assert(trace);
+                common.assertDurationCorrect();
+                done();
+              });
           for (var i = 0; i < 10; ++i) {
             stream.write({n: i});
           }

@@ -32,7 +32,8 @@ agent.logger.debug = function(error) {
 
 var versions = {
   grpc013: require('../hooks/fixtures/grpc0.13'),
-  grpc014: require('../hooks/fixtures/grpc0.14')
+  grpc014: require('../hooks/fixtures/grpc0.14'),
+  grpc015: require('../hooks/fixtures/grpc0.15')
 };
 
 Object.keys(versions).forEach(function(version) {
