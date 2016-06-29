@@ -18,17 +18,9 @@
 var agent = require('../..').start({ samplingRate: 0 }).private_();
 
 var common = require('../hooks/common.js');
-
 var assert = require('assert');
 var express = require('../hooks/fixtures/express4');
 var http = require('http');
-var grcPort = 50051;
-var debugCount = 0;
-agent.logger.debug = function(error) {
-  if (error.indexOf('http') !== -1) {
-    debugCount++;
-  }
-};
 
 var versions = {
   grpc013: require('../hooks/fixtures/grpc0.13'),
@@ -36,43 +28,152 @@ var versions = {
   grpc015: require('../hooks/fixtures/grpc0.15')
 };
 
+var grpcPort = 50051;
+var protoFile = __dirname + '/../fixtures/test-grpc.proto';
+var client, grpcServer, server;
+
+agent.logger.debug = function(error, uri) {
+  if (error.indexOf('http') !== -1) {
+    assert.notStrictEqual(uri.indexOf('localhost'), -1);
+  }
+};
+
+function makeHttpRequester(res) {
+  var pendingHttpReqs = 0;
+  return function() {
+    ++pendingHttpReqs;
+    http.get('http://www.google.com/', function(httpRes) {
+      httpRes.on('data', function() {});
+      httpRes.on('end', function() {
+        if (--pendingHttpReqs === 0) {
+          res.sendStatus(200);
+        }
+      });
+    });
+  };
+}
+
 Object.keys(versions).forEach(function(version) {
   var grpc = versions[version];
-  var test_proto = grpc.load(__dirname + '/../fixtures/test.proto').nodetest;
+
   describe('express + grpc', function() {
-    it('grpc should preserve context', function(done) {
+    before(function(done) {
+      var proto = grpc.load(protoFile).nodetest;
       var app = express();
-      app.get('/', function (req, res) {
-        var client = new test_proto.Tester('localhost:' + grcPort,
-          grpc.credentials.createInsecure());
-        client.test({message: 'hello'}, function(err, grpcRes) {
-          http.get('http://www.google.com/', function(httpRes) {
-            httpRes.on('data', function() {});
-            httpRes.on('end', function() {
-              res.sendStatus(200);
-            });
-          });
-        });
+
+      app.get('/unary', function(req, res) {
+        var httpRequester = makeHttpRequester(res);
+        client.testUnary({n: 42}, httpRequester);
       });
-      var server = app.listen(common.serverPort, function() {
-        var grpcServer = new grpc.Server();
-        grpcServer.addProtoService(test_proto.Tester.service, {
-          test: function(call, cb) {
-            cb(null, {message: 'world'});
+
+      app.get('/client', function(req, res) {
+        var httpRequester = makeHttpRequester(res);
+        var stream = client.testClientStream(httpRequester);
+        for (var i = 0; i < 10; ++i) {
+          stream.write({n: i});
+        }
+        stream.end();
+      });
+
+      app.get('/server', function(req, res) {
+        var httpRequester = makeHttpRequester(res);
+        var stream = client.testServerStream();
+        stream.on('data', httpRequester);
+        stream.on('status', httpRequester);
+      });
+
+      app.get('/bidi', function(req, res) {
+        var httpRequester = makeHttpRequester(res);
+        var stream = client.testBidiStream();
+        stream.on('data', httpRequester);
+        stream.on('status', httpRequester);
+        for (var i = 0; i < 10; ++i) {
+          stream.write({n: i});
+        }
+        stream.end();
+      });
+
+      client = new proto.Tester('localhost:' + grpcPort,
+        grpc.credentials.createInsecure());
+
+      server = app.listen(common.serverPort, function() {
+        grpcServer = new grpc.Server();
+        grpcServer.addProtoService(proto.Tester.service, {
+          testUnary: function(call, cb) {
+            cb(null, {n: call.request.n});
+          },
+          testClientStream: function(call, cb) {
+            call.on('data', function() {});
+            call.on('end', function() {
+              cb(null, {n: 43});
+            });
+          },
+          testServerStream: function(stream) {
+            for (var i = 0; i < 10; ++i) {
+              stream.write({n: i});
+            }
+            stream.end();
+          },
+          testBidiStream: function(stream) {
+            stream.on('data', function(data) {
+              stream.write({n: data.n});
+            });
+            stream.on('end', function() {
+              stream.end();
+            });
           }
         });
-        grpcServer.bind('localhost:' + grcPort,
+        grpcServer.bind('localhost:' + grpcPort,
           grpc.ServerCredentials.createInsecure());
         grpcServer.start();
-        http.get({port: common.serverPort}, function(res) {
-          grpcServer.forceShutdown();
-          server.close();
-          assert.equal(common.getTraces().length, 1);
-          assert.equal(debugCount, 1);
-          debugCount = 0;
-          common.cleanTraces();
-          done();
-        });
+        done();
+      });
+    });
+
+    after(function() {
+      grpcServer.forceShutdown();
+      server.close();
+    });
+
+    afterEach(function() {
+      common.cleanTraces();
+    });
+
+    it('grpc should preserve context for unary requests', function(done) {
+      http.get({port: common.serverPort, path: '/unary'}, function(res) {
+        assert.strictEqual(common.getTraces().length, 1);
+        // There is 1 span from express, 1 from grpc, and 1 from http.
+        assert.strictEqual(common.getTraces()[0].spans.length, 3);
+        done();
+      });
+    });
+
+    it('grpc should preserve context for client requests', function(done) {
+      http.get({port: common.serverPort, path: '/client'}, function(res) {
+        assert.strictEqual(common.getTraces().length, 1);
+        // There is 1 span from express, 1 from grpc, and 1 from http.
+        assert.strictEqual(common.getTraces()[0].spans.length, 3);
+        done();
+      });
+    });
+
+    it('grpc should preserve context for server requests', function(done) {
+      http.get({port: common.serverPort, path: '/server'}, function(res) {
+        assert.strictEqual(common.getTraces().length, 1);
+        // There are 11 http requests: 10 from 'data' listeners and 1 from the
+        // 'status' listener. The other 2 spans are from express and grpc.
+        assert.strictEqual(common.getTraces()[0].spans.length, 13);
+        done();
+      });
+    });
+
+    it('grpc should preserve context for bidi requests', function(done) {
+      http.get({port: common.serverPort, path: '/bidi'}, function(res) {
+        assert.strictEqual(common.getTraces().length, 1);
+        // There are 11 http requests: 10 from 'data' listeners and 1 from the
+        // 'status' listener. The other 2 spans are from express and grpc.
+        assert.strictEqual(common.getTraces()[0].spans.length, 13);
+        done();
       });
     });
   });
