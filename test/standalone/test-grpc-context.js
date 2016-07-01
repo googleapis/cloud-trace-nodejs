@@ -94,7 +94,7 @@ Object.keys(versions).forEach(function(version) {
       });
 
       client = new proto.Tester('localhost:' + grpcPort,
-        grpc.credentials.createInsecure());
+          grpc.credentials.createInsecure());
 
       server = app.listen(common.serverPort, function() {
         grpcServer = new grpc.Server();
@@ -124,7 +124,7 @@ Object.keys(versions).forEach(function(version) {
           }
         });
         grpcServer.bind('localhost:' + grpcPort,
-          grpc.ServerCredentials.createInsecure());
+            grpc.ServerCredentials.createInsecure());
         grpcServer.start();
         done();
       });
