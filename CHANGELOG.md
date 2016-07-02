@@ -1,5 +1,22 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-07-02, Version 0.5.4 (Experimental), @matthewloring
+
+### Notable changes
+
+**grpc**:
+  * [[`f37618623a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f37618623a)] - Support enhanced database reporting for gRPC (#270) (misterpoe) 
+  * [[`693b6ae565`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/693b6ae565)] - Support for gRPC time tracing (#267) (misterpoe) 
+
+### Commits
+
+* [[`f37618623a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f37618623a)] - Support enhanced database reporting for gRPC (#270) (misterpoe) 
+* [[`82969d6d6d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/82969d6d6d)] - Change callback lookup to not depend on gRPC version (#271) (misterpoe) 
+* [[`b15a705cea`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b15a705cea)] - Add gRPC context propagation tests for streaming APIs (#269) (misterpoe) 
+* [[`6e81d88e75`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6e81d88e75)] - Add test fixture for gRPC 0.15 (#268) (misterpoe) 
+* [[`693b6ae565`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/693b6ae565)] - Support for gRPC time tracing (#267) (misterpoe) 
+* [[`239890b0c6`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/239890b0c6)] - update the description for onUncaughtException (#266) (Ali Ijaz Sheikh) 
+
 ## 2016-06-14, Version 0.5.3 (Experimental), @matthewloring
 
 ### Notable changes
