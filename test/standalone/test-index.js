@@ -200,7 +200,7 @@ describe('index.js', function() {
           var span = matchingSpans[0].spans[1];
           var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
           assert(duration > 190);
-          assert(duration < 250);
+          assert(duration < 300);
           assert.equal(span.labels.key, 'val');
           agent.stop();
           done();
