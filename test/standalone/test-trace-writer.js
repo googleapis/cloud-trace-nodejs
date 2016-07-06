@@ -60,7 +60,7 @@ describe('tracewriter publishing', function() {
         agent.stop();
         scope.done();
         done();
-      }, 20);
+      }, 80);
     });
   });
 
