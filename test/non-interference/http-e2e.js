@@ -73,7 +73,8 @@ glob(test_glob, function(err, files) {
           ' >' +  files[testCount] + '.instru.js' + '&& mv ' + files[testCount] +
           '.instru.js' + ' ' + files[testCount]);
     }
-    var results = cp.spawnSync('node', [files[testCount]]);
+    // Use natives flag to allow http tests to force GC.
+    var results = cp.spawnSync('node', ['--allow_natives_syntax', files[testCount]]);
     if (results.status) {
       console.log('Failed: ' + files[testCount]);
       errors ++;
