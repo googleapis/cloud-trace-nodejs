@@ -29,22 +29,40 @@ done
 
 # Get test/coverage command
 counter=0
-function run {
-  C="$(npm bin)/istanbul test"
+test_cmd=""
+test_suffix="--timeout 4000 --R spec"
+function gen_test_cmd {
+  test_cmd="$(npm bin)/istanbul test"
   if [ "$cover" ]; then
-    C="$(npm bin)/istanbul cover --dir ./coverage/${counter}"
+    test_cmd="$(npm bin)/istanbul cover --dir ./coverage/${counter}"
     ((counter++))
   fi
-  ($C "$(npm bin)/_mocha" -- $* --timeout 4000 --R spec) || exit 1
+  test_cmd="$test_cmd $(npm bin)/_mocha --"
 }
 
-# Run test/coverage
-run test test/hooks
+# Run unit test suite
+gen_test_cmd
+($test_cmd test test/hooks/test-hooks-index.js \
+    test/hooks/test-hooks-interop-mongo-express.js \
+    test/hooks/test-trace-grpc.js test/hooks/test-trace-hapi.js \
+    test/hooks/test-trace-http.js test/hooks/test-trace-mongodb.js \
+    test/hooks/test-trace-redis.js $test_suffix) || exit 1
+
+# Run instrumentation tests
+gen_test_cmd
+tav express "4.14.0" $test_cmd test/hooks/test-trace-express.js $test_suffix || exit 1
+gen_test_cmd
+tav mysql "2.11.1" $test_cmd test/hooks/test-trace-mysql.js $test_suffix || exit 1
+gen_test_cmd
+tav restify "3.0.3 || 4.1.1" $test_cmd test/hooks/test-trace-restify $test_suffix || exit 1
+
+# Run standalone tests
 for test in test/standalone/test-*.js ;
 do
   if [[ ! $(node --version) =~ v0\.12\..* || ! "${test}" =~ .*trace\-koa\.js ]]
   then
-    run "${test}"
+    gen_test_cmd
+    ($test_cmd "${test}" $test_suffix) || exit 1
   fi
 done
 

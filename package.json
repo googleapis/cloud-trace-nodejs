@@ -46,6 +46,7 @@
     "nock": "^8.0.0",
     "proxyquire": "^1.4.0",
     "request": "^2.61.0",
+    "test-all-versions": "^1.2.1",
     "timekeeper": "0.0.5",
     "tmp": "0.0.28"
   },
