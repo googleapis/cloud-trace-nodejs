@@ -348,5 +348,5 @@ Object.keys(versions).forEach(function(version) {
 });
 
 function grpcPredicate(span) {
-  return span.name.indexOf('grpc-') === 0;
+  return span.name.indexOf('grpc:') === 0;
 }
