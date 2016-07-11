@@ -35,7 +35,7 @@ var simpleSchema = new Schema({
 
 var Simple = mongoose.model('Simple', simpleSchema);
 
-describe('test-trace-mongodb', function() {
+describe('test-trace-mongoose', function() {
   beforeEach(function(done) {
     var sim = new Simple({
       f1: 'sim',
