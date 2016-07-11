@@ -19,7 +19,7 @@ var common = require('./common.js');
 var traceLabels = require('../../lib/trace-labels.js');
 require('../..').private_().config_.enhancedDatabaseReporting = true;
 var assert = require('assert');
-var mysql = require('./fixtures/mysql2');
+var mysql = require('mysql');
 
 var pool = mysql.createPool({
   host     : 'localhost',

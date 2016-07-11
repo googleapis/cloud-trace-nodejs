@@ -19,7 +19,7 @@ var traceLabels = require('../../lib/trace-labels.js');
 var http = require('http');
 var assert = require('assert');
 var common = require('./common.js');
-var express = require('./fixtures/express4');
+var express = require('express');
 
 var server;
 var write;

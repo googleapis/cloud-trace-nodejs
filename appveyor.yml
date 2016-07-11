@@ -33,7 +33,10 @@ before_test:
 # Post-install test scripts.
 test_script:
   # run tests
-  - ps: node_modules/.bin/mocha test test\hooks --timeout 4000 --R
+  - ps: node_modules/.bin/mocha test test\hooks\test-hooks-index.js test\hooks\test-hooks-interop-mongo-express.js test\hooks\test-trace-grpc.js test\hooks\test-trace-hapi.js test\hooks\test-trace-http.js test\hooks\test-trace-mongodb.js test\hooks\test-trace-redis.js --timeout 4000 --R
+  - ps: node_modules/.bin/tav express "4.14.0" node_modules\.bin\mocha test\hooks\test-trace-express.js
+  - ps: node_modules/.bin/tav mysql "2.11.1" node_modules\.bin\mocha test\hooks\test-trace-mysql.js
+  - ps: node_modules/.bin/tav restify "3.0.3 || 4.1.1" node_modules\.bin\mocha test\hooks\test-trace-restify.js
   - ps: ForEach ($test in Get-ChildItem test/standalone/test-*.js) { if ($test -notmatch 'grpc*') { node_modules/.bin/mocha $test --timeout 4000 --R; if ($lastexitcode -ne 0) { exit 1 } } }
 
 # Don't actually build using MSBuild
