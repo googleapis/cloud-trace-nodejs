@@ -20,8 +20,9 @@ install:
   - redis-64\tools\redis-server.exe --service-start
   # install modules
   - npm install
-  # Skip grpc due to https://github.com/nodejs/node/issues/4932
-  - ps: ForEach ($fix in Get-ChildItem -Directory test/hooks/fixtures/*) { if ($fix -notmatch 'grpc*') { cd $fix; npm install --silent } }
+  # Skip grpc0.13 due to https://github.com/grpc/grpc/issues/6141.
+  # The build error was fixed in grpc0.14.
+  - ps: ForEach ($fix in Get-ChildItem -Directory test/hooks/fixtures/*) { if ($fix -notmatch 'grpc0.13') { cd $fix; npm install --silent } }
   - ps: cd ..\..\..\..
   # set GCLOUD_PROJECT
   - SET GCLOUD_PROJECT=0
@@ -34,7 +35,7 @@ before_test:
 test_script:
   # run tests
   - ps: node_modules/.bin/mocha test test\hooks --timeout 4000 --R
-  - ps: ForEach ($test in Get-ChildItem test/standalone/test-*.js) { if ($test -notmatch 'grpc*') { node_modules/.bin/mocha $test --timeout 4000 --R; if ($lastexitcode -ne 0) { exit 1 } } }
+  - ps: ForEach ($test in Get-ChildItem test/standalone/test-*.js) { node_modules/.bin/mocha $test --timeout 4000 --R; if ($lastexitcode -ne 0) { exit 1 } }
 
 # Don't actually build using MSBuild
 build: off
