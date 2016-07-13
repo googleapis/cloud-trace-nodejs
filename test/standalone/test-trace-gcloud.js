@@ -15,11 +15,6 @@
  */
 'use strict';
 
-if (process.platform === 'win32') {
-  // Skip grpc due to https://github.com/nodejs/node/issues/4932.
-  process.exit(0);
-}
-
 var common = require('../hooks/common.js');
 var nock = require('nock');
 var assert = require('assert');
@@ -34,6 +29,11 @@ describe('test-trace-gcloud', function() {
   // An auth error is returned, and a trace span for the gRPC call is created
   // with an error.
   it('should create gRPC spans', function(done) {
+    // gRPC does a remote request to datastore.googleapis.com through C and not
+    // through JavaScript, so Nock is unable to intercept the request. A larger
+    // timeout is set to accommodate for this remote request and reduce
+    // flakiness.
+    this.timeout(20000);
     process.env.GOOGLE_APPLICATION_CREDENTIALS =
         path.join(__dirname, '..', 'fixtures', 'gcloud-credentials.json');
     common.runInTransaction(function(endTransaction) {

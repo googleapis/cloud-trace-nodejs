@@ -15,21 +15,21 @@
  */
 'use strict';
 
-if (process.platform === 'win32') {
-  // Skip grpc due to https://github.com/nodejs/node/issues/4932
-  process.exit(0);
-}
-
 var common = require('./common.js');
 require('../..').private_().config_.enhancedDatabaseReporting = true;
 var assert = require('assert');
 var traceLabels = require('../../lib/trace-labels.js');
 
 var versions = {
-  grpc013: require('./fixtures/grpc0.13'),
   grpc014: require('./fixtures/grpc0.14'),
   grpc015: require('./fixtures/grpc0.15')
 };
+if (process.platform !== 'win32') {
+  // On Windows, skip grpc0.13 due to https://github.com/grpc/grpc/issues/6141.
+  // The build error was fixed in grpc0.14.
+  versions.grpc013 = require('./fixtures/grpc0.13');
+}
+
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';
 var grpcPort = 50051;
 var client, server;
