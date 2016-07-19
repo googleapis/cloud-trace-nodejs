@@ -1,5 +1,28 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-07-18, Version 0.5.5 (Experimental), @matthewloring
+
+### Notable changes
+
+**grpc**:
+  * [[`4d2bce161c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4d2bce161c)] - Add support for pre-release grpc v1.1.0 (#281) (misterpoe) 
+  * [[`43272b3fdc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/43272b3fdc)] - Add service name to gRPC span name (#278) (misterpoe) 
+
+**mongodb**:
+  * [[`6994b459fa`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6994b459fa)] - Add testing for mongodb-core (rskang)
+
+### Commits
+
+* [[`4d2bce161c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4d2bce161c)] - Add support for pre-release grpc v1.1.0 (#281) (misterpoe) 
+* [[`ee5fe02e2b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ee5fe02e2b)] - Add windows testing for gRPC (#280) (misterpoe) 
+* [[`6994b459fa`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6994b459fa)] - Add testing for mongodb-core (rskang) 
+* [[`abece5e15e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/abece5e15e)] - Rename test-trace-mongodb.js to test-trace-mongoose.js (rskang) 
+* [[`589e99edef`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/589e99edef)] - Test gRPC for gCloud (#277) (misterpoe) 
+* [[`43272b3fdc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/43272b3fdc)] - Add service name to gRPC span name (#278) (misterpoe) 
+* [[`1efdfbd766`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1efdfbd766)] - Add time to test-index to reduce flake (#274) (Matthew Loring) 
+* [[`7d536baf5b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7d536baf5b)] - Add time to tracewriter timeout test to reduce flake (#275) (Matthew Loring) 
+* [[`c699820893`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c699820893)] - Fix http test: test-http-same-map.js (#273) (Matthew Loring)
+
 ## 2016-07-02, Version 0.5.4 (Experimental), @matthewloring
 
 ### Notable changes
