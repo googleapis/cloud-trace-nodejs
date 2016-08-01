@@ -25,6 +25,7 @@ var traceLabels = require('../../lib/trace-labels.js');
 
 var assert = require('assert');
 var mongoose = require('./fixtures/mongoose4');
+mongoose.Promise = global.Promise;
 var Schema = mongoose.Schema;
 
 var simpleSchema = new Schema({
