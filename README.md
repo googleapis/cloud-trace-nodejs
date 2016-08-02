@@ -6,7 +6,7 @@
 [![Dependency Status][david-image]][david-url]
 [![devDependency Status][david-dev-image]][david-dev-url]
 
-> *This module is experimental, and should be used by early adopters. This module uses APIs there may be undocumented and may be subject to change without notice.*
+> *This module is experimental, and should be used by early adopters. This module uses APIs that may be undocumented and subject to change without notice.*
 
 This module provides StackDriver Trace support for Node.js applications. [StackDriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
 
