@@ -20,6 +20,7 @@ var common = require('./common.js');
 var traceLabels = require('../../lib/trace-labels.js');
 var http = require('http');
 var assert = require('assert');
+var constants = require('../../lib/constants.js');
 var semver = require('semver');
 
 var server;
@@ -223,6 +224,25 @@ Object.keys(versions).forEach(function(version) {
           var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
           // Ensure that our middleware is on top of the stack
           assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
+          done();
+        });
+      });
+    });
+
+    it('should set trace context on response', function(done) {
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: function(req, reply) {
+          reply(common.serverRes);
+        }
+      });
+      server.start(function() {
+        http.get({port: common.serverPort}, function(res) {
+          assert(
+            res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
           done();
         });
       });

@@ -51,18 +51,14 @@ describe('Trace Agent', function() {
     });
   });
 
-  describe('addContextToHeaders', function() {
-    it('adds context to headers', function() {
+  describe('generateTraceContext', function() {
+    it('context is well formed', function() {
       cls.getNamespace().run(function() {
         var spanData = agent.createRootSpanData('name', 1, 2);
         var spanId = spanData.span.spanId;
         spanData.options = 1;
-        var options = {
-          headers: {}
-        };
-        agent.addContextToHeaders(spanData, options.headers, true);
-        var parsed = agent.parseContextFromHeader(
-            options.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+        var context = agent.generateTraceContext(spanData, true);
+        var parsed = agent.parseContextFromHeader(context);
         assert.equal(parsed.traceId, 1);
         assert.equal(parsed.spanId, spanId);
         assert.equal(typeof parsed.spanId, 'string');
@@ -74,12 +70,8 @@ describe('Trace Agent', function() {
       cls.getNamespace().run(function() {
         var spanData = agent.createRootSpanData('name', 1, 2);
         spanData.options = 2;
-        var options = {
-          headers: {}
-        };
-        agent.addContextToHeaders(spanData, options.headers, true);
-        var parsed = agent.parseContextFromHeader(
-            options.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+        var context = agent.generateTraceContext(spanData, true);
+        var parsed = agent.parseContextFromHeader(context);
         assert.equal(parsed.options, 3);
       });
     });
@@ -88,25 +80,16 @@ describe('Trace Agent', function() {
       cls.getNamespace().run(function() {
         var spanData = agent.createRootSpanData('name', 1, 2);
         spanData.options = 2;
-        var options = {
-          headers: {}
-        };
-        agent.addContextToHeaders(spanData, options.headers, false);
-        var parsed = agent.parseContextFromHeader(
-            options.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+        var context = agent.generateTraceContext(spanData, false);
+        var parsed = agent.parseContextFromHeader(context);
         assert.equal(parsed.options, 2);
       });
     });
 
     it('noop on nullSpan', function() {
       cls.getNamespace().run(function() {
-        var options = {
-          headers: {}
-        };
-        agent.addContextToHeaders(SpanData.nullSpan, options.headers);
-        assert.equal(
-          options.headers[constants.TRACE_CONTEXT_HEADER_NAME],
-          undefined, true);
+        var context = agent.generateTraceContext(SpanData.nullSpan);
+        assert.equal(context, '');
       });
     });
   });
