@@ -18,6 +18,7 @@
 var traceLabels = require('../../lib/trace-labels.js');
 var http = require('http');
 var assert = require('assert');
+var constants = require('../../lib/constants.js');
 var common = require('./common.js');
 var express = require('./fixtures/express4');
 
@@ -197,6 +198,20 @@ describe('test-trace-express', function() {
       http.get({port: common.serverPort}, function(res) {
         var labels = common.getMatchingSpan(expressPredicate).labels;
         assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
+        done();
+      });
+    });
+  });
+
+  it('should set trace context on response', function(done) {
+    var app = express();
+    app.get('/', function (req, res) {
+      res.send(common.serverRes);
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort}, function(res) {
+        assert(
+          res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
         done();
       });
     });

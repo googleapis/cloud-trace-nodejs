@@ -19,6 +19,7 @@ var common = require('../hooks/common.js');
 var koa = require('../hooks/fixtures/koa1');
 var http = require('http');
 var assert = require('assert');
+var constants = require('../../lib/constants.js');
 var TraceLabels = require('../../lib/trace-labels.js');
 
 var server;
@@ -89,6 +90,24 @@ describe('test-trace-koa', function() {
         var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our middleware is on top of the stack
         assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
+        done();
+      });
+    });
+  });
+
+  it('should set trace context on response', function(done) {
+    var app = koa();
+    app.use(function* () {
+      this.body = yield function(cb) {
+        setTimeout(function() {
+          cb(null, common.serverRes);
+        }, common.serverWait);
+      };
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort}, function(res) {
+        assert(
+          res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
         done();
       });
     });

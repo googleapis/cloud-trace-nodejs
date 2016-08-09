@@ -18,6 +18,7 @@
 var traceLabels = require('../../lib/trace-labels.js');
 var http = require('http');
 var assert = require('assert');
+var constants = require('../../lib/constants.js');
 var common = require('./common.js');
 var versions = {
   restify3: require('./fixtures/restify3'),
@@ -181,6 +182,25 @@ Object.keys(versions).forEach(function(version) {
           var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
           // Ensure that our middleware is on top of the stack
           assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
+          done();
+        });
+      });
+    });
+
+    it('should set trace context on response', function(done) {
+      server = restify.createServer();
+      server.get('/', function (req, res, next) {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+        res.write(common.serverRes);
+        res.end();
+        return next();
+      });
+      server.listen(common.serverPort, function() {
+        http.get({port: common.serverPort}, function(res) {
+          assert(
+            res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
           done();
         });
       });
