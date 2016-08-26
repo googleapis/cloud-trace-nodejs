@@ -1,5 +1,22 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-08-26, Version 0.5.6 (Experimental), @matthewloring
+
+### Notable changes
+
+**hapi**:
+
+  * [[`aba443202d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/aba443202d)] - Support for hapi 14 (#284) (Matthew Loring) [#284](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/284)
+
+### Commits
+
+* [[`a71f578b58`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a71f578b58)] - Add test fixture for grpc 1.0 (#290) (Matthew Loring) 
+* [[`e0512f9cc5`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e0512f9cc5)] - Add trace context to traced http responses (#288) (Matthew Loring) [#288](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/288)
+* [[`ff44b7fddc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ff44b7fddc)] - Update mocha and timekeeper (#287) (Matthew Loring) 
+* [[`b2dc2131dc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b2dc2131dc)] - Fix typo in readme (#286) (Matthew Loring) 
+* [[`aba443202d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/aba443202d)] - Support for hapi 14 (#284) (Matthew Loring) [#284](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/284)
+* [[`e59beb8f30`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e59beb8f30)] - Fix mongoose promise deprecation (#285) (Matthew Loring) [#285](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/285)
+
 ## 2016-07-18, Version 0.5.5 (Experimental), @matthewloring
 
 ### Notable changes
