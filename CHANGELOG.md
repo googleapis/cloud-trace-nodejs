@@ -1,5 +1,11 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-08-29, Version 0.5.7 (Experimental), @matthewloring
+
+### Commits
+
+* [[`c52210857c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c52210857c)] - Support for hapi v15 (#293) (Matthew Loring) 
+
 ## 2016-08-26, Version 0.5.6 (Experimental), @matthewloring
 
 ### Notable changes
