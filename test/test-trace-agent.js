@@ -160,6 +160,16 @@ describe('Trace Agent', function() {
         });
       });
     });
+
+    describe('when configured to ignore header', function() {
+      it('should return expected value: null', function() {
+        agent.config_.ignoreContextHeader = true;
+        var result = agent.parseContextFromHeader(
+          '123456/667;o=1');
+        assert(!result);
+        agent.config_.ignoreContextHeader = false;
+      });
+    });
   });
 
 });

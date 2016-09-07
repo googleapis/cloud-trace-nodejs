@@ -64,7 +64,7 @@ module.exports = {
 
     // Specifies the behavior of the trace agent in the case of an uncaught exception.
     // Possible values are:
-    //   `ignore`: Take no action. Note that the process may termiante before all the 
+    //   `ignore`: Take no action. Note that the process may termiante before all the
     //            traces currently buffered have been flushed to the network.
     //   `flush`: Handle the uncaught exception and attempt to publish the traces to
     //            the API. Note that if you have other uncaught exception handlers in your
@@ -79,6 +79,9 @@ module.exports = {
     //            a delay. Note that presence of other uncaught exception handlers may
     //            chose to terminate the application before the buffer has been flushed to
     //            the network.
-    onUncaughtException: 'ignore'
+    onUncaughtException: 'ignore',
+
+    // Allows to ignore the requests X-Cloud-Trace-Context -header if set
+    ignoreContextHeader: false
   }
 };
