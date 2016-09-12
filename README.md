@@ -60,7 +60,7 @@ If you are using [Google App Engine flexible environment](https://cloud.google.c
 
 ### Google Compute Engine
 
-Your VM instances need to be created with `cloud-platform` scope if created via [gcloud](https://cloud.google.com/sdk) or the 'Allow API access' checkbox selected if created via the [console][cloud-console] (see screenshot).
+Your VM instances need to be created with the `https://www.googleapis.com/auth/trace.append` scope if created via the [gcloud](https://cloud.google.com/sdk) CLI or the Google Cloud Platform API, or with the 'Allow API access' checkbox selected if created via the [console][cloud-console] (see screenshot).
 
 ![GCE API](doc/images/gce.png?raw=true)
 
@@ -68,7 +68,7 @@ If you already have VMs that were created without API access and do not wish to 
 
 ### Google Container Engine
 
-Container Engine nodes need to also be created with the `cloud-platform` scope, which is configurable during cluster creation. Alternatively, you can follow the instructions for using a service account under [running elsewhere](#running-elsewhere). It's recommended that you store the service account credentials as [Kubernetes Secret](http://kubernetes.io/v1.1/docs/user-guide/secrets.html).
+Container Engine nodes need to also be created with the `https://www.googleapis.com/auth/trace.append` scope, which is configurable during cluster creation. Alternatively, you can follow the instructions for using a service account under [running elsewhere](#running-elsewhere). It's recommended that you store the service account credentials as [Kubernetes Secret](http://kubernetes.io/v1.1/docs/user-guide/secrets.html).
 
 ## Running elsewhere
 
