@@ -84,7 +84,7 @@ If your application is running outside of Google Cloud Platform, such as locally
   2. Copy the key somewhere your application can access it. Be sure not to expose the key publicly.
   3. Set the environment variable `GOOGLE_APPLICATION_CREDENTIALS` to the full path to the key. The debug agent will automatically look for this environment variable.
 
-3. Alternatively, if you are running your application on a machine where your are using the [`gcloud` command line tools][gcloud-sdk], and are logged using `gcloud beta auth application-default login`, you already have sufficient credentials, and a service account key is not required.
+3. Alternatively, if you are running your application on a development machine or test environment where you are using the [`gcloud` command line tools][gcloud-sdk], and are logged using `gcloud beta auth application-default login`, you already have sufficient credentials, and a service account key is not required.
 
 ## Viewing your traces
 
