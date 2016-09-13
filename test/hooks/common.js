@@ -84,7 +84,7 @@ function getMatchingSpans(predicate) {
 function assertDurationCorrect(predicate) {
   // We assume that the tests never care about top level transactions created
   // by the harness itself
-  predicate = predicate || function(span) { return span.name !== 'outer'; };
+  predicate = predicate || function(span) { return span.kind === 'RPC_CLIENT'; };
   var span = getMatchingSpan(predicate);
   var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
   assert(duration > SERVER_WAIT * (1 - FORGIVENESS),

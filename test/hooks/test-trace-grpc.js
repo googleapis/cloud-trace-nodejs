@@ -201,7 +201,7 @@ Object.keys(versions).forEach(function(version) {
       client.testUnary({n: 42}, function(err, result) {
         assert.ifError(err);
         assert.strictEqual(result.n, 42);
-        assert.strictEqual(common.getTraces().length, 0);
+        assert.strictEqual(common.getMatchingSpans(grpcPredicate).length, 0);
         done();
       });
     });
