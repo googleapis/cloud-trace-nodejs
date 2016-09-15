@@ -35,28 +35,37 @@ var protoFile = __dirname + '/../fixtures/test-grpc.proto';
 var grpcPort = 50051;
 var client, server;
 
+// When received in the 'n' field, the server should perform the appropriate action
+// (For client streaming methods, this would be the total sum of all requests)
+const SEND_METADATA = 131;
+const EMIT_ERROR = 13412;
+
 Object.keys(versions).forEach(function(version) {
   var grpc = versions[version];
+
   // This metadata can be used by all test methods.
   var metadata = new grpc.Metadata();
   metadata.set('a', 'b');
+  // Trailing metadata can be sent by unary and client stream requests.
+  var trailing_metadata = new grpc.Metadata();
+  trailing_metadata.set('c', 'd');
 
   function startServer(proto) {
     var _server = new grpc.Server();
     _server.addProtoService(proto.Tester.service, {
       testUnary: function(call, cb) {
-        // Sends metadata.
-        if (call.request.n === 131) {
-          call.sendMetadata(metadata);
-        }
-        // This is for testing errors.
-        if (call.request.n === 13412) {
+        if (call.request.n === EMIT_ERROR) {
           cb(new Error('test'));
-          return;
+        } else if (call.request.n === SEND_METADATA) {
+          call.sendMetadata(metadata);
+          setTimeout(function() {
+            cb(null, {n: call.request.n}, trailing_metadata);
+          }, common.serverWait);
+        } else {
+          setTimeout(function () {
+            cb(null, {n: call.request.n});
+          }, common.serverWait);
         }
-        setTimeout(function() {
-          cb(null, {n: call.request.n});
-        }, common.serverWait);
       },
       testClientStream: function(call, cb) {
         var sum = 0;
@@ -64,36 +73,54 @@ Object.keys(versions).forEach(function(version) {
           sum += data.n;
         });
         call.on('end', function() {
-          // Sends metadata.
-          if (sum === 131) {
-            call.sendMetadata(metadata);
-          }
-          // This is for testing errors.
-          if (sum === 13412) {
+          if (sum === EMIT_ERROR) {
             cb(new Error('test'));
-            return;
+          } else if (sum === SEND_METADATA) {
+            call.sendMetadata(metadata);
+            setTimeout(function() {
+              cb(null, {n: sum}, trailing_metadata);
+            }, common.serverWait);
+          } else {
+            setTimeout(function () {
+              cb(null, {n: sum});
+            }, common.serverWait);
           }
-          setTimeout(function() {
-            cb(null, {n: sum});
-          }, common.serverWait);
         });
       },
       testServerStream: function(stream) {
-        for (var i = 0; i < 10; ++i) {
-          stream.write({n: i});
+        if (stream.request.n === EMIT_ERROR) {
+          stream.emit('error', new Error('test'));
+        } else {
+          if (stream.request.n === SEND_METADATA) {
+            stream.sendMetadata(metadata);
+          }
+          for (var i = 0; i < 10; ++i) {
+            stream.write({n: i});
+          }
+          setTimeout(function () {
+            stream.end();
+          }, common.serverWait);
         }
-        setTimeout(function() {
-          stream.end();
-        }, common.serverWait);
       },
       testBidiStream: function(stream) {
+        var sum = 0;
         stream.on('data', function(data) {
+          sum += data.n;
           stream.write({n: data.n});
         });
         stream.on('end', function() {
-          setTimeout(function() {
-            stream.end();
-          }, common.serverWait);
+          if (sum === EMIT_ERROR) {
+            stream.emit('error', new Error('test'));
+          } else if (sum === SEND_METADATA) {
+            stream.sendMetadata(metadata);
+            setTimeout(function() {
+              stream.end();
+            }, common.serverWait, trailing_metadata);
+          } else {
+            setTimeout(function() {
+              stream.end();
+            }, common.serverWait);
+          }
         });
       }
     });
@@ -182,12 +209,11 @@ Object.keys(versions).forEach(function(version) {
             assert(trace);
             common.assertDurationCorrect(predicate);
             assert.strictEqual(trace.labels.argument, '{"n":42}');
-            if (trace.labels.status) {
-              assert.strictEqual(trace.labels.status,
-                  '{"code":0,"details":"OK","metadata":{"_internal_repr":{}}}');
-            }
+            return trace;
           };
-          assertTraceProperties(grpcClientPredicate);
+          var clientTrace = assertTraceProperties(grpcClientPredicate);
+          assert.strictEqual(clientTrace.labels.status,
+              '{"code":0,"details":"OK","metadata":{"_internal_repr":{}}}');
           assertTraceProperties(grpcServerPredicate);
           done();
         });
@@ -213,12 +239,11 @@ Object.keys(versions).forEach(function(version) {
             var trace = common.getMatchingSpan(predicate);
             assert(trace);
             common.assertDurationCorrect(predicate);
-            if (trace.labels.status) {
-              assert.strictEqual(trace.labels.status,
-                  '{"code":0,"details":"OK","metadata":{"_internal_repr":{}}}');
-            }
+            return trace;
           };
-          assertTraceProperties(grpcClientPredicate);
+          var clientTrace = assertTraceProperties(grpcClientPredicate);
+          assert.strictEqual(clientTrace.labels.status,
+              '{"code":0,"details":"OK","metadata":{"_internal_repr":{}}}');
           assertTraceProperties(grpcServerPredicate);
           done();
         });
@@ -252,13 +277,13 @@ Object.keys(versions).forEach(function(version) {
 
     it('should trace errors for unary requests', function(done) {
       common.runInTransaction(function(endTransaction) {
-        client.testUnary({n: 13412}, function(err, result) {
+        client.testUnary({n: EMIT_ERROR}, function(err, result) {
           endTransaction();
           assert(err);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
             assert(trace);
-            assert.strictEqual(trace.labels.argument, '{"n":13412}');
+            assert.strictEqual(trace.labels.argument, '{"n":' + EMIT_ERROR + '}');
             assert.strictEqual(trace.labels.error, 'Error: test');
           };
           assertTraceProperties(grpcClientPredicate);
@@ -282,14 +307,54 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcServerPredicate);
           done();
         });
-        stream.write({n: 13412});
+        stream.write({n: EMIT_ERROR});
         stream.end();
+      });
+    });
+
+    it('should trace errors for server streaming requests', function(done) {
+      common.runInTransaction(function(endTransaction) {
+        var stream = client.testServerStream({n: EMIT_ERROR}, metadata);
+        stream.on('data', function(data) {});
+        stream.on('error', function (err) {
+          process.nextTick(function () {
+            endTransaction();
+            var assertTraceProperties = function(predicate) {
+              var trace = common.getMatchingSpan(predicate);
+              assert(trace);
+              assert.strictEqual(trace.labels.error, 'Error: test');
+            };
+            assertTraceProperties(grpcClientPredicate);
+            assertTraceProperties(grpcServerPredicate);
+            done();
+          });
+        })
+      });
+    });
+
+    it('should trace errors for bidi streaming requests', function(done) {
+      common.runInTransaction(function(endTransaction) {
+        var stream = client.testBidiStream(metadata);
+        stream.on('data', function(data) {});
+        stream.write({n: EMIT_ERROR});
+        stream.end();
+        stream.on('error', function(err) {
+          endTransaction();
+          var assertTraceProperties = function(predicate) {
+            var trace = common.getMatchingSpan(predicate);
+            assert(trace);
+            assert.strictEqual(trace.labels.error, 'Error: test');
+          };
+          assertTraceProperties(grpcClientPredicate);
+          assertTraceProperties(grpcServerPredicate);
+          done();
+        });
       });
     });
 
     it('should trace metadata for server streaming requests', function(done) {
       common.runInTransaction(function(endTransaction) {
-        var stream = client.testServerStream({n: 42}, metadata);
+        var stream = client.testServerStream({n: SEND_METADATA}, metadata);
         stream.on('data', function(data) {});
         stream.on('status', function(status) {
           endTransaction();
@@ -298,9 +363,7 @@ Object.keys(versions).forEach(function(version) {
             var trace = common.getMatchingSpan(predicate);
             assert(trace);
             common.assertDurationCorrect(predicate);
-            if (trace.labels.metadata) {
-              assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
-            }
+            assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerPredicate);
@@ -313,6 +376,7 @@ Object.keys(versions).forEach(function(version) {
       common.runInTransaction(function(endTransaction) {
         var stream = client.testBidiStream(metadata);
         stream.on('data', function(data) {});
+        stream.write({n: SEND_METADATA});
         stream.end();
         stream.on('status', function(status) {
           endTransaction();
@@ -321,9 +385,7 @@ Object.keys(versions).forEach(function(version) {
             var trace = common.getMatchingSpan(predicate);
             assert(trace);
             common.assertDurationCorrect(predicate);
-            if (trace.labels.metadata) {
-              assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
-            }
+            assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerPredicate);
@@ -335,7 +397,7 @@ Object.keys(versions).forEach(function(version) {
     if (version === 'grpc013') {
       it('should trace metadata for old arg orders (unary)', function(done) {
         common.runInTransaction(function(endTransaction) {
-          client.testUnary({n: 131}, function(err, result) {
+          client.testUnary({n: SEND_METADATA}, function(err, result) {
             endTransaction();
             assert.ifError(err);
             var assertTraceProperties = function(predicate) {
@@ -343,9 +405,12 @@ Object.keys(versions).forEach(function(version) {
               assert(trace);
               common.assertDurationCorrect(predicate);
               assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+              return trace;
             };
             assertTraceProperties(grpcClientPredicate);
-            assertTraceProperties(grpcServerPredicate);
+            var serverTrace = assertTraceProperties(grpcServerPredicate);
+            // Also check trailing metadata
+            assert.strictEqual(serverTrace.labels.trailing_metadata, '{"c":"d"}');
             done();
           }, metadata, {});
         });
@@ -361,19 +426,22 @@ Object.keys(versions).forEach(function(version) {
               assert(trace);
               common.assertDurationCorrect(predicate);
               assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+              return trace;
             };
             assertTraceProperties(grpcClientPredicate);
-            assertTraceProperties(grpcServerPredicate);
+            var serverTrace = assertTraceProperties(grpcServerPredicate);
+            // Also check trailing metadata
+            assert.strictEqual(serverTrace.labels.trailing_metadata, '{"c":"d"}');
             done();
           }, metadata, {});
-          stream.write({n: 131});
+          stream.write({n: SEND_METADATA});
           stream.end();
         });
       });
     } else {
       it('should trace metadata for new arg orders (unary)', function(done) {
         common.runInTransaction(function(endTransaction) {
-          client.testUnary({n: 131}, metadata, {},
+          client.testUnary({n: SEND_METADATA}, metadata, {},
               function(err, result) {
                 endTransaction();
                 assert.ifError(err);
@@ -382,9 +450,12 @@ Object.keys(versions).forEach(function(version) {
                   assert(trace);
                   common.assertDurationCorrect(predicate);
                   assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+                  return trace;
                 };
                 assertTraceProperties(grpcClientPredicate);
-                assertTraceProperties(grpcServerPredicate);
+                var serverTrace = assertTraceProperties(grpcServerPredicate);
+                // Also check trailing metadata
+                assert.strictEqual(serverTrace.labels.trailing_metadata, '{"c":"d"}');
                 done();
               });
         });
@@ -401,12 +472,15 @@ Object.keys(versions).forEach(function(version) {
                   assert(trace);
                   common.assertDurationCorrect(predicate);
                   assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+                  return trace;
                 };
                 assertTraceProperties(grpcClientPredicate);
-                assertTraceProperties(grpcServerPredicate);
+                var serverTrace = assertTraceProperties(grpcServerPredicate);
+                // Also check trailing metadata
+                assert.strictEqual(serverTrace.labels.trailing_metadata, '{"c":"d"}');
                 done();
               });
-          stream.write({n: 131});
+          stream.write({n: SEND_METADATA});
           stream.end();
         });
       });
