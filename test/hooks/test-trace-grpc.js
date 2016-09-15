@@ -317,17 +317,15 @@ Object.keys(versions).forEach(function(version) {
         var stream = client.testServerStream({n: EMIT_ERROR}, metadata);
         stream.on('data', function(data) {});
         stream.on('error', function (err) {
-          process.nextTick(function () {
-            endTransaction();
-            var assertTraceProperties = function(predicate) {
-              var trace = common.getMatchingSpan(predicate);
-              assert(trace);
-              assert.strictEqual(trace.labels.error, 'Error: test');
-            };
-            assertTraceProperties(grpcClientPredicate);
-            assertTraceProperties(grpcServerPredicate);
-            done();
-          });
+          endTransaction();
+          var assertTraceProperties = function(predicate) {
+            var trace = common.getMatchingSpan(predicate);
+            assert(trace);
+            assert.strictEqual(trace.labels.error, 'Error: test');
+          };
+          assertTraceProperties(grpcClientPredicate);
+          assertTraceProperties(grpcServerPredicate);
+          done();
         })
       });
     });
