@@ -326,7 +326,7 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerPredicate);
           done();
-        })
+        });
       });
     });
 
