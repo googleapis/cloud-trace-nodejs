@@ -37,8 +37,8 @@ var client, server;
 
 // When received in the 'n' field, the server should perform the appropriate action
 // (For client streaming methods, this would be the total sum of all requests)
-const SEND_METADATA = 131;
-const EMIT_ERROR = 13412;
+var SEND_METADATA = 131;
+var EMIT_ERROR = 13412;
 
 Object.keys(versions).forEach(function(version) {
   var grpc = versions[version];
@@ -69,21 +69,24 @@ Object.keys(versions).forEach(function(version) {
       },
       testClientStream: function(call, cb) {
         var sum = 0;
+        var triggerCb = function () {
+          cb(null, {n: sum});
+        };
+        var triggerCbHandle = setTimeout(function () {
+          triggerCb();
+        }, common.serverWait);
         call.on('data', function(data) {
           sum += data.n;
         });
         call.on('end', function() {
           if (sum === EMIT_ERROR) {
+            clearTimeout(triggerCbHandle);
             cb(new Error('test'));
           } else if (sum === SEND_METADATA) {
             call.sendMetadata(metadata);
-            setTimeout(function() {
+            triggerCb = function() {
               cb(null, {n: sum}, trailing_metadata);
-            }, common.serverWait);
-          } else {
-            setTimeout(function () {
-              cb(null, {n: sum});
-            }, common.serverWait);
+            };
           }
         });
       },
@@ -104,6 +107,9 @@ Object.keys(versions).forEach(function(version) {
       },
       testBidiStream: function(stream) {
         var sum = 0;
+        setTimeout(function() {
+          stream.end();
+        }, common.serverWait);
         stream.on('data', function(data) {
           sum += data.n;
           stream.write({n: data.n});
@@ -113,13 +119,6 @@ Object.keys(versions).forEach(function(version) {
             stream.emit('error', new Error('test'));
           } else if (sum === SEND_METADATA) {
             stream.sendMetadata(metadata);
-            setTimeout(function() {
-              stream.end();
-            }, common.serverWait, trailing_metadata);
-          } else {
-            setTimeout(function() {
-              stream.end();
-            }, common.serverWait);
           }
         });
       }
