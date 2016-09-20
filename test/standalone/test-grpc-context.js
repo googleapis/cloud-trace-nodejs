@@ -42,36 +42,41 @@ agent.logger.debug = function(error, uri) {
   }
 };
 
-function makeHttpRequester(res) {
-  var pendingHttpReqs = 0;
+function makeHttpRequester(callback, expectedReqs) {
+  var pendingHttpReqs = expectedReqs;
   return function() {
-    ++pendingHttpReqs;
     http.get('http://www.google.com/', function(httpRes) {
       httpRes.on('data', function() {});
       httpRes.on('end', function() {
         if (--pendingHttpReqs === 0) {
-          res.sendStatus(200);
+          callback();
         }
       });
     });
   };
 }
 
+function requestAndSendHTTPStatus(res, expectedReqs) {
+  return makeHttpRequester(function () {
+    res.sendStatus(200);
+  }, expectedReqs);
+}
+
 Object.keys(versions).forEach(function(version) {
   var grpc = versions[version];
 
-  describe('express + grpc', function() {
+  describe('express + ' + version, function() {
     before(function(done) {
       var proto = grpc.load(protoFile).nodetest;
       var app = express();
 
       app.get('/unary', function(req, res) {
-        var httpRequester = makeHttpRequester(res);
+        var httpRequester = requestAndSendHTTPStatus(res, 1);
         client.testUnary({n: 42}, httpRequester);
       });
 
       app.get('/client', function(req, res) {
-        var httpRequester = makeHttpRequester(res);
+        var httpRequester = requestAndSendHTTPStatus(res, 1);
         var stream = client.testClientStream(httpRequester);
         for (var i = 0; i < 10; ++i) {
           stream.write({n: i});
@@ -80,14 +85,14 @@ Object.keys(versions).forEach(function(version) {
       });
 
       app.get('/server', function(req, res) {
-        var httpRequester = makeHttpRequester(res);
+        var httpRequester = requestAndSendHTTPStatus(res, 11);
         var stream = client.testServerStream();
         stream.on('data', httpRequester);
         stream.on('status', httpRequester);
       });
 
       app.get('/bidi', function(req, res) {
-        var httpRequester = makeHttpRequester(res);
+        var httpRequester = requestAndSendHTTPStatus(res, 11);
         var stream = client.testBidiStream();
         stream.on('data', httpRequester);
         stream.on('status', httpRequester);
@@ -104,27 +109,36 @@ Object.keys(versions).forEach(function(version) {
         grpcServer = new grpc.Server();
         grpcServer.addProtoService(proto.Tester.service, {
           testUnary: function(call, cb) {
-            cb(null, {n: call.request.n});
+            var httpRequester = makeHttpRequester(function () {
+              cb(null, {n: call.request.n});
+            }, 1);
+            httpRequester();
           },
           testClientStream: function(call, cb) {
-            call.on('data', function() {});
-            call.on('end', function() {
+            var httpRequester = makeHttpRequester(function () {
               cb(null, {n: 43});
-            });
+            }, 11);
+            call.on('data', httpRequester);
+            call.on('end', httpRequester);
           },
           testServerStream: function(stream) {
+            var httpRequester = makeHttpRequester(function () {
+              stream.end();
+            }, 1);
             for (var i = 0; i < 10; ++i) {
               stream.write({n: i});
             }
-            stream.end();
+            httpRequester();
           },
           testBidiStream: function(stream) {
+            var httpRequester = makeHttpRequester(function () {
+              stream.end();
+            }, 11);
             stream.on('data', function(data) {
               stream.write({n: data.n});
+              httpRequester();
             });
-            stream.on('end', function() {
-              stream.end();
-            });
+            stream.on('end', httpRequester);
           }
         });
         grpcServer.bind('localhost:' + grpcPort,
@@ -145,38 +159,52 @@ Object.keys(versions).forEach(function(version) {
 
     it('grpc should preserve context for unary requests', function(done) {
       http.get({port: common.serverPort, path: '/unary'}, function(res) {
-        assert.strictEqual(common.getTraces().length, 1);
-        // There is 1 span from express, 1 from grpc, and 1 from http.
-        assert.strictEqual(common.getTraces()[0].spans.length, 3);
+        assert.strictEqual(common.getTraces().length, 2);
+        // gRPC Server: 1 root span, 1 http span.
+        assert.strictEqual(common.getTraces()[0].spans.length, 2);
+        assert.strictEqual(common.getTraces()[0].spans[0].kind, 'RPC_SERVER');
+        // gRPC Client: 1 root span from express, 1 gRPC span, 1 http span.
+        assert.strictEqual(common.getTraces()[1].spans.length, 3);
         done();
       });
     });
 
     it('grpc should preserve context for client requests', function(done) {
       http.get({port: common.serverPort, path: '/client'}, function(res) {
-        assert.strictEqual(common.getTraces().length, 1);
-        // There is 1 span from express, 1 from grpc, and 1 from http.
-        assert.strictEqual(common.getTraces()[0].spans.length, 3);
+        assert.strictEqual(common.getTraces().length, 2);
+        // gRPC Server: 1 root span, 11 http spans (10 from 'data' listeners,
+        // 1 from 'end' listener).
+        assert.strictEqual(common.getTraces()[0].spans.length, 12);
+        assert.strictEqual(common.getTraces()[0].spans[0].kind, 'RPC_SERVER');
+        // gRPC Client: 1 root span from express, 1 gRPC span, 1 http span.
+        assert.strictEqual(common.getTraces()[1].spans.length, 3);
         done();
       });
     });
 
     it('grpc should preserve context for server requests', function(done) {
       http.get({port: common.serverPort, path: '/server'}, function(res) {
-        assert.strictEqual(common.getTraces().length, 1);
-        // There are 11 http requests: 10 from 'data' listeners and 1 from the
-        // 'status' listener. The other 2 spans are from express and grpc.
-        assert.strictEqual(common.getTraces()[0].spans.length, 13);
+        assert.strictEqual(common.getTraces().length, 2);
+        // gRPC Server: 1 root span, 1 http span.
+        assert.strictEqual(common.getTraces()[0].spans.length, 2);
+        assert.strictEqual(common.getTraces()[0].spans[0].kind, 'RPC_SERVER');
+        // gRPC Client: 1 root span from express, 1 gRPC span, and 11 http spans
+        // (10 from 'data' listeners and 1 from the 'status' listener).
+        assert.strictEqual(common.getTraces()[1].spans.length, 13);
         done();
       });
     });
 
     it('grpc should preserve context for bidi requests', function(done) {
       http.get({port: common.serverPort, path: '/bidi'}, function(res) {
-        assert.strictEqual(common.getTraces().length, 1);
-        // There are 11 http requests: 10 from 'data' listeners and 1 from the
-        // 'status' listener. The other 2 spans are from express and grpc.
-        assert.strictEqual(common.getTraces()[0].spans.length, 13);
+        assert.strictEqual(common.getTraces().length, 2);
+        // gRPC Server: 1 root span, 11 http spans (10 from 'data' listeners,
+        // 1 from 'end' listener).
+        assert.strictEqual(common.getTraces()[0].spans.length, 12);
+        assert.strictEqual(common.getTraces()[0].spans[0].kind, 'RPC_SERVER');
+        // gRPC Client: 1 root span from express, 1 gRPC span, and 11 http spans
+        // (10 from 'data' listeners and 1 from the 'status' listener).
+        assert.strictEqual(common.getTraces()[1].spans.length, 13);
         done();
       });
     });
