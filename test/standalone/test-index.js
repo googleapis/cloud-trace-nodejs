@@ -268,6 +268,41 @@ describe('index.js', function() {
     agent.stop();
   });
 
+  it('should not allow nested root spans', function(done) {
+    agent.start();
+    agent.runInRootSpan('root', function(cb1) {
+      var finished = false;
+      var finish = function () {
+        assert(!finished);
+        finished = true;
+        cb1();
+        var spanPredicate = function(spanData) {
+          return spanData.spans[0].name === 'root';
+        };
+        var matchingSpans = agent.private_().traceWriter.buffer_
+          .map(JSON.parse)
+          .filter(spanPredicate);
+        assert.equal(matchingSpans.length, 1);
+        var span = matchingSpans[0].spans[0];
+        var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
+        assert(duration > 190);
+        assert(duration < 300);
+        agent.stop();
+        done();
+      };
+      setTimeout(function() {
+        agent.runInRootSpan('root2', function(cb2) {
+          setTimeout(function() {
+            // We shouldn't reach this point
+            cb2();
+            finish();
+          }, 200);
+        });
+        finish();
+      }, 200);
+    });
+  });
+
   it('should set transaction name and labels', function() {
     agent.start();
     cls.getNamespace().run(function() {
