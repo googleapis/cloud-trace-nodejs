@@ -56,6 +56,12 @@ var phantomTraceAgent = {
     }
     fn(function() {});
   },
+  runInRootSpan: function(name, labels, fn) {
+    if (typeof(labels) === 'function') {
+      fn = labels;
+    }
+    fn(function() {});
+  },
   setTransactionName: function() {},
   addTransactionLabel: function() {}
 };
@@ -104,6 +110,10 @@ var publicAgent = {
 
   runInSpan: function(name, labels, fn) {
     return agent.runInSpan(name, labels, fn);
+  },
+
+  runInRootSpan: function(name, labels, fn) {
+    return agent.runInRootSpan(name, labels, fn);
   },
 
   setTransactionName: function(name) {

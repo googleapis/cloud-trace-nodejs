@@ -132,7 +132,9 @@ The trace configuration additionally exposes the `samplingRate` option which set
 
 ## Custom Tracing API
 
-The custom tracing API can be used to add custom spans to trace. A *span* is a particular unit of work within a trace, such as an RPC request. Currently, you can only use the custom tracing API inside the following web frameworks: `express`, `hapi`, `restify`.
+The custom tracing API can be used to add custom spans to trace. A *span* is a particular unit of work within a trace, such as an RPC request. Spans may be nested; the outermost span is called a *root span*, even if there are no nested child spans. Root spans typically correspond to incoming requests, while *child spans* typically correspond to outgoing requests, or other work that is triggered in response to incoming requests.
+
+For any of the web frameworks listed above (`express`, `hapi`, and `restify`), a root span is automatically started whenever an incoming request is received (in other words, all middleware already runs within a root span). If you wish to record a span outside of any of these frameworks, any traced code must run within a root span that you create yourself.
 
 The API is exposed by the `agent` returned by a call to `start`:
 
@@ -140,17 +142,17 @@ The API is exposed by the `agent` returned by a call to `start`:
   var agent = require('@google/cloud-trace').start();
 ```
 
-You can either use the `startSpan` and `endSpan` API, or use the `runInSpan` function that uses a callback-style.
+For child spans, you can either use the `startSpan` and `endSpan` API, or use the `runInSpan` function that uses a callback-style. For root spans, you must use `runInRootSpan`.
 
 ### Start & end
 
-To start a new span, use `agent.startSpan`. Each span requires a name, and you can optionally specify labels.
+To start a new child span, use `agent.startSpan`. Each span requires a name, and you can optionally specify labels.
 
 ```javascript
   var span = agent.startSpan('name', {label: 'value'});
 ```
 
-Once your work is complete, you can end the span with `agent.endSpan`. You can again optionally associate labels with the span:
+Once your work is complete, you can end a child span with `agent.endSpan`. You can again optionally associate labels with the span:
 
 ```javascript
   agent.endSpan(span, {label2: 'value'});
@@ -158,7 +160,7 @@ Once your work is complete, you can end the span with `agent.endSpan`. You can a
 
 ### Run in span
 
-`agent.runInSpan` takes a function to execute inside a custom span with the given name. The function may be synchronous or asynchronous. If it is asynchronous, it must accept a 'endSpan' function as an argument that should be called once the asynchronous work has completed.
+`agent.runInSpan` takes a function to execute inside a custom child span with the given name. The function may be synchronous or asynchronous. If it is asynchronous, it must accept a 'endSpan' function as an argument that should be called once the asynchronous work has completed.
 
 ```javascript
   agent.runInSpan('name', {label: 'value'}, function() {
@@ -166,6 +168,24 @@ Once your work is complete, you can end the span with `agent.endSpan`. You can a
   });
 
   agent.runInSpan('name', {label: 'value'}, function(endSpan) {
+    doAsyncWork(function(result) {
+      processResult(result);
+      endSpan({label2: 'value'});
+    });
+  });
+```
+
+### Run in root span
+
+`agent.runInRootSpan` behaves similarly to `agent.runInSpan`, except that the function is run within a root span.
+
+```javascript
+  agent.runInRootSpan('name', {label: 'value'}, function() {
+    // You can record child spans in here
+    doSynchronousWork();
+  });
+  agent.runInRootSpan('name', {label: 'value'}, function(endSpan) {
+    // You can record child spans in here
     doAsyncWork(function(result) {
       processResult(result);
       endSpan({label2: 'value'});

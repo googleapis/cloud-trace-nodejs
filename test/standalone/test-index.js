@@ -119,6 +119,7 @@ describe('index.js', function() {
     assert.equal(typeof agent.startSpan, 'function');
     assert.equal(typeof agent.endSpan, 'function');
     assert.equal(typeof agent.runInSpan, 'function');
+    assert.equal(typeof agent.runInRootSpan, 'function');
     assert.equal(typeof agent.setTransactionName, 'function');
     assert.equal(typeof agent.addTransactionLabel, 'function');
     agent.stop();
@@ -126,6 +127,7 @@ describe('index.js', function() {
     assert.equal(typeof agent.startSpan, 'function');
     assert.equal(typeof agent.endSpan, 'function');
     assert.equal(typeof agent.runInSpan, 'function');
+    assert.equal(typeof agent.runInRootSpan, 'function');
     assert.equal(typeof agent.setTransactionName, 'function');
     assert.equal(typeof agent.addTransactionLabel, 'function');
   });
@@ -209,6 +211,54 @@ describe('index.js', function() {
     });
   });
 
+  it('should produce real root spans runInRootSpan sync', function() {
+    agent.start();
+    cls.getNamespace().run(function() {
+      var testLabel = { key: 'val' };
+      agent.runInRootSpan('root', testLabel, function() {
+        var childSpan = agent.startSpan('sub');
+        agent.endSpan(childSpan);
+      });
+      var spanPredicate = function(spanData) {
+        return spanData.spans[0].name === 'root' && spanData.spans[1].name === 'sub';
+      };
+      var matchingSpans = agent.private_().traceWriter.buffer_
+                            .map(JSON.parse)
+                            .filter(spanPredicate);
+      assert.equal(matchingSpans.length, 1);
+      assert.equal(matchingSpans[0].spans[0].labels.key, 'val');
+      agent.stop();
+    });
+  });
+
+  it('should produce real root spans runInRootSpan async', function(done) {
+    agent.start();
+    cls.getNamespace().run(function() {
+      var testLabel = { key: 'val' };
+      agent.runInRootSpan('root', testLabel, function(endSpan) {
+        var childSpan = agent.startSpan('sub');
+        setTimeout(function() {
+          agent.endSpan(childSpan);
+          endSpan(testLabel);
+          var spanPredicate = function(spanData) {
+            return spanData.spans[0].name === 'root' && spanData.spans[1].name === 'sub';
+          };
+          var matchingSpans = agent.private_().traceWriter.buffer_
+                                .map(JSON.parse)
+                                .filter(spanPredicate);
+          assert.equal(matchingSpans.length, 1);
+          var span = matchingSpans[0].spans[0];
+          var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
+          assert(duration > 190);
+          assert(duration < 300);
+          assert.equal(span.labels.key, 'val');
+          agent.stop();
+          done();
+        }, 200);
+      });
+    });
+  });
+
   it('should not break with no root span', function() {
     agent.start();
     var span = agent.startSpan();
@@ -216,6 +266,41 @@ describe('index.js', function() {
     agent.addTransactionLabel('noop', 'noop');
     agent.endSpan(span);
     agent.stop();
+  });
+
+  it('should not allow nested root spans', function(done) {
+    agent.start();
+    agent.runInRootSpan('root', function(cb1) {
+      var finished = false;
+      var finish = function () {
+        assert(!finished);
+        finished = true;
+        cb1();
+        var spanPredicate = function(spanData) {
+          return spanData.spans[0].name === 'root';
+        };
+        var matchingSpans = agent.private_().traceWriter.buffer_
+          .map(JSON.parse)
+          .filter(spanPredicate);
+        assert.equal(matchingSpans.length, 1);
+        var span = matchingSpans[0].spans[0];
+        var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
+        assert(duration > 190);
+        assert(duration < 300);
+        agent.stop();
+        done();
+      };
+      setTimeout(function() {
+        agent.runInRootSpan('root2', function(cb2) {
+          setTimeout(function() {
+            // We shouldn't reach this point
+            cb2();
+            finish();
+          }, 200);
+        });
+        finish();
+      }, 200);
+    });
   });
 
   it('should set transaction name and labels', function() {
