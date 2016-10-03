@@ -1,5 +1,25 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-10-03, Version 0.5.8 (Experimental), @matthewloring
+
+### Notable changes
+
+**grpc**:
+
+  * [[`e76203e56c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e76203e56c)] - Implement gRPC Server Tracing (#301) (Kelvin Jin) [#301](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/301)
+
+### Commits
+
+* [[`566309edcc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/566309edcc)] - Change connect trace URL prefix and add tests for connect hook (#309) (Kelvin Jin) [#309](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/309)
+* [[`7acc4f60fc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7acc4f60fc)] - Update diagnostics common (#307) (Matthew Loring) [#307](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/307)
+* [[`4b8e43a023`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4b8e43a023)] - Intercept connect module (#305) (June Rhodes) [#305](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/305)
+* [[`1f2fc792e4`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1f2fc792e4)] - Added Custom Root Spans (#302) (Kelvin Jin) [#302](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/302)
+* [[`e76203e56c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e76203e56c)] - Implement gRPC Server Tracing (#301) (Kelvin Jin) [#301](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/301)
+* [[`b9e4848c14`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b9e4848c14)] - Document using just the trace.append scope (Zach Bjornson) 
+* [[`baa5116cf3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/baa5116cf3)] - Clarify use of application-default credentials (#300) (Matthew Loring) [#300](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/300)
+* [[`8c7f244faa`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8c7f244faa)] - Document ignoreContextHeader configuration (#296) (Matthew Loring) [#296](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/296)
+* [[`f321ee9aa0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f321ee9aa0)] - Allow ignoring the requests Context header (#295) (Jerry Jalava)
+
 ## 2016-08-29, Version 0.5.7 (Experimental), @matthewloring
 
 ### Commits
