@@ -107,8 +107,8 @@ The agent will also automatic trace of the following kinds of RPCs:
 * Outbound HTTP requests
 * [MongoDB-core](https://www.npmjs.com/package/mongodb-core) version 1
 * [Mongoose](https://www.npmjs.com/package/mongoose) version 4
-* [Redis](https://www.npmjs.com/package/redis) versions 0.12 - 2 (experimental)
-* [MySQL](https://www.npmjs.com/package/mysql) version 2 (experimental)
+* [Redis](https://www.npmjs.com/package/redis) versions 0.12 - 2
+* [MySQL](https://www.npmjs.com/package/mysql) version ^2.9
 
 You can use the [Custom Tracing API](#custom-tracing-api) to trace other processes in your application.
 
