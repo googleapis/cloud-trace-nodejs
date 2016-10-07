@@ -31,7 +31,7 @@ if (process.platform !== 'win32') {
 var agent = require('../../index.js');
 
 Object.keys(versions).forEach(function(version) {
-  describe('grpc', function() {
+  describe(version, function() {
     it('should not record traces', function(done) {
       agent.start();
       var grpc = require(versions[version]);
@@ -59,6 +59,7 @@ Object.keys(versions).forEach(function(version) {
         grpc.credentials.createInsecure());
 
       agent.stop();
+      assert(!agent.isActive());
 
       var run = function() {
         server.forceShutdown();
