@@ -30,7 +30,7 @@ This module provides StackDriver Trace support for Node.js applications. [StackD
           "start": "GCLOUD_PROJECT=<YOUR_PROJECT_ID> node server.js",
         },
 
-3. Include and start the library at the *as the very first action in your application*:
+3. Include and start the library *as the very first action in your application*:
 
         require('@google/cloud-trace').start();
 
