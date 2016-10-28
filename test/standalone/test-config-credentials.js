@@ -52,9 +52,9 @@ describe('test-config-credentials', function() {
     // Since we have to get an auth token, this always gets intercepted second
     nock('https://cloudtrace.googleapis.com')
       .intercept('/v1/projects/0/traces', 'PATCH', function() {
-        process.nextTick(done);
         scope.done();
         agent.stop();
+        setImmediate(done);
         return true;
       }).reply(200);
     cls.getNamespace().run(function() {
@@ -84,9 +84,49 @@ describe('test-config-credentials', function() {
     // Since we have to get an auth token, this always gets intercepted second
     nock('https://cloudtrace.googleapis.com')
       .intercept('/v1/projects/0/traces', 'PATCH', function() {
-        process.nextTick(done);
         scope.done();
         agent.stop();
+        setImmediate(done);
+        return true;
+      }).reply(200);
+    cls.getNamespace().run(function() {
+      queueSpans(2, agent.private_());
+    });
+  });
+
+  it('should ignore credentials if keyFilename is provided', function(done) {
+    var correctCredentials = require('../fixtures/gcloud-credentials.json');
+    var config = {
+      bufferSize: 2,
+      samplingRate: 0,
+      keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
+      credentials: {
+        client_id: "a",
+        client_secret: "b",
+        refresh_token: "c",
+        type: "authorized_user"
+      }
+    };
+    var agent = require('../..').start(config);
+    nock.disableNetConnect();
+    var scope = nock('https://accounts.google.com')
+      .intercept('/o/oauth2/token', 'POST', function(body) {
+        assert.equal(body.client_id, correctCredentials.client_id);
+        assert.equal(body.client_secret, correctCredentials.client_secret);
+        assert.equal(body.refresh_token, correctCredentials.refresh_token);
+        agent.stop();
+        return true;
+      }).reply(200, {
+        refresh_token: 'hello',
+        access_token: 'goodbye',
+        expiry_date: new Date(9999, 1, 1)
+      });
+    // Since we have to get an auth token, this always gets intercepted second
+    nock('https://cloudtrace.googleapis.com')
+      .intercept('/v1/projects/0/traces', 'PATCH', function() {
+        scope.done();
+        agent.stop();
+        setImmediate(done);
         return true;
       }).reply(200);
     cls.getNamespace().run(function() {

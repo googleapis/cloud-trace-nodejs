@@ -86,7 +86,7 @@ If your application is running outside of Google Cloud Platform, such as locally
 
 If you are running your application on a development machine or test environment where you are using the [`gcloud` command line tools][gcloud-sdk], and are logged using `gcloud beta auth application-default login`, you already have sufficient credentials, and a service account key is not required.
   
-Alternatively, you may set the `keyFile` or `credentials` configuration field to the full path or contents to the key file, respectively. Setting either of these fields will override both of the above options. (See the [default configuration](config.js) for more details.)
+Alternatively, you may set the `keyFilename` or `credentials` configuration field to the full path or contents to the key file, respectively. Setting either of these fields will override both of the above options. (See the [default configuration](config.js) for more details.)
 
 ## Viewing your traces
 

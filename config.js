@@ -93,16 +93,11 @@ module.exports = {
     // A path to a key file relative to the current working directory. If this
     // field is set, the contents of the pointed file will be used for
     // authentication instead of your application default credentials.
-    keyFile: null,
-
-    // An alias for keyFile. If both keyFile and keyFilename are set, the value
-    // of keyFilename will be ignored.
     keyFilename: null,
 
     // The contents of a key file. If this field is set, its contents will be
     // used for authentication instead of your application default credentials.
-    // If either keyFile or keyFilename are also set, the value of credentials
-    // will be ignored.
+    // If keyFilename is also set, the value of credentials will be ignored.
     credentials: null
   }
 };
