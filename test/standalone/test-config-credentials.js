@@ -101,12 +101,18 @@ describe('test-config-credentials', function() {
       samplingRate: 0,
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
       credentials: {
-        client_id: "a",
-        client_secret: "b",
-        refresh_token: "c",
-        type: "authorized_user"
+        client_id: 'a',
+        client_secret: 'b',
+        refresh_token: 'c',
+        type: 'authorized_user'
       }
     };
+    ['client_id', 'client_secret', 'refresh_token'].forEach(function (field) {
+      assert(correctCredentials.hasOwnProperty(field));
+      assert(config.credentials.hasOwnProperty(field));
+      assert.notEqual(config.credentials[field],
+        correctCredentials[field]);
+    });
     var agent = require('../..').start(config);
     nock.disableNetConnect();
     var scope = nock('https://accounts.google.com')
