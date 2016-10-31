@@ -50,7 +50,7 @@
     "tmp": "0.0.28"
   },
   "dependencies": {
-    "@google/cloud-diagnostics-common": "0.2.5",
+    "@google/cloud-diagnostics-common": "0.3.0",
     "continuation-local-storage": "^3.1.4",
     "lodash.findindex": "^4.4.0",
     "lodash.isequal": "^4.0.0",
