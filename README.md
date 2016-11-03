@@ -1,4 +1,4 @@
-# StackDriver Trace for Node.js
+# Stackdriver Trace for Node.js
 
 [![NPM Version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
@@ -8,9 +8,9 @@
 
 > *This module is experimental, and should be used by early adopters. This module uses APIs that may be undocumented and subject to change without notice.*
 
-This module provides StackDriver Trace support for Node.js applications. [StackDriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
+This module provides Stackdriver Trace support for Node.js applications. [Stackdriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
 
-![StackDriver Trace Overview](doc/images/cloud-trace-overview-page.png)
+![Stackdriver Trace Overview](doc/images/cloud-trace-overview-page.png)
 
 ## Prerequisites
 
@@ -72,7 +72,7 @@ Container Engine nodes need to also be created with the `https://www.googleapis.
 
 ## Running elsewhere
 
-If your application is running outside of Google Cloud Platform, such as locally, on-premise, or on another cloud provider, you can still use StackDriver Trace.
+If your application is running outside of Google Cloud Platform, such as locally, on-premise, or on another cloud provider, you can still use Stackdriver Trace.
 
 1. You will need to specify your project ID when starting the trace agent.
 
