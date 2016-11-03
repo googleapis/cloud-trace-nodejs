@@ -1,5 +1,20 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-10-31, Version 0.5.9 (Experimental), @matthewloring
+
+### Notable changes
+
+**configuration**:
+
+  * [[`f72983f4c3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f72983f4c3)] - Implemented reading keyFile/credentials field from config object (#315) (Kelvin Jin)
+
+### Commits
+
+* [[`372f81a1a6`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/372f81a1a6)] - Stackdriver is lower case d (#318) (Steren) 
+* [[`f72983f4c3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f72983f4c3)] - Implemented reading keyFile/credentials field from config object (#315) (Kelvin Jin) 
+* [[`a1650a414c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a1650a414c)] - fix(docs): fix typo in installation docs (#313) (Michael Prentice) [#313](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/313)
+* [[`47b35d4bcc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/47b35d4bcc)] - Correct mysql supported version and update framework support list (#310) (Matthew Loring) [#310](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/310)
+
 ## 2016-10-03, Version 0.5.8 (Experimental), @matthewloring
 
 ### Notable changes
