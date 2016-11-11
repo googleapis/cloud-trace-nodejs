@@ -230,6 +230,25 @@ Object.keys(versions).forEach(function(version) {
       });
     });
 
+    it('should not include query parameters in span name', function(done) {
+      server = new hapi.Server();
+      server.connection({ port: common.serverPort });
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: function(req, reply) {
+          reply(common.serverRes);
+        }
+      });
+      server.start(function() {
+        http.get({path: '/?a=b', port: common.serverPort}, function(res) {
+          var span = common.getMatchingSpan(hapiPredicate);
+          assert.equal(span.name, '/');
+          done();
+        });
+      });
+    });
+
     it('should set trace context on response', function(done) {
       server = new hapi.Server();
       server.connection({ port: common.serverPort });

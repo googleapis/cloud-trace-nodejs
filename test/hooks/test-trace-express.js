@@ -175,6 +175,20 @@ describe('test-trace-express', function() {
     });
   });
 
+  it('should not include query parameters in span name', function(done) {
+    var app = express();
+    app.get('/', function (req, res) {
+      res.send(common.serverRes);
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({path: '/?a=b', port: common.serverPort}, function(res) {
+        var name = common.getMatchingSpan(expressPredicate).name;
+        assert.equal(name, '/');
+        done();
+      });
+    });
+  });
+
   it('should handle thrown errors from get', function(done) {
     var app = express();
     app.get('/', function(req, res) {

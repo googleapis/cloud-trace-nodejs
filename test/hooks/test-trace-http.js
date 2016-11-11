@@ -106,6 +106,21 @@ describe('test-trace-http', function() {
     );
   });
 
+  it('should not include query parameters in span name', function(done) {
+    server.listen(common.serverPort, common.runInTransaction.bind(null,
+      function(endTransaction) {
+        http.get('http://localhost:' + common.serverPort + '/?foo=bar');
+        setTimeout(function() {
+          endTransaction();
+          var traces = common.getTraces();
+          assert.equal(traces.length, 1);
+          assert.equal(traces[0].spans[1].name, 'localhost');
+          done();
+        }, common.serverWait * 1.5);
+      })
+    );
+  });
+
   it('should accurately measure get time, error', function(done) {
     var server = http.Server(function(req, res) {
       setTimeout(function() {

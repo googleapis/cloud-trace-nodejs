@@ -95,6 +95,24 @@ describe('test-trace-koa', function() {
     });
   });
 
+  it('should not include query parameters in span name', function(done) {
+    var app = koa();
+    app.use(function* () {
+      this.body = yield function(cb) {
+        setTimeout(function() {
+          cb(null, common.serverRes);
+        }, common.serverWait);
+      };
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({path: '/?a=b', port: common.serverPort}, function(res) {
+        var name = common.getMatchingSpan(koaPredicate).name;
+        assert.equal(name, '/');
+        done();
+      });
+    });
+  });
+
   it('should set trace context on response', function(done) {
     var app = koa();
     app.use(function* () {
