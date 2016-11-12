@@ -1,5 +1,11 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2016-11-11, Version 0.5.10 (Experimental), @matthewloring
+
+### Commits
+
+* [[`43b79b9e1c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/43b79b9e1c)] - Remove query parameters from span names (#320) (Matthew Loring) [#320](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/320)
+
 ## 2016-10-31, Version 0.5.9 (Experimental), @matthewloring
 
 ### Notable changes
