@@ -45,7 +45,7 @@ describe('test-trace-header-context', function() {
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
-      assert.equal(traces[0].spans[1].name, 'http://localhost:9042/self');
+      assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
       common.cleanTraces();
       server.close();
@@ -71,7 +71,7 @@ describe('test-trace-header-context', function() {
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
-      assert.equal(traces[0].spans[1].name, 'http://localhost:9042/self');
+      assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
       common.cleanTraces();
       server.close();
@@ -103,7 +103,7 @@ describe('test-trace-header-context', function() {
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
-      assert.equal(traces[0].spans[1].name, 'http://localhost:9042/self');
+      assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
       common.cleanTraces();
       server.close();

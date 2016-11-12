@@ -121,6 +121,20 @@ describe('test-trace-connect', function() {
     });
   });
 
+  it('should not include query parameters in span name', function(done) {
+    var app = connect();
+    app.use(function middleware(req, res) {
+      res.end(common.serverRes);
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({path: '/?a=b', port: common.serverPort}, function(res) {
+        var span = common.getMatchingSpan(connectPredicate);
+        assert.equal(span.name, '/');
+        done();
+      });
+    });
+  });
+
   it('should handle thrown errors', function(done) {
     var app = connect();
     app.use('/', function(req, res) {

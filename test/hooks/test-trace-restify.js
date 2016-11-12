@@ -187,6 +187,25 @@ Object.keys(versions).forEach(function(version) {
       });
     });
 
+    it('should not include query parameters in span name', function(done) {
+      server = restify.createServer();
+      server.get('/', function (req, res, next) {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+        res.write(common.serverRes);
+        res.end();
+        return next();
+      });
+      server.listen(common.serverPort, function() {
+        http.get({path: '/?a=b', port: common.serverPort}, function(res) {
+          var span = common.getMatchingSpan(restifyPredicate);
+          assert.equal(span.name, '/');
+          done();
+        });
+      });
+    });
+
     it('should set trace context on response', function(done) {
       server = restify.createServer();
       server.get('/', function (req, res, next) {
