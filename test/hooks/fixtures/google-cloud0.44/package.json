@@ -1,8 +1,8 @@
 {
-  "name": "grpc0.14",
+  "name": "google-cloud0.44",
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
-    "grpc": "^0.14.0"
+    "google-cloud": "^0.44.0"
   }
 }

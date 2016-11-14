@@ -108,7 +108,7 @@ describe('index.js', function() {
 
   it('should wrap/unwrap restify on start/stop', function() {
     agent.start();
-    var restify = require('../hooks/fixtures/restify3');
+    var restify = require('../hooks/fixtures/restify4');
     wrapTest(restify, 'createServer');
     agent.stop();
   });
