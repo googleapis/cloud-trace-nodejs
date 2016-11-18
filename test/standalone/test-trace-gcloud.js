@@ -37,14 +37,15 @@ describe('test-trace-gcloud', function() {
     process.env.GOOGLE_APPLICATION_CREDENTIALS =
         path.join(__dirname, '..', 'fixtures', 'gcloud-credentials.json');
     common.runInTransaction(function(endTransaction) {
-      var gcloud = require('../hooks/fixtures/gcloud0.36');
+      var gcloud = require('../hooks/fixtures/google-cloud0.44');
       var ds = gcloud.datastore();
       var key = ds.key(['bad', 'key']);
       ds.get(key, function(err, entity) {
         endTransaction();
         assert(err);
         assert.strictEqual(err.code, 401);
-        assert.strictEqual(err.message, 'Unauthorized');
+        assert.notStrictEqual(
+            err.message.indexOf('accounts.google.com:443/o/oauth2/token'), -1);
         var trace = common.getMatchingSpan(grpcPredicate);
         assert(trace);
         assert.notStrictEqual(trace.labels.argument.indexOf(

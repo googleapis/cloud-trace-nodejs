@@ -23,14 +23,8 @@ var express = require('../hooks/fixtures/express4');
 var http = require('http');
 
 var versions = {
-  grpc014: require('../hooks/fixtures/grpc0.14'),
-  grpc015: require('../hooks/fixtures/grpc0.15')
+  grpc1: require('../hooks/fixtures/grpc1')
 };
-if (process.platform !== 'win32') {
-  // On Windows, skip grpc0.13 due to https://github.com/grpc/grpc/issues/6141.
-  // The build error was fixed in grpc0.14.
-  versions.grpc013 = require('../hooks/fixtures/grpc0.13');
-}
 
 var grpcPort = 50051;
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';

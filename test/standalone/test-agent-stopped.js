@@ -77,7 +77,7 @@ describe('restify', function() {
   it('should not break if no project number is found', function(done) {
     var agent = require('../..');
     agent.start();
-    var restify = require('../hooks/fixtures/restify3');
+    var restify = require('../hooks/fixtures/restify4');
     var server = restify.createServer();
     agent.stop();
     server.get('/', function (req, res, next) {

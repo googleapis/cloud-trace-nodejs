@@ -21,15 +21,8 @@ var assert = require('assert');
 var traceLabels = require('../../lib/trace-labels.js');
 
 var versions = {
-  grpc014: require('./fixtures/grpc0.14'),
-  grpc015: require('./fixtures/grpc0.15'),
   grpc1: require('./fixtures/grpc1')
 };
-if (process.platform !== 'win32') {
-  // On Windows, skip grpc0.13 due to https://github.com/grpc/grpc/issues/6141.
-  // The build error was fixed in grpc0.14.
-  versions.grpc013 = require('./fixtures/grpc0.13');
-}
 
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';
 var grpcPort = 50051;

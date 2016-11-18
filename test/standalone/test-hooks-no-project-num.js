@@ -85,7 +85,7 @@ describe('should not break without project num', function() {
   it('restify', function(done) {
     var http = require('http');
     var agent = require('../..').start();
-    var restify = require('../hooks/fixtures/restify3');
+    var restify = require('../hooks/fixtures/restify4');
     var server = restify.createServer();
     server.get('/', function (req, res, next) {
       res.writeHead(200, {

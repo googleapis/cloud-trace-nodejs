@@ -20,9 +20,7 @@ install:
   - redis-64\tools\redis-server.exe --service-start
   # install modules
   - npm install
-  # Skip grpc0.13 due to https://github.com/grpc/grpc/issues/6141.
-  # The build error was fixed in grpc0.14.
-  - ps: ForEach ($fix in Get-ChildItem -Directory test/hooks/fixtures/*) { if ($fix -notmatch 'grpc0.13') { cd $fix; npm install --silent } }
+  - ps: ForEach ($fix in Get-ChildItem -Directory test/hooks/fixtures/*) { cd $fix; npm install --silent }
   - ps: cd ..\..\..\..
   # set GCLOUD_PROJECT
   - SET GCLOUD_PROJECT=0

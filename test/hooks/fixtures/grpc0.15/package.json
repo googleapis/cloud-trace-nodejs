@@ -1,8 +1,0 @@
-{
-  "name": "grpc0.15",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "grpc": "^0.15.0"
-  }
-}

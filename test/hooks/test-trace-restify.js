@@ -20,10 +20,13 @@ var http = require('http');
 var assert = require('assert');
 var constants = require('../../lib/constants.js');
 var common = require('./common.js');
+var semver = require('semver');
 var versions = {
-  restify3: require('./fixtures/restify3'),
   restify4: require('./fixtures/restify4')
 };
+if (semver.satisfies(process.version, '<7')) {
+  versions.restify3 = require('./fixtures/restify3');
+}
 
 var server;
 var write;

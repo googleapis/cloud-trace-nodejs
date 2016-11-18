@@ -1,8 +1,0 @@
-{
-  "name": "gcloud0.36",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "gcloud": "^0.36.0"
-  }
-}
