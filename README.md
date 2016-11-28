@@ -197,9 +197,9 @@ Once your work is complete, you can end a child span with `agent.endSpan`. You c
 
 ### Changing trace properties
 
-It is possible to rename and add labels to current trace. This can be use to give it a more meaningful name or add additional metata.
+It is possible to rename and add labels to current trace. This can be used to give it a more meaningful name or add additional metata.
 
-By default we use the name of the express (or hapi/restify) route as the transaction name, but it can be change using `agent.setTransactionName`:
+By default we use the name of the express (or hapi/restify) route as the transaction name, but it can be changed using `agent.setTransactionName`:
 
 ```javascript
   agent.setTransactionName('new name');
