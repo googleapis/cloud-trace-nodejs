@@ -5,6 +5,7 @@
 [![Test Coverage][coveralls-image]][coveralls-url]
 [![Dependency Status][david-image]][david-url]
 [![devDependency Status][david-dev-image]][david-dev-url]
+[![Known Vulnerabilities][snyk-image]][snyk-url]
 
 > *This module is experimental, and should be used by early adopters. This module uses APIs that may be undocumented and subject to change without notice.*
 
@@ -232,4 +233,6 @@ You can add additional labels using `agent.addTransactionLabel`:
 [david-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs.svg
 [david-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs
 [david-dev-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs/dev-status.svg
-[david-dev-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs#info=devDependencies
+[david-dev-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs?type=dev
+[snyk-image]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg
+[snyk-url]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs
