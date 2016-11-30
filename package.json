@@ -43,11 +43,11 @@
     "istanbul": "^0.4.2",
     "jshint": "^2.9.1",
     "mocha": "^3.0.0",
-    "nock": "^8.0.0",
+    "nock": "^9.0.0",
     "proxyquire": "^1.4.0",
     "request": "^2.61.0",
-    "timekeeper": "^0.1.1",
-    "tmp": "0.0.28"
+    "timekeeper": "^1.0.0",
+    "tmp": "0.0.31"
   },
   "dependencies": {
     "@google/cloud-diagnostics-common": "0.3.0",
@@ -57,6 +57,6 @@
     "methods": "^1.1.1",
     "semver": "^5.0.1",
     "shimmer": "^1.0.0",
-    "uuid": "^2.0.1"
+    "uuid": "^3.0.1"
   }
 }
