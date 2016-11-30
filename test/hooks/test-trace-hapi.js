@@ -33,7 +33,8 @@ var versions = {
   hapi12: './fixtures/hapi12',
   hapi13: './fixtures/hapi13',
   hapi14: './fixtures/hapi14',
-  hapi15: './fixtures/hapi15'
+  hapi15: './fixtures/hapi15',
+  hapi16: './fixtures/hapi16'
 };
 
 Object.keys(versions).forEach(function(version) {
