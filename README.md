@@ -103,7 +103,7 @@ This is the trace list that shows a sampling of the incoming requests your appli
 
 The trace agent can do automatic tracing of HTTP requests when using these frameworks:
 * [express](https://www.npmjs.com/package/express) version 4
-* [hapi](https://www.npmjs.com/package/hapi) versions 8 - 13
+* [hapi](https://www.npmjs.com/package/hapi) versions 8 - 16
 * [restify](https://www.npmjs.com/package/restify) versions 3 - 4 (experimental)
 
 The agent will also automatic trace of the following kinds of RPCs:
