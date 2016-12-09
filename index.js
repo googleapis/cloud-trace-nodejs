@@ -26,7 +26,6 @@ var SpanData = require('./src/span-data.js');
 var common = require('@google/cloud-diagnostics-common');
 var semver = require('semver');
 var constants = require('./src/constants.js');
-var path = require('path');
 var util = require('./src/util.js');
 
 var modulesLoadedBeforeTrace = [];
@@ -74,17 +73,8 @@ var initConfig = function(projectConfig) {
   var config = {};
   util._extend(config, require('./config.js').trace);
   util._extend(config, projectConfig);
-  if (process.env.hasOwnProperty('GCLOUD_DIAGNOSTICS_CONFIG')) {
-    var c = require(path.resolve(process.env.GCLOUD_DIAGNOSTICS_CONFIG));
-    if (c) {
-      util._extend(config, c.trace);
-    }
-  }
   if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
     config.logLevel = process.env.GCLOUD_TRACE_LOGLEVEL;
-  }
-  if (process.env.hasOwnProperty('GCLOUD_TRACE_DISABLE')) {
-    config.enabled = false;
   }
   if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
     config.projectId = process.env.GCLOUD_PROJECT;
