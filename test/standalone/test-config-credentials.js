@@ -18,7 +18,7 @@
 var path = require('path');
 var assert = require('assert');
 var nock = require('nock');
-var cls = require('../../lib/cls.js');
+var cls = require('../../src/cls.js');
 
 var queueSpans = function(n, privateAgent) {
   for (var i = 0; i < n; i++) {

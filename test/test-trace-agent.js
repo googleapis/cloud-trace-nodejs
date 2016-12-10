@@ -16,7 +16,7 @@
 
  'use strict';
 
- var constants = require('../lib/constants.js');
+ var constants = require('../src/constants.js');
 
 if (!process.env.GCLOUD_PROJECT) {
   console.log('The GCLOUD_PROJECT environment variable must be set.');
@@ -25,11 +25,11 @@ if (!process.env.GCLOUD_PROJECT) {
 
 var assert = require('assert');
 var config = require('../config.js');
-var file = require('../lib/trace-agent.js');
-var SpanData = require('../lib/span-data.js');
+var file = require('../src/trace-agent.js');
+var SpanData = require('../src/span-data.js');
 var agent = file.get(config);
-var constants = require('../lib/constants.js');
-var cls = require('../lib/cls.js');
+var constants = require('../src/constants.js');
+var cls = require('../src/cls.js');
 
 describe('Trace Agent', function() {
 

@@ -25,7 +25,7 @@ var agent = require('../..').start(config).private_();
 // We want to disable publishing to avoid conflicts with production.
 agent.traceWriter.publish_ = function() {};
 
-var cls = require('../../lib/cls.js');
+var cls = require('../../src/cls.js');
 
 var assert = require('assert');
 var http = require('http');

@@ -18,7 +18,7 @@
 var common = require('./common.js');
 require('../..').private_().config_.enhancedDatabaseReporting = true;
 var assert = require('assert');
-var traceLabels = require('../../lib/trace-labels.js');
+var traceLabels = require('../../src/trace-labels.js');
 
 var versions = {
   grpc1: require('./fixtures/grpc1')

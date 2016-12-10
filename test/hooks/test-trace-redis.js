@@ -21,7 +21,7 @@
 // Run a redis image binding the redis port
 //   ex) docker run -p 6379:6379 -d redis
 var common = require('./common.js');
-var traceLabels = require('../../lib/trace-labels.js');
+var traceLabels = require('../../src/trace-labels.js');
 
 var assert = require('assert');
 var versions = {

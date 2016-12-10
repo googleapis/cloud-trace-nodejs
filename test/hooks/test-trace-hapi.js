@@ -17,10 +17,10 @@
 
 var common = require('./common.js');
 
-var traceLabels = require('../../lib/trace-labels.js');
+var traceLabels = require('../../src/trace-labels.js');
 var http = require('http');
 var assert = require('assert');
-var constants = require('../../lib/constants.js');
+var constants = require('../../src/constants.js');
 var semver = require('semver');
 
 var server;

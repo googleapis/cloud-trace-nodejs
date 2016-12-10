@@ -17,7 +17,7 @@
 'use strict';
 
 var assert = require('assert');
-var Trace = require('../lib/trace.js');
+var Trace = require('../src/trace.js');
 
 
 describe('Trace', function() {

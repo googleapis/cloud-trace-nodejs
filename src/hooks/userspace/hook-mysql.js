@@ -16,10 +16,10 @@
 
 'use strict';
 
-var cls = require('../../../lib/cls.js');
+var cls = require('../../../src/cls.js');
 var shimmer = require('shimmer');
 var semver = require('semver');
-var SpanData = require('../../../lib/span-data.js');
+var SpanData = require('../../../src/span-data.js');
 var agent;
 
 var SUPPORTED_VERSIONS = '^2.9.x';

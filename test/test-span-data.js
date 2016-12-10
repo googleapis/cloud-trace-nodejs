@@ -22,9 +22,9 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 var agent = require('..').start({ samplingRate: 0 }).private_();
-var TraceLabels = require('../lib/trace-labels.js');
+var TraceLabels = require('../src/trace-labels.js');
 var assert = require('assert');
-var cls = require('../lib/cls.js');
+var cls = require('../src/cls.js');
 
 describe('SpanData', function() {
 

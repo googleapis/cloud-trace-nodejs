@@ -21,7 +21,7 @@
 // Run a mongo image binding the mongo port
 //   ex) docker run -p 27017:27017 -d mongo
 var common = require('./common.js');
-var traceLabels = require('../../lib/trace-labels.js');
+var traceLabels = require('../../src/trace-labels.js');
 
 var assert = require('assert');
 var mongoose = require('./fixtures/mongoose4');

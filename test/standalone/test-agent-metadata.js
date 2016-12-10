@@ -19,7 +19,7 @@
 var assert = require('assert');
 var nock = require('nock');
 var agent = require('../..');
-var traceLabels = require('../../lib/trace-labels.js');
+var traceLabels = require('../../src/trace-labels.js');
 
 nock.disableNetConnect();
 

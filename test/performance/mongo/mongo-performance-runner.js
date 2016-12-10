@@ -49,7 +49,7 @@ var sim = new Simple({
 });
 
 var runInTransaction = function(fn) {
-  var cls = require('../../../lib/cls.js');
+  var cls = require('../../../src/cls.js');
   cls.getNamespace().run(function() {
     var span = traceAgent.createRootSpanData('outer');
     fn(function() {
