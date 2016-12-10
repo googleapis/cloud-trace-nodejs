@@ -17,20 +17,6 @@
     "profiling"
   ],
   "author": "Google Inc.",
-  "contributors": [
-    {
-      "name": "Ali Ijaz Sheikh",
-      "email": "ofrobots@google.com"
-    },
-    {
-      "name": "Matt Loring",
-      "email": "mattloring@google.com"
-    },
-    {
-      "name": "Scott McMaster",
-      "email": "smcmaster@google.com"
-    }
-  ],
   "license": "Apache-2.0",
   "engines": {
     "node": ">=0.12"
