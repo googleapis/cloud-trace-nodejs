@@ -19,8 +19,8 @@ var common = require('../hooks/common.js');
 var koa = require('../hooks/fixtures/koa1');
 var http = require('http');
 var assert = require('assert');
-var constants = require('../../lib/constants.js');
-var TraceLabels = require('../../lib/trace-labels.js');
+var constants = require('../../src/constants.js');
+var TraceLabels = require('../../src/trace-labels.js');
 
 var server;
 

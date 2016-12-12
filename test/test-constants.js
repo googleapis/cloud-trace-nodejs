@@ -17,7 +17,7 @@
 'use strict';
 
 var assert = require('assert');
-var constants = require('../lib/constants.js');
+var constants = require('../src/constants.js');
 
 describe('constants', function() {
   it('has correct values', function() {

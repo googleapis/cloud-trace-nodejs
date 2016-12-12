@@ -18,7 +18,7 @@
 
 var assert = require('assert');
 var tk = require('timekeeper');
-var TraceSpan = require('../lib/trace-span.js');
+var TraceSpan = require('../src/trace-span.js');
 
 
 describe('TraceSpan', function() {

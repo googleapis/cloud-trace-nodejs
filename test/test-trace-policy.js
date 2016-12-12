@@ -17,7 +17,7 @@
 'use strict';
 
 var assert = require('assert');
-var tracingPolicy = require('../lib/tracing-policy.js');
+var tracingPolicy = require('../src/tracing-policy.js');
 
 describe('FilterPolicy', function() {
   it('should not allow filtered urls', function() {

@@ -19,7 +19,7 @@ var common = require('../hooks/common.js');
 var http = require('http');
 var assert = require('assert');
 var express = require('../hooks/fixtures/express4');
-var constants = require('../../lib/constants.js');
+var constants = require('../../src/constants.js');
 
 describe('test-trace-header-context', function() {
   beforeEach(function() {

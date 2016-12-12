@@ -17,7 +17,7 @@
 'use strict';
 
 var assert = require('assert');
-var util = require('../lib/util.js');
+var util = require('../src/util.js');
 var path = require('path');
 
 var o = {

@@ -18,7 +18,7 @@
 
 var assert = require('assert');
 var nock = require('nock');
-var cls = require('../../lib/cls.js');
+var cls = require('../../src/cls.js');
 var agent = require('../..');
 var request = require('request');
 

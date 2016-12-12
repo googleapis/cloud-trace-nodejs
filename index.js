@@ -22,12 +22,12 @@ var filesLoadedBeforeTrace = Object.keys(require.cache);
 // patched before any user-land modules get loaded.
 require('continuation-local-storage');
 
-var SpanData = require('./lib/span-data.js');
+var SpanData = require('./src/span-data.js');
 var common = require('@google/cloud-diagnostics-common');
 var semver = require('semver');
-var constants = require('./lib/constants.js');
+var constants = require('./src/constants.js');
 var path = require('path');
-var util = require('./lib/util.js');
+var util = require('./src/util.js');
 
 var modulesLoadedBeforeTrace = [];
 
@@ -183,7 +183,7 @@ var publicAgent = {
       return this;
     }
 
-    agent = require('./lib/trace-agent.js').get(config, logger);
+    agent = require('./src/trace-agent.js').get(config, logger);
     return this; // for chaining
   },
 

@@ -18,7 +18,7 @@
 var assert = require('assert');
 var Module = require('module');
 var semver = require('semver');
-var index = require('../../lib/hooks/index.js');
+var index = require('../../src/hooks/index.js');
 var findModulePath = index.findModulePath;
 var findModuleVersion = index.findModuleVersion;
 

@@ -16,8 +16,8 @@
 'use strict';
 
 var common = require('./common.js');
-var constants = require('../../lib/constants.js');
-var TraceLabels = require('../../lib/trace-labels.js');
+var constants = require('../../src/constants.js');
+var TraceLabels = require('../../src/trace-labels.js');
 
 var assert = require('assert');
 var http = require('http');
@@ -218,7 +218,7 @@ describe('test-trace-http', function() {
               assert.equal(spans.length, 5);
               // We need to check a property attached at the end of a span
               var statusCodes = [];
-              var labels = require('../../lib/trace-labels.js');
+              var labels = require('../../src/trace-labels.js');
               for (var j = 0; j < spans.length; j++) {
                 var code = Number(spans[j].labels[
                     labels.HTTP_RESPONSE_CODE_LABEL_KEY]);
