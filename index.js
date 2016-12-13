@@ -95,122 +95,129 @@ var initConfig = function(projectConfig) {
 /**
  * The singleton public agent. This is the public API of the module.
  */
-var publicAgent = {
-  isActive: function() {
+function Trace(options){
+  if(!(this instanceof Trace)) {
+    return new Trace(options);
+  }
+}
+
+Trace.prototype.isActive = function() {
     return agent !== phantomTraceAgent;
-  },
-
-  startSpan: function(name, labels) {
-    return agent.startSpan(name, labels);
-  },
-
-  endSpan: function(spanData, labels) {
-    return agent.endSpan(spanData, labels);
-  },
-
-  runInSpan: function(name, labels, fn) {
-    return agent.runInSpan(name, labels, fn);
-  },
-
-  runInRootSpan: function(name, labels, fn) {
-    return agent.runInRootSpan(name, labels, fn);
-  },
-
-  setTransactionName: function(name) {
-    return agent.setTransactionName(name);
-  },
-
-  addTransactionLabel: function(key, value) {
-    return agent.addTransactionLabel(key, value);
-  },
-
-  start: function(projectConfig) {
-    if (this.isActive()) { // already started.
-      agent.logger.warn('Calling start on already started agent.' +
-        'New configuration will be ignored.');
-      return this;
-    }
-
-    var config = initConfig(projectConfig);
-    if (!config.enabled) {
-      return this;
-    }
-    var logger = common.logger.create(config.logLevel, '@google/cloud-trace');
-    if (!semver.satisfies(process.versions.node, '>=0.12')) {
-      logger.error('Tracing is only supported on Node versions >=0.12');
-      return this;
-    }
-
-    if (config.projectId) {
-      logger.info('Locally provided ProjectId: ' + config.projectId);
-    }
-
-    if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
-      logger.error('The value of onUncaughtException should be one of ',
-        onUncaughtExceptionValues);
-      throw new Error('Invalid value for onUncaughtException configuration.');
-    }
-
-    var headers = {};
-    headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
-
-    if (modulesLoadedBeforeTrace.length > 0) {
-      logger.warn('Tracing might not work as the following modules ' +
-        'were loaded before the trace agent was initialized: ' +
-        JSON.stringify(modulesLoadedBeforeTrace));
-    }
-
-    if (typeof config.projectId === 'undefined') {
-      // Queue the work to acquire the projectNumber (potentially from the
-      // network.)
-      common.utils.getProjectNumber(headers, function(err, project) {
-        if (err) {
-          // Fatal error. Disable the agent.
-          logger.error('Unable to acquire the project number from metadata ' +
-            'service. Please provide a valid project number as an env. ' +
-            'variable, or through config.projectId passed to start().' +
-            err);
-          publicAgent.stop();
-          return;
-        }
-        config.projectId = project;
-      });
-    } else if (typeof config.projectId === 'number') {
-      config.projectId = config.projectId.toString();
-    } else if (typeof config.projectId !== 'string') {
-      logger.error('config.projectId, if provided, must be' +
-        ' a string or number. Disabling trace agent.');
-      return this;
-    }
-
-    agent = require('./src/trace-agent.js').get(config, logger);
-    return this; // for chaining
-  },
-
-  get: function() {
-    if (this.isActive()) {
-      return this;
-    }
-    throw new Error('The agent must be initialized by calling start.');
-  },
-
-  stop: function() {
-    if (this.isActive()) {
-      agent.stop();
-      agent = phantomTraceAgent;
-    }
-  },
-
-  /**
-   * For use in tests only.
-   * @private
-   */
-  private_: function() { return agent; }
 };
 
-module.exports = global._google_trace_agent = publicAgent;
+Trace.prototype.startSpan = function(name, labels) {
+    return agent.startSpan(name, labels);
+};
+
+Trace.prototype.endSpan = function(spanData, labels) {
+    return agent.endSpan(spanData, labels);
+};
+
+Trace.prototype.runInSpan = function(name, labels, fn) {
+    return agent.runInSpan(name, labels, fn);
+};
+
+Trace.prototype.runInRootSpan = function(name, labels, fn) {
+    return agent.runInRootSpan(name, labels, fn);
+};
+
+Trace.prototype.setTransactionName = function(name) {
+    return agent.setTransactionName(name);
+};
+
+Trace.prototype.addTransactionLabel = function(key, value) {
+    return agent.addTransactionLabel(key, value);
+};
+
+Trace.prototype.startAgent = function(projectConfig) {
+  if (this.isActive()) { // already started.
+    agent.logger.warn('Calling start on already started agent.' +
+      'New configuration will be ignored.');
+    return this;
+  }
+
+  var config = initConfig(projectConfig);
+  if (!config.enabled) {
+    return this;
+  }
+  var logger = common.logger.create(config.logLevel, '@google/cloud-trace');
+  if (!semver.satisfies(process.versions.node, '>=0.12')) {
+    logger.error('Tracing is only supported on Node versions >=0.12');
+    return this;
+  }
+
+  if (config.projectId) {
+    logger.info('Locally provided ProjectId: ' + config.projectId);
+  }
+
+  if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
+    logger.error('The value of onUncaughtException should be one of ',
+      onUncaughtExceptionValues);
+    throw new Error('Invalid value for onUncaughtException configuration.');
+  }
+
+  var headers = {};
+  headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
+
+  if (modulesLoadedBeforeTrace.length > 0) {
+    logger.warn('Tracing might not work as the following modules ' +
+      'were loaded before the trace agent was initialized: ' +
+      JSON.stringify(modulesLoadedBeforeTrace));
+  }
+
+  if (typeof config.projectId === 'undefined') {
+    // Queue the work to acquire the projectNumber (potentially from the
+    // network.)
+    var that = this;
+    common.utils.getProjectNumber(headers, function(err, project) {
+      if (err) {
+        // Fatal error. Disable the agent.
+        logger.error('Unable to acquire the project number from metadata ' +
+          'service. Please provide a valid project number as an env. ' +
+          'variable, or through config.projectId passed to startAgent().' +
+          err);
+        that.stop();
+        return;
+      }
+      config.projectId = project;
+    });
+  } else if (typeof config.projectId === 'number') {
+    config.projectId = config.projectId.toString();
+  } else if (typeof config.projectId !== 'string') {
+    logger.error('config.projectId, if provided, must be' +
+      ' a string or number. Disabling trace agent.');
+    return this;
+  }
+
+  agent = require('./src/trace-agent.js').get(config, logger);
+  return this; // for chaining
+};
+
+Trace.prototype.get = function() {
+  if (this.isActive()) {
+    return this;
+  }
+  throw new Error('The agent must be initialized by calling start.');
+};
+
+Trace.prototype.stop = function() {
+  if (this.isActive()) {
+    agent.stop();
+    agent = phantomTraceAgent;
+  }
+};
+
+/**
+ * For use in tests only.
+ * @private
+ */
+Trace.prototype.private_ = function() {
+  return agent;
+};
+
+module.exports = global._google_trace_agent = Trace;
 
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {
-  module.exports.start();
+  module.exports().startAgent();
 }

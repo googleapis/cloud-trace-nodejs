@@ -23,11 +23,11 @@ var constants = require('../../src/constants.js');
 
 describe('test-trace-header-context', function() {
   beforeEach(function() {
-    require('../..').start();
+    require('../..')().startAgent();
   });
 
   afterEach(function() {
-    require('../..').stop();
+    require('../..')().stop();
   });
 
   it('should work with string url', function(done) {

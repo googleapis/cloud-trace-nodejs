@@ -25,7 +25,7 @@
 var traceAgent;
 if (process.argv[2] === '-i') {
   process.env.GCLOUD_TRACE_ENABLED = true;
-  traceAgent = require('../../..').start().private_();
+  traceAgent = require('../../..')().startAgent().private_();
   // We want to drop all spans and avoid network ops
   traceAgent.traceWriter.writeSpan = function() {};
 }

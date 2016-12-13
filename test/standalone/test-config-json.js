@@ -26,7 +26,7 @@ var assert = require('assert');
 process.env.GCLOUD_DIAGNOSTICS_CONFIG =
   path.join('test', 'fixtures', 'test-config.json');
 
-var agent = require('../..').start();
+var agent = require('../..')().startAgent();
 
 describe('json config', function() {
   it('should load trace config from json file', function() {
