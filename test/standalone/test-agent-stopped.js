@@ -23,7 +23,7 @@ process.env.GCLOUD_PROJECT = 0;
 
 describe('express', function() {
   it('should not break if no project number is found', function(done) {
-    var agent = require('../..');
+    var agent = require('../..')();
     agent.startAgent();
     var app = require('../hooks/fixtures/express4')();
     agent.stop();

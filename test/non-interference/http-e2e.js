@@ -48,7 +48,7 @@ var test_glob = semver.satisfies(process.version, '0.12.x') ?
 // Run tests
 console.log('Running tests');
 var gcloud_require = 'require(\'' + path.join(__dirname, '..', '..') +
-    '\').startAgent();';
+    '\')().startAgent();';
 glob(test_glob, function(err, files) {
   var errors = 0;
   var testCount;

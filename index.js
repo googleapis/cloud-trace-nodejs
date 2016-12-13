@@ -218,5 +218,5 @@ module.exports = global._google_trace_agent = Trace;
 
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {
-  module.exports.startAgent();
+  module.exports().startAgent();
 }

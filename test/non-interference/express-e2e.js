@@ -58,7 +58,7 @@ cp.execFileSync('npm', ['install']);
 // Reformat tests to use newly installed express
 console.log('Reformating tests');
 var gcloud_require = 'require(\'' + path.join(__dirname, '..', '..') +
-    '\').startAgent();';
+    '\')().startAgent();';
 glob(test_glob, function(err, files) {
   error = error || err;
   for (var i = 0; i < files.length; i++) {

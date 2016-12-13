@@ -28,7 +28,7 @@ process.env.GCLOUD_DIAGNOSTICS_CONFIG =
 
 process.env.GCLOUD_TRACE_LOGLEVEL = 2;
 
-var agent = require('../..').startAgent({logLevel: 3, stackTraceLimit: 2,
+var agent = require('../..')().startAgent({logLevel: 3, stackTraceLimit: 2,
   flushDelaySeconds: 31});
 
 describe('should respect config load order', function() {

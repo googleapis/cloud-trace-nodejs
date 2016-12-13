@@ -19,7 +19,7 @@
 process.env.GCLOUD_TRACE_DISABLE = 1;
 
 var assert = require('assert');
-var agent = require('../..');
+var agent = require('../..')();
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_TRACE_DISABLE', function() {

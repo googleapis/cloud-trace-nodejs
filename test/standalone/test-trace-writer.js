@@ -19,7 +19,7 @@
 var assert = require('assert');
 var nock = require('nock');
 var cls = require('../../src/cls.js');
-var agent = require('../..');
+var agent = require('../..')();
 var request = require('request');
 
 nock.disableNetConnect();
