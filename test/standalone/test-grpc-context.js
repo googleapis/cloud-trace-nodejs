@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var agent = require('../..').start({ samplingRate: 0 }).private_();
+var agent = require('../..').startAgent({ samplingRate: 0 }).private_();
 
 var common = require('../hooks/common.js');
 var assert = require('assert');

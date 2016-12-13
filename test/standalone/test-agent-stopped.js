@@ -24,7 +24,7 @@ process.env.GCLOUD_PROJECT = 0;
 describe('express', function() {
   it('should not break if no project number is found', function(done) {
     var agent = require('../..');
-    agent.start();
+    agent.startAgent();
     var app = require('../hooks/fixtures/express4')();
     agent.stop();
     app.get('/', function (req, res) {
@@ -47,7 +47,7 @@ describe('express', function() {
 describe('hapi', function() {
   it('should not break if no project number is found', function(done) {
     var agent = require('../..');
-    agent.start();
+    agent.startAgent();
     var hapi = require('../hooks/fixtures/hapi8');
     var server = new hapi.Server();
     server.connection({ port: 8081 });
@@ -76,7 +76,7 @@ describe('hapi', function() {
 describe('restify', function() {
   it('should not break if no project number is found', function(done) {
     var agent = require('../..');
-    agent.start();
+    agent.startAgent();
     var restify = require('../hooks/fixtures/restify4');
     var server = restify.createServer();
     agent.stop();

@@ -62,7 +62,7 @@ describe('tracewriter publishing', function() {
       }, 20);
     });
     process.nextTick(function() {
-      var privateAgent = agent.start({
+      var privateAgent = agent.startAgent({
         bufferSize: 1000,
         samplingRate: 0,
         onUncaughtException: 'flush'

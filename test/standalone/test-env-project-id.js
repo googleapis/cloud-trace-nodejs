@@ -23,13 +23,13 @@ var agent = require('../..');
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_PROJECT', function() {
-    agent.start();
+    agent.startAgent();
     assert.equal(agent.private_().config_.projectId, 1729);
     agent.stop();
   });
 
   it('should prefer env to config', function() {
-    agent.start({projectId: 1927});
+    agent.startAgent({projectId: 1927});
     assert.equal(agent.private_().config_.projectId, 1729);
     agent.stop();
   });

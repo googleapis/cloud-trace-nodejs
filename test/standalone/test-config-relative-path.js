@@ -27,7 +27,7 @@ process.env.GCLOUD_DIAGNOSTICS_CONFIG = path.join('fixtures', 'test-config.js');
 
 process.chdir('test');
 
-var agent = require('../..').start();
+var agent = require('../..').startAgent();
 
 describe('relative config', function() {
   it('should load trace config from relative path', function() {

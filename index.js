@@ -129,7 +129,7 @@ Trace.prototype.addTransactionLabel = function(key, value) {
     return agent.addTransactionLabel(key, value);
 };
 
-Trace.prototype.start = function(projectConfig) {
+Trace.prototype.startAgent = function(projectConfig) {
   if (this.isActive()) { // already started.
     agent.logger.warn('Calling start on already started agent.' +
       'New configuration will be ignored.');
@@ -173,9 +173,9 @@ Trace.prototype.start = function(projectConfig) {
         // Fatal error. Disable the agent.
         logger.error('Unable to acquire the project number from metadata ' +
           'service. Please provide a valid project number as an env. ' +
-          'variable, or through config.projectId passed to start().' +
+          'variable, or through config.projectId passed to startAgent().' +
           err);
-        publicAgent.stop();
+        this.stop();
         return;
       }
       config.projectId = project;
@@ -218,5 +218,5 @@ module.exports = global._google_trace_agent = Trace;
 
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {
-  module.exports.start();
+  module.exports.startAgent();
 }
