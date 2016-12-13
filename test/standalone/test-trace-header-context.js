@@ -27,7 +27,7 @@ describe('test-trace-header-context', function() {
   });
 
   afterEach(function() {
-    require('../..').stop();
+    require('../..')().stop();
   });
 
   it('should work with string url', function(done) {

@@ -17,7 +17,7 @@
 
 var common = require('./common.js');
 var traceLabels = require('../../src/trace-labels.js');
-require('../..').private_().config_.enhancedDatabaseReporting = true;
+require('../..')().private_().config_.enhancedDatabaseReporting = true;
 var assert = require('assert');
 var mysql = require('./fixtures/mysql2');
 
