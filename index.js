@@ -168,6 +168,7 @@ Trace.prototype.startAgent = function(projectConfig) {
   if (typeof config.projectId === 'undefined') {
     // Queue the work to acquire the projectNumber (potentially from the
     // network.)
+    var that = this;
     common.utils.getProjectNumber(headers, function(err, project) {
       if (err) {
         // Fatal error. Disable the agent.
@@ -175,7 +176,7 @@ Trace.prototype.startAgent = function(projectConfig) {
           'service. Please provide a valid project number as an env. ' +
           'variable, or through config.projectId passed to startAgent().' +
           err);
-        this.stop();
+        that.stop();
         return;
       }
       config.projectId = project;
