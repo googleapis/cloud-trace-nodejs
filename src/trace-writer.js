@@ -67,7 +67,7 @@ function TraceWriter(logger, config) {
   that.getHostname(function(hostname) {
     that.getInstanceId(function(instanceId) {
       var labels = {};
-      labels[traceLabels.AGENT_DATA] = 'node ' + pjson.version;
+      labels[traceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
       labels[traceLabels.GCE_HOSTNAME] = hostname;
       if (instanceId) {
         labels[traceLabels.GCE_INSTANCE_ID] = instanceId;
