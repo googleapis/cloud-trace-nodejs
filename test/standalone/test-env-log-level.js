@@ -19,7 +19,7 @@
 process.env.GCLOUD_TRACE_LOGLEVEL = 4;
 
 var assert = require('assert');
-var agent = require('../..')();
+var agent = require('../..')().startAgent();
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_TRACE_LOGLEVEL', function() {

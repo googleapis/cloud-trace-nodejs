@@ -22,7 +22,7 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 var assert = require('assert');
-var agent = require('../..')();
+var agent = require('../..')().startAgent();
 var cls = require('../../src/cls.js');
 
 describe('index.js', function() {
