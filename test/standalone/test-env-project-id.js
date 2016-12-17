@@ -19,7 +19,7 @@
 process.env.GCLOUD_PROJECT = 1729;
 
 var assert = require('assert');
-var agent = require('../..')().startAgent();
+var agent = require('../..')();
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_PROJECT', function() {
