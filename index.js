@@ -114,7 +114,7 @@ var publicAgent = {
     return agent.addTransactionLabel(key, value);
   },
 
-  start: function(projectConfig) {
+  startAgent: function(projectConfig) {
     if (this.isActive()) { // already started.
       agent.logger.warn('Calling start on already started agent.' +
         'New configuration will be ignored.');
@@ -198,9 +198,23 @@ var publicAgent = {
   private_: function() { return agent; }
 };
 
-module.exports = global._google_trace_agent = publicAgent;
+/**
+ * @param {object} options - These are currently ignored
+ */
+function Trace(options) {
+  if (!(this instanceof Trace)) {
+    return new Trace(options);
+  }
+}
+
+Trace.prototype.startAgent = function(projectConfig) {
+  publicAgent.startAgent(projectConfig);
+  return publicAgent;
+};
+
+module.exports = global._google_trace_agent = Trace;
 
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {
-  module.exports.start();
+  module.exports().startAgent();
 }

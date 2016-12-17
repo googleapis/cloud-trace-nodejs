@@ -20,7 +20,7 @@
 //   ex) docker -d
 // Run a mongo image binding the mongo port
 //   ex) docker run -p 27017:27017 -d mongo
-require('../..').start({ samplingRate: 0 });
+require('../..')().startAgent({ samplingRate: 0 });
 
 var common = require('../hooks/common.js');
 

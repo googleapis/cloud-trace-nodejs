@@ -23,7 +23,7 @@ var constants = require('../../src/constants.js');
 
 describe('test-trace-header-context', function() {
   beforeEach(function() {
-    require('../..').start();
+    require('../..')().startAgent();
   });
 
   afterEach(function() {

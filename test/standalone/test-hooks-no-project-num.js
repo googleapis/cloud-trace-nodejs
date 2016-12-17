@@ -35,7 +35,7 @@ describe('should not break without project num', function() {
     process.stderr.write = write;
   });
   it('mongo', function(done) {
-    var agent = require('../..').start();
+    var agent = require('../..')().startAgent();
     var mongoose = require('../hooks/fixtures/mongoose4');
     var Simple = mongoose.model('Simple', new mongoose.Schema({
       f1: String,
@@ -54,7 +54,7 @@ describe('should not break without project num', function() {
   });
 
   it('redis', function(done) {
-    var agent = require('../..').start();
+    var agent = require('../..')().startAgent();
     var redis = require('../hooks/fixtures/redis2.3');
     var client = redis.createClient();
     client.set('i', 1, function() {
@@ -67,7 +67,7 @@ describe('should not break without project num', function() {
 
   it('express', function(done) {
     var http = require('http');
-    var agent = require('../..').start();
+    var agent = require('../..')().startAgent();
     var express = require('../hooks/fixtures/express4');
     var app = express();
     var server;
@@ -84,7 +84,7 @@ describe('should not break without project num', function() {
 
   it('restify', function(done) {
     var http = require('http');
-    var agent = require('../..').start();
+    var agent = require('../..')().startAgent();
     var restify = require('../hooks/fixtures/restify4');
     var server = restify.createServer();
     server.get('/', function (req, res, next) {
@@ -104,7 +104,7 @@ describe('should not break without project num', function() {
 
   it('hapi', function(done) {
     var http = require('http');
-    var agent = require('../..').start();
+    var agent = require('../..')().startAgent();
     var hapi = require('../hooks/fixtures/hapi8');
     var server = new hapi.Server();
     server.connection({ port: 8081 });
@@ -124,7 +124,7 @@ describe('should not break without project num', function() {
   });
 
   it('http', function(done) {
-    var agent = require('../..').start();
+    var agent = require('../..')().startAgent();
     var req = require('http').get({ port: 8081 });
     req.on('error', function() {
       agent.stop();
@@ -133,7 +133,7 @@ describe('should not break without project num', function() {
   });
 
   it('mysql', function(done) {
-    var agent = require('../..').start();
+    var agent = require('../..')().startAgent();
     var mysql = require('../hooks/fixtures/mysql2');
     var pool = mysql.createPool({
       host     : 'localhost',

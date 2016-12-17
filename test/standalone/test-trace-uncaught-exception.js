@@ -19,7 +19,7 @@
 var assert = require('assert');
 var nock = require('nock');
 var cls = require('../../src/cls.js');
-var agent = require('../..');
+var agent = require('../..')();
 var request = require('request');
 
 nock.disableNetConnect();
@@ -62,7 +62,7 @@ describe('tracewriter publishing', function() {
       }, 20);
     });
     process.nextTick(function() {
-      var privateAgent = agent.start({
+      var privateAgent = agent.startAgent({
         bufferSize: 1000,
         samplingRate: 0,
         onUncaughtException: 'flush'
