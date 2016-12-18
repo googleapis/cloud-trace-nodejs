@@ -19,17 +19,17 @@
 process.env.GCLOUD_PROJECT = 1729;
 
 var assert = require('assert');
-var agent = require('../..')();
+var trace = require('../..')();
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_PROJECT', function() {
-    agent.startAgent();
+    var agent = trace.startAgent();
     assert.equal(agent.private_().config_.projectId, 1729);
     agent.stop();
   });
 
   it('should prefer env to config', function() {
-    agent.startAgent({projectId: 1927});
+    var agent = trace.startAgent({projectId: 1927});
     assert.equal(agent.private_().config_.projectId, 1729);
     agent.stop();
   });
