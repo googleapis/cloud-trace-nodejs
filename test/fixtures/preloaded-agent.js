@@ -16,7 +16,7 @@
 'use strict';
 
 var assert = require('assert');
-var agent = require('../../');
+var agent = require('../../')().startAgent();
 
 assert(agent.isActive());
 console.log('Preload test passed.');
