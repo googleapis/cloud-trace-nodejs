@@ -26,10 +26,19 @@ var trace = require('../..')();
 var cls = require('../../src/cls.js');
 
 describe('index.js', function() {
-  function wrapTest(nodule, property) {
+
+  it('should be harmless to stop before a start', function() {
+    var agent = trace.startAgent();
+    agent.stop();
+    agent.stop();
+    agent.stop();
+  });
+
+  function wrapTest(agent, nodule, property) {
+    agent.stop(); // harmless to stop before a start.
     assert(!nodule[property].__unwrap,
       property + ' already wrapped before start');
-    var agent = trace.startAgent();
+    agent = trace.startAgent();
     assert(nodule[property].__unwrap,
       property + ' should get wrapped on start');
     agent.stop();
@@ -44,7 +53,7 @@ describe('index.js', function() {
   }
 
   it('should wrap/unwrap module._load on start/stop', function() {
-    wrapTest(require('module'), '_load');
+    wrapTest(trace.startAgent(), require('module'), '_load');
   });
 
   it('should not attach exception handler with ignore option', function() {
@@ -57,7 +66,7 @@ describe('index.js', function() {
   it('should wrap/unwrap http on start/stop', function() {
     var agent = trace.startAgent(); // agent needs to be started before the first require.
     var http = require('http');
-    wrapTest(http, 'request');
+    wrapTest(agent, http, 'request');
     agent.stop();
   });
 
@@ -67,7 +76,7 @@ describe('index.js', function() {
     var patchedMethods = require('methods');
     patchedMethods.push('use', 'route', 'param', 'all');
     patchedMethods.forEach(function(method) {
-      wrapTest(express.application, method);
+      wrapTest(agent, express.application, method);
     });
     agent.stop();
   });
@@ -75,33 +84,33 @@ describe('index.js', function() {
   it('should wrap/unwrap hapi on start/stop', function() {
     var agent = trace.startAgent();
     var hapi = require('../hooks/fixtures/hapi8');
-    wrapTest(hapi.Server.prototype, 'connection');
+    wrapTest(agent, hapi.Server.prototype, 'connection');
     agent.stop();
   });
 
   it('should wrap/unwrap mongodb-core on start/stop', function() {
     var agent = trace.startAgent();
     var mongo = require('../hooks/fixtures/mongodb-core1');
-    wrapTest(mongo.Server.prototype, 'command');
-    wrapTest(mongo.Server.prototype, 'insert');
-    wrapTest(mongo.Server.prototype, 'update');
-    wrapTest(mongo.Server.prototype, 'remove');
-    wrapTest(mongo.Cursor.prototype, 'next');
+    wrapTest(agent, mongo.Server.prototype, 'command');
+    wrapTest(agent, mongo.Server.prototype, 'insert');
+    wrapTest(agent, mongo.Server.prototype, 'update');
+    wrapTest(agent, mongo.Server.prototype, 'remove');
+    wrapTest(agent, mongo.Cursor.prototype, 'next');
     agent.stop();
   });
 
   it('should wrap/unwrap redis on start/stop', function() {
     var agent = trace.startAgent();
     var redis = require('../hooks/fixtures/redis0.12');
-    wrapTest(redis.RedisClient.prototype, 'send_command');
-    wrapTest(redis, 'createClient');
+    wrapTest(agent, redis.RedisClient.prototype, 'send_command');
+    wrapTest(agent, redis, 'createClient');
     agent.stop();
   });
 
   it('should wrap/unwrap restify on start/stop', function() {
     var agent = trace.startAgent();
     var restify = require('../hooks/fixtures/restify4');
-    wrapTest(restify, 'createServer');
+    wrapTest(agent, restify, 'createServer');
     agent.stop();
   });
 
