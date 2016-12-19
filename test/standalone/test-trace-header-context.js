@@ -22,12 +22,13 @@ var express = require('../hooks/fixtures/express4');
 var constants = require('../../src/constants.js');
 
 describe('test-trace-header-context', function() {
+  var agent;
   beforeEach(function() {
-    require('../..')().startAgent();
+    agent = require('../..')().startAgent();
   });
 
   afterEach(function() {
-    require('../..').stop();
+    agent.stop();
   });
 
   it('should work with string url', function(done) {
