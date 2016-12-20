@@ -16,9 +16,8 @@
 'use strict';
 
 var common = require('./common.js');
-require('../..')().startAgent({
-  enhancedDatabaseReporting: true
-});
+var trace = require('../..')();
+trace.startAgent().private_().config_.enhancedDatabaseReporting = true;
 var assert = require('assert');
 var traceLabels = require('../../src/trace-labels.js');
 
