@@ -44,10 +44,6 @@ var formatBuffer = function(buffer) {
 describe('tracewriter publishing', function() {
 
   var agent;
-  beforeEach(function() {
-    agent = trace.startAgent();
-  });
-
   it('should publish on unhandled exception', function(done) {
     process.removeAllListeners('uncaughtException'); // Remove mocha handler
     var buf;
@@ -67,13 +63,12 @@ describe('tracewriter publishing', function() {
       }, 20);
     });
     process.nextTick(function() {
-      // TODO: (DK) Check if stop() should be called here
-      agent.stop();
-      var privateAgent = agent.startAgent({
+      agent = trace.startAgent({
         bufferSize: 1000,
         samplingRate: 0,
         onUncaughtException: 'flush'
-      }).private_();
+      });
+      var privateAgent = agent.private_();
       privateAgent.traceWriter.request_ = request; // Avoid authing
       cls.getNamespace().run(function() {
         queueSpans(2, privateAgent);
