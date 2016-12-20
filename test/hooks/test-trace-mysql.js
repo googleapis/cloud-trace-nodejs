@@ -17,8 +17,9 @@
 
 var common = require('./common.js');
 var traceLabels = require('../../src/trace-labels.js');
-var agent = require('../..')().startAgent();
-agent.private_().config_.enhancedDatabaseReporting = true;
+require('../..')().startAgent({
+  enhancedDatabaseReporting: true
+});
 var assert = require('assert');
 var mysql = require('./fixtures/mysql2');
 
