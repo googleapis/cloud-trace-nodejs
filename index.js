@@ -198,6 +198,7 @@ var publicAgent = {
   private_: function() { return agent; }
 };
 
+// TODO: Update the documentation for the supplied options
 /**
  * @param {object} options - These are currently ignored
  */
