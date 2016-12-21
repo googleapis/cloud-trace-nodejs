@@ -198,9 +198,26 @@ var publicAgent = {
   private_: function() { return agent; }
 };
 
-// TODO: Update the documentation for the supplied options
 /**
- * @param {object} options - These are currently ignored
+ * <p class="notice">
+ *   *This module is experimental, and should be used by early adopters. This
+ *   module uses APIs that may be undocumented and subject to change without
+ *   notice.*
+ * </p>
+ *
+ * This module provides Stackdriver Trace support for Node.js applications.
+ * [Stackdriver Trace](https://cloud.google.com/cloud-trace/) is a feature of
+ * [Google Cloud Platform](https://cloud.google.com/) that collects latency
+ * data (traces) from your applications and displays it in near real-time in
+ * the [Google Cloud Console][cloud-console].
+ *
+ * @constructor
+ * @alias module:trace
+ *
+ * @resource [What is Stackdriver Trace]{@link
+ *   https://cloud.google.com/cloud-trace/}
+ *
+ * @param {object} options - [Configuration object](#/docs)
  */
 function Trace(options) {
   if (!(this instanceof Trace)) {
@@ -208,8 +225,20 @@ function Trace(options) {
   }
 }
 
-Trace.prototype.startAgent = function(projectConfig) {
-  publicAgent.startAgent(projectConfig);
+/**
+ * Start the Trace agent that will make your application available for
+ * tracing with Stackdriver Trace.
+ *
+ * @param {object=} config - Trace configuration
+ *
+ * @resource [Introductory video]{@link
+ * https://www.youtube.com/watch?v=NCFDqeo7AeY}
+ *
+ * @example
+ * trace.startAgent();
+ */
+Trace.prototype.startAgent = function(config) {
+  publicAgent.startAgent(config);
   return publicAgent;
 };
 
