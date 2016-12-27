@@ -23,7 +23,8 @@ var filesLoadedBeforeTrace = Object.keys(require.cache);
 require('continuation-local-storage');
 
 var SpanData = require('./src/span-data.js');
-var common = require('@google/cloud-diagnostics-common');
+var common = require('@google-cloud/common');
+var gcpMetadata = require('gcp-metadata');
 var semver = require('semver');
 var constants = require('./src/constants.js');
 var util = require('./src/util.js');
@@ -125,7 +126,18 @@ var publicAgent = {
     if (!config.enabled) {
       return this;
     }
-    var logger = common.logger.create(config.logLevel, '@google/cloud-trace');
+
+    var logLevel = config.logLevel || 2;
+    if (logLevel < 0) {
+      logLevel = 0;
+    } else if (logLevel > 4) {
+      logLevel = 4;
+    }
+    var logger = common.logger({
+      level: common.logger.LEVELS[logLevel],
+      tag: '@google/cloud-trace'
+    });
+
     if (!semver.satisfies(process.versions.node, '>=0.12')) {
       logger.error('Tracing is only supported on Node versions >=0.12');
       return this;
@@ -153,7 +165,10 @@ var publicAgent = {
     if (typeof config.projectId === 'undefined') {
       // Queue the work to acquire the projectNumber (potentially from the
       // network.)
-      common.utils.getProjectNumber(headers, function(err, project) {
+      gcpMetadata.project({
+        property: 'project-id',
+        headers: headers
+      }, function(err, response, projectId) {
         if (err) {
           // Fatal error. Disable the agent.
           logger.error('Unable to acquire the project number from metadata ' +
@@ -163,13 +178,11 @@ var publicAgent = {
           publicAgent.stop();
           return;
         }
-        config.projectId = project;
+        config.projectId = projectId;
       });
-    } else if (typeof config.projectId === 'number') {
-      config.projectId = config.projectId.toString();
     } else if (typeof config.projectId !== 'string') {
       logger.error('config.projectId, if provided, must be' +
-        ' a string or number. Disabling trace agent.');
+        ' a string. Disabling trace agent.');
       return this;
     }
 

@@ -16,7 +16,8 @@
 
 'use strict';
 
-var utils = require('@google/cloud-diagnostics-common').utils;
+var gcpMetadata = require('gcp-metadata');
+var util = require('@google-cloud/common').util;
 var traceLabels = require('./trace-labels.js');
 var pjson = require('../package.json');
 var constants = require('./constants.js');
@@ -42,7 +43,8 @@ function TraceWriter(logger, config) {
   this.config_ = config;
 
   /** @private {function} authenticated request function */
-  this.request_ = utils.authorizedRequestFactory(SCOPES, {
+  this.request_ = util.makeAuthenticatedRequestFactory({
+    scopes: SCOPES,
     credentials: config.credentials,
     keyFile: config.keyFilename
   });
@@ -59,7 +61,7 @@ function TraceWriter(logger, config) {
   // Schedule periodic flushing of the buffer, but only if we are able to get
   // the project number (potentially from the network.)
   var that = this;
-  that.getProjectNumber(function(err, project) {
+  that.getProjectId(function(err, project) {
     if (err) { return; } // ignore as index.js takes care of this.
     that.scheduleFlush_(project);
   });
@@ -100,7 +102,10 @@ TraceWriter.prototype.stop = function() {
 
 TraceWriter.prototype.getHostname = function(cb) {
   var that = this;
-  utils.getHostname(headers, function(err, hostname) {
+  gcpMetadata.instance({
+    property: 'hostname',
+    headers: headers
+  }, function(err, response, hostname) {
     if (err && err.code !== 'ENOTFOUND') {
       // We are running on GCP.
       that.logger_.warn('Unable to retrieve GCE hostname.', err);
@@ -111,12 +116,42 @@ TraceWriter.prototype.getHostname = function(cb) {
 
 TraceWriter.prototype.getInstanceId = function(cb) {
   var that = this;
-  utils.getInstanceId(headers, function(err, instanceId) {
+  gcpMetadata.instance({
+    property: 'id',
+    headers: headers
+  }, function(err, response, instanceId) {
     if (err && err.code !== 'ENOTFOUND') {
       // We are running on GCP.
       that.logger_.warn('Unable to retrieve GCE instance id.', err);
     }
     cb(instanceId);
+  });
+};
+
+/**
+ * Returns the project ID if it has been cached and attempts to load
+ * it from the enviroment or network otherwise.
+ *
+ * @param {function(?, number):?} callback an (err, result) style callback
+ */
+TraceWriter.prototype.getProjectId = function(callback) {
+  var that = this;
+  if (that.config_.projectId) {
+    callback(null, that.config_.projectId);
+    return;
+  }
+
+  gcpMetadata.project({
+    property: 'project-id',
+    headers: headers
+  }, function(err, response, projectId) {
+    if (err) {
+      callback(err);
+      return;
+    }
+    that.logger_.info('Acquired ProjectId from metadata: ' + projectId);
+    that.config_.projectId = projectId;
+    callback(null, projectId);
   });
 };
 
@@ -151,7 +186,7 @@ TraceWriter.prototype.writeSpan = function(spanData) {
 TraceWriter.prototype.queueTrace_ = function(trace) {
   var that = this;
 
-  that.getProjectNumber(function(err, project) {
+  that.getProjectId(function(err, project) {
     if (err) {
       that.logger_.info('No project number, dropping trace.');
       return; // ignore as index.js takes care of this.
@@ -213,7 +248,7 @@ TraceWriter.prototype.publish_ = function(projectId, json) {
   var uri = 'https://cloudtrace.googleapis.com/v1/projects/' +
     projectId + '/traces';
 
-  this.request_({
+  this.request_.makeAuthenticatedRequest({
     method: 'PATCH',
     uri: uri,
     body: json,
@@ -225,30 +260,6 @@ TraceWriter.prototype.publish_ = function(projectId, json) {
     } else {
       that.logger_.info('TraceWriter: published. statusCode: ' + response.statusCode);
     }
-  });
-};
-
-/**
- * Returns the project number if it has been cached and attempts to load
- * it from the enviroment or network otherwise.
- *
- * @param {function(?, number):?} callback an (err, result) style callback
- */
-TraceWriter.prototype.getProjectNumber = function(callback) {
-  var that = this;
-  if (that.config_.projectId) {
-    callback(null, that.config_.projectId);
-    return;
-  }
-
-  utils.getProjectNumber(headers, function(err, project) {
-    if (err) {
-      callback(err);
-      return;
-    }
-    that.logger_.info('Acquired ProjectId from metadata: ' + project);
-    that.config_.projectId = project;
-    callback(null, project);
   });
 };
 
