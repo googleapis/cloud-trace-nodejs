@@ -75,7 +75,11 @@ var initConfig = function(projectConfig) {
   util._extend(config, require('./config.js').trace);
   util._extend(config, projectConfig);
   if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
-    config.logLevel = process.env.GCLOUD_TRACE_LOGLEVEL;
+    try {
+      config.logLevel = parseInt(process.env.GCLOUD_TRACE_LOGLEVEL);
+    } catch (e) {
+      // Just use the original log level if GCLOUD_TRACE_LOGLEVEL is malformed.
+    }
   }
   if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
     config.projectId = process.env.GCLOUD_PROJECT;
@@ -127,11 +131,11 @@ var publicAgent = {
       return this;
     }
 
-    var logLevel = config.logLevel || 2;
+    var logLevel = config.logLevel;
     if (logLevel < 0) {
       logLevel = 0;
-    } else if (logLevel > 4) {
-      logLevel = 4;
+    } else if (logLevel >= common.logger.LEVELS.length) {
+      logLevel = common.logger.LEVELS.length - 1;
     }
     var logger = common.logger({
       level: common.logger.LEVELS[logLevel],

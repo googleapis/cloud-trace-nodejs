@@ -36,7 +36,7 @@
     "tmp": "0.0.31"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.10.0",
+    "@google-cloud/common": "^0.11.0",
     "continuation-local-storage": "^3.1.4",
     "gcp-metadata": "^0.1.0",
     "lodash.findindex": "^4.4.0",
