@@ -248,7 +248,7 @@ TraceWriter.prototype.publish_ = function(projectId, json) {
   var uri = 'https://cloudtrace.googleapis.com/v1/projects/' +
     projectId + '/traces';
 
-  this.request_.makeAuthenticatedRequest({
+  this.request_({
     method: 'PATCH',
     uri: uri,
     body: json,
