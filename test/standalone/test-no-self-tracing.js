@@ -53,7 +53,7 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/instance/id').reply(200);
     var apiScope = nock('https://cloudtrace.googleapis.com')
                 .patch('/v1/projects/0/traces').reply(200);
-    var agent = require('../..').start({ projectId: 0, bufferSize: 1 });
+    var agent = require('../..').start({ projectId: '0', bufferSize: 1 });
     agent.private_().traceWriter.request_ = request;
     require('http'); // Must require http to force patching of the module
     var oldDebug = agent.private_().logger.debug;
