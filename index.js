@@ -22,17 +22,18 @@ var filesLoadedBeforeTrace = Object.keys(require.cache);
 // patched before any user-land modules get loaded.
 require('continuation-local-storage');
 
-var SpanData = require('./src/span-data.js');
 var common = require('@google-cloud/common');
+var constants = require('./src/constants.js');
 var gcpMetadata = require('gcp-metadata');
 var semver = require('semver');
-var constants = require('./src/constants.js');
-var util = require('./src/util.js');
+var traceUtil = require('./src/util.js');
+var SpanData = require('./src/span-data.js');
+var util = require('util');
 
 var modulesLoadedBeforeTrace = [];
 
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
-  var moduleName = util.packageNameFromPath(filesLoadedBeforeTrace[i]);
+  var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
   if (moduleName && moduleName !== '@google/cloud-trace' &&
       modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
     modulesLoadedBeforeTrace.push(moduleName);
@@ -111,7 +112,6 @@ var publicAgent = {
     var logLevelValid = true;
 
     // Initialize config object
-    var util = require('util');
     var config = {};
     util._extend(config, require('./config.js').trace);
     util._extend(config, projectConfig);
