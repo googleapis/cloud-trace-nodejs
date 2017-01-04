@@ -33,7 +33,7 @@ describe('test-no-self-tracing', function() {
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
                 .get('/computeMetadata/v1/instance/id').reply(200)
-                .get('/computeMetadata/v1/project/numeric-project-id').reply(200);
+                .get('/computeMetadata/v1/project/project-id').reply(200);
     var agent = require('../..').start();
     require('http'); // Must require http to force patching of the module
     var oldDebug = agent.private_().logger.debug;
