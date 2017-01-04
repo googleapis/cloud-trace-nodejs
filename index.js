@@ -70,6 +70,26 @@ var phantomTraceAgent = {
 /** @private */
 var agent = phantomTraceAgent;
 
+var initConfig = function(projectConfig) {
+  var config = {};
+  util._extend(config, require('./config.js').trace);
+  util._extend(config, projectConfig);
+  if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
+    var envLogLevel = parseInt(process.env.GCLOUD_TRACE_LOGLEVEL, 10);
+    if (!isNaN(envLogLevel)) {
+      config.logLevel = envLogLevel;
+    } else {
+      console.error('Warning: Ignoring env var GCLOUD_TRACE_LOGLEVEL as it ' +
+        'contains an non-integer log level: ' +
+        process.env.GCLOUD_TRACE_LOGLEVEL);
+    }
+  }
+  if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
+    config.projectId = process.env.GCLOUD_PROJECT;
+  }
+  return config;
+};
+
 /**
  * The singleton public agent. This is the public API of the module.
  */
@@ -109,22 +129,7 @@ var publicAgent = {
       return this;
     }
 
-    var logLevelValid = true;
-
-    // Initialize config object
-    var config = {};
-    util._extend(config, require('./config.js').trace);
-    util._extend(config, projectConfig);
-    if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
-      if (process.env.GCLOUD_TRACE_LOGLEVEL.match(/^\d+$/)) {
-        config.logLevel = parseInt(process.env.GCLOUD_TRACE_LOGLEVEL);
-      } else {
-        logLevelValid = false;
-      }
-    }
-    if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
-      config.projectId = process.env.GCLOUD_PROJECT;
-    }
+    var config = initConfig(projectConfig);
 
     if (!config.enabled) {
       return this;
@@ -133,21 +138,13 @@ var publicAgent = {
     var logLevel = config.logLevel;
     if (logLevel < 0) {
       logLevel = 0;
-      logLevelValid = false;
     } else if (logLevel >= common.logger.LEVELS.length) {
       logLevel = common.logger.LEVELS.length - 1;
-      logLevelValid = false;
     }
     var logger = common.logger({
       level: common.logger.LEVELS[logLevel],
       tag: '@google/cloud-trace'
     });
-    if (!logLevelValid) {
-      var desiredLogLevel = process.env.GCLOUD_TRACE_LOGLEVEL ||
-        config.logLevel;
-      logger.warn('Provided log level ' + desiredLogLevel + ' is invalid, ' +
-        'using log level ' + logLevel + ' instead.');
-    }
 
     if (!semver.satisfies(process.versions.node, '>=0.12')) {
       logger.error('Tracing is only supported on Node versions >=0.12');
