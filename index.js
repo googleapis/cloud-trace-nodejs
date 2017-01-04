@@ -69,24 +69,6 @@ var phantomTraceAgent = {
 /** @private */
 var agent = phantomTraceAgent;
 
-var initConfig = function(projectConfig) {
-  var util = require('util');
-  var config = {};
-  util._extend(config, require('./config.js').trace);
-  util._extend(config, projectConfig);
-  if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
-    try {
-      config.logLevel = parseInt(process.env.GCLOUD_TRACE_LOGLEVEL);
-    } catch (e) {
-      // Just use the original log level if GCLOUD_TRACE_LOGLEVEL is malformed.
-    }
-  }
-  if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
-    config.projectId = process.env.GCLOUD_PROJECT;
-  }
-  return config;
-};
-
 /**
  * The singleton public agent. This is the public API of the module.
  */
@@ -126,7 +108,24 @@ var publicAgent = {
       return this;
     }
 
-    var config = initConfig(projectConfig);
+    var logLevelValid = true;
+
+    // Initialize config object
+    var util = require('util');
+    var config = {};
+    util._extend(config, require('./config.js').trace);
+    util._extend(config, projectConfig);
+    if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
+      if (process.env.GCLOUD_TRACE_LOGLEVEL.match(/^\d+$/)) {
+        config.logLevel = parseInt(process.env.GCLOUD_TRACE_LOGLEVEL);
+      } else {
+        logLevelValid = false;
+      }
+    }
+    if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
+      config.projectId = process.env.GCLOUD_PROJECT;
+    }
+
     if (!config.enabled) {
       return this;
     }
@@ -134,13 +133,21 @@ var publicAgent = {
     var logLevel = config.logLevel;
     if (logLevel < 0) {
       logLevel = 0;
+      logLevelValid = false;
     } else if (logLevel >= common.logger.LEVELS.length) {
       logLevel = common.logger.LEVELS.length - 1;
+      logLevelValid = false;
     }
     var logger = common.logger({
       level: common.logger.LEVELS[logLevel],
       tag: '@google/cloud-trace'
     });
+    if (!logLevelValid) {
+      var desiredLogLevel = process.env.GCLOUD_TRACE_LOGLEVEL ||
+        config.logLevel;
+      logger.warn('Provided log level ' + desiredLogLevel + ' is invalid, ' +
+        'using log level ' + logLevel + ' instead.');
+    }
 
     if (!semver.satisfies(process.versions.node, '>=0.12')) {
       logger.error('Tracing is only supported on Node versions >=0.12');
@@ -167,26 +174,36 @@ var publicAgent = {
     }
 
     if (typeof config.projectId === 'undefined') {
-      // Queue the work to acquire the projectNumber (potentially from the
+      // Queue the work to acquire the projectId (potentially from the
       // network.)
       gcpMetadata.project({
         property: 'project-id',
         headers: headers
       }, function(err, response, projectId) {
+        if (response && response.statusCode !== 200) {
+          if (response.statusCode === 503) {
+            err = new Error('Metadata service responded with a 503 status ' +
+              'code. This may be due to a temporary server error; please try ' +
+              'again later.');
+          } else {
+            err = new Error('Metadata service responded with the following ' +
+              'status code: ' + response.statusCode);
+          }
+        }
         if (err) {
           // Fatal error. Disable the agent.
           logger.error('Unable to acquire the project number from metadata ' +
             'service. Please provide a valid project number as an env. ' +
-            'variable, or through config.projectId passed to start().' +
-            err);
+            'variable, or through config.projectId passed to start(). ' +
+            'Disabling trace agent. ' + err);
           publicAgent.stop();
           return;
         }
         config.projectId = projectId;
       });
     } else if (typeof config.projectId !== 'string') {
-      logger.error('config.projectId, if provided, must be' +
-        ' a string. Disabling trace agent.');
+      logger.error('config.projectId, if provided, must be a string. ' +
+        'Disabling trace agent.');
       return this;
     }
 
