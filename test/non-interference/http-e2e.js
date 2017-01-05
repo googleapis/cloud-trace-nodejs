@@ -39,7 +39,9 @@ cp.execFileSync('git', ['clone', '--branch', process.version,
     'https://github.com/nodejs/node.git', '--depth', '1', node_dir]);
 fs.mkdirSync(path.join(node_dir, 'test', 'tmp'));
 console.log('Turning off global checks');
-cp.execFileSync('sed', ['-i', 's/exports.globalCheck = true/' +
+// The use of the -i flag as '-i.bak' to specify a backup extension of '.bak'
+// is needed to ensure that the command works on both Linux and OS X
+cp.execFileSync('sed', ['-i.bak', 's/exports.globalCheck = true/' +
     'exports.globalCheck = false/g', path.join(node_dir, 'test', 'common.js')]);
 var test_glob = semver.satisfies(process.version, '0.12.x') ?
     path.join(node_dir, 'test', 'simple', 'test-http*.js') :
@@ -66,7 +68,9 @@ glob(test_glob, function(err, files) {
       console.log('Skipped: ' + files[testCount]);
       continue;
     }
-    cp.execFileSync('sed', ['-i', 's#\'use strict\';#' +
+    // The use of the -i flag as '-i.bak' to specify a backup extension of 
+    // '.bak' is needed to ensure that the command works on both Linux and OS X
+    cp.execFileSync('sed', ['-i.bak', 's#\'use strict\';#' +
         '\'use strict\';' + gcloud_require + '#g', files[testCount]]);
     if (cp.spawnSync('grep', ['-q', gcloud_require, files[testCount]]).status) {
       cp.execSync('echo "' + gcloud_require + '" | cat - ' + files[testCount] +
