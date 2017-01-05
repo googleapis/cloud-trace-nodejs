@@ -36,9 +36,9 @@ describe('findModuleVersion', function() {
   });
 
   it('should work with namespaces', function() {
-    var modulePath = findModulePath('@google/cloud-diagnostics-common', module);
+    var modulePath = findModulePath('@google-cloud/common', module);
     var truePackage =
-      require('../../node_modules/@google/cloud-diagnostics-common/package.json');
+      require('../../node_modules/@google-cloud/common/package.json');
     assert.equal(findModuleVersion(modulePath, Module._load), truePackage.version);
   });
 });
