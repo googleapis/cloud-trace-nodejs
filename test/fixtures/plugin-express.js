@@ -1,8 +1,7 @@
-var TraceLabels = require('../../trace-labels.js');
+var TraceLabels = require('../../src/trace-labels.js');
 var shimmer = require('shimmer');
 var methods = require('methods').concat('use', 'route', 'param', 'all');
 
-// for most modules, where we patch the root file (like express)
 module.exports = function() {
   return {
     '': {
@@ -57,8 +56,9 @@ module.exports = function() {
         methods.forEach(function(method) {
           shimmer.wrap(express.application, method, applicationActionWrap);
         });
+        express._plugin_patched = true;
       },
-      unpatch: function(client) {
+      unpatch: function(express) {
         // TODO(kjin): not implemented
       }
     }

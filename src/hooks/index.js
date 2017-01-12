@@ -38,7 +38,7 @@ var Plugin = require('../trace-plugin-interface.js');
 // Note: the order in which filenames are defined in the hooks determines the
 // order in which they are loaded.
 var toInstrument = Object.create(null, {
-  'express': { enumerable: true, value: { file: './userspace/hook-express-extreme.js',
+  'express': { enumerable: true, value: { file: './userspace/hook-express.js',
       patches: {} } },
   'grpc': { enumerable: true, value: { file: './userspace/hook-grpc.js',
       patches: {} } },
@@ -123,7 +123,14 @@ function checkLoadedModules(logger) {
 function activate(agent) {
 
   logger = agent.logger;
+
+  // Plugin stuff
   var api = new Plugin(agent);
+  Object.keys(agent.plugins).forEach(function(pluginName) {
+    if (toInstrument[pluginName]) {
+      toInstrument[pluginName].file = agent.plugins[pluginName];
+    }
+  });
 
   checkLoadedModules(logger);
 
