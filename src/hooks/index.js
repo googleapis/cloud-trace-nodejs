@@ -19,6 +19,7 @@ var Module = require('module');
 var shimmer = require('shimmer');
 var path = require('path');
 var fs = require('fs');
+var Plugin = require('../trace-plugin-interface.js');
 
 //
 // All these operations need to be reversible
@@ -37,7 +38,7 @@ var fs = require('fs');
 // Note: the order in which filenames are defined in the hooks determines the
 // order in which they are loaded.
 var toInstrument = Object.create(null, {
-  'express': { enumerable: true, value: { file: './userspace/hook-express.js',
+  'express': { enumerable: true, value: { file: './userspace/hook-express-extreme.js',
       patches: {} } },
   'grpc': { enumerable: true, value: { file: './userspace/hook-grpc.js',
       patches: {} } },
@@ -122,6 +123,7 @@ function checkLoadedModules(logger) {
 function activate(agent) {
 
   logger = agent.logger;
+  var api = new Plugin(agent);
 
   checkLoadedModules(logger);
 
@@ -141,7 +143,7 @@ function activate(agent) {
           modulePatch[file].module = originalModuleLoad(loadPath, module, false);
         }
         if (modulePatch[file].patch !== undefined) {
-          modulePatch[file].patch(modulePatch[file].module);
+          modulePatch[file].patch(modulePatch[file].module, api);
         }
         if (modulePatch[file].intercept !== undefined) {
           modulePatch[file].module = modulePatch[file].intercept(modulePatch[file].module);
