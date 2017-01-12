@@ -1,3 +1,4 @@
+'use strict';
 var Mocha = require('mocha');
 var assert = require('assert');
 
@@ -8,7 +9,7 @@ var config = {
     'express': __dirname + '/fixtures/plugin-express.js'
   }
 };
-var agent = require('..').start(config).private_();
+require('..').start(config).private_();
 
 describe('trace agent plugin interface', function() {
   it('should make an express plugin capable of running correctly', function(done) {

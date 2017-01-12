@@ -1,3 +1,4 @@
+'use strict';
 var TraceLabels = require('../../src/trace-labels.js');
 var shimmer = require('shimmer');
 var methods = require('methods').concat('use', 'route', 'param', 'all');

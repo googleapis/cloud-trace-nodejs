@@ -1,5 +1,4 @@
-var cls = require('continuation-local-storage');
-var SpanData = require('./span-data.js');
+'use strict';
 var constants = require('./constants.js');
 
 function Transaction(agent, traceContext) {
@@ -9,20 +8,11 @@ function Transaction(agent, traceContext) {
   this.namespace = agent.namespace;
 }
 
-function startChildSpan() {
-  console.log('Started root span: ' + Array.prototype.slice.call(arguments));
-}
-
-function endChildSpan() {
-  console.log('Ended root span: ' + Array.prototype.slice.call(arguments));
-}
-
 /*
  * Binds the given function to the current context. Proxy to cls bind but using zone.js
  * naming conventions.
  */
 Transaction.prototype.wrap = function(fn) {
-  console.log('Binded function: ' + Array.prototype.slice.call(arguments));
   this.namespace.bind(fn);
 };
 
@@ -31,7 +21,6 @@ Transaction.prototype.wrap = function(fn) {
  * zone.js naming conventions.
  */
 Transaction.prototype.wrapEmitter = function(ee) {
-  console.log('Binded emitter: ' + Array.prototype.slice.call(arguments));
   this.namespace.bindEmitter(ee);
 };
 
@@ -43,21 +32,23 @@ Transaction.prototype.wrapEmitter = function(ee) {
 Transaction.prototype.runRoot = function(name, fn, setTraceContext) {
   var that = this;
   that.namespace.run(function() {
-    that.currentTraceContext = that.agent.createRootSpanData(name, that.propogatedContext.traceId, that.propogatedContext.spanId, 3);
+    that.currentTraceContext = that.agent.createRootSpanData(name,
+      that.propogatedContext.traceId, that.propogatedContext.spanId, 3);
     if (setTraceContext) {
-      var header = that.currentTraceContext.traceId + '/' + that.currentTraceContext.spanId;
-      var options = that.propogatedContext.options | constants.TRACE_OPTIONS_TRACE_ENABLED;
+      var header = that.currentTraceContext.traceId + '/' +
+        that.currentTraceContext.spanId;
+      var options = that.propogatedContext.options |
+        constants.TRACE_OPTIONS_TRACE_ENABLED;
       header += (';o=' + options);
       setTraceContext('x-cloud-trace-context', header);
     }
     var addLabel = function (key, value) {
-      console.log('Added label: ' + Array.prototype.slice.call(arguments));
       that.currentTraceContext.addLabel(key, value);
     };
     var endRootSpan = function() { that.currentTraceContext.close(); };
     fn(addLabel, endRootSpan);
   });
-}
+};
 
 /*
  * Constructs a new child span using the information associated with this transaction as
@@ -67,9 +58,7 @@ Transaction.prototype.runRoot = function(name, fn, setTraceContext) {
  */
 Transaction.prototype.runChild = function(fn) {
   // TODO(kjin): implement me
-  startChildSpan();
-  namespace.run(fn.bind(null, addLabel, endChildSpan));
-}
+};
 
 function Plugin(agent) {
   this.activeTransaction = null;
@@ -92,6 +81,6 @@ Plugin.prototype.createTransaction = function(getTraceContext, url) {
 
 Plugin.prototype.getTransaction = function() {
   return this.activeTransaction;
-}
+};
 
 module.exports = Plugin;
