@@ -431,7 +431,9 @@ module.exports = function(version_, agent_) {
   return {
     'src/node/src/client.js': {
       patch: function(client) {
-        agent = agent_;
+        if (!agent) {
+          agent = agent_;
+        }
         shimmer.wrap(client, 'makeClientConstructor',
             makeClientConstructorWrap);
       },
@@ -445,6 +447,9 @@ module.exports = function(version_, agent_) {
     },
     'src/node/src/server.js': {
       patch: function(server) {
+        if (!agent) {
+          agent = agent_;
+        }
         shimmer.wrap(server.Server.prototype, 'register', serverRegisterWrap);
       },
       unpatch: function(server) {
