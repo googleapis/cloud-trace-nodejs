@@ -24,5 +24,15 @@ module.exports = {
   TRACE_AGENT_REQUEST_HEADER: 'x-cloud-trace-agent-request',
 
   /** @const {number} bitmask to determine whether trace is enabled in trace options. */
-  TRACE_OPTIONS_TRACE_ENABLED: 1 << 0
+  TRACE_OPTIONS_TRACE_ENABLED: 1 << 0,
+
+  /** See: cloud.google.com/trace/api/reference/rest/v1/projects.traces for limits. */
+  /** Maximum size of a span name in bytes. */
+  TRACE_SERVICE_SPAN_NAME_LIMIT: 127,
+
+  /** Maximum size of a label key in bytes. */
+  TRACE_SERVICE_LABEL_KEY_LIMIT: 127,
+
+  /** Maximum size of a label value in bytes. */
+  TRACE_SERVICE_LABEL_VALUE_LIMIT: 16 * 1024 - 1,
 };
