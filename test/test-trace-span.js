@@ -45,6 +45,12 @@ describe('TraceSpan', function() {
     assert.equal(span.labels.c, '5');
   });
 
+  it ('serializes object labels correctly', function() {
+    var span = new TraceSpan('name', 1, 0);
+    span.setLabel('a', [{i: 5}, {j: 6}]);
+    assert.equal(span.labels.a, '[ { i: 5 }, { j: 6 } ]');
+  });
+
   it('closes', function() {
     var span = new TraceSpan('name', 1, 0);
     assert.equal(span.endTime, '');
