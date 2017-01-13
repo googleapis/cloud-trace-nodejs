@@ -53,6 +53,17 @@ module.exports = {
 
   setRootContext: function setRootContext(rootContext) {
     getNamespace().set('root', rootContext);
+  },
+
+  getTransaction: function getTransaction() {
+    if (getNamespace() && getNamespace().get('transaction')) {
+      return getNamespace().get('transaction');
+    }
+    return null;
+  },
+
+  setTransaction: function setTransaction(transaction) {
+    getNamespace().set('transaction', transaction);
   }
 };
 
