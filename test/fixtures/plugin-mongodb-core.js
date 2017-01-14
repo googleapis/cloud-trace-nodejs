@@ -3,7 +3,6 @@
 var traceUtil = require('../../src/util.js');
 var shimmer = require('shimmer');
 var semver = require('semver');
-var agent;
 
 var SUPPORTED_VERSIONS = '1 - 2';
 
@@ -17,8 +16,7 @@ var SUPPORTED_VERSIONS = '1 - 2';
  */
 function wrapCallback(transaction, done) {
   return function(err, res) {
-    var labels = {};
-    if (transaction.enhancedDatabaseReporting) {
+    if (transaction.config.enhancedDatabaseReporting) {
       if (err) {
         // Errors may contain sensitive query parameters.
         transaction.addLabel('mongoError', err);
@@ -26,7 +24,7 @@ function wrapCallback(transaction, done) {
       if (res) {
         var result = res.result ? res.result : res;
         transaction.addLabel('results', traceUtil.stringifyPrefix(
-          result, agent.config_.databaseResultReportingSize));
+          result, transaction.config.databaseResultReportingSize));
       }
     }
     transaction.endSpan();
@@ -54,7 +52,6 @@ module.exports = function(version_, api) {
       },
       unpatch: function(pool) {
         shimmer.unwrap(pool.prototype, 'once');
-        agent_.logger.info('Mongo connection pool: unpatched');
       }
     },
     // An empty relative path here matches the root module being loaded.
@@ -117,7 +114,6 @@ module.exports = function(version_, api) {
         shimmer.unwrap(mongo.Server.prototype, 'update');
         shimmer.unwrap(mongo.Server.prototype, 'remove');
         shimmer.unwrap(mongo.Cursor.prototype, 'next');
-        agent_.logger.info('Mongo: unpatched');
       }
     }
   };

@@ -10,10 +10,10 @@ var constants = require('./constants.js');
 function RootTransaction(agent, context) {
   this.agent = agent;
   this.context = context;
-}
-
-RootTransaction.prototype.enhancedReporting = function() {
-  return this.agent.config_.enhancedDatabaseReporting;
+  this.config = {
+    enhancedDatabaseReporting: agent.config_.enhancedDatabaseReporting,
+    databaseResultReportingSize: agent.config_.databaseResultReportingSize
+  };
 }
 
 /**
@@ -32,11 +32,11 @@ RootTransaction.prototype.wrapEmitter = function(ee) {
 
 RootTransaction.prototype.addLabel = function(key, value) {
   this.context.addLabel(key, value);
-}
+};
 
 RootTransaction.prototype.endSpan = function() {
   this.context.close();
-}
+};
 
 /**
  * Child transaction.
@@ -49,7 +49,7 @@ function ChildTransaction(agent, span) {
 
 ChildTransaction.prototype.enhancedReporting = function() {
   return this.agent.config_.enhancedDatabaseReporting;
-}
+};
 
 ChildTransaction.prototype.wrap = function(fn) {
   this.agent.namespace.bind(fn);
@@ -61,11 +61,11 @@ ChildTransaction.prototype.wrapEmitter = function(ee) {
 
 ChildTransaction.prototype.addLabel = function(key, value) {
   this.span.addLabel(key, value);
-}
+};
 
 ChildTransaction.prototype.endSpan = function() {
   this.span.close();
-}
+};
 
 /**
  * Constructs a new root span using the information associated with this
@@ -83,33 +83,7 @@ ChildTransaction.prototype.endSpan = function() {
  *   will be invoked with a header field name and value as arguments,
  *   respectively.
  */
-
-/**
- * Constructs a new child span using the information associated with this transaction as
- * the root. It invokes the provided function providing as arguments a pair of functions.
- * One function one function will add labels to the current root span, the other will
- * terminate the root span.
- */
-RootTransaction.prototype.runChild = function(fn) {
-  var that = this;
-  that.namespace.run(function() {
-    that.currentTraceContext = that.agent.startSpan(name,
-      that.propogatedContext.traceId, that.propogatedContext.spanId, 3);
-    if (setHeader) {
-      var header = that.currentTraceContext.traceId + '/' +
-        that.currentTraceContext.spanId;
-      var options = that.propogatedContext.options |
-        constants.TRACE_OPTIONS_TRACE_ENABLED;
-      header += (';o=' + options);
-      setHeader('x-cloud-trace-context', header);
-    }
-    var addLabel = function(key, value) {
-      that.currentTraceContext.addLabel(key, value);
-    };
-    var endRootSpan = function() { that.currentTraceContext.close(); };
-    fn(addLabel, endRootSpan);
-  });
-};
+// TODO(kjin): Move this comment to the right place
 
 function Plugin(agent) {
   this.agent = agent;
@@ -188,10 +162,10 @@ Plugin.prototype.runInSpan = function(name, fn, extras) {
 
 Plugin.prototype.wrap = function(fn) {
   this.agent.namespace.bind(fn);
-}
+};
 
 Plugin.prototype.wrapEmitter = function(emitter) {
   this.agent.namespace.bindEmitter(emitter);
-}
+};
 
 module.exports = Plugin;
