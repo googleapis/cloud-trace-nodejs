@@ -7,26 +7,65 @@ var constants = require('./constants.js');
  * for arbitrary modules.
  */
 
-function Transaction(agent, traceContext) {
-  this.propogatedContext = traceContext;
-  this.currentTraceContext = null;
+function RootTransaction(agent, context) {
   this.agent = agent;
-  this.namespace = agent.namespace;
+  this.context = context;
+}
+
+RootTransaction.prototype.enhancedReporting = function() {
+  return this.agent.config_.enhancedDatabaseReporting;
 }
 
 /**
  * Binds the given function to the current context.
  */
-Transaction.prototype.wrap = function(fn) {
-  this.namespace.bind(fn);
+RootTransaction.prototype.wrap = function(fn) {
+  this.agent.namespace.bind(fn);
 };
 
 /**
  * Binds the given event emitter to the current context.
  */
-Transaction.prototype.wrapEmitter = function(ee) {
-  this.namespace.bindEmitter(ee);
+RootTransaction.prototype.wrapEmitter = function(ee) {
+  this.agent.namespace.bindEmitter(ee);
 };
+
+RootTransaction.prototype.addLabel = function(key, value) {
+  this.context.addLabel(key, value);
+}
+
+RootTransaction.prototype.endSpan = function() {
+  this.context.close();
+}
+
+/**
+ * Child transaction.
+ */
+
+function ChildTransaction(agent, span) {
+  this.agent = agent;
+  this.span = span;
+}
+
+ChildTransaction.prototype.enhancedReporting = function() {
+  return this.agent.config_.enhancedDatabaseReporting;
+}
+
+ChildTransaction.prototype.wrap = function(fn) {
+  this.agent.namespace.bind(fn);
+};
+
+ChildTransaction.prototype.wrapEmitter = function(ee) {
+  this.agent.namespace.bindEmitter(ee);
+};
+
+ChildTransaction.prototype.addLabel = function(key, value) {
+  this.span.addLabel(key, value);
+}
+
+ChildTransaction.prototype.endSpan = function() {
+  this.span.close();
+}
 
 /**
  * Constructs a new root span using the information associated with this
@@ -44,10 +83,17 @@ Transaction.prototype.wrapEmitter = function(ee) {
  *   will be invoked with a header field name and value as arguments,
  *   respectively.
  */
-Transaction.prototype.runRoot = function(name, fn, setHeader) {
+
+/**
+ * Constructs a new child span using the information associated with this transaction as
+ * the root. It invokes the provided function providing as arguments a pair of functions.
+ * One function one function will add labels to the current root span, the other will
+ * terminate the root span.
+ */
+RootTransaction.prototype.runChild = function(fn) {
   var that = this;
   that.namespace.run(function() {
-    that.currentTraceContext = that.agent.createRootSpanData(name,
+    that.currentTraceContext = that.agent.startSpan(name,
       that.propogatedContext.traceId, that.propogatedContext.spanId, 3);
     if (setHeader) {
       var header = that.currentTraceContext.traceId + '/' +
@@ -65,22 +111,12 @@ Transaction.prototype.runRoot = function(name, fn, setHeader) {
   });
 };
 
-/**
- * Constructs a new child span using the information associated with this transaction as
- * the root. It invokes the provided function providing as arguments a pair of functions.
- * One function one function will add labels to the current root span, the other will
- * terminate the root span.
- */
-Transaction.prototype.runChild = function(fn) {
-  // TODO(kjin): implement me
-};
-
 function Plugin(agent) {
   this.agent = agent;
 }
 
 /**
- * Creates and returns a new Transaction object for an incoming request, or
+ * Creates and returns a new RootTransaction object for an incoming request, or
  * null if the incoming request should not be traced.
  * If a new transaction object is created, it can be retrieved by subsequent
  * calls to getTransaction().
@@ -88,36 +124,74 @@ function Plugin(agent) {
  *   a request header field name and returns that field's value, or null if
  *   that header field doesn't have a value.
  * @param {?string} url The URL of the incoming request.
- * @returns If the incoming request should be traced, a Transaction object which
+ * @returns If the incoming request should be traced, a RootTransaction object which
  *   exposes methods for tracing the request; otherwise, null.
  */
-Plugin.prototype.createTransaction = function(getHeader, url) {
-  var header = getHeader('x-cloud-trace-context');
+Plugin.prototype.runInRootSpan = function(name, fn, extras) {
+  // options could be:
+  // url: URL (if applicable)
+  // getHeader: function describing how to retrieve a header
+  // setHeader: function describing how to set a header
+  extras = extras || {};
+  var that = this;
+  // Try to retrieve the header
   var context;
-  if (header) {
-    context = this.agent.parseContextFromHeader(header);
+  if (extras.getHeader) {
+    var header = extras.getHeader('x-cloud-trace-context');
+    if (header) {
+      context = that.agent.parseContextFromHeader(header);
+    }
   }
   context = context || {};
-  if (!this.agent.shouldTrace(url, context.options)) {
-    return null;
+  if (!that.agent.shouldTrace(extras.url, context.options)) {
+    return fn(null);
   }
-  var transaction = new Transaction(this.agent, context);
-  cls.getNamespace().run(function() {
-    cls.setTransaction(transaction);
+  that.agent.namespace.run(function() {
+    var rootContext = that.agent.createRootSpanData(name,
+      context.traceId, context.spanId, extras.stackFrames || 0);
+    if (extras.setHeader) {
+      var header = rootContext.traceId + '/' +
+        rootContext.spanId;
+      var options = context.options |
+        constants.TRACE_OPTIONS_TRACE_ENABLED;
+      header += (';o=' + options);
+      extras.setHeader('x-cloud-trace-context', header);
+    }
+    return fn(new RootTransaction(that.agent, rootContext));
   });
-  return transaction;
 };
 
 /**
- * Returns a Transaction object created by an earlier call to createTransaction
+ * Returns a RootTransaction object created by an earlier call to createTransaction
  * in this continuation, or null if there isn't one.
- * @returns If a transaction was previously created, a Transaction object which
+ * @returns If a transaction was previously created, a RootTransaction object which
  *   exposes methods for tracing an outgoing request; otherwise, null.
  */
-Plugin.prototype.getTransaction = function() {
-  return cls.getNamespace().runAndReturn(function() {
-    return cls.getTransaction();
-  });
+Plugin.prototype.runInSpan = function(name, fn, extras) {
+  var that = this;
+  var root = cls.getRootContext();
+  if (!root) {
+    return fn(null);
+  }
+  extras = extras || {};
+  var context = that.agent.startSpan(name, {}, extras.stackFrames || 0);
+  if (extras.setHeader) {
+    var header = that.currentTraceContext.traceId + '/' +
+      that.currentTraceContext.spanId;
+    var options = that.propogatedContext.options |
+      constants.TRACE_OPTIONS_TRACE_ENABLED;
+    header += (';o=' + options);
+    extras.setHeader('x-cloud-trace-context', header);
+  }
+  return fn(new ChildTransaction(that.agent, context));
 };
+
+Plugin.prototype.wrap = function(fn) {
+  this.agent.namespace.bind(fn);
+}
+
+Plugin.prototype.wrapEmitter = function(emitter) {
+  this.agent.namespace.bindEmitter(emitter);
+}
 
 module.exports = Plugin;

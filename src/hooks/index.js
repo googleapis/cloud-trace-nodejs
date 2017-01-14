@@ -129,6 +129,7 @@ function activate(agent) {
   Object.keys(agent.plugins).forEach(function(pluginName) {
     if (toInstrument[pluginName]) {
       toInstrument[pluginName].file = agent.plugins[pluginName];
+      toInstrument[pluginName].isPlugin = true;
     }
   });
 
@@ -142,7 +143,12 @@ function activate(agent) {
       if (!modulePatch) {
         // Load the hook. This file, i.e. index.js, becomes the parent module.
         var moduleHook = originalModuleLoad(instrumentation.file, module, false);
-        modulePatch = moduleHook(version, agent);
+        // TODO(kjin): This is hacky, make it not so
+        if (instrumentation.isPlugin) {
+          modulePatch = moduleHook(version, api);
+        } else {
+          modulePatch = moduleHook(version, agent);
+        }
       }
       Object.keys(modulePatch).forEach(function(file) {
         if (!modulePatch[file].module) {
@@ -150,7 +156,7 @@ function activate(agent) {
           modulePatch[file].module = originalModuleLoad(loadPath, module, false);
         }
         if (modulePatch[file].patch !== undefined) {
-          modulePatch[file].patch(modulePatch[file].module, api);
+          modulePatch[file].patch(modulePatch[file].module);
         }
         if (modulePatch[file].intercept !== undefined) {
           modulePatch[file].module = modulePatch[file].intercept(modulePatch[file].module);

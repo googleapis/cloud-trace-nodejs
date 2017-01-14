@@ -1,12 +1,18 @@
 'use strict';
 var TraceLabels = require('../../src/trace-labels.js');
 var shimmer = require('shimmer');
+var semver = require('semver');
 var methods = require('methods').concat('use', 'route', 'param', 'all');
 
-module.exports = function() {
+var SUPPORTED_VERSIONS = '4.x';
+
+module.exports = function(version, api) {
+  if (!semver.satisfies(version, SUPPORTED_VERSIONS)) {
+    return {};
+  }
   return {
     '': {
-      patch: function(express, api) {
+      patch: function(express) {
         function applicationActionWrap(method) {
           return function expressActionTrace() {
             if (!this._google_trace_patched && !this._router) {
@@ -18,39 +24,40 @@ module.exports = function() {
         }
 
         function middleware(req, res, next) {
-          var transaction = api.createTransaction(function getTraceContext(headerName) {
-            return req.get(headerName);
-          }, req.originalUrl);
-          if (!transaction) {
-            return next();
-          }
+          api.runInRootSpan(req.path, function(transaction) {
+            if (!transaction) {
+              next();
+              return;
+            }
 
-          transaction.wrapEmitter(req);
-          transaction.wrapEmitter(res);
+            api.wrapEmitter(req);
+            api.wrapEmitter(res);
 
-          transaction.runRoot(req.path, function(addLabel, endRootSpan) {
-            var originalEnd = res.end;
             var url = req.protocol + '://' + req.hostname + req.originalUrl;
-            addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, req.method);
-            addLabel(TraceLabels.HTTP_URL_LABEL_KEY, url);
-            addLabel(TraceLabels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+            transaction.addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, req.method);
+            transaction.addLabel(TraceLabels.HTTP_URL_LABEL_KEY, url);
+            transaction.addLabel(TraceLabels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
             // wrap end
+            var originalEnd = res.end;
             res.end = function(chunk, encoding) {
               res.end = originalEnd;
               var returned = res.end(chunk, encoding);
 
               if (req.route && req.route.path) {
-                addLabel('express/request.route.path', req.route.path);
+                transaction.addLabel('express/request.route.path', req.route.path);
               }
-              addLabel(TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-              endRootSpan();
+              transaction.addLabel(TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+              transaction.endSpan();
               return returned;
             };
 
             next();
-          }, function setTraceContext(headerName, header) {
-            res.set(headerName, header);
+          }, {
+            getHeader: function (headerName) { return req.get(headerName); },
+            setHeader: function (headerName, header) { res.set(headerName, header); },
+            url: req.originalUrl,
+            stackFrames: 3
           });
         }
 
