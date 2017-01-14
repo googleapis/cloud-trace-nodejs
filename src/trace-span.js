@@ -16,6 +16,8 @@
 
 'use strict';
 
+var util = require('util');
+
 /**
  * Creates a trace span object.
  * @constructor
@@ -37,7 +39,7 @@ function TraceSpan(name, spanId, parentSpanId) {
  * @param {string} value The new value of the label.
  */
 TraceSpan.prototype.setLabel = function(key, value) {
-  this.labels[key] = '' + value;
+  this.labels[key] = typeof value === 'object' ? util.inspect(value) : '' + value;
 };
 
 
