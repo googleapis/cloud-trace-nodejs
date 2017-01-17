@@ -24,7 +24,14 @@ module.exports = function(version, api) {
         }
 
         function middleware(req, res, next) {
-          api.runInRootSpan(req.path, function(transaction) {
+          var options = {
+            name: req.path,
+            getHeader: function (headerName) { return req.get(headerName); },
+            setHeader: function (headerName, header) { res.set(headerName, header); },
+            url: req.originalUrl,
+            stackFrames: 3
+          };
+          api.runInRootSpan(options, function(transaction) {
             if (!transaction) {
               next();
               return;
@@ -53,11 +60,6 @@ module.exports = function(version, api) {
             };
 
             next();
-          }, {
-            getHeader: function (headerName) { return req.get(headerName); },
-            setHeader: function (headerName, header) { res.set(headerName, header); },
-            url: req.originalUrl,
-            stackFrames: 3
           });
         }
 

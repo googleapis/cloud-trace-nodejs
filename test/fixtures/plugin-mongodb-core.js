@@ -60,18 +60,19 @@ module.exports = function(version_, api) {
         function nextWrap(next) {
           return function next_trace(cb) {
             var args = arguments;
-            api.runInSpan('mongo-cursor', function(transaction) {
+            api.runInSpan({
+              name: 'mongo-cursor',
+              stackFrames: 1
+            }, function(transaction) {
               if (!transaction) {
                 return next.apply(this, args);
               }
               transaction.addLabel('db', this.ns);
-              if (transaction.enhancedReporting) {
+              if (transaction.config.enhancedDatabaseReporting) {
                 transaction.addLabel('cmd', this.cmd);
               }
               return next.call(this, wrapCallback(transaction, cb));
-            }.bind(this), {
-              stackFrames: 1
-            });
+            }.bind(this));
           };
         }
 
@@ -79,24 +80,25 @@ module.exports = function(version_, api) {
           return function(original) {
             return function mongo_operation_trace(ns, ops, options, callback) {
               var args = arguments;
-              api.runInSpan(label, function(transaction) {
-                if (!transaction) {
-                  return original.apply(this, args);
-                }
-                transaction.addLabel('db', ns);
-                if (transaction.enhancedReporting) {
-                  transaction.addLabel('operations', JSON.stringify(ops));
-                }
-                if (typeof options === 'function') {
-                  return original.call(this, ns, ops,
-                    wrapCallback(transaction, options));
-                } else {
-                  return original.call(this, ns, ops, options,
-                    wrapCallback(transaction, callback));
-                }
-              }.bind(this), {
+                api.runInSpan({
+                name: label,
                 stackFrames: 1
-              });
+              }, function(transaction) {
+                  if (!transaction) {
+                    return original.apply(this, args);
+                  }
+                  transaction.addLabel('db', ns);
+                  if (transaction.config.enhancedDatabaseReporting) {
+                    transaction.addLabel('operations', JSON.stringify(ops));
+                  }
+                  if (typeof options === 'function') {
+                    return original.call(this, ns, ops,
+                      wrapCallback(transaction, options));
+                  } else {
+                    return original.call(this, ns, ops, options,
+                      wrapCallback(transaction, callback));
+                  }
+                }.bind(this));
             };
           };
         }
