@@ -1,5 +1,5 @@
 'use strict';
-
+var TraceLabels = require('../../src/trace-labels.js');
 var shimmer = require('shimmer');
 var semver = require('semver');
 var findIndex = require('lodash.findindex');
@@ -12,12 +12,13 @@ var SUPPORTED_VERSIONS = '0.13 - 1';
 
 function makeClientMethod(method) {
   return function clientMethodTrace() {
+    var that = this;
     var args = Array.prototype.slice.call(arguments);
     // The span name will be of form "grpc:/[Service]/[MethodName]".
-    api.runInSpan({
+    api.runInChildSpan({
       name: 'grpc:' + method.path
-    }, function(transaction) {
-      if (!transaction) {
+    }, function(span) {
+      if (!span) {
         return method.apply(this, args);
       }
       // Check if the response is through a stream or a callback.
@@ -29,10 +30,10 @@ function makeClientMethod(method) {
           return typeof arg === 'function';
         });
         if (cbIndex !== -1) {
-          args[cbIndex] = wrapCallback(transaction, args[cbIndex]);
+          args[cbIndex] = wrapCallback(span, args[cbIndex]);
         }
       }
-      var call = method.apply(this, arguments);
+      var call = method.apply(that, args);
       // Add extra data only when call successfully goes through. At this point
       // we know that the arguments are correct.
       if (api.config.enhancedDatabaseReporting) {
@@ -46,10 +47,10 @@ function makeClientMethod(method) {
         });
         if (metaIndex !== -1) {
           var metadata = args[metaIndex];
-          transaction.addLabel('metadata', JSON.stringify(metadata.getMap()));
+          span.addLabel('metadata', JSON.stringify(metadata.getMap()));
         }
         if (!method.requestStream) {
-          transaction.addLabel('argument', JSON.stringify(args[0]));
+          span.addLabel('argument', JSON.stringify(args[0]));
         }
       }
       // The user might need the current context in listeners to this stream.
@@ -58,19 +59,19 @@ function makeClientMethod(method) {
         var spanEnded = false;
         call.on('error', function(err) {
           if (api.config.enhancedDatabaseReporting) {
-            transaction.addLabel('error', err);
+            span.addLabel('error', err);
           }
           if (!spanEnded) {
-            transaction.endSpan(span);
+            span.endSpan();
             spanEnded = true;
           }
         });
         call.on('status', function(status) {
           if (api.config.enhancedDatabaseReporting) {
-            transaction.addLabel('status', JSON.stringify(status));
+            span.addLabel('status', JSON.stringify(status));
           }
           if (!spanEnded) {
-            transaction.endSpan(span);
+            span.endSpan();
             spanEnded = true;
           }
         });
@@ -86,20 +87,20 @@ function makeClientMethod(method) {
  * @param {SpanData} span - The span that should end after this callback.
  * @param {function(?Error, value=)} done - The callback to be wrapped.
  */
-function wrapCallback(transaction, done) {
+function wrapCallback(span, done) {
   var fn = function(err, res) {
     if (api.config.enhancedDatabaseReporting) {
       if (err) {
-        transaction.addLabel('error', err);
+        span.addLabel('error', err);
       }
       if (res) {
-        transaction.addLabel('result', JSON.stringify(res));
+        span.addLabel('result', JSON.stringify(res));
       }
     }
-    transaction.endSpan(span);
+    span.endSpan();
     done(err, res);
   };
-  return api.wrap(fn);
+  return fn;
 }
 
 function makeClientConstructorWrap(makeClientConstructor) {
@@ -138,19 +139,19 @@ function sendMetadataWrapper(transaction) {
 function wrapUnary(handlerSet, requestName) {
   // Start right before deserialization
   // End right after serialization
-  shimmer.wrap(handlerSet, 'deserialize', function (deserialize) {
-    return function deserializeTrace() {
-      createTransaction({ name: requestName });
+  shimmer.wrap(handlerSet, 'deserialize', api.wrap(function (deserialize) {
+    return api.wrap(function deserializeTrace() {
+      api.createTransaction({ name: requestName });
       return deserialize.apply(this, arguments);
-    };
-  });
+    });
+  }));
   // Even though our root span doesn't start or end here,
   // we need to wrap 'func' so that:
   // (1) child spans have the correct context, and
   // (2) we can get additional labels as needed
-  shimmer.wrap(handlerSet, 'func', function (func) {
-    return function funcTrace(call, callback) {
-      var transaction = getTransaction();
+  shimmer.wrap(handlerSet, 'func', api.wrap(function (func) {
+    return api.wrap(function funcTrace(call, callback) {
+      var transaction = api.getTransaction();
       if (!transaction) {
         return func.apply(this, arguments);
       }
@@ -158,7 +159,7 @@ function wrapUnary(handlerSet, requestName) {
       if (api.config.enhancedDatabaseReporting) {
         shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(transaction));
       }
-      if (agent.config_.enhancedDatabaseReporting) {
+      if (api.config.enhancedDatabaseReporting) {
         transaction.addLabel('argument', JSON.stringify(call.request));
       }
       // arguments[1] is the callback
@@ -181,12 +182,12 @@ function wrapUnary(handlerSet, requestName) {
         return callback(err, result, trailer, flags);
       };
       return func.apply(this, arguments);
-    };
-  });
+    });
+  }));
   shimmer.wrap(handlerSet, 'serialize', function (serialize) {
     return function serializeTrace() {
       var serializeResult = serialize.apply(this, arguments);
-      var transaction = getTransaction();
+      var transaction = api.getTransaction();
       if (transaction) {
         transaction.endSpan();
       }
@@ -206,13 +207,13 @@ function wrapServerStream(handlerSet, requestName) {
   // End right after output stream 'finish' event
   shimmer.wrap(handlerSet, 'deserialize', function (deserialize) {
     return function deserializeTrace() {
-      createTransaction({ name: requestName });
+      api.createTransaction({ name: requestName });
       return deserialize.apply(this, arguments);
     };
   });
   shimmer.wrap(handlerSet, 'func', function (func) {
     return function funcTrace(call) {
-      var transaction = getTransaction();
+      var transaction = api.getTransaction();
       if (!transaction) {
         return func.apply(this, arguments);
       }
@@ -258,13 +259,13 @@ function wrapClientStream(handlerSet, requestName) {
   // End right after serialization (which is done in the callback)
   shimmer.wrap(handlerSet, 'func', function (func) {
     return function funcTrace(stream, callback) {
-      var transaction = createTransaction({ name: requestName });
+      var transaction = api.createTransaction({ name: requestName });
       if (!transaction) {
         return func.apply(this, arguments);
       }
       transaction.addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, 'POST');
       if (api.config.enhancedDatabaseReporting) {
-        shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
+        shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(transaction));
       }
       // Preserve context in stream event handlers.
       api.wrapEmitter(stream);
@@ -293,7 +294,7 @@ function wrapClientStream(handlerSet, requestName) {
   shimmer.wrap(handlerSet, 'serialize', function (serialize) {
     return function serializeTrace(result) {
       var serializeResult = serialize.apply(this, arguments);
-      var transaction = getTransaction();
+      var transaction = api.getTransaction();
       if (transaction) {
         transaction.endSpan();
       }
@@ -313,10 +314,11 @@ function wrapBidi(handlerSet, requestName) {
   // End right after output stream 'finish' event
   shimmer.wrap(handlerSet, 'func', function (func) {
     return function funcTrace(stream) {
+      var that = this;
       var args = arguments;
       return api.runInRootSpan(requestName, function(transaction) {
         if (!transaction) {
-          return func.apply(this, args);
+          return func.apply(that, args);
         }
         transaction.addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, 'POST');
         if (api.config.enhancedDatabaseReporting) {
@@ -343,7 +345,7 @@ function wrapBidi(handlerSet, requestName) {
           }
           endSpan();
         });
-        return func.apply(this, args);
+        return func.apply(that, args);
       });
     };
   });
@@ -367,7 +369,7 @@ function serverRegisterWrap(register) {
     // Proceed to wrap methods that are invoked when a gRPC service call is made.
     // In every case, the function 'func' is the user-implemented handling function.
     if (method_type === 'unary') {
-      wrapUnary(handlerSet, requestName);
+      api.wrap(wrapUnary(handlerSet, requestName));
     } else if (method_type === 'server_stream') {
       wrapServerStream(handlerSet, requestName);
     } else if (method_type === 'client_stream') {
@@ -389,11 +391,8 @@ module.exports = function(version_, api_) {
   }
   return {
     'src/node/src/client.js': {
-      api = api_;
       patch: function(client) {
-        if (!agent) {
-          agent = agent_;
-        }
+        api = api_;
         shimmer.wrap(client, 'makeClientConstructor',
             makeClientConstructorWrap);
         client._plugin_patched = true;
@@ -403,18 +402,18 @@ module.exports = function(version_, api_) {
         // will not wrap Client methods with tracing. However, existing Client
         // objects with wrapped prototype methods will continue tracing.
         shimmer.unwrap(client, 'makeClientConstructor');
-        agent_.logger.info('gRPC makeClientConstructor: unpatched');
+        api.logger.info('gRPC makeClientConstructor: unpatched');
       }
     },
     'src/node/src/server.js': {
-      api = api_;
       patch: function(server) {
+        api = api_;
         shimmer.wrap(server.Server.prototype, 'register', serverRegisterWrap);
         server._plugin_patched = true;
       },
       unpatch: function(server) {
         shimmer.unwrap(server.Server.prototype, 'register');
-        agent_.logger.info('gRPC Server: unpatched');
+        api.logger.info('gRPC Server: unpatched');
       }
     }
   };

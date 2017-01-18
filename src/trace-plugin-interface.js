@@ -1,5 +1,4 @@
 'use strict';
-var TraceLabels = require('./trace-labels.js');
 var cls = require('./cls.js');
 var constants = require('./constants.js');
 
@@ -87,7 +86,7 @@ Transaction.prototype.runInChildSpan = function(options, fn) {
     // If the options object passed in has the setHeader field set,
     // use it to set trace metadata in an outgoing request.
     if (typeof(options.setHeader) === 'function') {
-      var outgoingTraceContext = agent.generateTraceContext(childContext, true);
+      var outgoingTraceContext = that.agent.generateTraceContext(childContext, true);
       options.setHeader('x-cloud-trace-context', outgoingTraceContext);
     }
     return fn(new ChildSpan(that.agent, childContext));
@@ -144,7 +143,7 @@ Plugin.prototype.createTransaction = function(options) {
     }
   }
   incomingTraceContext = incomingTraceContext || {};
-  if (!that.agent.shouldTrace(options.url, incomingTraceContext.options)) {
+  if (options.url && !that.agent.shouldTrace(options.url, incomingTraceContext.options)) {
     return null;
   }
   return that.agent.namespace.runAndReturn(function() {
@@ -157,14 +156,15 @@ Plugin.prototype.createTransaction = function(options) {
     if (typeof(options.setHeader) === 'function') {
       var outgoingTraceContext = rootContext.traceId + '/' +
         rootContext.spanId;
-      var outgoingHeaderOptions = incomingTraceContext.options != null ?
+      var outgoingHeaderOptions = (incomingTraceContext.options !== null &&
+        incomingTraceContext.options !== undefined) ?
         incomingTraceContext.options : constants.TRACE_OPTIONS_TRACE_ENABLED;
       outgoingTraceContext += (';o=' + outgoingHeaderOptions);
       options.setHeader('x-cloud-trace-context', outgoingTraceContext);
     }
     return new Transaction(that.agent, rootContext);
   });
-}
+};
 
 Plugin.prototype.getTransaction = function() {
   if (cls.getRootContext()) {
@@ -172,7 +172,7 @@ Plugin.prototype.getTransaction = function() {
   } else {
     return null;
   }
-}
+};
 
 /**
  * Runs the given function in a root span corresponding to an incoming request,

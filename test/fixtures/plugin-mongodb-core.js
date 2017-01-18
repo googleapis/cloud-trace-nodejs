@@ -38,7 +38,6 @@ function wrapCallback(transaction, done) {
 
 function nextWrap(next) {
   return function next_trace(cb) {
-    var args = arguments;
     api.runInChildSpan({
       name: 'mongo-cursor',
       stackFrames: 6
