@@ -4,6 +4,8 @@ var traceUtil = require('../../src/util.js');
 var shimmer = require('shimmer');
 var semver = require('semver');
 
+var api;
+
 var SUPPORTED_VERSIONS = '1 - 2';
 
 /**
@@ -16,7 +18,7 @@ var SUPPORTED_VERSIONS = '1 - 2';
  */
 function wrapCallback(transaction, done) {
   return function(err, res) {
-    if (transaction.config.enhancedDatabaseReporting) {
+    if (api.config.enhancedDatabaseReporting) {
       if (err) {
         // Errors may contain sensitive query parameters.
         transaction.addLabel('mongoError', err);
@@ -24,7 +26,7 @@ function wrapCallback(transaction, done) {
       if (res) {
         var result = res.result ? res.result : res;
         transaction.addLabel('results', traceUtil.stringifyPrefix(
-          result, transaction.config.databaseResultReportingSize));
+          result, api.config.databaseResultReportingSize));
       }
     }
     transaction.endSpan();
@@ -34,13 +36,60 @@ function wrapCallback(transaction, done) {
   };
 }
 
-module.exports = function(version_, api) {
+function nextWrap(next) {
+  return function next_trace(cb) {
+    var args = arguments;
+    api.runInChildSpan({
+      name: 'mongo-cursor',
+      stackFrames: 6
+    }, (function(transaction) {
+      if (!transaction) {
+        return next.call(this, cb);
+      }
+      transaction.addLabel('db', this.ns);
+      if (api.config.enhancedDatabaseReporting) {
+        transaction.addLabel('cmd', this.cmd);
+      }
+      return next.call(this, wrapCallback(transaction, cb));
+    }).bind(this));
+  };
+}
+
+function wrapWithLabel(label) {
+  return function(original) {
+    return function mongo_operation_trace(ns, ops, options, callback) {
+      var args = arguments;
+        api.runInChildSpan({
+          name: label,
+          stackFrames: 6
+        }, (function(transaction) {
+          if (!transaction) {
+            return original.apply(this, args);
+          }
+          transaction.addLabel('db', ns);
+          if (api.config.enhancedDatabaseReporting) {
+            transaction.addLabel('operations', JSON.stringify(ops));
+          }
+          if (typeof options === 'function') {
+            return original.call(this, ns, ops,
+              wrapCallback(transaction, options));
+          } else {
+            return original.call(this, ns, ops, options,
+              wrapCallback(transaction, callback));
+          }
+        }).bind(this));
+    };
+  };
+}
+
+module.exports = function(version_, api_) {
   if (!semver.satisfies(version_, SUPPORTED_VERSIONS)) {
     return {};
   }
   return {
     'lib/connection/pool.js': {
       patch: function(pool) {
+        api = api_;
         function onceWrap(once) {
           return function once_trace(event, cb) {
             api.wrap(cb);
@@ -57,52 +106,7 @@ module.exports = function(version_, api) {
     // An empty relative path here matches the root module being loaded.
     '': {
       patch: function(mongo) {
-        function nextWrap(next) {
-          return function next_trace(cb) {
-            var args = arguments;
-            api.runInSpan({
-              name: 'mongo-cursor',
-              stackFrames: 1
-            }, function(transaction) {
-              if (!transaction) {
-                return next.apply(this, args);
-              }
-              transaction.addLabel('db', this.ns);
-              if (transaction.config.enhancedDatabaseReporting) {
-                transaction.addLabel('cmd', this.cmd);
-              }
-              return next.call(this, wrapCallback(transaction, cb));
-            }.bind(this));
-          };
-        }
-
-        function wrapWithLabel(label) {
-          return function(original) {
-            return function mongo_operation_trace(ns, ops, options, callback) {
-              var args = arguments;
-                api.runInSpan({
-                name: label,
-                stackFrames: 1
-              }, function(transaction) {
-                  if (!transaction) {
-                    return original.apply(this, args);
-                  }
-                  transaction.addLabel('db', ns);
-                  if (transaction.config.enhancedDatabaseReporting) {
-                    transaction.addLabel('operations', JSON.stringify(ops));
-                  }
-                  if (typeof options === 'function') {
-                    return original.call(this, ns, ops,
-                      wrapCallback(transaction, options));
-                  } else {
-                    return original.call(this, ns, ops, options,
-                      wrapCallback(transaction, callback));
-                  }
-                }.bind(this));
-            };
-          };
-        }
-
+        api = api_;
         shimmer.wrap(mongo.Server.prototype, 'command', wrapWithLabel('mongo-command'));
         shimmer.wrap(mongo.Server.prototype, 'insert', wrapWithLabel('mongo-insert'));
         shimmer.wrap(mongo.Server.prototype, 'update', wrapWithLabel('mongo-update'));

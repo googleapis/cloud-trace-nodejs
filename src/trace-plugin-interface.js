@@ -1,4 +1,5 @@
 'use strict';
+var TraceLabels = require('./trace-labels.js');
 var cls = require('./cls.js');
 var constants = require('./constants.js');
 
@@ -8,16 +9,38 @@ var constants = require('./constants.js');
  */
 
 /**
- * An object that is associated with a single root or child span. It exposes
+ * An object that is associated with a single child span. It exposes
+ * functions for adding labels to or closing the associated span.
+ */
+function ChildSpan(agent, context) {
+  this.agent = agent;
+  this.context = context;
+}
+
+/**
+ * Adds a label to the underlying span.
+ * @param {string} key The name of the label to add.
+ * @param {*} value The value of the label to add.
+ */
+ChildSpan.prototype.addLabel = function(key, value) {
+  this.context.addLabel(key, value);
+};
+
+/**
+ * Ends the underlying span. This function should only be called once.
+ */
+ChildSpan.prototype.endSpan = function() {
+  this.context.close();
+};
+
+/**
+ * An object that is associated with a single root span. It exposes
  * functions for adding labels to or closing the associated span.
  */
 function Transaction(agent, context) {
   this.agent = agent;
   this.context = context;
-  this.config = {
-    enhancedDatabaseReporting: agent.config_.enhancedDatabaseReporting,
-    databaseResultReportingSize: agent.config_.databaseResultReportingSize
-  };
+  this.closed = false;
 }
 
 /**
@@ -37,22 +60,39 @@ Transaction.prototype.endSpan = function() {
 };
 
 /**
- * Constructs a new root span using the information associated with this
- * transaction. It will synchronously invoke the provided function, fn,
- * providing as arguments functions to add labels and end the span,
- * respectively.
- * @type {function(string, string)} addLabel A function that accepts a string
- *   key-value pair and adds it as a label to the root span.
- * @type {function()} endRootSpan A function that ends the root span.
- * @param {string} name The name to assign to this root span.
- * @param {function(addLabel, endRootSpan)} fn A function that
- *   should be called after the root span is created.
- * @param {?function(string, string)} setHeader A function that, if applicable,
- *   should be provided to modify an outgoing request header. If provided, it
- *   will be invoked with a header field name and value as arguments,
- *   respectively.
+ * Runs the given function in a child span, passing it an object that
+ * exposes an interface for adding labels and closing the span.
+ * @param {object} options An object that specifies options for how the child
+ * span is created and propogated.
+ * @param {string} options.name The name to apply to the child span.
+ * @param {?function(string, string)} options.setHeader A function describing
+ * how to set a header field with the given field name to a given value,
+ * respectively. If supplied, it will be called to set the header field in an
+ * outgoing request associated with this child span to the field name
+ * 'x-cloud-trace-context'.
+ * @param {?number} options.skipFrames The number of stack frames to skip when
+ * collecting call stack information for the root span, starting from the top;
+ * this should be set to avoid including frames in the plugin. Defaults to 0.
+ * @param {function(ChildSpan)} fn A function that will be called exactly
+ * once, with a ChildSpan object exposing an interface operating on the child
+ * span.
+ * @returns The return value of calling fn.
  */
-// TODO(kjin): Move this comment to the right place
+Transaction.prototype.runInChildSpan = function(options, fn) {
+  var that = this;
+  options = options || {};
+  return that.agent.namespace.runAndReturn(function() {
+    var childContext = that.agent.startSpan(options.name, {},
+      options.stackFrames || 0);
+    // If the options object passed in has the setHeader field set,
+    // use it to set trace metadata in an outgoing request.
+    if (typeof(options.setHeader) === 'function') {
+      var outgoingTraceContext = agent.generateTraceContext(childContext, true);
+      options.setHeader('x-cloud-trace-context', outgoingTraceContext);
+    }
+    return fn(new ChildSpan(that.agent, childContext));
+  });
+};
 
 /**
  * Plugin constructor. Don't call directly - a Plugin object will be passed to
@@ -61,12 +101,16 @@ Transaction.prototype.endSpan = function() {
  */
 function Plugin(agent) {
   this.agent = agent;
+  this.logger = agent.logger;
+  this.config = {
+    enhancedDatabaseReporting: agent.config_.enhancedDatabaseReporting,
+    databaseResultReportingSize: agent.config_.databaseResultReportingSize
+  };
 }
 
 /**
- * Runs the given function in a root span corresponding to an incoming request,
- * possibly passing it an object that exposes an interface for adding labels
- * and closing the span.
+ * Creates a new Transaction object corresponding to an incoming request, which
+ * exposes methods operating on the root span.
  * @param {object} options An object that specifies options for how the root
  * span is created and propogated.
  * @param {string} options.name The name to apply to the root span.
@@ -84,14 +128,10 @@ function Plugin(agent) {
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the root span, starting from the top;
  * this should be set to avoid including frames in the plugin. Defaults to 0.
- * @param {function(?Transaction)} fn A function that will be called exactly
- * once. If the incoming request should be traced, a root span will be created,
- * and this function will be called with a Transaction object exposing functions
- * operating on the root span; otherwise, it will be called without any
- * arguments.
- * @returns The return value of calling fn.
+ * @returns A new Transaction object, or null if the trace agent's policy has
+ * disabled tracing for the given set of options.
  */
-Plugin.prototype.runInRootSpan = function(options, fn) {
+Plugin.prototype.createTransaction = function(options) {
   options = options || {};
   var that = this;
   // If the options object passed in has the getHeader field set,
@@ -105,7 +145,7 @@ Plugin.prototype.runInRootSpan = function(options, fn) {
   }
   incomingTraceContext = incomingTraceContext || {};
   if (!that.agent.shouldTrace(options.url, incomingTraceContext.options)) {
-    return fn();
+    return null;
   }
   return that.agent.namespace.runAndReturn(function() {
     var rootContext = that.agent.createRootSpanData(options.name,
@@ -120,49 +160,58 @@ Plugin.prototype.runInRootSpan = function(options, fn) {
       var outgoingHeaderOptions = incomingTraceContext.options != null ?
         incomingTraceContext.options : constants.TRACE_OPTIONS_TRACE_ENABLED;
       outgoingTraceContext += (';o=' + outgoingHeaderOptions);
-      extras.setHeader('x-cloud-trace-context', outgoingTraceContext);
+      options.setHeader('x-cloud-trace-context', outgoingTraceContext);
     }
-    return fn(new Transaction(that.agent, rootContext));
+    return new Transaction(that.agent, rootContext);
+  });
+}
+
+Plugin.prototype.getTransaction = function() {
+  if (cls.getRootContext()) {
+    return new Transaction(this.agent, cls.getRootContext());
+  } else {
+    return null;
+  }
+}
+
+/**
+ * Runs the given function in a root span corresponding to an incoming request,
+ * possibly passing it an object that exposes an interface for adding labels
+ * and closing the span.
+ * @param {object} options An object that specifies options for how the root
+ * span is created and propogated. @see Plugin.prototype.createTransaction
+ * @param {function(?Transaction)} fn A function that will be called exactly
+ * once. If the incoming request should be traced, a root span will be created,
+ * and this function will be called with a Transaction object exposing functions
+ * operating on the root span; otherwise, it will be called without any
+ * arguments.
+ * @returns The return value of calling fn.
+ */
+Plugin.prototype.runInRootSpan = function(options, fn) {
+  var transaction = this.createTransaction(options);
+  return this.agent.namespace.runAndReturn(function() {
+    return fn(transaction);
   });
 };
 
 /**
- * Runs the given function in a child span, possibly passing it an object that
- * exposes an interface for adding labels and closing the span.
- * @param {object} options An object that specifies options for how the child
- * span is created and propogated.
- * @param {string} options.name The name to apply to the child span.
- * @param {?function(string, string)} options.setHeader A function describing
- * how to set a header field with the given field name to a given value,
- * respectively. If supplied, it will be called to set the header field in an
- * outgoing request associated with this child span to the field name
- * 'x-cloud-trace-context'.
- * @param {?number} options.skipFrames The number of stack frames to skip when
- * collecting call stack information for the root span, starting from the top;
- * this should be set to avoid including frames in the plugin. Defaults to 0.
- * @param {function(?Transaction)} fn A function that will be called exactly
- * once. If a root span has been started, a child span will be created, and this
- * function will be called with a Transaction object exposing an interface
- * operating on the child span; otherwise, it will be called without any
+ * Convenience method which obtains a Transaction object with getTransaction()
+ * and calls its runInChildSpan function on the given arguments. If there is
+ * no current Transaction object, the provided function will be called without
  * arguments.
+ * @param {object} options An object that specifies options for how the root
+ * span is created and propogated. @see Transaction.prototype.runInChildSpan
+ * @param {function(?Transaction)} fn A function that will be called exactly
+ * once. @see Transaction.prototype.runInChildSpan
  * @returns The return value of calling fn.
  */
-Plugin.prototype.runInSpan = function(extras, fn) {
-  var that = this;
-  if (!cls.getRootContext()) {
+Plugin.prototype.runInChildSpan = function(options, fn) {
+  var transaction = this.getTransaction();
+  if (transaction) {
+    return transaction.runInChildSpan(options, fn);
+  } else {
+    this.logger.warn(options.name + ': Attempted to run in child span without root');
     return fn();
-  }
-  options = options || {};
-  return that.agent.namespace.runAndReturn(function() {
-    var childContext = that.agent.startSpan(options.name, {},
-      options.stackFrames || 0);
-    // If the options object passed in has the setHeader field set,
-    // use it to set trace metadata in an outgoing request.
-    if (typeof(options.setHeader) === 'function') {
-      var outgoingTraceContext = agent.generateTraceContext(childContext, true);
-      options.setHeader('x-cloud-trace-context', outgoingTraceContext);
-    }
-    return fn(new Transaction(that.agent, childContext));
   }
 };
 
