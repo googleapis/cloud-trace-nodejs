@@ -160,58 +160,35 @@ function sendMetadataWrapper(rootContext) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapUnary(namespace, handlerSet, requestName) {
-  var rootContext;
-  // CLS context object. Because a root span is started outside of the unary function
-  // handle, we use this object to explicitly ensure that any client trace spans
-  // have the same context available to them.
-  var context = {};
-  // Start right before deserialization
-  // End right after serialization
-  shimmer.wrap(handlerSet, 'deserialize', function (deserialize) {
-    return namespace.bind(function deserializeTrace() {
-      rootContext = startRootSpanForRequest(requestName);
-      return deserialize.apply(this, arguments);
-    }, context);
-  });
-  // Even though our root span doesn't start or end here,
-  // we need to wrap 'func' so that:
-  // (1) child spans have the correct context, and
-  // (2) we can get additional labels as needed
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return namespace.bind(function funcTrace(call, callback) {
-      if (agent.config_.enhancedDatabaseReporting) {
-        shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(rootContext));
-      }
-      if (agent.config_.enhancedDatabaseReporting) {
-        rootContext.addLabel('argument', JSON.stringify(call.request));
-      }
-      // arguments[1] is the callback
-      arguments[1] = function (err, result, trailer, flags) {
+    return function funcTrace(call, callback) {
+      var that = this;
+      var args = arguments;
+      return namespace.runAndReturn(function() {
+        var rootContext = startRootSpanForRequest(requestName);
         if (agent.config_.enhancedDatabaseReporting) {
-          if (err) {
-            rootContext.addLabel('error', err);
-          } else {
-            rootContext.addLabel('result', JSON.stringify(result));
-          }
-          if (trailer) {
-            rootContext.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
-          }
+          shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
-        if (err) {
-          // If there is an error, then no result will be serialized to
-          // be sent back to the client. So end the root span here.
+        if (agent.config_.enhancedDatabaseReporting) {
+          rootContext.addLabel('argument', JSON.stringify(call.request));
+        }
+        // arguments[1] is the callback
+        args[1] = function (err, result, trailer, flags) {
+          if (agent.config_.enhancedDatabaseReporting) {
+            if (err) {
+              rootContext.addLabel('error', err);
+            } else {
+              rootContext.addLabel('result', JSON.stringify(result));
+            }
+            if (trailer) {
+              rootContext.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
+            }
+          }
           endRootSpanForRequest(rootContext);
-        }
-        return callback(err, result, trailer, flags);
-      };
-      return func.apply(this, arguments);
-    }, context);
-  });
-  shimmer.wrap(handlerSet, 'serialize', function (serialize) {
-    return function serializeTrace() {
-      var serializeResult = serialize.apply(this, arguments);
-      endRootSpanForRequest(rootContext);
-      return serializeResult;
+          return callback(err, result, trailer, flags);
+        };
+        return func.apply(that, args);
+      });
     };
   });
 }
@@ -224,46 +201,41 @@ function wrapUnary(namespace, handlerSet, requestName) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapServerStream(namespace, handlerSet, requestName) {
-  var rootContext;
-  // CLS context object.
-  var context = {};
-  // Start right before deserialization (which precedes call to function)
-  // End right after output stream 'finish' event
-  shimmer.wrap(handlerSet, 'deserialize', function (deserialize) {
-    return namespace.bind(function deserializeTrace() {
-      rootContext = startRootSpanForRequest(requestName);
-      return deserialize.apply(this, arguments);
-    }, context);
-  });
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return namespace.bind(function funcTrace(call) {
-      if (agent.config_.enhancedDatabaseReporting) {
-        shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(rootContext));
-      }
-      if (agent.config_.enhancedDatabaseReporting) {
-        rootContext.addLabel('argument', JSON.stringify(call.request));
-      }
-      var spanEnded = false;
-      var endSpan = function () {
-        if (!spanEnded) {
-          spanEnded = true;
-          endRootSpanForRequest(rootContext);
-        }
-      };
-      call.on('finish', function () {
-        // End the span unless there is an error.
-        if (call.status.code === 0) {
-          endSpan();
-        }
-      });
-      call.on('error', function (err) {
+    return function funcTrace(stream) {
+      var that = this;
+      var args = arguments;
+      return namespace.runAndReturn(function() {
+        var rootContext = startRootSpanForRequest(requestName);
         if (agent.config_.enhancedDatabaseReporting) {
-          rootContext.addLabel('error', err);
+          shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
-        endSpan();
+        if (agent.config_.enhancedDatabaseReporting) {
+          rootContext.addLabel('argument', JSON.stringify(stream.request));
+        }
+        var spanEnded = false;
+        var endSpan = function () {
+          if (!spanEnded) {
+            spanEnded = true;
+            endRootSpanForRequest(rootContext);
+          }
+        };
+        namespace.bindEmitter(stream);
+        stream.on('finish', function () {
+          // End the span unless there is an error.
+          if (stream.status.code === 0) {
+            endSpan();
+          }
+        });
+        stream.on('error', function (err) {
+          if (agent.config_.enhancedDatabaseReporting) {
+            rootContext.addLabel('error', err);
+          }
+          endSpan();
+        });
+        return func.apply(this, args);
       });
-      return func.apply(this, arguments);
-    }, context);
+    };
   });
 }
 
@@ -275,46 +247,36 @@ function wrapServerStream(namespace, handlerSet, requestName) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapClientStream(namespace, handlerSet, requestName) {
-  var rootContext;
-  // CLS context object
-  var context = {};
   // Start right before call to function
   // End right after serialization (which is done in the callback)
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return namespace.bind(function funcTrace(stream, callback) {
-      rootContext = startRootSpanForRequest(requestName);
-      if (agent.config_.enhancedDatabaseReporting) {
-        shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
-      }
-      // Preserve context in stream event handlers.
-      namespace.bindEmitter(stream);
-      // arguments[1] is the callback
-      arguments[1] = function (err, result, trailer, flags) {
+    return function funcTrace(stream, callback) {
+      var that = this;
+      var args = arguments;
+      return namespace.runAndReturn(function() {
+        var rootContext = startRootSpanForRequest(requestName);
         if (agent.config_.enhancedDatabaseReporting) {
-          if (err) {
-            rootContext.addLabel('error', err);
-          } else {
-            rootContext.addLabel('result', JSON.stringify(result));
-          }
-          if (trailer) {
-            rootContext.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
-          }
+          shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
-        if (err) {
-          // If there is an error, then no result will be serialized to
-          // be sent back to the client. So end the root span here.
+        // Preserve context in stream event handlers.
+        namespace.bindEmitter(stream);
+        // arguments[1] is the callback
+        args[1] = function (err, result, trailer, flags) {
+          if (agent.config_.enhancedDatabaseReporting) {
+            if (err) {
+              rootContext.addLabel('error', err);
+            } else {
+              rootContext.addLabel('result', JSON.stringify(result));
+            }
+            if (trailer) {
+              rootContext.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
+            }
+          }
           endRootSpanForRequest(rootContext);
-        }
-        return callback(err, result, trailer, flags);
-      };
-      return func.apply(this, arguments);
-    }, context);
-  });
-  shimmer.wrap(handlerSet, 'serialize', function (serialize) {
-    return function serializeTrace(result) {
-      var serializeResult = serialize.apply(this, arguments);
-      endRootSpanForRequest(rootContext);
-      return serializeResult;
+          return callback(err, result, trailer, flags);
+        };
+        return func.apply(that, args);
+      });
     };
   });
 }
@@ -327,40 +289,41 @@ function wrapClientStream(namespace, handlerSet, requestName) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapBidi(namespace, handlerSet, requestName) {
-  var rootContext;
-  // CLS context object
-  var context = {};
   // Start right before call to function
   // End right after output stream 'finish' event
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return namespace.bind(function funcTrace(stream) {
-      rootContext = startRootSpanForRequest(requestName);
-      if (agent.config_.enhancedDatabaseReporting) {
-        shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
-      }
-      // Preserve context in stream event handlers.
-      namespace.bindEmitter(stream);
-      var spanEnded = false;
-      var endSpan = function () {
-        if (!spanEnded) {
-          spanEnded = true;
-          endRootSpanForRequest(rootContext);
-        }
-      };
-      stream.on('finish', function () {
-        // End the span unless there is an error.
-        if (stream.status.code === 0) {
-          endSpan();
-        }
-      });
-      stream.on('error', function (err) {
+    return function funcTrace(stream) {
+      var that = this;
+      var args = arguments;
+      return namespace.runAndReturn(function() {
+        var rootContext = startRootSpanForRequest(requestName);
         if (agent.config_.enhancedDatabaseReporting) {
-          rootContext.addLabel('error', err);
+          shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
-        endSpan();
+        // Preserve context in stream event handlers.
+        namespace.bindEmitter(stream);
+        var spanEnded = false;
+        var endSpan = function () {
+          if (!spanEnded) {
+            spanEnded = true;
+            endRootSpanForRequest(rootContext);
+          }
+        };
+        stream.on('finish', function () {
+          // End the span unless there is an error.
+          if (stream.status.code === 0) {
+            endSpan();
+          }
+        });
+        stream.on('error', function (err) {
+          if (!spanEnded && agent.config_.enhancedDatabaseReporting) {
+            rootContext.addLabel('error', err);
+          }
+          endSpan();
+        });
+        return func.apply(that, args);
       });
-      return func.apply(this, arguments);
-    }, context);
+    };
   });
 }
 
