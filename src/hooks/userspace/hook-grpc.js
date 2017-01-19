@@ -164,6 +164,7 @@ function wrapUnary(namespace, handlerSet, requestName) {
     return function funcTrace(call, callback) {
       var that = this;
       var args = arguments;
+      // Running in the namespace here propagates context to func.
       return namespace.runAndReturn(function() {
         var rootContext = startRootSpanForRequest(requestName);
         if (agent.config_.enhancedDatabaseReporting) {
@@ -172,7 +173,9 @@ function wrapUnary(namespace, handlerSet, requestName) {
         if (agent.config_.enhancedDatabaseReporting) {
           rootContext.addLabel('argument', JSON.stringify(call.request));
         }
-        // arguments[1] is the callback
+        // args[1] is the callback.
+        // Here, we patch the callback so that the span is ended immediately
+        // beforehand.
         args[1] = function (err, result, trailer, flags) {
           if (agent.config_.enhancedDatabaseReporting) {
             if (err) {
@@ -205,6 +208,7 @@ function wrapServerStream(namespace, handlerSet, requestName) {
     return function funcTrace(stream) {
       var that = this;
       var args = arguments;
+      // Running in the namespace here propagates context to func.
       return namespace.runAndReturn(function() {
         var rootContext = startRootSpanForRequest(requestName);
         if (agent.config_.enhancedDatabaseReporting) {
@@ -220,9 +224,15 @@ function wrapServerStream(namespace, handlerSet, requestName) {
             endRootSpanForRequest(rootContext);
           }
         };
+        // Propagate context to stream event handlers.
         namespace.bindEmitter(stream);
+        // stream is a WriteableStream. Emitting a 'finish' or 'error' event
+        // suggests that no more data will be sent, so we end the span in these
+        // event handlers.
         stream.on('finish', function () {
-          // End the span unless there is an error.
+          // End the span unless there is an error. (If there is, the span will
+          // be ended in the error event handler. This is to ensure that the
+          // 'error' label is applied.)
           if (stream.status.code === 0) {
             endSpan();
           }
@@ -247,20 +257,26 @@ function wrapServerStream(namespace, handlerSet, requestName) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapClientStream(namespace, handlerSet, requestName) {
-  // Start right before call to function
-  // End right after serialization (which is done in the callback)
   shimmer.wrap(handlerSet, 'func', function (func) {
     return function funcTrace(stream, callback) {
       var that = this;
       var args = arguments;
+      // Running in the namespace here propagates context to func.
       return namespace.runAndReturn(function() {
         var rootContext = startRootSpanForRequest(requestName);
         if (agent.config_.enhancedDatabaseReporting) {
           shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
-        // Preserve context in stream event handlers.
+        // Propagate context to stream event handlers.
+        // stream is a ReadableStream.
+        // Note that unlike server streams, the length of the span is not
+        // tied to the lifetime of the stream. It should measure the time for
+        // the server to send a response, not the time until all data has been
+        // received from the client.
         namespace.bindEmitter(stream);
-        // arguments[1] is the callback
+        // args[1] is the callback.
+        // Here, we patch the callback so that the span is ended immediately
+        // beforehand.
         args[1] = function (err, result, trailer, flags) {
           if (agent.config_.enhancedDatabaseReporting) {
             if (err) {
@@ -289,19 +305,16 @@ function wrapClientStream(namespace, handlerSet, requestName) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapBidi(namespace, handlerSet, requestName) {
-  // Start right before call to function
-  // End right after output stream 'finish' event
   shimmer.wrap(handlerSet, 'func', function (func) {
     return function funcTrace(stream) {
       var that = this;
       var args = arguments;
+      // Running in the namespace here propagates context to func.
       return namespace.runAndReturn(function() {
         var rootContext = startRootSpanForRequest(requestName);
         if (agent.config_.enhancedDatabaseReporting) {
           shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
-        // Preserve context in stream event handlers.
-        namespace.bindEmitter(stream);
         var spanEnded = false;
         var endSpan = function () {
           if (!spanEnded) {
@@ -309,6 +322,14 @@ function wrapBidi(namespace, handlerSet, requestName) {
             endRootSpanForRequest(rootContext);
           }
         };
+        // Propagate context in stream event handlers.
+        namespace.bindEmitter(stream);
+        // stream is a Duplex. Emitting a 'finish' or 'error' event
+        // suggests that no more data will be sent, so we end the span in these
+        // event handlers.
+        // Similar to client streams, the trace span should measure the time
+        // until the server has finished sending data back to the client, not
+        // the time that all data has been received from the client.
         stream.on('finish', function () {
           // End the span unless there is an error.
           if (stream.status.code === 0) {
