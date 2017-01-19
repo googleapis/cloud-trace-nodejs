@@ -24,6 +24,7 @@ if (!process.env.GCLOUD_PROJECT) {
 var assert = require('assert');
 var agent = require('../..');
 var cls = require('../../src/cls.js');
+var TraceLabels = require('../../src/trace-labels.js');
 
 describe('index.js', function() {
 
@@ -163,6 +164,51 @@ describe('index.js', function() {
       agent.stop();
     });
   });
+
+  describe('labels', function(){
+    it('should add labels to spans', function() {
+      agent.start();
+      cls.getNamespace().run(function() {
+        agent.private_().createRootSpanData('root', 1, 2);
+        var spanData = agent.startSpan('sub', {test1: 'value'});
+        agent.endSpan(spanData);
+        var traceSpan = spanData.span;
+        assert.equal(traceSpan.name, 'sub');
+        assert.ok(traceSpan.labels);
+        assert.equal(traceSpan.labels.test1, 'value');
+      });
+    });
+
+    it('should ignore non-object labels', function() {
+      agent.start();
+      cls.getNamespace().run(function() {
+        agent.private_().createRootSpanData('root', 1, 2);
+
+        var testLabels = [
+          'foo',
+          5,
+          undefined,
+          null,
+          true,
+          false,
+          [4,5,6],
+          function () {}
+        ];
+
+        testLabels.forEach(function(labels) {
+          var spanData = agent.startSpan('sub', labels);
+          agent.endSpan(spanData);
+          var spanLabels = spanData.span.labels;
+          // Only the default labels should be there.
+          var keys = Object.keys(spanLabels);
+          assert.equal(keys.length, 1, 'should have only 1 key');
+          assert.equal(keys[0], TraceLabels.STACK_TRACE_DETAILS_KEY);
+        });
+      });
+    });
+
+  });
+
 
   it('should produce real spans runInSpan sync', function() {
     agent.start();

@@ -40,6 +40,7 @@
     "@google-cloud/common": "^0.11.0",
     "continuation-local-storage": "^3.1.4",
     "gcp-metadata": "^0.1.0",
+    "is": "^3.2.0",
     "lodash.findindex": "^4.4.0",
     "lodash.isequal": "^4.0.0",
     "methods": "^1.1.1",

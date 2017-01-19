@@ -161,6 +161,8 @@ Once your work is complete, you can end a child span with `agent.endSpan`. You c
   agent.endSpan(span, {label2: 'value'});
 ```
 
+Note that the labels parameter must be an object. Other types (e.g. string) will be silently ignored.
+
 ### Run in span
 
 `agent.runInSpan` takes a function to execute inside a custom child span with the given name. The function may be synchronous or asynchronous. If it is asynchronous, it must accept a 'endSpan' function as an argument that should be called once the asynchronous work has completed.

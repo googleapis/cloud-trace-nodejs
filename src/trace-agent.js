@@ -85,7 +85,7 @@ TraceAgent.prototype.config = function() {
  * Begin a new custom span.
  * @param {string} name The name of the span.
  * @param {Object<string, string}>=} labels Labels to be attached
- *   to the newly created span.
+ *   to the newly created span. Non-object data types are silently ignored.
  * @param {number=} skipFrames The number of caller frames to eliminate from
  *                            stack traces.
  * @return {SpanData} The newly created span.
@@ -95,11 +95,7 @@ TraceAgent.prototype.startSpan = function(name, labels, skipFrames) {
   skipFrames = skipFrames || 0;
   if (rootSpan) {
     var newSpan = rootSpan.createChildSpanData(name, skipFrames + 1);
-    if (labels) {
-      Object.keys(labels).forEach(function(key) {
-        newSpan.addLabel(key, labels[key]);
-      });
-    }
+    newSpan.addLabels(labels);
     return newSpan;
   } else {
     this.logger.error
@@ -112,14 +108,10 @@ TraceAgent.prototype.startSpan = function(name, labels, skipFrames) {
  * Close the provided span.
  * @param {SpanData} spanData The span to be ended.
  * @param {Object<string, string}>=} labels Labels to be attached
- *   to the terminated span.
+ *   to the terminated span. Non-object data types are silently ignored.
  */
 TraceAgent.prototype.endSpan = function(spanData, labels) {
-  if (labels) {
-    Object.keys(labels).forEach(function(key) {
-      spanData.addLabel(key, labels[key]);
-    });
-  }
+  spanData.addLabels(labels);
   spanData.close();
 };
 
@@ -130,7 +122,7 @@ TraceAgent.prototype.endSpan = function(spanData, labels) {
  * work is completed.
  * @param {string} name The name of the resulting span.
  * @param {Object<string, string}>=} labels Labels to be attached
- *   to the resulting span.
+ *   to the resulting span. Non-object data types are silently ignored.
  * @param {function(function()=)} fn The function to trace.
  */
 TraceAgent.prototype.runInSpan = function(name, labels, fn) {
@@ -169,11 +161,7 @@ TraceAgent.prototype.runInRootSpan = function(name, labels, fn) {
       return;
     }
     var span = self.createRootSpanData(name, null, null, 3, 'SPAN_KIND_UNSPECIFIED');
-    if (labels) {
-      Object.keys(labels).forEach(function(key) {
-        span.addLabel(key, labels[key]);
-      });
-    }
+    span.addLabels(labels);
     if (fn.length === 0) {
       fn();
       span.close();
