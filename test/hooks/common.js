@@ -69,6 +69,14 @@ function getMatchingSpans(predicate) {
   return list;
 }
 
+function assertSpanDurationCorrect(span) {
+  var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
+  assert(duration > SERVER_WAIT * (1 - FORGIVENESS),
+      'Duration was ' + duration + ', expected ' + SERVER_WAIT);
+  assert(duration < SERVER_WAIT * (1 + FORGIVENESS),
+      'Duration was ' + duration + ', expected ' + SERVER_WAIT);
+}
+
 /**
  * Verifies that the duration of the span captured
  * by the tracer matching the predicate `predicate`
@@ -86,11 +94,7 @@ function assertDurationCorrect(predicate) {
   // by the harness itself
   predicate = predicate || function(span) { return span.name !== 'outer'; };
   var span = getMatchingSpan(predicate);
-  var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
-  assert(duration > SERVER_WAIT * (1 - FORGIVENESS),
-      'Duration was ' + duration + ', expected ' + SERVER_WAIT);
-  assert(duration < SERVER_WAIT * (1 + FORGIVENESS),
-      'Duration was ' + duration + ', expected ' + SERVER_WAIT);
+  assertSpanDurationCorrect(span);
 }
 
 function doRequest(method, done, tracePredicate, path) {
@@ -133,6 +137,7 @@ function createChildSpan(cb, duration) {
 }
 
 module.exports = {
+  assertSpanDurationCorrect: assertSpanDurationCorrect,
   assertDurationCorrect: assertDurationCorrect,
   cleanTraces: cleanTraces,
   getMatchingSpan: getMatchingSpan,

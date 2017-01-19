@@ -275,6 +275,89 @@ Object.keys(versions).forEach(function(version) {
       });
     });
 
+    it('should not let root spans interfere with one another', function(done) {
+      this.timeout(8000);
+      var next = done;
+      // Calling queueCallTogether builds a call chain, with each link
+      // testing interference between two gRPC calls spaced apart by half
+      // of common.serverWait (to interleave them).
+      // This chain is kicked off with an initial call to next().
+      var queueCallTogether = function(first, second) {
+        var prevNext = next;
+        next = function() {
+          common.runInTransaction(function(endTransaction) {
+            var num = 0;
+            common.cleanTraces();
+            var callback = function() {
+              if (++num === 2) {
+                endTransaction();
+                var traces = common.getMatchingSpans(grpcServerOuterPredicate);
+                assert(traces.length === 2);
+                assert(traces[0].spanId !== traces[1].spanId);
+                assert(traces[0].startTime !== traces[1].startTime);
+                common.assertSpanDurationCorrect(traces[0]);
+                common.assertSpanDurationCorrect(traces[1]);
+                setImmediate(prevNext);
+              }
+            }
+            first(callback);
+            setTimeout(function() {
+              second(callback);
+            }, common.serverWait / 2);
+          });
+        }
+      }
+
+      // Define the gRPC calls.
+      var callUnary = function(cb) {
+        client.testUnary({n: 42}, function(err, result) {
+          assert.ifError(err);
+          cb();
+        });
+      }
+      var callClientStream = function(cb) {
+        var stream = client.testClientStream(function(err, result) {
+          assert.ifError(err);
+          cb();
+        });
+        for (var i = 0; i < 10; ++i) {
+          stream.write({n: i});
+        }
+        stream.end();
+      }
+      var callServerStream = function(cb) {
+        var stream = client.testServerStream({n: 42});
+        var sum = 0;
+        stream.on('data', function(data) {
+          sum += data.n;
+        });
+        stream.on('status', cb);
+      }
+      var callBidi = function(cb) {
+        var stream = client.testBidiStream();
+        var sum = 0;
+        stream.on('data', function(data) {
+          sum += data.n;
+        });
+        for (var i = 0; i < 10; ++i) {
+          stream.write({n: i});
+        }
+        stream.end();
+        stream.on('status', cb);
+      }
+
+      // Call queueCallTogether with every possible pair of gRPC calls.
+      var methods = [ callUnary, callClientStream, callServerStream, callBidi ];
+      for (var m of methods) {
+        for (var n of methods) {
+          queueCallTogether(m, n);
+        }
+      }
+
+      // Kick off call chain.
+      next();
+    });
+
     it('should remove trace frames from stack', function(done) {
       common.runInTransaction(function(endTransaction) {
         client.testUnary({n: 42}, function(err, result) {
