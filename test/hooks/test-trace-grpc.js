@@ -299,23 +299,23 @@ Object.keys(versions).forEach(function(version) {
                 common.assertSpanDurationCorrect(traces[1]);
                 setImmediate(prevNext);
               }
-            }
+            };
             first(callback);
             setTimeout(function() {
               second(callback);
             }, common.serverWait / 2);
           });
-        }
-      }
+        };
+      };
 
       // Define the gRPC calls.
-      var callUnary = function(cb) {
+      function callUnary(cb) {
         client.testUnary({n: 42}, function(err, result) {
           assert.ifError(err);
           cb();
         });
       }
-      var callClientStream = function(cb) {
+      function callClientStream(cb) {
         var stream = client.testClientStream(function(err, result) {
           assert.ifError(err);
           cb();
@@ -325,7 +325,7 @@ Object.keys(versions).forEach(function(version) {
         }
         stream.end();
       }
-      var callServerStream = function(cb) {
+      function callServerStream(cb) {
         var stream = client.testServerStream({n: 42});
         var sum = 0;
         stream.on('data', function(data) {
@@ -333,7 +333,7 @@ Object.keys(versions).forEach(function(version) {
         });
         stream.on('status', cb);
       }
-      var callBidi = function(cb) {
+      function callBidi(cb) {
         var stream = client.testBidiStream();
         var sum = 0;
         stream.on('data', function(data) {

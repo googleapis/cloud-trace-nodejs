@@ -233,7 +233,7 @@ function wrapServerStream(namespace, handlerSet, requestName) {
           }
           endSpan();
         });
-        return func.apply(this, args);
+        return func.apply(that, args);
       });
     };
   });
