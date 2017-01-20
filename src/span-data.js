@@ -16,6 +16,7 @@
 
 'use strict';
 
+var is = require('is');
 var TraceSpan = require('./trace-span.js');
 var TraceLabels = require('./trace-labels.js');
 
@@ -95,6 +96,21 @@ SpanData.prototype.addLabel = function(key, value) {
 };
 
 /**
+ * Add properties from provided `labels` param to the span as labels.
+ * 
+ * @param {Object<string, string}>=} labels Labels to be attached to the newly 
+ *   created span. Non-object data types are silently ignored.
+ */
+SpanData.prototype.addLabels = function(labels) {
+  var that = this;
+  if (is.object(labels)) {
+    Object.keys(labels).forEach(function(key) {
+      that.addLabel(key, labels[key]);
+    });
+  }
+};
+
+/**
  * Closes the span and queues it for publishing if it is a root.
  */
 SpanData.prototype.close = function() {
@@ -143,6 +159,7 @@ function StackFrame(className, methodName, fileName, lineNumber, columnNumber) {
 SpanData.nullSpan = {
   createChildSpanData: function() { return SpanData.nullSpan; },
   addLabel: function() {},
+  addLabels: function() {},
   close: function() {}
 };
 
