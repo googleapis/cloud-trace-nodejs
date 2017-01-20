@@ -22,8 +22,18 @@ var semver = require('semver');
 
 // hapi 13 and hapi-plugin-mysql uses const
 if (semver.satisfies(process.version, '>=4')) {
-  var Hapi = require('../hooks/fixtures/hapi13');
   describe('test-trace-mysql', function() {
+    var agent;
+    var Hapi;
+    before(function() {
+      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      Hapi = require('../hooks/fixtures/hapi13');
+    });
+
+    after(function() {
+      agent.stop();
+    });
+
     it('should work with connection pool access', function(done) {
       var server = new Hapi.Server();
       server.connection({ port: common.serverPort });
@@ -52,7 +62,7 @@ if (semver.satisfies(process.version, '>=4')) {
             var result = '';
             res.on('data', function(data) { result += data; });
             res.on('end', function() {
-              var spans = common.getMatchingSpans(function (span) {
+              var spans = common.getMatchingSpans(agent, function (span) {
                 return span.name === 'mysql-query';
               });
               assert.equal(spans.length, 1);

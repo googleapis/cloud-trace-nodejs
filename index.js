@@ -82,12 +82,31 @@ var initConfig = function(projectConfig) {
   return config;
 };
 
+function _printStack(name) {
+  /*
+  var stack = require('callsite');
+  console.log('Invoking ' + name + ' at:');
+  stack().forEach(function(site){
+    var file = site.getFileName();
+    if (file.indexOf('cloud-trace-nodejs') !== -1 &&
+          file.indexOf('node_modules') === -1 &&
+            !file.endsWith('index.js')){
+      console.log('  %s:%d',
+        //site.getFunctionName() || 'anonymous',
+        site.getFileName(),
+        site.getLineNumber());
+    }
+  });
+  console.log();
+  */
+}
+
 /**
  * The singleton public agent. This is the public API of the module.
  */
 var publicAgent = {
   isActive: function() {
-    return agent !== phantomTraceAgent;
+    return agent !== phantomTraceAgent && agent.isRunning();
   },
 
   startSpan: function(name, labels) {
@@ -116,9 +135,7 @@ var publicAgent = {
 
   startAgent: function(projectConfig) {
     if (this.isActive()) { // already started.
-      agent.logger.warn('Calling start on already started agent.' +
-        'New configuration will be ignored.');
-      return this;
+      throw new Error('Cannot call start on an already started agent.');
     }
 
     var config = initConfig(projectConfig);
@@ -185,6 +202,8 @@ var publicAgent = {
   },
 
   stop: function() {
+    _printStack('publicAgent.stop with isActive=' + this.isActive());
+
     if (this.isActive()) {
       agent.stop();
       agent = phantomTraceAgent;
@@ -220,6 +239,8 @@ var publicAgent = {
  * @param {object} options - [Configuration object](#/docs)
  */
 function Trace(options) {
+  _printStack('Trace.new');
+
   if (!(this instanceof Trace)) {
     return new Trace(options);
   }
@@ -238,8 +259,18 @@ function Trace(options) {
  * trace.startAgent();
  */
 Trace.prototype.startAgent = function(config) {
+  _printStack('Trace.startAgent');
   publicAgent.startAgent(config);
   return publicAgent;
+};
+
+Trace.prototype.isActive = function() {
+  return publicAgent.isActive();
+};
+
+Trace.prototype.get = function() {
+  _printStack('Trace.get');
+  return publicAgent.get();
 };
 
 global._google_trace_agent = publicAgent;

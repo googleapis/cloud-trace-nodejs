@@ -136,6 +136,7 @@ describe('index.js', function() {
   it('should return the initialized agent on get', function() {
     var agent = trace.startAgent();
     assert.equal(agent.get(), agent);
+    agent.stop();
   });
 
   it('should allow start, end, runIn span calls when disabled', function() {

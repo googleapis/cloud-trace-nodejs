@@ -20,10 +20,8 @@ if (!process.env.GCLOUD_PROJECT) {
   process.exit(1);
 }
 
-var config = { enhancedDatabaseReporting: true, samplingRate: 0 };
-var agent = require('../..')().startAgent(config).private_();
 // We want to disable publishing to avoid conflicts with production.
-agent.traceWriter.publish_ = function() {};
+require('../../src/trace-writer').publish_ = function() {};
 
 var cls = require('../../src/cls.js');
 
@@ -42,24 +40,32 @@ var SERVER_CERT = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
 /**
  * Cleans the tracer state between test runs.
  */
-function cleanTraces() {
+function cleanTraces(agent) {
   agent.traceWriter.buffer_ = [];
 }
 
-function getTraces() {
+function getTraces(agent) {
   return agent.traceWriter.buffer_.map(JSON.parse);
 }
 
-function getMatchingSpan(predicate) {
-  var spans = getMatchingSpans(predicate);
+function getMatchingSpan(agent, predicate) {
+  if (arguments.length !== 2){
+    throw new Error('getMatchingSpan() not called with 2 arguments');
+  }
+
+  var spans = getMatchingSpans(agent, predicate);
   assert.equal(spans.length, 1,
     'predicate did not isolate a single span');
   return spans[0];
 }
 
-function getMatchingSpans(predicate) {
+function getMatchingSpans(agent, predicate) {
+  if (arguments.length !== 2){
+    throw new Error('getMatchingSpans() not called with 2 arguments');
+  }
+
   var list = [];
-  getTraces().forEach(function(trace) {
+  getTraces(agent).forEach(function(trace) {
     trace.spans.forEach(function(span) {
       if (predicate(span)) {
         list.push(span);
@@ -81,11 +87,15 @@ function getMatchingSpans(predicate) {
  *
  * @param {function(?)=} predicate
  */
-function assertDurationCorrect(predicate) {
+function assertDurationCorrect(agent, predicate) {
+  if (arguments.length < 1){
+    throw new Error('assertDurationCorrect() not called with 2 arguments');
+  }
+
   // We assume that the tests never care about top level transactions created
   // by the harness itself
   predicate = predicate || function(span) { return span.name !== 'outer'; };
-  var span = getMatchingSpan(predicate);
+  var span = getMatchingSpan(agent, predicate);
   var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
   assert(duration > SERVER_WAIT * (1 - FORGIVENESS),
       'Duration was ' + duration + ', expected ' + SERVER_WAIT);
@@ -93,19 +103,27 @@ function assertDurationCorrect(predicate) {
       'Duration was ' + duration + ', expected ' + SERVER_WAIT);
 }
 
-function doRequest(method, done, tracePredicate, path) {
+function doRequest(agent, method, done, tracePredicate, path) {
+  if (arguments.length < 4){
+    throw new Error('doRequest() not called with 4 or more arguments');
+  }
+
   http.get({port: SERVER_PORT, method: method, path: path || '/'}, function(res) {
     var result = '';
     res.on('data', function(data) { result += data; });
     res.on('end', function() {
       assert.equal(SERVER_RES, result);
-      assertDurationCorrect(tracePredicate);
+      assertDurationCorrect(agent, tracePredicate);
       done();
     });
   });
 }
 
-function runInTransaction(fn) {
+function runInTransaction(agent, fn) {
+  if (arguments.length !== 2){
+    throw new Error('runInTransaction() not called with 2 arguments');
+  }
+
   cls.getNamespace().run(function() {
     var spanData = agent.createRootSpanData('outer');
     fn(function() {

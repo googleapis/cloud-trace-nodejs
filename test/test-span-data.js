@@ -21,12 +21,20 @@ if (!process.env.GCLOUD_PROJECT) {
   process.exit(1);
 }
 
-var agent = require('..')().startAgent({ samplingRate: 0 }).private_();
 var TraceLabels = require('../src/trace-labels.js');
 var assert = require('assert');
 var cls = require('../src/cls.js');
 
 describe('SpanData', function() {
+
+  var agent;
+  beforeEach(function() {
+    agent = require('..')().startAgent({ samplingRate: 0 }).private_();
+  });
+
+  afterEach(function() {
+    agent.stop();
+  });
 
   it('has correct default values', function() {
     cls.getNamespace().run(function() {

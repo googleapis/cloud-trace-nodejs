@@ -18,16 +18,17 @@
 var common = require('../hooks/common.js');
 var http = require('http');
 var assert = require('assert');
-var express = require('../hooks/fixtures/express4');
 var constants = require('../../src/constants.js');
 
 describe('test-trace-header-context', function() {
   var agent;
-  beforeEach(function() {
-    agent = require('../..')().startAgent();
+  var express;
+  before(function() {
+    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    express = require('../hooks/fixtures/express4');
   });
 
-  afterEach(function() {
+  after(function() {
     agent.stop();
   });
 
@@ -41,14 +42,14 @@ describe('test-trace-header-context', function() {
     app.get('/self', function(req, res) {
       assert(req.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
       res.send(common.serverRes);
-      var traces = common.getTraces();
+      var traces = common.getTraces(agent);
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.close();
       done();
     });
@@ -67,14 +68,14 @@ describe('test-trace-header-context', function() {
     app.get('/self', function(req, res) {
       assert(req.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
       res.send(common.serverRes);
-      var traces = common.getTraces();
+      var traces = common.getTraces(agent);
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.close();
       done();
     });
@@ -99,14 +100,14 @@ describe('test-trace-header-context', function() {
         req.headers[constants.TRACE_CONTEXT_HEADER_NAME].slice(8),
         ';o=1');
       res.send(common.serverRes);
-      var traces = common.getTraces();
+      var traces = common.getTraces(agent);
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.close();
       done();
     });
