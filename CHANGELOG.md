@@ -1,5 +1,11 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-01-19, Version 0.6.1 (Experimental), @matthewloring
+
+### Commits
+
+* [[`8b05415dc5`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8b05415dc5)] - ignore labels unless it is an object (#352) (Ali Ijaz Sheikh) 
+
 ## 2017-01-13, Version 0.6.0 (Experimental), @matthewloring
 
 ### Notable changes
