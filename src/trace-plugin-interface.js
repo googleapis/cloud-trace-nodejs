@@ -80,17 +80,15 @@ Transaction.prototype.endSpan = function() {
 Transaction.prototype.runInChildSpan = function(options, fn) {
   var that = this;
   options = options || {};
-  return that.agent.namespace.runAndReturn(function() {
-    var childContext = that.agent.startSpan(options.name, {},
-      options.stackFrames || 0);
-    // If the options object passed in has the setHeader field set,
-    // use it to set trace metadata in an outgoing request.
-    if (typeof(options.setHeader) === 'function') {
-      var outgoingTraceContext = that.agent.generateTraceContext(childContext, true);
-      options.setHeader('x-cloud-trace-context', outgoingTraceContext);
-    }
-    return fn(new ChildSpan(that.agent, childContext));
-  });
+  var childContext = that.agent.startSpan(options.name, {},
+    options.skipFrames ? options.skipFrames + 1 : 1);
+  // If the options object passed in has the setHeader field set,
+  // use it to set trace metadata in an outgoing request.
+  if (typeof(options.setHeader) === 'function') {
+    var outgoingTraceContext = that.agent.generateTraceContext(childContext, true);
+    options.setHeader('x-cloud-trace-context', outgoingTraceContext);
+  }
+  return fn(new ChildSpan(that.agent, childContext));
 };
 
 /**
@@ -146,24 +144,22 @@ Plugin.prototype.createTransaction = function(options) {
   if (options.url && !that.agent.shouldTrace(options.url, incomingTraceContext.options)) {
     return null;
   }
-  return that.agent.namespace.runAndReturn(function() {
-    var rootContext = that.agent.createRootSpanData(options.name,
-      incomingTraceContext.traceId,
-      incomingTraceContext.spanId,
-      options.stackFrames || 0);
-    // If the options object passed in has the setHeader field set,
-    // use it to set trace metadata in an outgoing request.
-    if (typeof(options.setHeader) === 'function') {
-      var outgoingTraceContext = rootContext.traceId + '/' +
-        rootContext.spanId;
-      var outgoingHeaderOptions = (incomingTraceContext.options !== null &&
-        incomingTraceContext.options !== undefined) ?
-        incomingTraceContext.options : constants.TRACE_OPTIONS_TRACE_ENABLED;
-      outgoingTraceContext += (';o=' + outgoingHeaderOptions);
-      options.setHeader('x-cloud-trace-context', outgoingTraceContext);
-    }
-    return new Transaction(that.agent, rootContext);
-  });
+  var rootContext = that.agent.createRootSpanData(options.name,
+    incomingTraceContext.traceId,
+    incomingTraceContext.spanId,
+    options.skipFrames ? options.skipFrames + 1 : 1);
+  // If the options object passed in has the setHeader field set,
+  // use it to set trace metadata in an outgoing request.
+  if (typeof(options.setHeader) === 'function') {
+    var outgoingTraceContext = rootContext.traceId + '/' +
+      rootContext.spanId;
+    var outgoingHeaderOptions = (incomingTraceContext.options !== null &&
+      incomingTraceContext.options !== undefined) ?
+      incomingTraceContext.options : constants.TRACE_OPTIONS_TRACE_ENABLED;
+    outgoingTraceContext += (';o=' + outgoingHeaderOptions);
+    options.setHeader('x-cloud-trace-context', outgoingTraceContext);
+  }
+  return new Transaction(that.agent, rootContext);
 };
 
 Plugin.prototype.getTransaction = function() {
@@ -188,8 +184,12 @@ Plugin.prototype.getTransaction = function() {
  * @returns The return value of calling fn.
  */
 Plugin.prototype.runInRootSpan = function(options, fn) {
-  var transaction = this.createTransaction(options);
+  var that = this;
   return this.agent.namespace.runAndReturn(function() {
+    var oldSkipFrames = options.skipFrames;
+    options.skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
+    var transaction = that.createTransaction(options);
+    options.skipFrames = oldSkipFrames;
     return fn(transaction);
   });
 };
@@ -208,7 +208,11 @@ Plugin.prototype.runInRootSpan = function(options, fn) {
 Plugin.prototype.runInChildSpan = function(options, fn) {
   var transaction = this.getTransaction();
   if (transaction) {
-    return transaction.runInChildSpan(options, fn);
+    var oldSkipFrames = options.skipFrames;
+    options.skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
+    var result = transaction.runInChildSpan(options, fn);
+    options.skipFrames = oldSkipFrames;
+    return result;
   } else {
     this.logger.warn(options.name + ': Attempted to run in child span without root');
     return fn();

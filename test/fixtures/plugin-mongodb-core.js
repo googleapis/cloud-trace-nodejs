@@ -40,7 +40,7 @@ function nextWrap(next) {
   return function next_trace(cb) {
     api.runInChildSpan({
       name: 'mongo-cursor',
-      stackFrames: 6
+      skipFrames: 0
     }, (function(transaction) {
       if (!transaction) {
         return next.call(this, cb);
@@ -60,7 +60,7 @@ function wrapWithLabel(label) {
       var args = arguments;
         api.runInChildSpan({
           name: label,
-          stackFrames: 6
+          skipFrames: 0
         }, (function(transaction) {
           if (!transaction) {
             return original.apply(this, args);

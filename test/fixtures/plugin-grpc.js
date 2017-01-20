@@ -1,5 +1,4 @@
 'use strict';
-var TraceLabels = require('../../src/trace-labels.js');
 var shimmer = require('shimmer');
 var semver = require('semver');
 var findIndex = require('lodash.findindex');
@@ -15,11 +14,11 @@ function makeClientMethod(method) {
     var that = this;
     var args = Array.prototype.slice.call(arguments);
     // The span name will be of form "grpc:/[Service]/[MethodName]".
-    api.runInChildSpan({
+    return api.runInChildSpan({
       name: 'grpc:' + method.path
     }, function(span) {
       if (!span) {
-        return method.apply(this, args);
+        return method.apply(that, args);
       }
       // Check if the response is through a stream or a callback.
       if (!method.responseStream) {
@@ -118,13 +117,17 @@ function makeClientConstructorWrap(makeClientConstructor) {
  * function can be used as the 'wrapper' argument to wrap sendMetadata.
  * sendMetadata is a member of each of ServerUnaryCall, ServerWriteableStream,
  * ServerReadableStream, and ServerDuplexStream.
- * @param rootContext The span object to which the metadata should be added.
+ * @param transaction The span object to which the metadata should be added.
  * @returns {Function} A function that returns a wrapped form of sendMetadata.
  */
 function sendMetadataWrapper(transaction) {
   return function (sendMetadata) {
     return function sendMetadataTrace(responseMetadata) {
-      transaction.addLabel('metadata', JSON.stringify(responseMetadata.getMap()));
+      if (transaction) {
+        transaction.addLabel('metadata', JSON.stringify(responseMetadata.getMap()));
+      } else {
+        api.logger.info('gRPC: No root context found in sendMetadata');
+      }
       return sendMetadata.apply(this, arguments);
     };
   };
@@ -137,61 +140,43 @@ function sendMetadataWrapper(transaction) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapUnary(handlerSet, requestName) {
-  // Start right before deserialization
-  // End right after serialization
-  shimmer.wrap(handlerSet, 'deserialize', api.wrap(function (deserialize) {
-    return api.wrap(function deserializeTrace() {
-      api.createTransaction({ name: requestName });
-      return deserialize.apply(this, arguments);
-    });
-  }));
-  // Even though our root span doesn't start or end here,
-  // we need to wrap 'func' so that:
-  // (1) child spans have the correct context, and
-  // (2) we can get additional labels as needed
-  shimmer.wrap(handlerSet, 'func', api.wrap(function (func) {
-    return api.wrap(function funcTrace(call, callback) {
-      var transaction = api.getTransaction();
-      if (!transaction) {
-        return func.apply(this, arguments);
-      }
-      transaction.addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, 'POST');
-      if (api.config.enhancedDatabaseReporting) {
-        shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(transaction));
-      }
-      if (api.config.enhancedDatabaseReporting) {
-        transaction.addLabel('argument', JSON.stringify(call.request));
-      }
-      // arguments[1] is the callback
-      arguments[1] = function (err, result, trailer, flags) {
+  shimmer.wrap(handlerSet, 'func', function (func) {
+    return function serverMethodTrace(call, callback) {
+      var that = this;
+      var args = arguments;
+      // Running in the namespace here propagates context to func.
+      return api.runInRootSpan({
+        name: requestName,
+        skipFrames: 3
+      }, function(transaction) {
+        if (!transaction) {
+          return func.apply(that, args);
+        }
         if (api.config.enhancedDatabaseReporting) {
-          if (err) {
-            transaction.addLabel('error', err);
-          } else {
-            transaction.addLabel('result', JSON.stringify(result));
-          }
-          if (trailer) {
-            transaction.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
-          }
+          shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(transaction));
         }
-        if (err) {
-          // If there is an error, then no result will be serialized to
-          // be sent back to the client. So end the root span here.
+        if (api.config.enhancedDatabaseReporting) {
+          transaction.addLabel('argument', JSON.stringify(call.request));
+        }
+        // args[1] is the callback.
+        // Here, we patch the callback so that the span is ended immediately
+        // beforehand.
+        args[1] = function (err, result, trailer, flags) {
+          if (api.config.enhancedDatabaseReporting) {
+            if (err) {
+              transaction.addLabel('error', err);
+            } else {
+              transaction.addLabel('result', JSON.stringify(result));
+            }
+            if (trailer) {
+              transaction.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
+            }
+          }
           transaction.endSpan();
-        }
-        return callback(err, result, trailer, flags);
-      };
-      return func.apply(this, arguments);
-    });
-  }));
-  shimmer.wrap(handlerSet, 'serialize', function (serialize) {
-    return function serializeTrace() {
-      var serializeResult = serialize.apply(this, arguments);
-      var transaction = api.getTransaction();
-      if (transaction) {
-        transaction.endSpan();
-      }
-      return serializeResult;
+          return callback(err, result, trailer, flags);
+        };
+        return func.apply(that, args);
+      });
     };
   });
 }
@@ -203,47 +188,52 @@ function wrapUnary(handlerSet, requestName) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapServerStream(handlerSet, requestName) {
-  // Start right before deserialization (which precedes call to function)
-  // End right after output stream 'finish' event
-  shimmer.wrap(handlerSet, 'deserialize', function (deserialize) {
-    return function deserializeTrace() {
-      api.createTransaction({ name: requestName });
-      return deserialize.apply(this, arguments);
-    };
-  });
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return function funcTrace(call) {
-      var transaction = api.getTransaction();
-      if (!transaction) {
-        return func.apply(this, arguments);
-      }
-      transaction.addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, 'POST');
-      if (api.config.enhancedDatabaseReporting) {
-        shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(transaction));
-      }
-      if (api.config.enhancedDatabaseReporting) {
-        transaction.addLabel('argument', JSON.stringify(call.request));
-      }
-      var spanEnded = false;
-      var endSpan = function () {
-        if (!spanEnded) {
-          spanEnded = true;
-          transaction.endSpan();
+    return function serverMethodTrace(stream) {
+      var that = this;
+      var args = arguments;
+      // Running in the namespace here propagates context to func.
+      return api.runInRootSpan({
+        name: requestName,
+        skipFrames: 3
+      }, function(transaction) {
+        if (!transaction) {
+          return func.apply(that, args);
         }
-      };
-      call.on('finish', function () {
-        // End the span unless there is an error.
-        if (call.status.code === 0) {
-          endSpan();
-        }
-      });
-      call.on('error', function (err) {
         if (api.config.enhancedDatabaseReporting) {
-          transaction.addLabel('error', err);
+          shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(transaction));
         }
-        endSpan();
+        if (api.config.enhancedDatabaseReporting) {
+          transaction.addLabel('argument', JSON.stringify(stream.request));
+        }
+        var spanEnded = false;
+        var endSpan = function() {
+          if (!spanEnded) {
+            spanEnded = true;
+            transaction.endSpan();
+          }
+        };
+        // Propagate context to stream event handlers.
+        api.wrapEmitter(stream);
+        // stream is a WriteableStream. Emitting a 'finish' or 'error' event
+        // suggests that no more data will be sent, so we end the span in these
+        // event handlers.
+        stream.on('finish', function() {
+          // End the span unless there is an error. (If there is, the span will
+          // be ended in the error event handler. This is to ensure that the
+          // 'error' label is applied.)
+          if (stream.status.code === 0) {
+            endSpan();
+          }
+        });
+        stream.on('error', function (err) {
+          if (api.config.enhancedDatabaseReporting) {
+            transaction.addLabel('error', err);
+          }
+          endSpan();
+        });
+        return func.apply(that, args);
       });
-      return func.apply(this, arguments);
     };
   });
 }
@@ -255,50 +245,47 @@ function wrapServerStream(handlerSet, requestName) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapClientStream(handlerSet, requestName) {
-  // Start right before call to function
-  // End right after serialization (which is done in the callback)
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return function funcTrace(stream, callback) {
-      var transaction = api.createTransaction({ name: requestName });
-      if (!transaction) {
-        return func.apply(this, arguments);
-      }
-      transaction.addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, 'POST');
-      if (api.config.enhancedDatabaseReporting) {
-        shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(transaction));
-      }
-      // Preserve context in stream event handlers.
-      api.wrapEmitter(stream);
-      // arguments[1] is the callback
-      arguments[1] = function (err, result, trailer, flags) {
+    return function serverMethodTrace(stream, callback) {
+      var that = this;
+      var args = arguments;
+      // Running in the namespace here propagates context to func.
+      return api.runInRootSpan({
+        name: requestName,
+        skipFrames: 3
+      }, function(transaction) {
+        if (!transaction) {
+          return func.apply(that, args);
+        }
         if (api.config.enhancedDatabaseReporting) {
-          if (err) {
-            transaction.addLabel('error', err);
-          } else {
-            transaction.addLabel('result', JSON.stringify(result));
-          }
-          if (trailer) {
-            transaction.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
-          }
+          shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(transaction));
         }
-        if (err) {
-          // If there is an error, then no result will be serialized to
-          // be sent back to the client. So end the root span here.
+        // Propagate context to stream event handlers.
+        // stream is a ReadableStream.
+        // Note that unlike server streams, the length of the span is not
+        // tied to the lifetime of the stream. It should measure the time for
+        // the server to send a response, not the time until all data has been
+        // received from the client.
+        api.wrapEmitter(stream);
+        // args[1] is the callback.
+        // Here, we patch the callback so that the span is ended immediately
+        // beforehand.
+        args[1] = function (err, result, trailer, flags) {
+          if (api.config.enhancedDatabaseReporting) {
+            if (err) {
+              transaction.addLabel('error', err);
+            } else {
+              transaction.addLabel('result', JSON.stringify(result));
+            }
+            if (trailer) {
+              transaction.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
+            }
+          }
           transaction.endSpan();
-        }
-        return callback(err, result, trailer, flags);
-      };
-      return func.apply(this, arguments);
-    };
-  });
-  shimmer.wrap(handlerSet, 'serialize', function (serialize) {
-    return function serializeTrace(result) {
-      var serializeResult = serialize.apply(this, arguments);
-      var transaction = api.getTransaction();
-      if (transaction) {
-        transaction.endSpan();
-      }
-      return serializeResult;
+          return callback(err, result, trailer, flags);
+        };
+        return func.apply(that, args);
+      });
     };
   });
 }
@@ -310,37 +297,44 @@ function wrapClientStream(handlerSet, requestName) {
  * @param {string} requestName The human-friendly name of the request.
  */
 function wrapBidi(handlerSet, requestName) {
-  // Start right before call to function
-  // End right after output stream 'finish' event
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return function funcTrace(stream) {
+    return function serverMethodTrace(stream) {
       var that = this;
       var args = arguments;
-      return api.runInRootSpan(requestName, function(transaction) {
+      // Running in the namespace here propagates context to func.
+      return api.runInRootSpan({
+        name: requestName,
+        skipFrames: 3
+      }, function(transaction) {
         if (!transaction) {
           return func.apply(that, args);
         }
-        transaction.addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, 'POST');
         if (api.config.enhancedDatabaseReporting) {
           shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(transaction));
         }
-        // Preserve context in stream event handlers.
-        api.wrapEmitter(stream);
         var spanEnded = false;
-        var endSpan = function () {
+        var endSpan = function() {
           if (!spanEnded) {
             spanEnded = true;
             transaction.endSpan();
           }
         };
-        stream.on('finish', function () {
+        // Propagate context in stream event handlers.
+        api.wrapEmitter(stream);
+        // stream is a Duplex. Emitting a 'finish' or 'error' event
+        // suggests that no more data will be sent, so we end the span in these
+        // event handlers.
+        // Similar to client streams, the trace span should measure the time
+        // until the server has finished sending data back to the client, not
+        // the time that all data has been received from the client.
+        stream.on('finish', function() {
           // End the span unless there is an error.
           if (stream.status.code === 0) {
             endSpan();
           }
         });
         stream.on('error', function (err) {
-          if (api.config.enhancedDatabaseReporting) {
+          if (!spanEnded && api.config.enhancedDatabaseReporting) {
             transaction.addLabel('error', err);
           }
           endSpan();
@@ -369,7 +363,7 @@ function serverRegisterWrap(register) {
     // Proceed to wrap methods that are invoked when a gRPC service call is made.
     // In every case, the function 'func' is the user-implemented handling function.
     if (method_type === 'unary') {
-      api.wrap(wrapUnary(handlerSet, requestName));
+      wrapUnary(handlerSet, requestName);
     } else if (method_type === 'server_stream') {
       wrapServerStream(handlerSet, requestName);
     } else if (method_type === 'client_stream') {

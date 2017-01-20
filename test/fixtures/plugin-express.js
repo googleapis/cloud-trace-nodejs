@@ -29,7 +29,7 @@ module.exports = function(version, api) {
             getHeader: function (headerName) { return req.get(headerName); },
             setHeader: function (headerName, header) { res.set(headerName, header); },
             url: req.originalUrl,
-            stackFrames: 6
+            skipFrames: 3
           };
           api.runInRootSpan(options, function(transaction) {
             if (!transaction) {
