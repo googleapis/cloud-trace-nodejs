@@ -1,6 +1,6 @@
 {
   "name": "@google/cloud-trace",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Node.js Support for StackDriver Trace",
   "main": "index.js",
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
