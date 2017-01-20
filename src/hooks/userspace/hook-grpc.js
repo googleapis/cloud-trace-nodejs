@@ -161,12 +161,12 @@ function sendMetadataWrapper(rootContext) {
  */
 function wrapUnary(namespace, handlerSet, requestName) {
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return function funcTrace(call, callback) {
+    return function serverMethodTrace(call, callback) {
       var that = this;
       var args = arguments;
       // Running in the namespace here propagates context to func.
       return namespace.runAndReturn(function() {
-        var rootContext = startRootSpanForRequest(requestName);
+        var rootContext = startRootSpanForRequest(requestName, 5);
         if (agent.config_.enhancedDatabaseReporting) {
           shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
@@ -205,12 +205,12 @@ function wrapUnary(namespace, handlerSet, requestName) {
  */
 function wrapServerStream(namespace, handlerSet, requestName) {
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return function funcTrace(stream) {
+    return function serverMethodTrace(stream) {
       var that = this;
       var args = arguments;
       // Running in the namespace here propagates context to func.
       return namespace.runAndReturn(function() {
-        var rootContext = startRootSpanForRequest(requestName);
+        var rootContext = startRootSpanForRequest(requestName, 5);
         if (agent.config_.enhancedDatabaseReporting) {
           shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
@@ -258,12 +258,12 @@ function wrapServerStream(namespace, handlerSet, requestName) {
  */
 function wrapClientStream(namespace, handlerSet, requestName) {
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return function funcTrace(stream, callback) {
+    return function serverMethodTrace(stream, callback) {
       var that = this;
       var args = arguments;
       // Running in the namespace here propagates context to func.
       return namespace.runAndReturn(function() {
-        var rootContext = startRootSpanForRequest(requestName);
+        var rootContext = startRootSpanForRequest(requestName, 5);
         if (agent.config_.enhancedDatabaseReporting) {
           shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
@@ -306,12 +306,12 @@ function wrapClientStream(namespace, handlerSet, requestName) {
  */
 function wrapBidi(namespace, handlerSet, requestName) {
   shimmer.wrap(handlerSet, 'func', function (func) {
-    return function funcTrace(stream) {
+    return function serverMethodTrace(stream) {
       var that = this;
       var args = arguments;
       // Running in the namespace here propagates context to func.
       return namespace.runAndReturn(function() {
-        var rootContext = startRootSpanForRequest(requestName);
+        var rootContext = startRootSpanForRequest(requestName, 5);
         if (agent.config_.enhancedDatabaseReporting) {
           shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootContext));
         }
@@ -390,8 +390,8 @@ function serverRegisterWrap(register) {
  * @param {Object} req The request being processed.
  * @returns {!SpanData} The new initialized trace span data instance.
  */
-function startRootSpanForRequest(req) {
-  var rootContext = agent.createRootSpanData(req, null, null, 1);
+function startRootSpanForRequest(req, skipFrames) {
+  var rootContext = agent.createRootSpanData(req, null, null, skipFrames);
   return rootContext;
 }
 

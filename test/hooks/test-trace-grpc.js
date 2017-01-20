@@ -80,7 +80,9 @@ Object.keys(versions).forEach(function(version) {
         });
         call.on('end', function() {
           if (sum === EMIT_ERROR) {
-            stopChildSpan();
+            if (stopChildSpan) {
+              stopChildSpan();
+            }
             cb(new Error('test'));
           } else if (sum === SEND_METADATA) {
             call.sendMetadata(metadata);
@@ -125,6 +127,9 @@ Object.keys(versions).forEach(function(version) {
         stream.on('end', function() {
           stopChildSpan();
           if (sum === EMIT_ERROR) {
+          if (stopChildSpan) {
+            stopChildSpan();
+          }
             stream.emit('error', new Error('test'));
           } else if (sum === SEND_METADATA) {
             stream.sendMetadata(metadata);
@@ -364,11 +369,16 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           assert.ifError(err);
           assert.strictEqual(result.n, 42);
-          var trace = common.getMatchingSpan(grpcClientPredicate);
-          var labels = trace.labels;
-          var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
-          assert.notStrictEqual(-1,
-              stack.stack_frame[0].method_name.indexOf('clientMethodTrace'));
+          function getMethodName(predicate) {
+            var trace = common.getMatchingSpan(predicate);
+            var labels = trace.labels;
+            var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+            return stack.stack_frame[0].method_name;
+          }
+          assert.notStrictEqual(-1, getMethodName(grpcClientPredicate)
+            .indexOf('clientMethodTrace'));
+          assert.notStrictEqual(-1, getMethodName(grpcServerOuterPredicate)
+            .indexOf('serverMethodTrace'));
           done();
         });
       });
