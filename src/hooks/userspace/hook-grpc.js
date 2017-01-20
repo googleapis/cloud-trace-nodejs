@@ -176,10 +176,11 @@ function wrapUnary(namespace, handlerSet, requestName) {
         // args[1] is the callback.
         // Here, we patch the callback so that the span is ended immediately
         // beforehand.
+        args = Array.prototype.slice.call(args);
         args[1] = function (err, result, trailer, flags) {
           if (agent.config_.enhancedDatabaseReporting) {
             if (err) {
-              rootContext.addLabel('error', err);
+              rootContext.addLabel('error', err); 
             } else {
               rootContext.addLabel('result', JSON.stringify(result));
             }
@@ -277,6 +278,7 @@ function wrapClientStream(namespace, handlerSet, requestName) {
         // args[1] is the callback.
         // Here, we patch the callback so that the span is ended immediately
         // beforehand.
+        args = Array.prototype.slice.call(args);
         args[1] = function (err, result, trailer, flags) {
           if (agent.config_.enhancedDatabaseReporting) {
             if (err) {
