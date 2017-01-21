@@ -16,6 +16,7 @@
 
 'use strict';
 
+var proxyquire  = require('proxyquire');
 var assert = require('assert');
 var nock = require('nock');
 var trace = require('../..')();
@@ -26,8 +27,20 @@ nock.disableNetConnect();
 delete process.env.GCLOUD_PROJECT;
 
 describe('agent interaction with metadata service', function() {
-
   var agent;
+
+  before(function() {
+    // Setup: Monkeypatch gcp-metadata to not ask for retries at all.
+    var retryRequest = require('retry-request');
+    proxyquire('gcp-metadata', {
+      'retry-request': function(requestOps, callback) {
+        return retryRequest(requestOps, {
+          retries: 0
+        }, callback);
+      }
+    });
+  });
+
   afterEach(function() {
     agent.stop();
   });
@@ -35,7 +48,7 @@ describe('agent interaction with metadata service', function() {
   it('should stop when the project number cannot be acquired', function(done) {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
-                .get('/computeMetadata/v1/project/numeric-project-id')
+                .get('/computeMetadata/v1/project/project-id')
                 .times(2)
                 .reply(404, 'foo');
 
@@ -50,7 +63,7 @@ describe('agent interaction with metadata service', function() {
   it('should activate with projectId from metadata service', function(done) {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
-                .get('/computeMetadata/v1/project/numeric-project-id')
+                .get('/computeMetadata/v1/project/project-id')
                 .times(2)
                 .reply(200, '1234');
     agent = trace.startAgent({logLevel: 0});
@@ -65,7 +78,7 @@ describe('agent interaction with metadata service', function() {
   it('should not query metadata service when config.projectId is set',
     function() {
       nock.disableNetConnect();
-      agent = trace.startAgent({projectId: 0, logLevel: 0});
+      agent = trace.startAgent({projectId: '0', logLevel: 0});
     });
 
   it('should not query metadata service when env. var. is set', function() {
@@ -82,7 +95,7 @@ describe('agent interaction with metadata service', function() {
                 .times(1)
                 .reply(200, 'host');
 
-    agent = trace.startAgent({projectId: 0, logLevel: 0});
+    agent = trace.startAgent({projectId: '0', logLevel: 0});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -101,7 +114,7 @@ describe('agent interaction with metadata service', function() {
                 .times(1)
                 .reply(200, '1729');
 
-    agent = trace.startAgent({projectId: 0, logLevel: 0});
+    agent = trace.startAgent({projectId: '0', logLevel: 0});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -115,7 +128,7 @@ describe('agent interaction with metadata service', function() {
 
   it('shouldn\'t add id or hostname labels if not present', function(done) {
     nock.disableNetConnect();
-    agent = trace.startAgent({projectId: 0, logLevel: 0});
+    agent = trace.startAgent({projectId: '0', logLevel: 0});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -132,7 +145,7 @@ describe('agent interaction with metadata service', function() {
     process.env.GAE_MODULE_NAME = 'foo';
     process.env.GAE_MODULE_VERSION = '20151119t120000';
     process.env.GAE_MINOR_VERSION = '91992';
-    agent = trace.startAgent({projectId: 0, logLevel: 0});
+    agent = trace.startAgent({projectId: '0', logLevel: 0});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -151,7 +164,7 @@ describe('agent interaction with metadata service', function() {
     process.env.GAE_MODULE_NAME = 'default';
     process.env.GAE_MODULE_VERSION = '20151119t130000';
     process.env.GAE_MINOR_VERSION = '81818';
-    agent = trace.startAgent({projectId: 0, logLevel: 0});
+    agent = trace.startAgent({projectId: '0', logLevel: 0});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -177,7 +190,7 @@ describe('agent interaction with metadata service', function() {
                   .reply(200, 'host');
 
       delete process.env.GAE_MODULE_NAME;
-      agent = trace.startAgent({projectId: 0, logLevel: 0});
+      agent = trace.startAgent({projectId: '0', logLevel: 0});
       setTimeout(function() {
         agent.private_().namespace.run(function() {
           var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -199,14 +212,14 @@ describe('agent interaction with metadata service', function() {
                   .reply(404);
 
       delete process.env.GAE_MODULE_NAME;
-      agent = trace.startAgent({projectId: 0, logLevel: 0});
+      agent = trace.startAgent({projectId: '0', logLevel: 0});
       setTimeout(function() {
         agent.private_().namespace.run(function() {
           var spanData = agent.private_().createRootSpanData('name', 5, 0);
           spanData.close();
+          scope.done();
           assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME],
             require('os').hostname());
-          scope.done();
           done();
         });
       }, 500);

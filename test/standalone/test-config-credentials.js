@@ -94,25 +94,19 @@ describe('test-config-credentials', function() {
     });
   });
 
-  it('should ignore credentials if keyFilename is provided', function(done) {
-    var correctCredentials = require('../fixtures/gcloud-credentials.json');
+  it('should ignore keyFilename if credentials is provided', function(done) {
+    var correctCredentials = {
+      client_id: 'a',
+      client_secret: 'b',
+      refresh_token: 'c',
+      type: 'authorized_user'
+    };
     var config = {
       bufferSize: 2,
       samplingRate: 0,
-      keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
-      credentials: {
-        client_id: 'a',
-        client_secret: 'b',
-        refresh_token: 'c',
-        type: 'authorized_user'
-      }
+      credentials: correctCredentials,
+      keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json')
     };
-    ['client_id', 'client_secret', 'refresh_token'].forEach(function (field) {
-      assert(correctCredentials.hasOwnProperty(field));
-      assert(config.credentials.hasOwnProperty(field));
-      assert.notEqual(config.credentials[field],
-        correctCredentials[field]);
-    });
     var agent = require('../..')().startAgent(config);
     nock.disableNetConnect();
     var scope = nock('https://accounts.google.com')

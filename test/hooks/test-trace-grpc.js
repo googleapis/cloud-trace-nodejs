@@ -283,7 +283,7 @@ Object.keys(versions).forEach(function(version) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
             assert.strictEqual(trace.labels.argument, '{"n":' + EMIT_ERROR + '}');
-            assert.strictEqual(trace.labels.error, 'Error: test');
+            assert(trace.labels.error.indexOf('Error: test') !== -1);
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerPredicate);
@@ -300,7 +300,7 @@ Object.keys(versions).forEach(function(version) {
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            assert.strictEqual(trace.labels.error, 'Error: test');
+            assert(trace.labels.error.indexOf('Error: test') !== -1);
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerPredicate);
@@ -320,7 +320,7 @@ Object.keys(versions).forEach(function(version) {
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            assert.strictEqual(trace.labels.error, 'Error: test');
+            assert(trace.labels.error.indexOf('Error: test') !== -1);
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerPredicate);
@@ -340,7 +340,7 @@ Object.keys(versions).forEach(function(version) {
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            assert.strictEqual(trace.labels.error, 'Error: test');
+            assert(trace.labels.error.indexOf('Error: test') !== -1);
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerPredicate);

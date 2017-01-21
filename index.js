@@ -22,16 +22,18 @@ var filesLoadedBeforeTrace = Object.keys(require.cache);
 // patched before any user-land modules get loaded.
 require('continuation-local-storage');
 
-var SpanData = require('./src/span-data.js');
-var common = require('@google/cloud-diagnostics-common');
-var semver = require('semver');
+var common = require('@google-cloud/common');
 var constants = require('./src/constants.js');
-var util = require('./src/util.js');
+var gcpMetadata = require('gcp-metadata');
+var semver = require('semver');
+var traceUtil = require('./src/util.js');
+var SpanData = require('./src/span-data.js');
+var util = require('util');
 
 var modulesLoadedBeforeTrace = [];
 
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
-  var moduleName = util.packageNameFromPath(filesLoadedBeforeTrace[i]);
+  var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
   if (moduleName && moduleName !== '@google/cloud-trace' &&
       modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
     modulesLoadedBeforeTrace.push(moduleName);
@@ -69,12 +71,18 @@ var phantomTraceAgent = {
 var agent = phantomTraceAgent;
 
 var initConfig = function(projectConfig) {
-  var util = require('util');
   var config = {};
   util._extend(config, require('./config.js').trace);
   util._extend(config, projectConfig);
   if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
-    config.logLevel = process.env.GCLOUD_TRACE_LOGLEVEL;
+    var envLogLevel = parseInt(process.env.GCLOUD_TRACE_LOGLEVEL, 10);
+    if (!isNaN(envLogLevel)) {
+      config.logLevel = envLogLevel;
+    } else {
+      console.error('Warning: Ignoring env var GCLOUD_TRACE_LOGLEVEL as it ' +
+        'contains an non-integer log level: ' +
+        process.env.GCLOUD_TRACE_LOGLEVEL);
+    }
   }
   if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
     config.projectId = process.env.GCLOUD_PROJECT;
@@ -120,10 +128,22 @@ var publicAgent = {
     }
 
     var config = initConfig(projectConfig);
+
     if (!config.enabled) {
       return this;
     }
-    var logger = common.logger.create(config.logLevel, '@google/cloud-trace');
+
+    var logLevel = config.logLevel;
+    if (logLevel < 0) {
+      logLevel = 0;
+    } else if (logLevel >= common.logger.LEVELS.length) {
+      logLevel = common.logger.LEVELS.length - 1;
+    }
+    var logger = common.logger({
+      level: common.logger.LEVELS[logLevel],
+      tag: '@google/cloud-trace'
+    });
+
     if (!semver.satisfies(process.versions.node, '>=0.12')) {
       logger.error('Tracing is only supported on Node versions >=0.12');
       return this;
@@ -149,25 +169,36 @@ var publicAgent = {
     }
 
     if (typeof config.projectId === 'undefined') {
-      // Queue the work to acquire the projectNumber (potentially from the
+      // Queue the work to acquire the projectId (potentially from the
       // network.)
-      common.utils.getProjectNumber(headers, function(err, project) {
+      gcpMetadata.project({
+        property: 'project-id',
+        headers: headers
+      }, function(err, response, projectId) {
+        if (response && response.statusCode !== 200) {
+          if (response.statusCode === 503) {
+            err = new Error('Metadata service responded with a 503 status ' +
+              'code. This may be due to a temporary server error; please try ' +
+              'again later.');
+          } else {
+            err = new Error('Metadata service responded with the following ' +
+              'status code: ' + response.statusCode);
+          }
+        }
         if (err) {
           // Fatal error. Disable the agent.
           logger.error('Unable to acquire the project number from metadata ' +
             'service. Please provide a valid project number as an env. ' +
-            'variable, or through config.projectId passed to start().' +
-            err);
+            'variable, or through config.projectId passed to start(). ' +
+            'Disabling trace agent. ' + err);
           publicAgent.stop();
           return;
         }
-        config.projectId = project;
+        config.projectId = projectId;
       });
-    } else if (typeof config.projectId === 'number') {
-      config.projectId = config.projectId.toString();
     } else if (typeof config.projectId !== 'string') {
-      logger.error('config.projectId, if provided, must be' +
-        ' a string or number. Disabling trace agent.');
+      logger.error('config.projectId, if provided, must be a string. ' +
+        'Disabling trace agent.');
       return this;
     }
 

@@ -90,14 +90,14 @@ module.exports = {
     // projects.
     ignoreContextHeader: false,
 
+    // The contents of a key file. If this field is set, its contents will be
+    // used for authentication instead of your application default credentials.
+    credentials: null,
+
     // A path to a key file relative to the current working directory. If this
     // field is set, the contents of the pointed file will be used for
     // authentication instead of your application default credentials.
-    keyFilename: null,
-
-    // The contents of a key file. If this field is set, its contents will be
-    // used for authentication instead of your application default credentials.
-    // If keyFilename is also set, the value of credentials will be ignored.
-    credentials: null
+    // If credentials is also set, the value of keyFilename will be ignored.
+    keyFilename: null
   }
 };

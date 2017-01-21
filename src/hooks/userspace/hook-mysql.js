@@ -86,7 +86,9 @@ module.exports = function(version_, agent_) {
   return {
     'lib/Connection.js': {
       patch: function(Connection) {
-        agent = agent_;
+        if (!agent) {
+          agent = agent_;
+        }
         shimmer.wrap(Connection, 'createQuery', createQueryWrap);
       },
       unpatch: function(Connection) {
@@ -96,6 +98,9 @@ module.exports = function(version_, agent_) {
     },
     'lib/Pool.js': {
       patch: function(Pool) {
+        if (!agent) {
+          agent = agent_;
+        }
         shimmer.wrap(Pool.prototype, 'getConnection', wrapGetConnection);
       },
       unpatch: function(Pool) {

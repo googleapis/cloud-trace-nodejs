@@ -1,5 +1,47 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-01-19, Version 0.6.1 (Experimental), @matthewloring
+
+### Commits
+
+* [[`8b05415dc5`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8b05415dc5)] - ignore labels unless it is an object (#352) (Ali Ijaz Sheikh) 
+
+## 2017-01-13, Version 0.6.0 (Experimental), @matthewloring
+
+### Notable changes
+
+**bug fixes**:
+
+  * [[`94e5dad453`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/94e5dad453)] - Limit span names/labels to service limits (#345) (Matthew Loring) [#345](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/345)
+  * [[`d31798c9d7`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d31798c9d7)] - Display contents of label values of object type (#346) (Matthew Loring) [#346](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/346)
+
+**configuration**:
+
+  * [[`8e46d5f8ed`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8e46d5f8ed)] - Remove unncessary environment variables (#331) (Matthew Loring) [#331](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/331)
+
+**hapi**:
+
+  * [[`b89dda8f1b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b89dda8f1b)] - Support for hapi 16 (#325) (Matthew Loring) [#325](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/325)
+
+### Commits
+
+* [[`94e5dad453`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/94e5dad453)] - Limit span names/labels to service limits (#345) (Matthew Loring) [#345](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/345)
+* [[`d31798c9d7`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d31798c9d7)] - Display contents of label values of object type (#346) (Matthew Loring) [#346](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/346)
+* [[`ca84959c28`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ca84959c28)] - Ensure agent is always set for mysql/grpc (#343) (Matthew Loring) [#343](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/343)
+* [[`4e6670363c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4e6670363c)] - Address system dependence of sed in tests (#339) (Dominic Kramer) [#339](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/339)
+* [[`8aed09d156`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8aed09d156)] - Removed dependency on cloud-diagnostics-common (#338) (Kelvin Jin) [#338](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/338)
+* [[`f5401db6bb`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f5401db6bb)] - Add `coverage` to `.gitignore` (#336) (Dominic Kramer) [#336](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/336)
+* [[`60cf051967`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/60cf051967)] - Specify package name in version string (#335) (Matthew Loring) [#335](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/335)
+* [[`8e46d5f8ed`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8e46d5f8ed)] - Remove unncessary environment variables (#331) (Matthew Loring) [#331](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/331)
+* [[`422c9508ee`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/422c9508ee)] - Rename the `lib` directory to `src` (#333) (Dominic Kramer) [#333](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/333)
+* [[`04b3b31023`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/04b3b31023)] - Add AUTHORS file (#332) (Matthew Loring) [#332](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/332)
+* [[`aa5da46bf8`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/aa5da46bf8)] - Fix typo in `parseContextFromHeader` comment (#329) (Adri Van Houdt) 
+* [[`398f46c33f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/398f46c33f)] - hapi versions in README.md were out of sync (#328) (Ali Ijaz Sheikh) 
+* [[`00a9ec7b07`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/00a9ec7b07)] - Fix some typos in the README (#323) (Dominic Kramer) 
+* [[`b89dda8f1b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b89dda8f1b)] - Support for hapi 16 (#325) (Matthew Loring) [#325](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/325)
+* [[`598366f194`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/598366f194)] - Add badges + update dependencies (#324) (Matthew Loring) [#324](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/324)
+* [[`63e7aae593`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/63e7aae593)] - Begin testing against v7 on travis (#322) (Matthew Loring) [#322](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/322)
+
 ## 2016-11-11, Version 0.5.10 (Experimental), @matthewloring
 
 ### Commits
