@@ -136,12 +136,32 @@ function runInTransaction(agent, fn) {
   });
 }
 
+// Creates a child span that closes after the given duration.
+// Also calls cb after that duration.
+// Returns a method which, when called, closes the child span
+// right away and cancels callback from being called after the duration.
+function createChildSpan(agent, cb, duration) {
+  var span = agent.startSpan('inner');
+  var t = setTimeout(function() {
+    agent.endSpan(span);
+    if (cb) {
+      cb();
+    }
+  }, duration);
+  return function() {
+    agent.endSpan(span);
+    clearTimeout(t);
+  };
+}
+
 module.exports = {
+  assertSpanDurationCorrect: assertSpanDurationCorrect,
   assertDurationCorrect: assertDurationCorrect,
   cleanTraces: cleanTraces,
   getMatchingSpan: getMatchingSpan,
   getMatchingSpans: getMatchingSpans,
   doRequest: doRequest,
+  createChildSpan: createChildSpan,
   getTraces: getTraces,
   runInTransaction: runInTransaction,
   serverWait: SERVER_WAIT,
