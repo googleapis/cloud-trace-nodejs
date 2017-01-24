@@ -19,7 +19,6 @@
 var proxyquire  = require('proxyquire');
 var assert = require('assert');
 var nock = require('nock');
-var trace = require('../..')();
 var traceLabels = require('../../src/trace-labels.js');
 
 nock.disableNetConnect();
@@ -28,6 +27,7 @@ delete process.env.GCLOUD_PROJECT;
 
 describe('agent interaction with metadata service', function() {
   var agent;
+  var trace;
 
   before(function() {
     // Setup: Monkeypatch gcp-metadata to not ask for retries at all.
@@ -39,6 +39,7 @@ describe('agent interaction with metadata service', function() {
         }, callback);
       }
     });
+    trace = require('../..')();
   });
 
   afterEach(function() {
