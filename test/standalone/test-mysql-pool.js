@@ -26,7 +26,8 @@ if (semver.satisfies(process.version, '>=4')) {
     var agent;
     var Hapi;
     before(function() {
-      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      agent = require('../..')().startAgent({ samplingRate: 0,
+                                              enhancedDatabaseReporting: true }).private_();
       Hapi = require('../hooks/fixtures/hapi13');
     });
 
@@ -65,6 +66,7 @@ if (semver.satisfies(process.version, '>=4')) {
               var spans = common.getMatchingSpans(agent, function (span) {
                 return span.name === 'mysql-query';
               });
+              console.log('spans=' + JSON.stringify(spans, null, 2));
               assert.equal(spans.length, 1);
               assert.equal(spans[0].labels.sql, 'SELECT * FROM t');
               done();

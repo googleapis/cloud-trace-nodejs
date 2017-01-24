@@ -25,7 +25,8 @@ nock.disableNetConnect();
 describe('test-trace-gcloud', function() {
   var agent;
   before(function() {
-    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    agent = require('../..')().startAgent({ samplingRate: 0,
+      enhancedDatabaseReporting: true }).private_();
   });
 
   after(function() {
