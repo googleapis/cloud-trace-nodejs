@@ -264,11 +264,16 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           assert.ifError(err);
           assert.strictEqual(result.n, 42);
-          var trace = common.getMatchingSpan(agent, grpcClientPredicate);
-          var labels = trace.labels;
-          var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
-          assert.notStrictEqual(-1,
-              stack.stack_frame[0].method_name.indexOf('clientMethodTrace'));
+          function getMethodName(predicate) {
+            var trace = common.getMatchingSpan(agent, predicate);
+            var labels = trace.labels;
+            var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+            return stack.stack_frame[0].method_name;
+          }
+          assert.notStrictEqual(-1, getMethodName(grpcClientPredicate)
+            .indexOf('clientMethodTrace'));
+          assert.notStrictEqual(-1, getMethodName(grpcServerOuterPredicate)
+            .indexOf('serverMethodTrace'));
           done();
         });
       });
@@ -487,6 +492,10 @@ Object.keys(versions).forEach(function(version) {
 
 function grpcClientPredicate(span) {
   return span.kind === 'RPC_CLIENT' && span.name.indexOf('grpc:') === 0;
+}
+
+function grpcServerOuterPredicate(span) {
+  return span.kind === 'RPC_SERVER' && span.name.indexOf('grpc:') === 0;
 }
 
 function grpcServerPredicate(span) {
