@@ -110,6 +110,13 @@ function makeClientConstructorWrap(makeClientConstructor) {
   };
 }
 
+function(client, api) {
+  api = api_;
+  shimmer.wrap(client, 'makeClientConstructor',
+      makeClientConstructorWrap);
+  client._plugin_patched = true;
+}
+
 // # Server
 
 /**
@@ -378,6 +385,15 @@ function serverRegisterWrap(register) {
 }
 
 // # Exports
+
+
+
+module.exports = [
+  {
+    file: 'src/node/src/client.js',
+    versions: '1.x',
+    patch: 
+];
 
 module.exports = function(version_, api_) {
   if (!semver.satisfies(version_, SUPPORTED_VERSIONS)) {

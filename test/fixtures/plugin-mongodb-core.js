@@ -81,45 +81,55 @@ function wrapWithLabel(label) {
   };
 }
 
-module.exports = function(version_, api_) {
-  if (!semver.satisfies(version_, SUPPORTED_VERSIONS)) {
-    return {};
+function patchConnectionPool(pool, api_) {
+  api = api_;
+  function onceWrap(once) {
+    return function once_trace(event, cb) {
+      api.wrap(cb);
+      return once.call(this, event, cb);
+    };
   }
-  return {
-    'lib/connection/pool.js': {
-      patch: function(pool) {
-        api = api_;
-        function onceWrap(once) {
-          return function once_trace(event, cb) {
-            api.wrap(cb);
-            return once.call(this, event, cb);
-          };
-        }
-        
-        shimmer.wrap(pool.prototype, 'once', onceWrap);
-      },
-      unpatch: function(pool) {
-        shimmer.unwrap(pool.prototype, 'once');
+  
+  shimmer.wrap(pool.prototype, 'once', onceWrap);
+}
+
+module.exports = [
+  {
+    file: 'lib/connection/pool.js',
+    versions: SUPPORTED_VERSIONS,
+    patch: function patchConnectionPool(pool, api_) {
+      api = api_;
+      function onceWrap(once) {
+        return function once_trace(event, cb) {
+          api.wrap(cb);
+          return once.call(this, event, cb);
+        };
       }
+      
+      shimmer.wrap(pool.prototype, 'once', onceWrap);
     },
-    // An empty relative path here matches the root module being loaded.
-    '': {
-      patch: function(mongo) {
-        api = api_;
-        shimmer.wrap(mongo.Server.prototype, 'command', wrapWithLabel('mongo-command'));
-        shimmer.wrap(mongo.Server.prototype, 'insert', wrapWithLabel('mongo-insert'));
-        shimmer.wrap(mongo.Server.prototype, 'update', wrapWithLabel('mongo-update'));
-        shimmer.wrap(mongo.Server.prototype, 'remove', wrapWithLabel('mongo-remove'));
-        shimmer.wrap(mongo.Cursor.prototype, 'next', nextWrap);
-        mongo._plugin_patched = true;
-      },
-      unpatch: function(mongo) {
-        shimmer.unwrap(mongo.Server.prototype, 'command');
-        shimmer.unwrap(mongo.Server.prototype, 'insert');
-        shimmer.unwrap(mongo.Server.prototype, 'update');
-        shimmer.unwrap(mongo.Server.prototype, 'remove');
-        shimmer.unwrap(mongo.Cursor.prototype, 'next');
-      }
+    unpatch: function unpatchConnectionPool(pool) {
+      shimmer.unwrap(pool.prototype, 'once');
     }
-  };
-};
+  },
+  {
+    file: '', // module root
+    versions: SUPPORTED_VERSIONS,
+    patch: function patchModuleRoot(mongo, api_) {
+      api = api_;
+      shimmer.wrap(mongo.Server.prototype, 'command', wrapWithLabel('mongo-command'));
+      shimmer.wrap(mongo.Server.prototype, 'insert', wrapWithLabel('mongo-insert'));
+      shimmer.wrap(mongo.Server.prototype, 'update', wrapWithLabel('mongo-update'));
+      shimmer.wrap(mongo.Server.prototype, 'remove', wrapWithLabel('mongo-remove'));
+      shimmer.wrap(mongo.Cursor.prototype, 'next', nextWrap);
+      mongo._plugin_patched = true;
+    },
+    unpatch: function unpatchModuleRoot(mongo) {
+      shimmer.unwrap(mongo.Server.prototype, 'command');
+      shimmer.unwrap(mongo.Server.prototype, 'insert');
+      shimmer.unwrap(mongo.Server.prototype, 'update');
+      shimmer.unwrap(mongo.Server.prototype, 'remove');
+      shimmer.unwrap(mongo.Cursor.prototype, 'next');
+    }
+  }
+];

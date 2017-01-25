@@ -6,9 +6,7 @@ var config = {
   enhancedDatabaseReporting: true,
   samplingRate: 0,
   plugins: {
-    'express': __dirname + '/fixtures/plugin-express.js',
-    'mongodb-core': __dirname + '/fixtures/plugin-mongodb-core.js',
-    'grpc': __dirname + '/fixtures/plugin-grpc.js'
+    'express': __dirname + '/fixtures/plugin-express.js'
   }
 };
 require('..').start(config).private_();
@@ -41,22 +39,22 @@ describe('trace agent plugin interface', function() {
     });
   });
 
-  it('should make a gRPC plugin capable of running correctly', function(done) {
-    this.timeout(10000);
-    ['1'].forEach(function(version) {
-      var modulePath = __dirname + '/hooks/fixtures/grpc' + version;
-      require(modulePath);
-      assert(require(modulePath + '/node_modules/grpc/src/node/src/server.js')._plugin_patched);
-      assert(require(modulePath + '/node_modules/grpc/src/node/src/client.js')._plugin_patched);
-    });
-    var mocha = new Mocha();
-    mocha.addFile('test/hooks/test-trace-grpc.js');
-    // Run tests used for express hook and make sure there are no failures
-    mocha.run(function(numFailures) {
-      assert(numFailures === 0);
-      setImmediate(done);
-    });
-  });
+  // it('should make a gRPC plugin capable of running correctly', function(done) {
+  //   this.timeout(10000);
+  //   ['1'].forEach(function(version) {
+  //     var modulePath = __dirname + '/hooks/fixtures/grpc' + version;
+  //     require(modulePath);
+  //     assert(require(modulePath + '/node_modules/grpc/src/node/src/server.js')._plugin_patched);
+  //     assert(require(modulePath + '/node_modules/grpc/src/node/src/client.js')._plugin_patched);
+  //   });
+  //   var mocha = new Mocha();
+  //   mocha.addFile('test/hooks/test-trace-grpc.js');
+  //   // Run tests used for express hook and make sure there are no failures
+  //   mocha.run(function(numFailures) {
+  //     assert(numFailures === 0);
+  //     setImmediate(done);
+  //   });
+  // });
 
   it('should allow client and server plugins to work together', function(done) {
     require(__dirname + '/hooks/fixtures/mongoose4');

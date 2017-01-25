@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2017 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,45 +19,10 @@ var Module = require('module');
 var shimmer = require('shimmer');
 var path = require('path');
 var fs = require('fs');
+var semver = require('semver');
+var Plugin = require('./trace-plugin-interface.js');
 
-//
-// All these operations need to be reversible
-//
-// Patch core modules: _http_client, ...
-// Patch Module._load
-// Patch user modules express, hapi, ...
-//   These are done on-demand via our Module._load wrapper
-// Install a tracer in the global scope.
-
-// Patches is a map from module load path to { filename1: { patchFunction: ...,
-// unpatchFunction: ..., module: ..., active: ... }, filename2: ... }
-// Each filename key represents a relative path which will be appended to the
-// absolute path to the root of the module. Leaving this relative path blank
-// will result in the module itself being patched.
-// Note: the order in which filenames are defined in the hooks determines the
-// order in which they are loaded.
-var toInstrument = Object.create(null, {
-  'express': { enumerable: true, value: { file: './userspace/hook-express.js',
-      patches: {} } },
-  'grpc': { enumerable: true, value: { file: './userspace/hook-grpc.js',
-      patches: {} } },
-  'hapi': { enumerable: true, value: { file: './userspace/hook-hapi.js',
-      patches: {} } },
-  'http': { enumerable: true, value: { file: './core/hook-http.js',
-      patches: {} } },
-  'koa': { enumerable: true, value: { file: './userspace/hook-koa.js',
-      patches: {} } },
-  'mongodb-core': { enumerable: true, value: { file: './userspace/hook-mongodb-core.js',
-      patches: {} } },
-  'mysql': { enumerable: true, value: { file: './userspace/hook-mysql.js',
-      patches: {} } },
-  'redis': { enumerable: true, value: { file: './userspace/hook-redis.js',
-      patches: {} } },
-  'restify': { enumerable: true, value: { file: './userspace/hook-restify.js',
-      patches: {} } },
-  'connect': { enumerable: true, value: { file: './userspace/hook-connect.js',
-      patches: {} } }
-});
+var plugins = {};
 
 var logger;
 
@@ -97,10 +62,10 @@ function findModuleVersion(modulePath, load) {
   return process.version;
 }
 
-function checkLoadedModules(logger) {
-  for (var moduleName in toInstrument) {
+function checkLoadedModules() {
+  for (var plugin in plugins) {
     // \\ is benign on unix and escapes \\ on windows
-    var regex = new RegExp('node_modules\\' + path.sep + moduleName +
+    var regex = new RegExp('node_modules\\' + path.sep + plugin +
       '\\' + path.sep);
     for (var file in require.cache) {
       if (file.match(regex)) {
@@ -120,53 +85,77 @@ function checkLoadedModules(logger) {
 }
 
 function activate(agent) {
-
   logger = agent.logger;
 
-  checkLoadedModules(logger);
+  // Plugin stuff
+  var api = new Plugin(agent);
+  for (var moduleName in agent.plugins) {
+    plugins[moduleName] = {
+      file: agent.plugins[moduleName],
+      patches: {}
+    };
+  }
+
+  checkLoadedModules();
 
   // hook into Module._load so that we can hook into userspace frameworks
   shimmer.wrap(Module, '_load', function(originalModuleLoad) {
-
     function loadAndPatch(instrumentation, moduleRoot, version) {
-      var modulePatch = instrumentation.patches[moduleRoot];
-      if (!modulePatch) {
-        // Load the hook. This file, i.e. index.js, becomes the parent module.
-        var moduleHook = originalModuleLoad(instrumentation.file, module, false);
-        modulePatch = moduleHook(version, agent);
+      if (!instrumentation.patches[moduleRoot]) {
+        instrumentation.patches[moduleRoot] = {};
       }
-      Object.keys(modulePatch).forEach(function(file) {
-        if (!modulePatch[file].module) {
-          var loadPath = moduleRoot ? path.join(moduleRoot, file) : file;
-          modulePatch[file].module = originalModuleLoad(loadPath, module, false);
+      var patchSet = instrumentation.patches[moduleRoot][version];
+      if (!patchSet) {
+        // Load the plugin object
+        var plugin = originalModuleLoad(instrumentation.file, module, false);
+        patchSet = [];
+        plugin.forEach(function(patch) {
+          if (semver.satisfies(version, patch.versions)) {
+            patchSet[patch.file] = {
+              file: patch.file || '',
+              patch: patch.patch,
+              intercept: patch.intercept
+            }
+          }
+        });
+        instrumentation.patches[moduleRoot][version] = patchSet;
+      }
+      Object.keys(patchSet).forEach(function(file) {
+        var patch = patchSet[file];
+        if (!patch.module) {
+          var loadPath = moduleRoot ? path.join(moduleRoot, patch.file) : patch.file;
+          patch.module = originalModuleLoad(loadPath, module, false);
         }
-        if (modulePatch[file].patch !== undefined) {
-          modulePatch[file].patch(modulePatch[file].module);
+        if (patch.patch) {
+          patch.patch(patch.module, api);
         }
-        if (modulePatch[file].intercept !== undefined) {
-          modulePatch[file].module = modulePatch[file].intercept(modulePatch[file].module);
+        if (patch.intercept) {
+          patch.module = patch.intercept(patch.module, api);
         }
-        modulePatch[file].active = true;
+        patch.active = true;
       });
-      instrumentation.patches[moduleRoot] = modulePatch;
-      if (modulePatch[''] !== undefined && modulePatch[''].intercept !== undefined) {
-        return modulePatch[''].module;
+      var rootPatch = patchSet.filter(function(patch) { return !patch.name; })[0];
+      if (rootPatch && rootPatch.intercept) {
+        return rootPatch.module;
       } else {
         return null;
       }
     }
 
     function moduleAlreadyPatched(instrumentation, moduleRoot) {
+      if (!instrumentation.patches[moduleRoot]) {
+        return false;
+      }
       var modulePatch = instrumentation.patches[moduleRoot];
-      return modulePatch && Object.keys(modulePatch).every(function(curr) {
+      return !!modulePatch && Object.keys(modulePatch).every(function(curr) {
         return modulePatch[curr].active;
       }, true);
     }
 
     // If this is a reactivation, we may have a cached list of modules from last
     // time that we need to go and patch pro-actively.
-    for (var moduleName in toInstrument) {
-      var instrumentation = toInstrument[moduleName];
+    for (var moduleName in plugins) {
+      var instrumentation = plugins[moduleName];
       for (var moduleRoot in instrumentation.patches) {
         var modulePatch = instrumentation.patches[moduleRoot];
         if (modulePatch) {
@@ -177,7 +166,7 @@ function activate(agent) {
 
     // Future requires get patched as they get loaded.
     return function Module_load(request, parent, isMain) {
-      var instrumentation = toInstrument[request];
+      var instrumentation = plugins[request];
 
       if (instrumentation &&
           agent.config().excludedHooks.indexOf(request) === -1) {
@@ -200,8 +189,8 @@ function activate(agent) {
 }
 
 function deactivate() {
-  for (var moduleName in toInstrument) {
-    var instrumentation = toInstrument[moduleName];
+  for (var moduleName in plugins) {
+    var instrumentation = plugins[moduleName];
     for (var moduleRoot in instrumentation.patches) {
       var modulePatch = instrumentation.patches[moduleRoot];
       for (var patchedFile in modulePatch) {

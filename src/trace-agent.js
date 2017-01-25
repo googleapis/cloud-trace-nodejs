@@ -18,6 +18,7 @@
 
 var cls = require('./cls');
 var hooks = require('./hooks/index.js');
+var plugins = require('./trace-plugin-loader.js');
 var Trace = require('./trace.js');
 var SpanData = require('./span-data.js');
 var TraceWriter = require('./trace-writer.js');
@@ -35,9 +36,10 @@ var traceAgent;
 function TraceAgent(config, logger) {
   this.config_ = config;
   this.logger = logger;
-  this.plugins = config ? config.plugins : {};
+  this.plugins = config && config.plugins ? config.plugins : {};
 
   hooks.activate(this);
+  plugins.activate(this);
 
   this.namespace = cls.createNamespace();
   this.traceWriter = new TraceWriter(logger, config);

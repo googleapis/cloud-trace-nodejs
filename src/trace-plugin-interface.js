@@ -1,9 +1,10 @@
 'use strict';
+var TraceLabels = require('./trace-labels.js');
 var cls = require('./cls.js');
 var constants = require('./constants.js');
 
 /**
- * This file describes an interface for third-party plugins to enable tracing
+ * This file describes an interface for third-party PluginAPIs to enable tracing
  * for arbitrary modules.
  */
 
@@ -71,7 +72,7 @@ Transaction.prototype.endSpan = function() {
  * 'x-cloud-trace-context'.
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the root span, starting from the top;
- * this should be set to avoid including frames in the plugin. Defaults to 0.
+ * this should be set to avoid including frames in the PluginAPI. Defaults to 0.
  * @param {function(ChildSpan)} fn A function that will be called exactly
  * once, with a ChildSpan object exposing an interface operating on the child
  * span.
@@ -92,11 +93,11 @@ Transaction.prototype.runInChildSpan = function(options, fn) {
 };
 
 /**
- * Plugin constructor. Don't call directly - a Plugin object will be passed to
- * plugins themselves
+ * PluginAPI constructor. Don't call directly - a PluginAPI object will be passed to
+ * PluginAPIs themselves
  * TODO(kjin): Should be called something else
  */
-function Plugin(agent) {
+function PluginAPI(agent) {
   this.agent = agent;
   this.logger = agent.logger;
   this.config = {
@@ -124,11 +125,11 @@ function Plugin(agent) {
  * 'x-cloud-trace-context'.
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the root span, starting from the top;
- * this should be set to avoid including frames in the plugin. Defaults to 0.
+ * this should be set to avoid including frames in the PluginAPI. Defaults to 0.
  * @returns A new Transaction object, or null if the trace agent's policy has
  * disabled tracing for the given set of options.
  */
-Plugin.prototype.createTransaction = function(options) {
+PluginAPI.prototype.createTransaction = function(options) {
   options = options || {};
   var that = this;
   // If the options object passed in has the getHeader field set,
@@ -162,7 +163,7 @@ Plugin.prototype.createTransaction = function(options) {
   return new Transaction(that.agent, rootContext);
 };
 
-Plugin.prototype.getTransaction = function() {
+PluginAPI.prototype.getTransaction = function() {
   if (cls.getRootContext()) {
     return new Transaction(this.agent, cls.getRootContext());
   } else {
@@ -175,7 +176,7 @@ Plugin.prototype.getTransaction = function() {
  * possibly passing it an object that exposes an interface for adding labels
  * and closing the span.
  * @param {object} options An object that specifies options for how the root
- * span is created and propogated. @see Plugin.prototype.createTransaction
+ * span is created and propogated. @see PluginAPI.prototype.createTransaction
  * @param {function(?Transaction)} fn A function that will be called exactly
  * once. If the incoming request should be traced, a root span will be created,
  * and this function will be called with a Transaction object exposing functions
@@ -183,7 +184,7 @@ Plugin.prototype.getTransaction = function() {
  * arguments.
  * @returns The return value of calling fn.
  */
-Plugin.prototype.runInRootSpan = function(options, fn) {
+PluginAPI.prototype.runInRootSpan = function(options, fn) {
   var that = this;
   return this.agent.namespace.runAndReturn(function() {
     var oldSkipFrames = options.skipFrames;
@@ -205,7 +206,7 @@ Plugin.prototype.runInRootSpan = function(options, fn) {
  * once. @see Transaction.prototype.runInChildSpan
  * @returns The return value of calling fn.
  */
-Plugin.prototype.runInChildSpan = function(options, fn) {
+PluginAPI.prototype.runInChildSpan = function(options, fn) {
   var transaction = this.getTransaction();
   if (transaction) {
     var oldSkipFrames = options.skipFrames;
@@ -225,7 +226,7 @@ Plugin.prototype.runInChildSpan = function(options, fn) {
  * that are called asynchronously (for example, in a network response handler).
  * @param {function} fn A function to which to bind the trace context.
  */
-Plugin.prototype.wrap = function(fn) {
+PluginAPI.prototype.wrap = function(fn) {
   return this.agent.namespace.bind(fn);
 };
 
@@ -235,8 +236,10 @@ Plugin.prototype.wrap = function(fn) {
  * @param {EventEmitter} emitter An event emitter whose handlers should have
  * the trace context binded to them.
  */
-Plugin.prototype.wrapEmitter = function(emitter) {
+PluginAPI.prototype.wrapEmitter = function(emitter) {
   this.agent.namespace.bindEmitter(emitter);
 };
 
-module.exports = Plugin;
+PluginAPI.prototype.labels = TraceLabels;
+
+module.exports = PluginAPI;
