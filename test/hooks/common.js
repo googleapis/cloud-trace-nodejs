@@ -24,6 +24,12 @@ var config = { enhancedDatabaseReporting: true, samplingRate: 0 };
 var agent = require('../..').start(config).private_();
 // We want to disable publishing to avoid conflicts with production.
 agent.traceWriter.publish_ = function() {};
+agent._shouldTraceArgs = [];
+var shouldTrace = agent.shouldTrace;
+agent.shouldTrace = function() {
+  agent._shouldTraceArgs.push([].slice.call(arguments, 0));
+  return shouldTrace.apply(this, arguments);
+}
 
 var cls = require('../../src/cls.js');
 
@@ -44,10 +50,15 @@ var SERVER_CERT = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
  */
 function cleanTraces() {
   agent.traceWriter.buffer_ = [];
+  agent._shouldTraceArgs = [];
 }
 
 function getTraces() {
   return agent.traceWriter.buffer_.map(JSON.parse);
+}
+
+function getShouldTraceArgs() {
+  return agent._shouldTraceArgs;
 }
 
 function getMatchingSpan(predicate) {
@@ -136,6 +147,10 @@ function createChildSpan(cb, duration) {
   };
 }
 
+function getAndResetShouldTraceArguments() {
+  return shouldTraceArgs;
+}
+
 module.exports = {
   assertSpanDurationCorrect: assertSpanDurationCorrect,
   assertDurationCorrect: assertDurationCorrect,
@@ -146,6 +161,7 @@ module.exports = {
   createChildSpan: createChildSpan,
   getTraces: getTraces,
   runInTransaction: runInTransaction,
+  getShouldTraceArgs: getShouldTraceArgs,
   serverWait: SERVER_WAIT,
   serverRes: SERVER_RES,
   serverPort: SERVER_PORT,
