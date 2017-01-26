@@ -33,7 +33,7 @@ describe('test-trace-header-context', function() {
   });
 
   afterEach(function() {
-    agent.namespace.set('root', null)
+    agent.namespace.set('root', null);
   });
 
   it('should work with string url', function(done) {
