@@ -47,7 +47,7 @@ process.chdir(restify_dir);
 
 // Remove name to allow for cyclic dependency
 console.log('Updating restify metadata');
-cp.execFileSync('sed', ['-i', 's/"restify"/"r"/', 'package.json']);
+cp.execFileSync('sed', ['-i.bak', 's/"restify"/"r"/', 'package.json']);
 
 // Install restify as it's own dependency
 console.log('Installing restify dependencies');
@@ -60,14 +60,14 @@ var gcloud_require = 'require(\'' + path.join(__dirname, '..', '..') +
     '\')().startAgent();';
 glob(test_glob, function(err, files) {
   for (var i = 0; i < files.length; i++) {
-    cp.execFileSync('sed', ['-i', 's#\'use strict\';#' +
+    cp.execFileSync('sed', ['-i.bak', 's#\'use strict\';#' +
         '\'use strict\'; ' + gcloud_require + '#g', files[i]]);
     if (cp.spawnSync('grep', ['-q', gcloud_require, files[i]]).status) {
       cp.execSync('echo "' + gcloud_require + '" | cat - ' + files[i] +
           ' >' +  files[i] + '.instru.js' + '&& mv ' + files[i] +
           '.instru.js' + ' ' + files[i]);
     }
-    cp.execFileSync('sed', ['-i', 's#require(\'\\.\\./lib\')#require(\'restify\')#',
+    cp.execFileSync('sed', ['-i.bak', 's#require(\'\\.\\./lib\')#require(\'restify\')#',
         files[i]]);
   }
   // Run tests
