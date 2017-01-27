@@ -29,7 +29,7 @@ var shouldTrace = agent.shouldTrace;
 agent.shouldTrace = function() {
   agent._shouldTraceArgs.push([].slice.call(arguments, 0));
   return shouldTrace.apply(this, arguments);
-}
+};
 
 var cls = require('../../src/cls.js');
 
@@ -145,10 +145,6 @@ function createChildSpan(cb, duration) {
     agent.endSpan(span);
     clearTimeout(t);
   };
-}
-
-function getAndResetShouldTraceArguments() {
-  return shouldTraceArgs;
 }
 
 module.exports = {

@@ -327,7 +327,7 @@ Object.keys(versions).forEach(function(version) {
           return arg[0] === prefix + 'BidiStream';
         }, -1));
         done();
-      }
+      };
       next = callUnary.bind(null, next);
       next = callClientStream.bind(null, next);
       next = callServerStream.bind(null, next);
