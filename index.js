@@ -94,6 +94,13 @@ var initConfig = function(projectConfig) {
  * The singleton public agent. This is the public API of the module.
  */
 var publicAgent = {
+  __DISABLE_START_CHECK__: false,
+
+  _disableStartCheck: function() {
+    this.__DISABLE_START_CHECK__ = true;
+    return this;
+  },
+
   isActive: function() {
     return agent !== phantomTraceAgent && agent.isRunning();
   },
@@ -124,7 +131,13 @@ var publicAgent = {
 
   startAgent: function(projectConfig) {
     if (this.isActive()) { // already started.
-      throw new Error('Cannot call start on an already started agent.');
+      var message = 'Cannot call start on an already started agent.';
+      if (this.__DISABLE_START_CHECK__) {
+        console.log(message);
+      }
+      else {
+        throw new Error(message);
+      }
     }
 
     var config = initConfig(projectConfig);

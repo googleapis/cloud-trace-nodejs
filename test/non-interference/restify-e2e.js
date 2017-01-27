@@ -57,7 +57,7 @@ cp.execFileSync('npm', ['install']);
 // Reformat tests to use newly installed restify
 console.log('Reformating tests');
 var gcloud_require = 'require(\'' + path.join(__dirname, '..', '..') +
-    '\')().startAgent();';
+    '\')().startAgent()._disableStartCheck();';
 glob(test_glob, function(err, files) {
   for (var i = 0; i < files.length; i++) {
     cp.execFileSync('sed', ['-i.bak', 's#\'use strict\';#' +
