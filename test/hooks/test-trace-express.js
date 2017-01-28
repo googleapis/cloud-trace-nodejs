@@ -20,13 +20,17 @@ var http = require('http');
 var assert = require('assert');
 var constants = require('../../src/constants.js');
 var common = require('./common.js');
-var express = require('./fixtures/express4');
 
 var server;
 var write;
 
 describe('test-trace-express', function() {
+  var agent;
+  var express;
   before(function() {
+    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    express = require('./fixtures/express4');
+
     // Mute stderr to satiate appveyor
     write = process.stderr.write;
     process.stderr.write = function(c, e, cb) {
@@ -38,9 +42,10 @@ describe('test-trace-express', function() {
   });
   after(function() {
     process.stderr.write = write;
+    agent.stop();
   });
   afterEach(function() {
-    common.cleanTraces();
+    common.cleanTraces(agent);
     server.close();
   });
 
@@ -52,7 +57,7 @@ describe('test-trace-express', function() {
       }, common.serverWait);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest('GET', done, expressPredicate);
+      common.doRequest(agent, 'GET', done, expressPredicate);
     });
   });
 
@@ -67,7 +72,7 @@ describe('test-trace-express', function() {
       next();
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest('GET', done, expressPredicate);
+      common.doRequest(agent, 'GET', done, expressPredicate);
     });
   });
 
@@ -79,7 +84,7 @@ describe('test-trace-express', function() {
       }, common.serverWait);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest('POST', done, expressPredicate);
+      common.doRequest(agent, 'POST', done, expressPredicate);
     });
   });
 
@@ -91,7 +96,7 @@ describe('test-trace-express', function() {
       }, common.serverWait);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest('PUT', done, expressPredicate);
+      common.doRequest(agent, 'PUT', done, expressPredicate);
     });
   });
 
@@ -108,7 +113,7 @@ describe('test-trace-express', function() {
       }, common.serverWait / 2);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest('GET', done, expressParamPredicate, '/:id');
+      common.doRequest(agent, 'GET', done, expressParamPredicate, '/:id');
     });
   });
 
@@ -125,7 +130,7 @@ describe('test-trace-express', function() {
       }, common.serverWait / 2);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest('GET', done, expressPredicate);
+      common.doRequest(agent, 'GET', done, expressPredicate);
     });
   });
 
@@ -138,7 +143,7 @@ describe('test-trace-express', function() {
       }, common.serverWait);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest('GET', done, expressPredicate);
+      common.doRequest(agent, 'GET', done, expressPredicate);
     });
   });
 
@@ -149,7 +154,7 @@ describe('test-trace-express', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(expressPredicate).labels;
+        var labels = common.getMatchingSpan(agent, expressPredicate).labels;
         assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
         assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
         assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost/');
@@ -166,7 +171,7 @@ describe('test-trace-express', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(expressPredicate).labels;
+        var labels = common.getMatchingSpan(agent, expressPredicate).labels;
         var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our middleware is on top of the stack
         assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
@@ -182,7 +187,7 @@ describe('test-trace-express', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({path: '/?a=b', port: common.serverPort}, function(res) {
-        var name = common.getMatchingSpan(expressPredicate).name;
+        var name = common.getMatchingSpan(agent, expressPredicate).name;
         assert.equal(name, '/');
         done();
       });
@@ -196,7 +201,7 @@ describe('test-trace-express', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(expressPredicate).labels;
+        var labels = common.getMatchingSpan(agent, expressPredicate).labels;
         assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
         done();
       });
@@ -210,7 +215,7 @@ describe('test-trace-express', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(expressPredicate).labels;
+        var labels = common.getMatchingSpan(agent, expressPredicate).labels;
         assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
         done();
       });

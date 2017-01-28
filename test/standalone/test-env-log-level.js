@@ -19,17 +19,17 @@
 process.env.GCLOUD_TRACE_LOGLEVEL = 4;
 
 var assert = require('assert');
-var agent = require('../..');
+var trace = require('../..')();
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_TRACE_LOGLEVEL', function() {
-    agent.start();
+    var agent = trace.startAgent();
     assert.equal(agent.private_().config_.logLevel, 4);
     agent.stop();
   });
 
   it('should prefer env to config', function() {
-    agent.start({logLevel: 2});
+    var agent = trace.startAgent({logLevel: 2});
     assert.equal(agent.private_().config_.logLevel, 4);
     agent.stop();
   });

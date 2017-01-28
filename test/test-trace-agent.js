@@ -27,7 +27,12 @@ var assert = require('assert');
 var config = require('../config.js');
 var file = require('../src/trace-agent.js');
 var SpanData = require('../src/span-data.js');
-var agent = file.get(config);
+var agent = file.get(config, {
+  debug: function() {},
+  warn: function() {},
+  error: function() {},
+  info: function() {}
+});
 var constants = require('../src/constants.js');
 var cls = require('../src/cls.js');
 
