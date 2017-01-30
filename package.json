@@ -37,7 +37,7 @@
     "tmp": "0.0.31"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.11.0",
+    "@google-cloud/common": "^0.12.0",
     "continuation-local-storage": "^3.1.4",
     "gcp-metadata": "^0.1.0",
     "is": "^3.2.0",
