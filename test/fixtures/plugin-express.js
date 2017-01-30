@@ -64,4 +64,4 @@ function patchModuleRoot(express, api) {
 
 module.exports = [
   { versions: SUPPORTED_VERSIONS, patch: patchModuleRoot }
-]
+];

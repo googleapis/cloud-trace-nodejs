@@ -2,7 +2,6 @@
 
 var traceUtil = require('../../src/util.js');
 var shimmer = require('shimmer');
-var semver = require('semver');
 
 var api;
 
@@ -79,18 +78,6 @@ function wrapWithLabel(label) {
         }).bind(this));
     };
   };
-}
-
-function patchConnectionPool(pool, api_) {
-  api = api_;
-  function onceWrap(once) {
-    return function once_trace(event, cb) {
-      api.wrap(cb);
-      return once.call(this, event, cb);
-    };
-  }
-  
-  shimmer.wrap(pool.prototype, 'once', onceWrap);
 }
 
 module.exports = [

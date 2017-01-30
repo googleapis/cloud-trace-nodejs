@@ -63,9 +63,9 @@ function findModuleVersion(modulePath, load) {
 }
 
 function checkLoadedModules() {
-  for (var plugin in plugins) {
+  for (var moduleName in plugins) {
     // \\ is benign on unix and escapes \\ on windows
-    var regex = new RegExp('node_modules\\' + path.sep + plugin +
+    var regex = new RegExp('node_modules\\' + path.sep + moduleName +
       '\\' + path.sep);
     for (var file in require.cache) {
       if (file.match(regex)) {
@@ -115,7 +115,7 @@ function activate(agent) {
               file: patch.file || '',
               patch: patch.patch,
               intercept: patch.intercept
-            }
+            };
           }
         });
         instrumentation.patches[moduleRoot][version] = patchSet;

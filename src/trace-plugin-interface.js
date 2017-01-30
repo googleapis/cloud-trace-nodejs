@@ -2,6 +2,7 @@
 var TraceLabels = require('./trace-labels.js');
 var cls = require('./cls.js');
 var constants = require('./constants.js');
+var is = require('is');
 
 /**
  * This file describes an interface for third-party PluginAPIs to enable tracing
@@ -85,9 +86,9 @@ Transaction.prototype.runInChildSpan = function(options, fn) {
     options.skipFrames ? options.skipFrames + 1 : 1);
   // If the options object passed in has the setHeader field set,
   // use it to set trace metadata in an outgoing request.
-  if (typeof(options.setHeader) === 'function') {
-    var outgoingTraceContext = that.agent.generateTraceContext(childContext, true);
-    options.setHeader('x-cloud-trace-context', outgoingTraceContext);
+  if (is.fn(options.setHeader)) {
+    options.setHeader('x-cloud-trace-context',
+      that.agent.generateTraceContext(childContext, true));
   }
   return fn(new ChildSpan(that.agent, childContext));
 };
@@ -135,7 +136,7 @@ PluginAPI.prototype.createTransaction = function(options) {
   // If the options object passed in has the getHeader field set,
   // try to retrieve the header field containing incoming trace metadata.
   var incomingTraceContext;
-  if (typeof(options.getHeader) === 'function') {
+  if (is.fn(options.getHeader)) {
     var header = options.getHeader('x-cloud-trace-context');
     if (header) {
       incomingTraceContext = that.agent.parseContextFromHeader(header);
@@ -151,7 +152,7 @@ PluginAPI.prototype.createTransaction = function(options) {
     options.skipFrames ? options.skipFrames + 1 : 1);
   // If the options object passed in has the setHeader field set,
   // use it to set trace metadata in an outgoing request.
-  if (typeof(options.setHeader) === 'function') {
+  if (is.fn(options.setHeader)) {
     var outgoingTraceContext = rootContext.traceId + '/' +
       rootContext.spanId;
     var outgoingHeaderOptions = (incomingTraceContext.options !== null &&
