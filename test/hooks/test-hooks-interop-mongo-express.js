@@ -23,17 +23,19 @@
 var common = require('./common.js');
 
 var assert = require('assert');
-var express = require('./fixtures/express4');
 var http = require('http');
-var mongoose = require('./fixtures/mongoose4');
 
 var server;
 
 describe('mongodb + express', function() {
   var agent;
   var oldDebug;
+  var express;
+  var mongoose;
   before(function() {
     agent = require('../..')().startAgent().get().private_();
+    express = require('./fixtures/express4');
+    mongoose = require('./fixtures/mongoose4');
     oldDebug = agent.logger.debug;
     agent.logger.debug = function(error) {
       assert(error.indexOf('mongo') === -1, error);
