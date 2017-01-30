@@ -13,9 +13,9 @@ var is = require('is');
  * An object that is associated with a single child span. It exposes
  * functions for adding labels to or closing the associated span.
  */
-function ChildSpan(agent, context) {
-  this.agent = agent;
-  this.context = context;
+function ChildSpan(agent, span) {
+  this.agent_ = agent;
+  this.span_ = span;
 }
 
 /**
@@ -24,14 +24,14 @@ function ChildSpan(agent, context) {
  * @param {*} value The value of the label to add.
  */
 ChildSpan.prototype.addLabel = function(key, value) {
-  this.context.addLabel(key, value);
+  this.span_.addLabel(key, value);
 };
 
 /**
  * Ends the underlying span. This function should only be called once.
  */
 ChildSpan.prototype.endSpan = function() {
-  this.context.close();
+  this.span_.close();
 };
 
 /**
@@ -39,9 +39,8 @@ ChildSpan.prototype.endSpan = function() {
  * functions for adding labels to or closing the associated span.
  */
 function Transaction(agent, context) {
-  this.agent = agent;
-  this.context = context;
-  this.closed = false;
+  this.agent_ = agent;
+  this.context_ = context;
 }
 
 /**
@@ -50,14 +49,14 @@ function Transaction(agent, context) {
  * @param {*} value The value of the label to add.
  */
 Transaction.prototype.addLabel = function(key, value) {
-  this.context.addLabel(key, value);
+  this.context_.addLabel(key, value);
 };
 
 /**
  * Ends the underlying span. This function should only be called once.
  */
 Transaction.prototype.endSpan = function() {
-  this.context.close();
+  this.context_.close();
 };
 
 /**
@@ -80,17 +79,16 @@ Transaction.prototype.endSpan = function() {
  * @returns The return value of calling fn.
  */
 Transaction.prototype.runInChildSpan = function(options, fn) {
-  var that = this;
   options = options || {};
-  var childContext = that.agent.startSpan(options.name, {},
+  var childContext = this.agent.startSpan(options.name, {},
     options.skipFrames ? options.skipFrames + 1 : 1);
   // If the options object passed in has the setHeader field set,
   // use it to set trace metadata in an outgoing request.
   if (is.fn(options.setHeader)) {
     options.setHeader('x-cloud-trace-context',
-      that.agent.generateTraceContext(childContext, true));
+      this.agent.generateTraceContext(childContext, true));
   }
-  return fn(new ChildSpan(that.agent, childContext));
+  return fn(new ChildSpan(this.agent, childContext));
 };
 
 /**
