@@ -199,7 +199,6 @@ function deactivate() {
         if (hook.unpatch !== undefined) {
           hook.unpatch(hook.module);
         }
-        hook.active = false;
       }
     }
   }

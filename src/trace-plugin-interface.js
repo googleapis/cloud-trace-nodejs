@@ -80,7 +80,7 @@ Transaction.prototype.endSpan = function() {
  */
 Transaction.prototype.runInChildSpan = function(options, fn) {
   options = options || {};
-  var childContext = this.agent.startSpan(options.name, {},
+  var childContext = this.agent_.startSpan(options.name, {},
     options.skipFrames ? options.skipFrames + 1 : 1);
   // If the options object passed in has the setHeader field set,
   // use it to set trace metadata in an outgoing request.
@@ -88,7 +88,7 @@ Transaction.prototype.runInChildSpan = function(options, fn) {
     options.setHeader('x-cloud-trace-context',
       this.agent.generateTraceContext(childContext, true));
   }
-  return fn(new ChildSpan(this.agent, childContext));
+  return fn(new ChildSpan(this.agent_, childContext));
 };
 
 /**
