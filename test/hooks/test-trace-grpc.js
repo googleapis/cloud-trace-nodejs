@@ -15,11 +15,15 @@
  */
 'use strict';
 
-var common = require('./common.js');
 var agent = require('../..')().startAgent().private_();
 agent.config_.enhancedDatabaseReporting = true;
+
+var common = require('./common.js');
+common.init(agent);
+
 var assert = require('assert');
 var traceLabels = require('../../src/trace-labels.js');
+var findIndex = require('lodash.findindex');
 
 var versions = {
   grpc1: require('./fixtures/grpc1')
@@ -150,6 +154,56 @@ Object.keys(versions).forEach(function(version) {
         grpc.credentials.createInsecure());
   }
 
+  function callUnary(cb) {
+    client.testUnary({n: 42}, function(err, result) {
+      assert.ifError(err);
+      assert.strictEqual(result.n, 42);
+      cb();
+    });
+  }
+
+  function callClientStream(cb) {
+    var stream = client.testClientStream(function(err, result) {
+      assert.ifError(err);
+      assert.strictEqual(result.n, 45);
+      cb();
+    });
+    for (var i = 0; i < 10; ++i) {
+      stream.write({n: i});
+    }
+    stream.end();
+  }
+
+  function callServerStream(cb) {
+    var stream = client.testServerStream({n: 42});
+    var sum = 0;
+    stream.on('data', function(data) {
+      sum += data.n;
+    });
+    stream.on('status', function(status) {
+      assert.strictEqual(status.code, grpc.status.OK);
+      assert.strictEqual(sum, 45);
+      cb();
+    });
+  }
+
+  function callBidi(cb) {
+    var stream = client.testBidiStream();
+    var sum = 0;
+    stream.on('data', function(data) {
+      sum += data.n;
+    });
+    for (var i = 0; i < 10; ++i) {
+      stream.write({n: i});
+    }
+    stream.end();
+    stream.on('status', function(status) {
+      assert.strictEqual(status.code, grpc.status.OK);
+      assert.strictEqual(sum, 45);
+      cb();
+    });
+  }
+
   describe(version, function() {
     before(function() {
       var proto = grpc.load(protoFile).nodetest;
@@ -172,10 +226,8 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure time for unary requests', function(done) {
       common.runInTransaction(agent, function(endTransaction) {
-        client.testUnary({n: 42}, function(err, result) {
+        callUnary(function() {
           endTransaction();
-          assert.ifError(err);
-          assert.strictEqual(result.n, 42);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
@@ -187,6 +239,7 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
           assert(common.getMatchingSpan(agent, grpcServerInnerPredicate));
+          // var shouldTraceArgs = common.getShouldTraceArgs();
           done();
         });
       });
@@ -194,10 +247,8 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure time for client streaming requests', function(done) {
       common.runInTransaction(agent, function(endTransaction) {
-        var stream = client.testClientStream(function(err, result) {
+        callClientStream(function() {
           endTransaction();
-          assert.ifError(err);
-          assert.strictEqual(result.n, 45);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
@@ -210,24 +261,13 @@ Object.keys(versions).forEach(function(version) {
           assert(common.getMatchingSpan(agent, grpcServerInnerPredicate));
           done();
         });
-        for (var i = 0; i < 10; ++i) {
-          stream.write({n: i});
-        }
-        stream.end();
       });
     });
 
     it('should accurately measure time for server streaming requests', function(done) {
       common.runInTransaction(agent, function(endTransaction) {
-        var stream = client.testServerStream({n: 42});
-        var sum = 0;
-        stream.on('data', function(data) {
-          sum += data.n;
-        });
-        stream.on('status', function(status) {
+        callServerStream(function() {
           endTransaction();
-          assert.strictEqual(status.code, grpc.status.OK);
-          assert.strictEqual(sum, 45);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
@@ -248,19 +288,8 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure time for bidi streaming requests', function(done) {
       common.runInTransaction(agent, function(endTransaction) {
-        var stream = client.testBidiStream();
-        var sum = 0;
-        stream.on('data', function(data) {
-          sum += data.n;
-        });
-        for (var i = 0; i < 10; ++i) {
-          stream.write({n: i});
-        }
-        stream.end();
-        stream.on('status', function(status) {
+        callBidi(function() {
           endTransaction();
-          assert.strictEqual(status.code, grpc.status.OK);
-          assert.strictEqual(sum, 45);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
@@ -279,12 +308,41 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should not break if no parent transaction', function(done) {
-      client.testUnary({n: 42}, function(err, result) {
-        assert.ifError(err);
-        assert.strictEqual(result.n, 42);
+      callUnary(function() {
         assert.strictEqual(common.getMatchingSpans(agent, grpcClientPredicate).length, 0);
         done();
       });
+    });
+
+    it('should respect the tracing policy', function(done) {
+      var next = function() {
+        var args = common.getShouldTraceArgs(agent);
+        assert.strictEqual(args.length, 4,
+          'expected one call for each of four gRPC method types but got ' +
+          args.length + ' instead');
+        for (var i = 0; i < args.length; i++) {
+          assert.strictEqual(args[i].length, 1);
+        }
+        var prefix = 'grpc:/nodetest.Tester/Test';
+        assert.notStrictEqual(findIndex(args, function(arg) {
+          return arg[0] === prefix + 'Unary';
+        }, -1));
+        assert.notStrictEqual(findIndex(args, function(arg) {
+          return arg[0] === prefix + 'ClientStream';
+        }, -1));
+        assert.notStrictEqual(findIndex(args, function(arg) {
+          return arg[0] === prefix + 'ServerStream';
+        }, -1));
+        assert.notStrictEqual(findIndex(args, function(arg) {
+          return arg[0] === prefix + 'BidiStream';
+        }, -1));
+        done();
+      };
+      next = callUnary.bind(null, next);
+      next = callClientStream.bind(null, next);
+      next = callServerStream.bind(null, next);
+      next = callBidi.bind(null, next);
+      next();
     });
 
     it('should not let root spans interfere with one another', function(done) {
@@ -319,44 +377,6 @@ Object.keys(versions).forEach(function(version) {
           });
         };
       };
-
-      // Define the gRPC calls.
-      function callUnary(cb) {
-        client.testUnary({n: 42}, function(err, result) {
-          assert.ifError(err);
-          cb();
-        });
-      }
-      function callClientStream(cb) {
-        var stream = client.testClientStream(function(err, result) {
-          assert.ifError(err);
-          cb();
-        });
-        for (var i = 0; i < 10; ++i) {
-          stream.write({n: i});
-        }
-        stream.end();
-      }
-      function callServerStream(cb) {
-        var stream = client.testServerStream({n: 42});
-        var sum = 0;
-        stream.on('data', function(data) {
-          sum += data.n;
-        });
-        stream.on('status', cb);
-      }
-      function callBidi(cb) {
-        var stream = client.testBidiStream();
-        var sum = 0;
-        stream.on('data', function(data) {
-          sum += data.n;
-        });
-        for (var i = 0; i < 10; ++i) {
-          stream.write({n: i});
-        }
-        stream.end();
-        stream.on('status', cb);
-      }
 
       // Call queueCallTogether with every possible pair of gRPC calls.
       var methods = [ callUnary, callClientStream, callServerStream, callBidi ];
