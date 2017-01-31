@@ -1,3 +1,19 @@
+/**
+ * Copyright 2017 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 'use strict';
 var TraceLabels = require('./trace-labels.js');
 var cls = require('./cls.js');
@@ -5,13 +21,15 @@ var constants = require('./constants.js');
 var is = require('is');
 
 /**
- * This file describes an interface for third-party PluginAPIs to enable tracing
+ * This file describes an interface for third-party plugins to enable tracing
  * for arbitrary modules.
  */
 
 /**
  * An object that is associated with a single child span. It exposes
  * functions for adding labels to or closing the associated span.
+ * @param {TraceAgent} agent The underlying trace agent object.
+ * @param {SpanData} span An object containing information about the child span.
  */
 function ChildSpan(agent, span) {
   this.agent_ = agent;
@@ -37,6 +55,9 @@ ChildSpan.prototype.endSpan = function() {
 /**
  * An object that is associated with a single root span. It exposes
  * functions for adding labels to or closing the associated span.
+ * @param {TraceAgent} agent The underlying trace agent object.
+ * @param {SpanData} context An object containing information about the
+ * root span.
  */
 function Transaction(agent, context) {
   this.agent_ = agent;
@@ -71,38 +92,36 @@ Transaction.prototype.endSpan = function() {
  * outgoing request associated with this child span to the field name
  * 'x-cloud-trace-context'.
  * @param {?number} options.skipFrames The number of stack frames to skip when
- * collecting call stack information for the root span, starting from the top;
- * this should be set to avoid including frames in the PluginAPI. Defaults to 0.
+ * collecting call stack information for the child span, starting from the top;
+ * this should be set to avoid including frames in the plugin. Defaults to 0.
  * @param {function(ChildSpan)} fn A function that will be called exactly
  * once, with a ChildSpan object exposing an interface operating on the child
  * span.
  * @returns The return value of calling fn.
  */
 Transaction.prototype.runInChildSpan = function(options, fn) {
-  options = options || {};
-  var childContext = this.agent_.startSpan(options.name, {},
-    options.skipFrames ? options.skipFrames + 1 : 1);
-  // If the options object passed in has the setHeader field set,
-  // use it to set trace metadata in an outgoing request.
-  if (is.fn(options.setHeader)) {
-    options.setHeader('x-cloud-trace-context',
-      this.agent.generateTraceContext(childContext, true));
-  }
-  return fn(new ChildSpan(this.agent_, childContext));
+  var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
+  return runInChildSpan_(this, options, skipFrames, fn);
 };
 
 /**
- * PluginAPI constructor. Don't call directly - a PluginAPI object will be passed to
- * PluginAPIs themselves
+ * PluginAPI constructor. Don't call directly - a plugin object will be passed to
+ * plugin themselves
  * TODO(kjin): Should be called something else
  */
 function PluginAPI(agent) {
   this.agent = agent;
   this.logger = agent.logger;
-  this.config = {
-    enhancedDatabaseReporting: agent.config_.enhancedDatabaseReporting,
-    databaseResultReportingSize: agent.config_.databaseResultReportingSize
-  };
+}
+
+/**
+ * Gets the value of enhancedDatabaseReporting in the trace agent's
+ * configuration object.
+ * @returns A boolean value indicating whether the trace agent was configured
+ * to have an enhanced level of reporting enabled.
+ */
+PluginAPI.prototype.enhancedReportingEnabled = function() {
+  return this.agent.config_.enhancedDatabaseReporting;
 }
 
 /**
@@ -124,48 +143,27 @@ function PluginAPI(agent) {
  * 'x-cloud-trace-context'.
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the root span, starting from the top;
- * this should be set to avoid including frames in the PluginAPI. Defaults to 0.
+ * this should be set to avoid including frames in the plugin. Defaults to 0.
  * @returns A new Transaction object, or null if the trace agent's policy has
  * disabled tracing for the given set of options.
  */
 PluginAPI.prototype.createTransaction = function(options) {
-  options = options || {};
-  var that = this;
-  // If the options object passed in has the getHeader field set,
-  // try to retrieve the header field containing incoming trace metadata.
-  var incomingTraceContext;
-  if (is.fn(options.getHeader)) {
-    var header = options.getHeader('x-cloud-trace-context');
-    if (header) {
-      incomingTraceContext = that.agent.parseContextFromHeader(header);
-    }
-  }
-  incomingTraceContext = incomingTraceContext || {};
-  if (options.url && !that.agent.shouldTrace(options.url, incomingTraceContext.options)) {
-    return null;
-  }
-  var rootContext = that.agent.createRootSpanData(options.name,
-    incomingTraceContext.traceId,
-    incomingTraceContext.spanId,
-    options.skipFrames ? options.skipFrames + 1 : 1);
-  // If the options object passed in has the setHeader field set,
-  // use it to set trace metadata in an outgoing request.
-  if (is.fn(options.setHeader)) {
-    var outgoingTraceContext = rootContext.traceId + '/' +
-      rootContext.spanId;
-    var outgoingHeaderOptions = (incomingTraceContext.options !== null &&
-      incomingTraceContext.options !== undefined) ?
-      incomingTraceContext.options : constants.TRACE_OPTIONS_TRACE_ENABLED;
-    outgoingTraceContext += (';o=' + outgoingHeaderOptions);
-    options.setHeader('x-cloud-trace-context', outgoingTraceContext);
-  }
-  return new Transaction(that.agent, rootContext);
+  var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
+  return createTransaction_(this, options, skipFrames);
 };
 
+/**
+ * Returns a Transaction object that corresponds to a root span started earlier
+ * in the same context, or null if one doesn't exist.
+ * @returns A new Transaction object, or null if a root span doesn't exist in
+ * the current context.
+ */
 PluginAPI.prototype.getTransaction = function() {
   if (cls.getRootContext()) {
     return new Transaction(this.agent, cls.getRootContext());
   } else {
+    this.logger.warn('Attempted to get transaction handle when it doesn\'t' + 
+      ' exist');
     return null;
   }
 };
@@ -186,10 +184,8 @@ PluginAPI.prototype.getTransaction = function() {
 PluginAPI.prototype.runInRootSpan = function(options, fn) {
   var that = this;
   return this.agent.namespace.runAndReturn(function() {
-    var oldSkipFrames = options.skipFrames;
-    options.skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
-    var transaction = that.createTransaction(options);
-    options.skipFrames = oldSkipFrames;
+    var skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
+    var transaction = createTransaction_(that, options, skipFrames);
     return fn(transaction);
   });
 };
@@ -208,13 +204,11 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
 PluginAPI.prototype.runInChildSpan = function(options, fn) {
   var transaction = this.getTransaction();
   if (transaction) {
-    var oldSkipFrames = options.skipFrames;
-    options.skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-    var result = transaction.runInChildSpan(options, fn);
-    options.skipFrames = oldSkipFrames;
-    return result;
+    var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
+    return runInChildSpan_(transaction, options, skipFrames, fn);
   } else {
-    this.logger.warn(options.name + ': Attempted to run in child span without root');
+    this.logger.warn(options.name + ': Attempted to run in child span without' +
+      ' root');
     return fn();
   }
 };
@@ -242,3 +236,51 @@ PluginAPI.prototype.wrapEmitter = function(emitter) {
 PluginAPI.prototype.labels = TraceLabels;
 
 module.exports = PluginAPI;
+
+// Module-private functions
+
+function createTransaction_(api, options, skipFrames) {
+  options = options || {};
+  // If the options object passed in has the getHeader field set,
+  // try to retrieve the header field containing incoming trace metadata.
+  var incomingTraceContext;
+  if (is.fn(options.getHeader)) {
+    var header = options.getHeader('x-cloud-trace-context');
+    if (header) {
+      incomingTraceContext = api.agent.parseContextFromHeader(header);
+    }
+  }
+  incomingTraceContext = incomingTraceContext || {};
+  if (options.url && !api.agent.shouldTrace(options.url, incomingTraceContext.options)) {
+    return null;
+  }
+  var rootContext = api.agent.createRootSpanData(options.name,
+    incomingTraceContext.traceId,
+    incomingTraceContext.spanId,
+    skipFrames + 1);
+  // If the options object passed in has the setHeader field set,
+  // use it to set trace metadata in an outgoing request.
+  if (is.fn(options.setHeader)) {
+    var outgoingTraceContext = rootContext.traceId + '/' +
+      rootContext.spanId;
+    var outgoingHeaderOptions = (incomingTraceContext.options !== null &&
+      incomingTraceContext.options !== undefined) ?
+      incomingTraceContext.options : constants.TRACE_OPTIONS_TRACE_ENABLED;
+    outgoingTraceContext += (';o=' + outgoingHeaderOptions);
+    options.setHeader('x-cloud-trace-context', outgoingTraceContext);
+  }
+  return new Transaction(api.agent, rootContext);
+}
+
+function runInChildSpan_(transaction, options, skipFrames, fn) {
+  options = options || {};
+  var childContext = transaction.agent_.startSpan(options.name, {},
+    skipFrames + 1);
+  // If the options object passed in has the setHeader field set,
+  // use it to set trace metadata in an outgoing request.
+  if (is.fn(options.setHeader)) {
+    options.setHeader('x-cloud-trace-context',
+      transaction.agent_.generateTraceContext(childContext, true));
+  }
+  return fn(new ChildSpan(transaction.agent_, childContext));
+}

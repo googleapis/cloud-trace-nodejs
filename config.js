@@ -31,6 +31,8 @@ module.exports = {
     // `enhancedDatabaseReporting` is enabled.
     databaseResultReportingSize: 127,
 
+    plugins: {},
+
     // Valid entries are:
     // 'express', 'hapi', 'http', 'restify'
     excludedHooks: [],

@@ -20,7 +20,7 @@ var shimmer = require('shimmer');
 var path = require('path');
 var fs = require('fs');
 var semver = require('semver');
-var Plugin = require('./trace-plugin-interface.js');
+var PluginAPI = require('./trace-plugin-interface.js');
 
 var plugins = {};
 
@@ -100,13 +100,18 @@ function checkLoadedModules() {
 }
 
 function activate(agent) {
+  if (logger) {
+    logger.error('Plugins activated more than once.');
+  }
   logger = agent.logger;
 
-  // Plugin stuff
-  var api = new Plugin(agent);
-  for (var moduleName in agent.plugins) {
+  // Create a new object exposing functions to create trace spans and propagate
+  // context. This relies on functions currently exposed by the agent.
+  var api = new PluginAPI(agent);
+  var pluginConfig = agent.config().plugins;
+  for (var moduleName in pluginConfig) {
     plugins[moduleName] = {
-      file: resolvePluginPath(agent.plugins[moduleName]),
+      file: resolvePluginPath(pluginConfig[moduleName]),
       patches: {}
     };
   }
