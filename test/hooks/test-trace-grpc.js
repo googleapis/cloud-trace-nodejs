@@ -86,10 +86,12 @@ Object.keys(versions).forEach(function(version) {
         });
         call.on('end', function() {
           if (sum === EMIT_ERROR) {
-            if (stopChildSpan) {
-              stopChildSpan();
-            }
-            cb(new Error('test'));
+            triggerCb = function() {
+              if (stopChildSpan) {
+                stopChildSpan();
+              }
+              cb(new Error('test'));
+            };
           } else if (sum === SEND_METADATA) {
             call.sendMetadata(metadata);
             triggerCb = function() {
@@ -118,7 +120,7 @@ Object.keys(versions).forEach(function(version) {
       testBidiStream: function(stream) {
         var sum = 0;
         var stopChildSpan;
-        setTimeout(function() {
+        var t = setTimeout(function() {
           stream.end();
         }, common.serverWait);
         stream.on('data', function(data) {
@@ -133,10 +135,13 @@ Object.keys(versions).forEach(function(version) {
         stream.on('end', function() {
           stopChildSpan();
           if (sum === EMIT_ERROR) {
-          if (stopChildSpan) {
-            stopChildSpan();
-          }
-            stream.emit('error', new Error('test'));
+            clearTimeout(t);
+            setTimeout(function() {
+              if (stopChildSpan) {
+                stopChildSpan();
+              }
+              stream.emit('error', new Error('test'));
+            }, common.serverWait);
           } else if (sum === SEND_METADATA) {
             stream.sendMetadata(metadata);
           }
