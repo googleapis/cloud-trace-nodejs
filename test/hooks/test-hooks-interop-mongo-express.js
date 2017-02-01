@@ -23,18 +23,29 @@
 var common = require('./common.js');
 
 var assert = require('assert');
-var express = require('./fixtures/express4');
 var http = require('http');
-var mongoose = require('./fixtures/mongoose4');
-var agent = require('../..').get().private_();
-var oldDebug = agent.logger.debug;
-agent.logger.debug = function(error) {
-  assert(error.indexOf('mongo') === -1, error);
-};
 
 var server;
 
 describe('mongodb + express', function() {
+  var agent;
+  var oldDebug;
+  var express;
+  var mongoose;
+  before(function() {
+    agent = require('../..')().startAgent().get().private_();
+    express = require('./fixtures/express4');
+    mongoose = require('./fixtures/mongoose4');
+    oldDebug = agent.logger.debug;
+    agent.logger.debug = function(error) {
+      assert(error.indexOf('mongo') === -1, error);
+    };
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   it('should not lose context on startup', function(done) {
     var app = express();
     app.get('/', function (req, res) {
@@ -49,7 +60,7 @@ describe('mongodb + express', function() {
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
         server.close();
-        common.cleanTraces();
+        common.cleanTraces(agent);
         agent.logger.debug = oldDebug;
         done();
       });

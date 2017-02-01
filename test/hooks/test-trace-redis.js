@@ -24,6 +24,7 @@ var common = require('./common.js');
 var traceLabels = require('../../src/trace-labels.js');
 
 var assert = require('assert');
+var agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
 var versions = {
   redis0: require('./fixtures/redis0.12'),
   redis2dot3: require('./fixtures/redis2.3'),
@@ -32,34 +33,43 @@ var versions = {
   redisHiredis05: require('./fixtures/redis2.3-hiredis0.5')
 };
 
+var count = 0;
 var client;
 Object.keys(versions).forEach(function(version) {
   var redis = versions[version];
   describe(version, function() {
+    after(function() {
+      count++;
+
+      if (count === versions.length) {
+        agent.stop();
+      }
+    });
+
     beforeEach(function(done) {
       client = redis.createClient();
       client.on('error', function(err) {
         assert(false, 'redis error ' + err);
       });
       client.set('beforeEach', 42, function() {
-        common.cleanTraces();
+        common.cleanTraces(agent);
         done();
       });
     });
 
     afterEach(function(done) {
       client.quit(function() {
-        common.cleanTraces();
+        common.cleanTraces(agent);
         done();
       });
     });
 
     it('should accurately measure get time', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         client.get('beforeEach', function(err, n) {
           endTransaction();
           assert.equal(n, 42);
-          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-get'));
+          var trace = common.getMatchingSpan(agent, redisPredicate.bind(null, 'redis-get'));
           assert(trace);
           done();
         });
@@ -67,10 +77,10 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should accurately measure set time', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         client.set('key', 'val', function(err) {
           endTransaction();
-          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-set'));
+          var trace = common.getMatchingSpan(agent, redisPredicate.bind(null, 'redis-set'));
           assert(trace);
           done();
         });
@@ -78,11 +88,11 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should accurately measure hset time', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         // Test error case as hset requires 3 parameters
         client.hset('key', 'val', function(err) {
           endTransaction();
-          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
+          var trace = common.getMatchingSpan(agent, redisPredicate.bind(null, 'redis-hset'));
           assert(trace);
           done();
         });
@@ -90,11 +100,11 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should remove trace frames from stack', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         // Test error case as hset requires 3 parameters
         client.hset('key', 'val', function(err) {
           endTransaction();
-          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
+          var trace = common.getMatchingSpan(agent, redisPredicate.bind(null, 'redis-hset'));
           var labels = trace.labels;
           var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
           // Ensure that our patch is on top of the stack

@@ -36,6 +36,7 @@ var traceAgent;
 function TraceAgent(config, logger) {
   this.config_ = config;
   this.logger = logger;
+  this.running = true;
 
   hooks.activate(this);
   pluginLoader.activate(this);
@@ -46,8 +47,9 @@ function TraceAgent(config, logger) {
   this.policy = tracingPolicy.createTracePolicy(config);
 
   if (config.onUncaughtException !== 'ignore') {
+    var that = this;
     this.unhandledException = function() {
-      traceAgent.traceWriter.flushBuffer_(traceAgent.config_.projectId);
+      that.traceWriter.flushBuffer_(that.config_.projectId);
       if (config.onUncaughtException === 'flushAndExit') {
         setTimeout(function() {
           process.exit(1);
@@ -60,10 +62,15 @@ function TraceAgent(config, logger) {
   logger.info('trace agent activated');
 }
 
+TraceAgent.prototype.isRunning = function() {
+  return this.running;
+};
+
 /**
  * Halts this agent and unpatches any patched modules.
  */
 TraceAgent.prototype.stop = function() {
+  this.running = false;
   hooks.deactivate();
   pluginLoader.deactivate();
   cls.destroyNamespace();

@@ -22,11 +22,19 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 var assert = require('assert');
-var agent = require('../..');
+var trace = require('../..')();
 var cls = require('../../src/cls.js');
 var TraceLabels = require('../../src/trace-labels.js');
 
 describe('index.js', function() {
+  var agent;
+  beforeEach(function() {
+    agent = trace.startAgent();
+  });
+
+  afterEach(function(){
+    agent.stop();
+  });
 
   it('should be harmless to stop before a start', function() {
     agent.stop();
@@ -34,17 +42,17 @@ describe('index.js', function() {
     agent.stop();
   });
 
-  function wrapTest(nodule, property) {
+  function wrapTest(agent, nodule, property) {
     agent.stop(); // harmless to stop before a start.
     assert(!nodule[property].__unwrap,
       property + ' already wrapped before start');
-    agent.start();
+    agent = trace.startAgent();
     assert(nodule[property].__unwrap,
       property + ' should get wrapped on start');
     agent.stop();
     assert(!nodule[property].__unwrap,
       property + ' should get unwrapped on stop');
-    agent.start();
+    agent = trace.startAgent();
     assert(nodule[property].__unwrap,
       property + ' should get wrapped on start');
     agent.stop();
@@ -53,69 +61,54 @@ describe('index.js', function() {
   }
 
   it('should wrap/unwrap module._load on start/stop', function() {
-    wrapTest(require('module'), '_load');
+    wrapTest(agent, require('module'), '_load');
   });
 
   it('should not attach exception handler with ignore option', function() {
-    agent.start();
     // Mocha attaches 1 exception handler
     assert.equal(process.listeners('uncaughtException').length, 1);
-    agent.stop();
   });
 
   it('should wrap/unwrap http on start/stop', function() {
-    agent.start(); // agent needs to be started before the first require.
     var http = require('http');
-    wrapTest(http, 'request');
-    agent.stop();
+    wrapTest(agent, http, 'request');
   });
 
   it('should wrap/unwrap express on start/stop', function() {
-    agent.start();
     var express = require('../hooks/fixtures/express4');
     var patchedMethods = require('methods');
     patchedMethods.push('use', 'route', 'param', 'all');
     patchedMethods.forEach(function(method) {
-      wrapTest(express.application, method);
+      wrapTest(agent, express.application, method);
     });
-    agent.stop();
   });
 
   it('should wrap/unwrap hapi on start/stop', function() {
-    agent.start();
     var hapi = require('../hooks/fixtures/hapi8');
-    wrapTest(hapi.Server.prototype, 'connection');
-    agent.stop();
+    wrapTest(agent, hapi.Server.prototype, 'connection');
   });
 
   it('should wrap/unwrap mongodb-core on start/stop', function() {
-    agent.start();
     var mongo = require('../hooks/fixtures/mongodb-core1');
-    wrapTest(mongo.Server.prototype, 'command');
-    wrapTest(mongo.Server.prototype, 'insert');
-    wrapTest(mongo.Server.prototype, 'update');
-    wrapTest(mongo.Server.prototype, 'remove');
-    wrapTest(mongo.Cursor.prototype, 'next');
-    agent.stop();
+    wrapTest(agent, mongo.Server.prototype, 'command');
+    wrapTest(agent, mongo.Server.prototype, 'insert');
+    wrapTest(agent, mongo.Server.prototype, 'update');
+    wrapTest(agent, mongo.Server.prototype, 'remove');
+    wrapTest(agent, mongo.Cursor.prototype, 'next');
   });
 
   it('should wrap/unwrap redis on start/stop', function() {
-    agent.start();
     var redis = require('../hooks/fixtures/redis0.12');
-    wrapTest(redis.RedisClient.prototype, 'send_command');
-    wrapTest(redis, 'createClient');
-    agent.stop();
+    wrapTest(agent, redis.RedisClient.prototype, 'send_command');
+    wrapTest(agent, redis, 'createClient');
   });
 
   it('should wrap/unwrap restify on start/stop', function() {
-    agent.start();
     var restify = require('../hooks/fixtures/restify4');
-    wrapTest(restify, 'createServer');
-    agent.stop();
+    wrapTest(agent, restify, 'createServer');
   });
 
   it('should have equivalent enabled and disabled structure', function() {
-    agent.start();
     assert.equal(typeof agent, 'object');
     assert.equal(typeof agent.startSpan, 'function');
     assert.equal(typeof agent.endSpan, 'function');
@@ -133,12 +126,7 @@ describe('index.js', function() {
     assert.equal(typeof agent.addTransactionLabel, 'function');
   });
 
-  it('should throw if get called before start', function() {
-    assert.throws(function() { agent.get(); }, Error);
-  });
-
   it('should return the initialized agent on get', function() {
-    agent.start();
     assert.equal(agent.get(), agent);
   });
 
@@ -155,19 +143,16 @@ describe('index.js', function() {
   });
 
   it('should produce real spans when enabled', function() {
-    agent.start();
     cls.getNamespace().run(function() {
       agent.private_().createRootSpanData('root', 1, 2);
       var spanData = agent.startSpan('sub');
       agent.endSpan(spanData);
       assert.equal(spanData.span.name, 'sub');
-      agent.stop();
     });
   });
 
   describe('labels', function(){
     it('should add labels to spans', function() {
-      agent.start();
       cls.getNamespace().run(function() {
         agent.private_().createRootSpanData('root', 1, 2);
         var spanData = agent.startSpan('sub', {test1: 'value'});
@@ -180,7 +165,6 @@ describe('index.js', function() {
     });
 
     it('should ignore non-object labels', function() {
-      agent.start();
       cls.getNamespace().run(function() {
         agent.private_().createRootSpanData('root', 1, 2);
 
@@ -211,7 +195,6 @@ describe('index.js', function() {
 
 
   it('should produce real spans runInSpan sync', function() {
-    agent.start();
     cls.getNamespace().run(function() {
       var root = agent.private_().createRootSpanData('root', 1, 0);
       var testLabel = { key: 'val' };
@@ -225,12 +208,10 @@ describe('index.js', function() {
                             .filter(spanPredicate);
       assert.equal(matchingSpans.length, 1);
       assert.equal(matchingSpans[0].spans[1].labels.key, 'val');
-      agent.stop();
     });
   });
 
   it('should produce real spans runInSpan async', function(done) {
-    agent.start();
     cls.getNamespace().run(function() {
       var root = agent.private_().createRootSpanData('root', 1, 0);
       var testLabel = { key: 'val' };
@@ -250,7 +231,6 @@ describe('index.js', function() {
           assert(duration > 190);
           assert(duration < 300);
           assert.equal(span.labels.key, 'val');
-          agent.stop();
           done();
         }, 200);
       });
@@ -258,7 +238,6 @@ describe('index.js', function() {
   });
 
   it('should produce real root spans runInRootSpan sync', function() {
-    agent.start();
     cls.getNamespace().run(function() {
       var testLabel = { key: 'val' };
       agent.runInRootSpan('root', testLabel, function() {
@@ -273,12 +252,10 @@ describe('index.js', function() {
                             .filter(spanPredicate);
       assert.equal(matchingSpans.length, 1);
       assert.equal(matchingSpans[0].spans[0].labels.key, 'val');
-      agent.stop();
     });
   });
 
   it('should produce real root spans runInRootSpan async', function(done) {
-    agent.start();
     cls.getNamespace().run(function() {
       var testLabel = { key: 'val' };
       agent.runInRootSpan('root', testLabel, function(endSpan) {
@@ -298,7 +275,6 @@ describe('index.js', function() {
           assert(duration > 190);
           assert(duration < 300);
           assert.equal(span.labels.key, 'val');
-          agent.stop();
           done();
         }, 200);
       });
@@ -306,16 +282,13 @@ describe('index.js', function() {
   });
 
   it('should not break with no root span', function() {
-    agent.start();
     var span = agent.startSpan();
     agent.setTransactionName('noop');
     agent.addTransactionLabel('noop', 'noop');
     agent.endSpan(span);
-    agent.stop();
   });
 
   it('should not allow nested root spans', function(done) {
-    agent.start();
     agent.runInRootSpan('root', function(cb1) {
       var finished = false;
       var finish = function () {
@@ -333,7 +306,6 @@ describe('index.js', function() {
         var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
         assert(duration > 190);
         assert(duration < 300);
-        agent.stop();
         done();
       };
       setTimeout(function() {
@@ -350,14 +322,12 @@ describe('index.js', function() {
   });
 
   it('should set transaction name and labels', function() {
-    agent.start();
     cls.getNamespace().run(function() {
       var spanData = agent.private_().createRootSpanData('root', 1, 2);
       agent.setTransactionName('root2');
       agent.addTransactionLabel('key', 'value');
       assert.equal(spanData.span.name, 'root2');
       assert.equal(spanData.span.labels.key, 'value');
-      agent.stop();
     });
   });
 
