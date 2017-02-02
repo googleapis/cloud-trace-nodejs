@@ -35,6 +35,7 @@ var traceAgent;
 function TraceAgent(config, logger) {
   this.config_ = config;
   this.logger = logger;
+  this.plugins = config ? config.plugins : {};
 
   hooks.activate(this);
 

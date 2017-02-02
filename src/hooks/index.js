@@ -19,6 +19,7 @@ var Module = require('module');
 var shimmer = require('shimmer');
 var path = require('path');
 var fs = require('fs');
+var Plugin = require('../trace-plugin-interface.js');
 
 //
 // All these operations need to be reversible
@@ -123,6 +124,15 @@ function activate(agent) {
 
   logger = agent.logger;
 
+  // Plugin stuff
+  var api = new Plugin(agent);
+  Object.keys(agent.plugins).forEach(function(pluginName) {
+    if (toInstrument[pluginName]) {
+      toInstrument[pluginName].file = agent.plugins[pluginName];
+      toInstrument[pluginName].isPlugin = true;
+    }
+  });
+
   checkLoadedModules(logger);
 
   // hook into Module._load so that we can hook into userspace frameworks
@@ -133,7 +143,12 @@ function activate(agent) {
       if (!modulePatch) {
         // Load the hook. This file, i.e. index.js, becomes the parent module.
         var moduleHook = originalModuleLoad(instrumentation.file, module, false);
-        modulePatch = moduleHook(version, agent);
+        // TODO(kjin): This is hacky, make it not so
+        if (instrumentation.isPlugin) {
+          modulePatch = moduleHook(version, api);
+        } else {
+          modulePatch = moduleHook(version, agent);
+        }
       }
       Object.keys(modulePatch).forEach(function(file) {
         if (!modulePatch[file].module) {
