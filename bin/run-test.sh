@@ -39,7 +39,12 @@ function run {
 }
 
 # Run test/coverage
-run test test/hooks
+run test
+for test in test/hooks/*.js ;
+do
+  run "${test}"
+done
+
 for test in test/standalone/test-*.js ;
 do
   if [[ ! $(node --version) =~ v0\.12\..* || ! "${test}" =~ .*trace\-koa\.js ]]

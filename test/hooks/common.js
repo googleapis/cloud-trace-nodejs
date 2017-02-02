@@ -132,8 +132,8 @@ function assertSpanDurationCorrect(span) {
  * @param {function(?)=} predicate
  */
 function assertDurationCorrect(agent, predicate) {
-  if (arguments.length !== 2) {
-    throw new Error('assertDurationCorrect() expected 2 arguments.  ' +
+  if (arguments.length === 0) {
+    throw new Error('assertDurationCorrect() expected at lest one argument.  ' +
       'Received: ' + arguments.length);
   }
 
