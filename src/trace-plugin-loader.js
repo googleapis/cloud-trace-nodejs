@@ -22,7 +22,7 @@ var fs = require('fs');
 var semver = require('semver');
 var PluginAPI = require('./trace-plugin-interface.js');
 
-var plugins = {};
+var plugins = Object.create(null);
 
 var logger;
 
