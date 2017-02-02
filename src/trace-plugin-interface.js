@@ -34,6 +34,7 @@ var is = require('is');
 function ChildSpan(agent, span) {
   this.agent_ = agent;
   this.span_ = span;
+  this.serializedTraceContext_ = agent.generateTraceContext(span, true);
 }
 
 /**
@@ -53,6 +54,15 @@ ChildSpan.prototype.endSpan = function() {
 };
 
 /**
+ * Gets the trace context serialized as a string. This string can be set as the
+ * 'x-cloud-trace-context' field in an HTTP request header to support
+ * distributed tracing.
+ */
+ChildSpan.prototype.getTraceContext = function() {
+  return this.serializedTraceContext_;
+};
+
+/**
  * An object that is associated with a single root span. It exposes
  * functions for adding labels to or closing the associated span.
  * @param {TraceAgent} agent The underlying trace agent object.
@@ -62,6 +72,7 @@ ChildSpan.prototype.endSpan = function() {
 function Transaction(agent, context) {
   this.agent_ = agent;
   this.context_ = context;
+  this.serializedTraceContext_ = agent.generateTraceContext(context, true);
 }
 
 /**
@@ -81,13 +92,22 @@ Transaction.prototype.endSpan = function() {
 };
 
 /**
+ * Gets the trace context serialized as a string. This string can be set as the
+ * 'x-cloud-trace-context' field in an HTTP request header to support
+ * distributed tracing.
+ */
+Transaction.prototype.getTraceContext = function() {
+  return this.serializedTraceContext_;
+};
+
+/**
  * Runs the given function in a child span, passing it an object that
  * exposes an interface for adding labels and closing the span.
  * @param {object} options An object that specifies options for how the child
  * span is created and propogated.
  * @param {string} options.name The name to apply to the child span.
- * @param {?function(string, string)} options.setTraceContext A function
- * describing how to set the trace context for an outgoing request.
+ * @param {?string} options.traceContext The serialized form of an object that
+ * contains information about an existing trace context.
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the child span, starting from the top;
  * this should be set to avoid including frames in the plugin. Defaults to 0.
@@ -97,8 +117,10 @@ Transaction.prototype.endSpan = function() {
  * @returns The return value of calling fn.
  */
 Transaction.prototype.runInChildSpan = function(options, fn) {
-  var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-  return runInChildSpan_(this, options, skipFrames, fn);
+  options = options || {};
+  var childContext = this.agent_.startSpan(options.name, {},
+    options.skipFrames ? options.skipFrames + 1 : 1);
+  return fn(new ChildSpan(this.agent_, childContext));
 };
 
 /**
@@ -129,11 +151,8 @@ PluginAPI.prototype.enhancedReportingEnabled = function() {
  * @param {string} options.name The name to apply to the root span.
  * @param {?string} options.url A URL associated with the root span, if
  * applicable.
- * @param {?function(string)} options.getTraceContext A function describing how
- * to obtain the trace context from the incoming request assoicated with this
- * root span.
- * @param {?function(string, string)} options.setTraceContext A function
- * describing how to set the trace context for an outgoing request.
+ * @param {?string} options.traceContext The serialized form of an object that
+ * contains information about an existing trace context.
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the root span, starting from the top;
  * this should be set to avoid including frames in the plugin. Defaults to 0.
@@ -197,11 +216,13 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
 PluginAPI.prototype.runInChildSpan = function(options, fn) {
   var transaction = this.getTransaction();
   if (transaction) {
-    var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-    return runInChildSpan_(transaction, options, skipFrames, fn);
+    options = options || {};
+    var childContext = transaction.agent_.startSpan(options.name, {},
+      options.skipFrames ? options.skipFrames + 1 : 1);
+    return fn(new ChildSpan(transaction.agent_, childContext));
   } else {
-    this.logger_.warn(options.name + ': Attempted to run in child span without' +
-      ' root');
+    this.logger_.warn(options.name + ': Attempted to run in child span ' +
+      'without root');
     return fn();
   }
 };
@@ -239,11 +260,8 @@ function createTransaction_(api, options, skipFrames) {
   // If the options object passed in has the getTraceContext field set,
   // try to retrieve the header field containing incoming trace metadata.
   var incomingTraceContext;
-  if (is.fn(options.getTraceContext)) {
-    var header = options.getTraceContext();
-    if (header) {
-      incomingTraceContext = api.agent_.parseContextFromHeader(header);
-    }
+  if (is.string(options.traceContext)) {
+    incomingTraceContext = api.agent_.parseContextFromHeader(options.traceContext);
   }
   incomingTraceContext = incomingTraceContext || {};
   if (options.url && !api.agent_.shouldTrace(options.url, incomingTraceContext.options)) {
@@ -253,29 +271,5 @@ function createTransaction_(api, options, skipFrames) {
     incomingTraceContext.traceId,
     incomingTraceContext.spanId,
     skipFrames + 1);
-  // If the options object passed in has the setTraceContext field set,
-  // use it to set trace metadata in an outgoing request.
-  if (is.fn(options.setTraceContext)) {
-    var outgoingTraceContext = rootContext.traceId + '/' +
-      rootContext.spanId;
-    var outgoingHeaderOptions = (incomingTraceContext.options !== null &&
-      incomingTraceContext.options !== undefined) ?
-      incomingTraceContext.options : constants.TRACE_OPTIONS_TRACE_ENABLED;
-    outgoingTraceContext += (';o=' + outgoingHeaderOptions);
-    options.setTraceContext(outgoingTraceContext);
-  }
   return new Transaction(api.agent_, rootContext);
-}
-
-function runInChildSpan_(transaction, options, skipFrames, fn) {
-  options = options || {};
-  var childContext = transaction.agent_.startSpan(options.name, {},
-    skipFrames + 1);
-  // If the options object passed in has the setTraceContext field set,
-  // use it to set trace metadata in an outgoing request.
-  if (is.fn(options.setTraceContext)) {
-    options.setTraceContext(
-      transaction.agent_.generateTraceContext(childContext, true));
-  }
-  return fn(new ChildSpan(transaction.agent_, childContext));
 }
