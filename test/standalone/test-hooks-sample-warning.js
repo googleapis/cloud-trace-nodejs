@@ -30,8 +30,15 @@ describe('express + dbs', function() {
   var oldDebug;
   var agent;
 
-  beforeEach(function() {
+  before(function() {
     agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
+  beforeEach(function() {
     oldDebug = agent.logger.debug;
     var newDebug = function(error) {
       if (error.indexOf('redis') !== -1 || error.indexOf('mongo') !== -1 ||
@@ -45,7 +52,6 @@ describe('express + dbs', function() {
   afterEach(function() {
     agent.logger.newDebug = oldDebug;
     debugCount = 0;
-    agent.stop();
   });
 
   it('mongo should not warn', function(done) {
