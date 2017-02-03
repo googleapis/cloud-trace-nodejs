@@ -31,6 +31,13 @@ module.exports = {
     // `enhancedDatabaseReporting` is enabled.
     databaseResultReportingSize: 127,
 
+    // An object describing which modules to trace. To enable tracing for a
+    // module, add its name as a key under this object, as well as the
+    // require-friendly module path of the plugin that implements tracing for
+    // that module as the corresponding value. Relative paths are not accepted.
+    // An empty object means that no modules will be automatically traced at
+    // all.
+    // This field is experimental.
     plugins: {},
 
     // Valid entries are:

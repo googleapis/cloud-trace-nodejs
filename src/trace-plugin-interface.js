@@ -139,7 +139,7 @@ function PluginAPI(agent) {
  * @returns A boolean value indicating whether the trace agent was configured
  * to have an enhanced level of reporting enabled.
  */
-PluginAPI.prototype.enhancedReportingEnabled = function() {
+PluginAPI.prototype.enhancedDatabaseReportingEnabled = function() {
   return this.agent_.config_.enhancedDatabaseReporting;
 };
 

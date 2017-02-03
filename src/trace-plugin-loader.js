@@ -62,21 +62,6 @@ function findModuleVersion(modulePath, load) {
   return process.version;
 }
 
-function resolvePluginPath(pluginFile) {
-  // If path doesn't start with '/', './', or '../',
-  // it must refer to a module in node_modules
-  if (!pluginFile.match(/^(\/|\.\/|\.\.\/)/)) {
-    return pluginFile;
-  } else {
-    if (path.isAbsolute(pluginFile)) {
-      return pluginFile;
-    } else {
-      var entryPoint = process.argv[1];
-      return path.join(path.dirname(entryPoint), pluginFile);
-    }
-  }
-}
-
 function checkLoadedModules() {
   for (var moduleName in plugins) {
     // \\ is benign on unix and escapes \\ on windows
@@ -111,7 +96,7 @@ function activate(agent) {
   var pluginConfig = agent.config().plugins;
   for (var moduleName in pluginConfig) {
     plugins[moduleName] = {
-      file: resolvePluginPath(pluginConfig[moduleName]),
+      file: pluginConfig[moduleName],
       patches: {}
     };
   }
