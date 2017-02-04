@@ -15,214 +15,216 @@
  */
 'use strict';
 
-var agent = require('../..')().startAgent().private_();
-agent.config_.enhancedDatabaseReporting = true;
-
-var common = require('./common.js');
-common.init(agent);
-
 var assert = require('assert');
 var traceLabels = require('../../src/trace-labels.js');
 var findIndex = require('lodash.findindex');
 
 var versions = {
-  grpc1: require('./fixtures/grpc1')
+  grpc1: './fixtures/grpc1'
 };
 
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';
 var grpcPort = 50051;
-var client, server;
 
 // When received in the 'n' field, the server should perform the appropriate action
 // (For client streaming methods, this would be the total sum of all requests)
 var SEND_METADATA = 131;
 var EMIT_ERROR = 13412;
 
-var count = 0;
-Object.keys(versions).forEach(function(version) {
-  var grpc = versions[version];
-
-  // This metadata can be used by all test methods.
-  var metadata = new grpc.Metadata();
-  metadata.set('a', 'b');
-  // Trailing metadata can be sent by unary and client stream requests.
-  var trailing_metadata = new grpc.Metadata();
-  trailing_metadata.set('c', 'd');
-
-  function startServer(proto) {
-    var _server = new grpc.Server();
-    _server.addProtoService(proto.Tester.service, {
-      testUnary: function(call, cb) {
-        if (call.request.n === EMIT_ERROR) {
-          common.createChildSpan(agent, function () {
+function startServer(proto, grpc, common, agent, metadata, trailing_metadata) {
+  var _server = new grpc.Server();
+  _server.addProtoService(proto.Tester.service, {
+    testUnary: function(call, cb) {
+      if (call.request.n === EMIT_ERROR) {
+        common.createChildSpan(agent, function () {
+          cb(new Error('test'));
+        }, common.serverWait);
+      } else if (call.request.n === SEND_METADATA) {
+        call.sendMetadata(metadata);
+        setTimeout(function() {
+          cb(null, {n: call.request.n}, trailing_metadata);
+        }, common.serverWait);
+      } else {
+        common.createChildSpan(agent, function () {
+          cb(null, {n: call.request.n});
+        }, common.serverWait);
+      }
+    },
+    testClientStream: function(call, cb) {
+      var sum = 0;
+      var triggerCb = function () {
+        cb(null, {n: sum});
+      };
+      var stopChildSpan;
+      call.on('data', function(data) {
+        // Creating child span in stream event handler to ensure that
+        // context is propagated correctly
+        if (!stopChildSpan) {
+          stopChildSpan = common.createChildSpan(agent, function () {
+            triggerCb();
+          }, common.serverWait);
+        }
+        sum += data.n;
+      });
+      call.on('end', function() {
+        if (sum === EMIT_ERROR) {
+          triggerCb = function() {
+            if (stopChildSpan) {
+              stopChildSpan();
+            }
             cb(new Error('test'));
-          }, common.serverWait);
-        } else if (call.request.n === SEND_METADATA) {
+          };
+        } else if (sum === SEND_METADATA) {
           call.sendMetadata(metadata);
-          setTimeout(function() {
-            cb(null, {n: call.request.n}, trailing_metadata);
-          }, common.serverWait);
-        } else {
-          common.createChildSpan(agent, function () {
-            cb(null, {n: call.request.n});
-          }, common.serverWait);
+          triggerCb = function() {
+            cb(null, {n: sum}, trailing_metadata);
+          };
         }
-      },
-      testClientStream: function(call, cb) {
-        var sum = 0;
-        var triggerCb = function () {
-          cb(null, {n: sum});
-        };
-        var stopChildSpan;
-        call.on('data', function(data) {
-          // Creating child span in stream event handler to ensure that
-          // context is propagated correctly
-          if (!stopChildSpan) {
-            stopChildSpan = common.createChildSpan(agent, function () {
-              triggerCb();
-            }, common.serverWait);
-          }
-          sum += data.n;
-        });
-        call.on('end', function() {
-          if (sum === EMIT_ERROR) {
-            triggerCb = function() {
-              if (stopChildSpan) {
-                stopChildSpan();
-              }
-              cb(new Error('test'));
-            };
-          } else if (sum === SEND_METADATA) {
-            call.sendMetadata(metadata);
-            triggerCb = function() {
-              cb(null, {n: sum}, trailing_metadata);
-            };
-          }
-        });
-      },
-      testServerStream: function(stream) {
-        if (stream.request.n === EMIT_ERROR) {
-          common.createChildSpan(agent, function () {
-            stream.emit('error', new Error('test'));
-          }, common.serverWait);
-        } else {
-          if (stream.request.n === SEND_METADATA) {
-            stream.sendMetadata(metadata);
-          }
-          for (var i = 0; i < 10; ++i) {
-            stream.write({n: i});
-          }
-          common.createChildSpan(agent, function () {
-            stream.end();
-          }, common.serverWait);
+      });
+    },
+    testServerStream: function(stream) {
+      if (stream.request.n === EMIT_ERROR) {
+        common.createChildSpan(agent, function () {
+          stream.emit('error', new Error('test'));
+        }, common.serverWait);
+      } else {
+        if (stream.request.n === SEND_METADATA) {
+          stream.sendMetadata(metadata);
         }
-      },
-      testBidiStream: function(stream) {
-        var sum = 0;
-        var stopChildSpan;
-        var t = setTimeout(function() {
+        for (var i = 0; i < 10; ++i) {
+          stream.write({n: i});
+        }
+        common.createChildSpan(agent, function () {
           stream.end();
         }, common.serverWait);
-        stream.on('data', function(data) {
-          // Creating child span in stream event handler to ensure that
-          // context is propagated correctly
-          if (!stopChildSpan) {
-            stopChildSpan = common.createChildSpan(agent, null, common.serverWait);
-          }
-          sum += data.n;
-          stream.write({n: data.n});
-        });
-        stream.on('end', function() {
-          stopChildSpan();
-          if (sum === EMIT_ERROR) {
-            clearTimeout(t);
-            setTimeout(function() {
-              if (stopChildSpan) {
-                stopChildSpan();
-              }
-              stream.emit('error', new Error('test'));
-            }, common.serverWait);
-          } else if (sum === SEND_METADATA) {
-            stream.sendMetadata(metadata);
-          }
-        });
       }
-    });
-    _server.bind('localhost:' + grpcPort,
-        grpc.ServerCredentials.createInsecure());
-    _server.start();
-    return _server;
-  }
-
-  function createClient(proto) {
-    return new proto.Tester('localhost:' + grpcPort,
-        grpc.credentials.createInsecure());
-  }
-
-  function callUnary(cb) {
-    client.testUnary({n: 42}, function(err, result) {
-      assert.ifError(err);
-      assert.strictEqual(result.n, 42);
-      cb();
-    });
-  }
-
-  function callClientStream(cb) {
-    var stream = client.testClientStream(function(err, result) {
-      assert.ifError(err);
-      assert.strictEqual(result.n, 45);
-      cb();
-    });
-    for (var i = 0; i < 10; ++i) {
-      stream.write({n: i});
+    },
+    testBidiStream: function(stream) {
+      var sum = 0;
+      var stopChildSpan;
+      var t = setTimeout(function() {
+        stream.end();
+      }, common.serverWait);
+      stream.on('data', function(data) {
+        // Creating child span in stream event handler to ensure that
+        // context is propagated correctly
+        if (!stopChildSpan) {
+          stopChildSpan = common.createChildSpan(agent, null, common.serverWait);
+        }
+        sum += data.n;
+        stream.write({n: data.n});
+      });
+      stream.on('end', function() {
+        stopChildSpan();
+        if (sum === EMIT_ERROR) {
+          clearTimeout(t);
+          setTimeout(function() {
+            if (stopChildSpan) {
+              stopChildSpan();
+            }
+            stream.emit('error', new Error('test'));
+          }, common.serverWait);
+        } else if (sum === SEND_METADATA) {
+          stream.sendMetadata(metadata);
+        }
+      });
     }
-    stream.end();
-  }
+  });
+  _server.bind('localhost:' + grpcPort,
+      grpc.ServerCredentials.createInsecure());
+  _server.start();
+  return _server;
+}
 
-  function callServerStream(cb) {
-    var stream = client.testServerStream({n: 42});
-    var sum = 0;
-    stream.on('data', function(data) {
-      sum += data.n;
-    });
-    stream.on('status', function(status) {
-      assert.strictEqual(status.code, grpc.status.OK);
-      assert.strictEqual(sum, 45);
-      cb();
-    });
-  }
+function createClient(proto, grpc) {
+  return new proto.Tester('localhost:' + grpcPort,
+      grpc.credentials.createInsecure());
+}
 
-  function callBidi(cb) {
-    var stream = client.testBidiStream();
-    var sum = 0;
-    stream.on('data', function(data) {
-      sum += data.n;
-    });
-    for (var i = 0; i < 10; ++i) {
-      stream.write({n: i});
-    }
-    stream.end();
-    stream.on('status', function(status) {
-      assert.strictEqual(status.code, grpc.status.OK);
-      assert.strictEqual(sum, 45);
-      cb();
-    });
-  }
+function callUnary(client, cb) {
+  client.testUnary({n: 42}, function(err, result) {
+    assert.ifError(err);
+    assert.strictEqual(result.n, 42);
+    cb();
+  });
+}
 
+function callClientStream(client, cb) {
+  var stream = client.testClientStream(function(err, result) {
+    assert.ifError(err);
+    assert.strictEqual(result.n, 45);
+    cb();
+  });
+  for (var i = 0; i < 10; ++i) {
+    stream.write({n: i});
+  }
+  stream.end();
+}
+
+function callServerStream(client, grpc, cb) {
+  var stream = client.testServerStream({n: 42});
+  var sum = 0;
+  stream.on('data', function(data) {
+    sum += data.n;
+  });
+  stream.on('status', function(status) {
+    assert.strictEqual(status.code, grpc.status.OK);
+    assert.strictEqual(sum, 45);
+    cb();
+  });
+}
+
+function callBidi(client, grpc, cb) {
+  var stream = client.testBidiStream();
+  var sum = 0;
+  stream.on('data', function(data) {
+    sum += data.n;
+  });
+  for (var i = 0; i < 10; ++i) {
+    stream.write({n: i});
+  }
+  stream.end();
+  stream.on('status', function(status) {
+    assert.strictEqual(status.code, grpc.status.OK);
+    assert.strictEqual(sum, 45);
+    cb();
+  });
+}
+
+Object.keys(versions).forEach(function(version) {
+  var agent;
+  var common;
+  var grpc;
+  var metadata;
+  var server;
+  var client;
   describe(version, function() {
     before(function() {
+      // It is necessary for the samplingRate to be 0 for the tests to succeed
+      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      agent.config_.enhancedDatabaseReporting = true;
+
+      common = require('./common.js');
+      common.init(agent);
+
+      grpc = require(versions[version]);
+
+      // This metadata can be used by all test methods.
+      metadata = new grpc.Metadata();
+      metadata.set('a', 'b');
+
+      // Trailing metadata can be sent by unary and client stream requests.
+      var trailing_metadata = new grpc.Metadata();
+      trailing_metadata.set('c', 'd');
+
       var proto = grpc.load(protoFile).nodetest;
-      server = startServer(proto);
-      client = createClient(proto);
+      server = startServer(proto, grpc, common, agent, metadata, trailing_metadata);
+      client = createClient(proto, grpc);
     });
 
     after(function() {
       server.forceShutdown();
-
-      count++;
-      if (count === versions.length) {
-        agent.stop();
-      }
+      agent.stop();
     });
 
     afterEach(function() {
@@ -231,7 +233,7 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure time for unary requests', function(done) {
       common.runInTransaction(agent, function(endTransaction) {
-        callUnary(function() {
+        callUnary(client, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
@@ -252,7 +254,7 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure time for client streaming requests', function(done) {
       common.runInTransaction(agent, function(endTransaction) {
-        callClientStream(function() {
+        callClientStream(client, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
@@ -271,7 +273,7 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure time for server streaming requests', function(done) {
       common.runInTransaction(agent, function(endTransaction) {
-        callServerStream(function() {
+        callServerStream(client, grpc, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
@@ -293,7 +295,7 @@ Object.keys(versions).forEach(function(version) {
 
     it('should accurately measure time for bidi streaming requests', function(done) {
       common.runInTransaction(agent, function(endTransaction) {
-        callBidi(function() {
+        callBidi(client, grpc, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
@@ -313,7 +315,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should not break if no parent transaction', function(done) {
-      callUnary(function() {
+      callUnary(client, function() {
         assert.strictEqual(common.getMatchingSpans(agent, grpcClientPredicate).length, 0);
         done();
       });
@@ -343,10 +345,10 @@ Object.keys(versions).forEach(function(version) {
         }, -1));
         done();
       };
-      next = callUnary.bind(null, next);
-      next = callClientStream.bind(null, next);
-      next = callServerStream.bind(null, next);
-      next = callBidi.bind(null, next);
+      next = callUnary.bind(null, client, next);
+      next = callClientStream.bind(null, client, next);
+      next = callServerStream.bind(null, client, grpc, next);
+      next = callBidi.bind(null, client, grpc, next);
       next();
     });
 
@@ -384,7 +386,10 @@ Object.keys(versions).forEach(function(version) {
       };
 
       // Call queueCallTogether with every possible pair of gRPC calls.
-      var methods = [ callUnary, callClientStream, callServerStream, callBidi ];
+      var methods = [ callUnary.bind(null, client),
+                      callClientStream.bind(null, client),
+                      callServerStream.bind(null, client, grpc),
+                      callBidi.bind(null, client, grpc) ];
       for (var m of methods) {
         for (var n of methods) {
           queueCallTogether(m, n);

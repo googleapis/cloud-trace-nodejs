@@ -40,7 +40,7 @@ function run {
 
 # Run test/coverage
 run test
-for test in test/hooks/*.js ;
+for test in test/hooks/*.js
 do
   run "${test}"
 done
