@@ -16,21 +16,31 @@
 'use strict';
 
 var common = require('./common.js');
-var agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
 var constants = require('../../src/constants.js');
 var TraceLabels = require('../../src/trace-labels.js');
 
 var assert = require('assert');
-var http = require('http');
-
-var server = http.Server(function(req, res) {
-  setTimeout(function() {
-    res.writeHead(200);
-    res.end(common.serverRes);
-  }, common.serverWait);
-});
 
 describe('test-trace-http', function() {
+  var agent;
+  var http;
+  var server;
+  before(function() {
+    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    http = require('http');
+
+    server = http.Server(function(req, res) {
+      setTimeout(function() {
+        res.writeHead(200);
+        res.end(common.serverRes);
+      }, common.serverWait);
+    });
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   afterEach(function() {
     common.cleanTraces(agent);
     server.close();
@@ -241,6 +251,13 @@ describe('test-trace-http', function() {
 });
 
 describe('https', function() {
+  var agent;
+  var https;
+  before(function() {
+    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    https = require('https');
+  });
+
   after(function() {
     agent.stop();
   });
@@ -250,8 +267,6 @@ describe('https', function() {
   });
 
   it('should accurately measure https#get time with callback', function(done) {
-    var https = require('https');
-
     var options = {
       key: common.serverKey,
       cert: common.serverCert

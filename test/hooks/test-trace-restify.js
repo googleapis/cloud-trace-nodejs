@@ -20,32 +20,25 @@ var http = require('http');
 var assert = require('assert');
 var constants = require('../../src/constants.js');
 var common = require('./common.js');
-var agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
 var semver = require('semver');
 var versions = {
-  restify4: require('./fixtures/restify4')
+  restify4: './fixtures/restify4'
 };
 if (semver.satisfies(process.version, '<7')) {
-  versions.restify3 = require('./fixtures/restify3');
+  versions.restify3 = './fixtures/restify3';
 }
 
-var count = 0;
 var server;
 var write;
 
 Object.keys(versions).forEach(function(version) {
-  var restify = versions[version];
-
   describe(version, function() {
-    after(function() {
-      count++;
-
-      if (count === versions.length){
-        agent.stop();
-      }
-    });
-
+    var agent;
+    var restify;
     before(function() {
+      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      restify = require(versions[version]);
+
       // Mute stderr to satiate appveyor
       write = process.stderr.write;
       process.stderr.write = function(c, e, cb) {
@@ -57,6 +50,7 @@ Object.keys(versions).forEach(function(version) {
     });
     after(function() {
       process.stderr.write = write;
+      agent.stop();
     });
     afterEach(function() {
       common.cleanTraces(agent);

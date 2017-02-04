@@ -39,11 +39,27 @@ function run {
 }
 
 # Run test/coverage
-run test
-for test in test/hooks/*.js
-do
-  run "${test}"
-done
+run test/test-constants.js
+run test/test-span-data.js
+run test/test-trace-agent.js
+run test/test-trace-policy.js
+run test/test-trace-span.js
+run test/test-trace.js
+run test/test-util.js
+
+run test/hooks/common.js
+run test/hooks/test-hooks-index.js
+run test/hooks/test-hooks-interop-mongo-express.js
+run test/hooks/test-trace-connect.js
+run test/hooks/test-trace-express.js
+run test/hooks/test-trace-grpc.js
+run test/hooks/test-trace-hapi.js
+run test/hooks/test-trace-http.js
+run test/hooks/test-trace-mongodb.js
+run test/hooks/test-trace-mongoose.js
+run test/hooks/test-trace-mysql.js
+run test/hooks/test-trace-redis.js
+run test/hooks/test-trace-restify.js
 
 for test in test/standalone/test-*.js ;
 do

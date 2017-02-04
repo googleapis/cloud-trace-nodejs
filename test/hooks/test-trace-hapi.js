@@ -25,7 +25,6 @@ var semver = require('semver');
 
 var server;
 
-var agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
 var versions = {
   hapi8: './fixtures/hapi8',
   hapi9: './fixtures/hapi9',
@@ -38,20 +37,21 @@ var versions = {
   hapi16: './fixtures/hapi16'
 };
 
-var count = 0;
 Object.keys(versions).forEach(function(version) {
   if (version.substring(4) > 10 && semver.satisfies(process.version, '<4')) {
     // v11 started using ES6 features (const)
     return;
   }
-  var hapi = require(versions[version]);
   describe(version, function() {
-    after(function() {
-      count++;
+    var agent;
+    var hapi;
+    before(function() {
+      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      hapi = require(versions[version]);
+    });
 
-      if (count === versions.length) {
-        agent.stop();
-      }
+    after(function() {
+      agent.stop();
     });
 
     afterEach(function(done) {

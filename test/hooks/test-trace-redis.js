@@ -24,26 +24,26 @@ var common = require('./common.js');
 var traceLabels = require('../../src/trace-labels.js');
 
 var assert = require('assert');
-var agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
 var versions = {
-  redis0: require('./fixtures/redis0.12'),
-  redis2dot3: require('./fixtures/redis2.3'),
-  redis2dotx: require('./fixtures/redis2.x'),
-  redisHiredis04: require('./fixtures/redis2.3-hiredis0.4'),
-  redisHiredis05: require('./fixtures/redis2.3-hiredis0.5')
+  redis0: './fixtures/redis0.12',
+  redis2dot3: './fixtures/redis2.3',
+  redis2dotx: './fixtures/redis2.x',
+  redisHiredis04: './fixtures/redis2.3-hiredis0.4',
+  redisHiredis05: './fixtures/redis2.3-hiredis0.5'
 };
 
-var count = 0;
 var client;
 Object.keys(versions).forEach(function(version) {
-  var redis = versions[version];
   describe(version, function() {
-    after(function() {
-      count++;
+    var agent;
+    var redis;
+    before(function() {
+      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      redis = require(versions[version]);
+    });
 
-      if (count === versions.length) {
-        agent.stop();
-      }
+    after(function() {
+      agent.stop();
     });
 
     beforeEach(function(done) {

@@ -24,24 +24,23 @@ var common = require('./common.js');
 var traceLabels = require('../../src/trace-labels.js');
 var assert = require('assert');
 
-var agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
 var versions = {
-  mongodb1: require('./fixtures/mongodb-core1'),
-  mongodb2: require('./fixtures/mongodb-core2')
+  mongodb1: './fixtures/mongodb-core1',
+  mongodb2: './fixtures/mongodb-core2'
 };
 
-var count = 0;
 Object.keys(versions).forEach(function(version) {
-  var mongodb = versions[version];
-  var server;
-
   describe(version, function() {
-    after(function() {
-      count++;
+    var agent;
+    var mongodb;
+    var server;
+    before(function() {
+      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      mongodb = require(versions[version]);
+    });
 
-      if (count === versions.length) {
-        agent.stop();
-      }
+    after(function() {
+      agent.stop();
     });
 
     beforeEach(function(done) {
