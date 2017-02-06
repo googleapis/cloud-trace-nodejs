@@ -39,10 +39,10 @@ function run {
 }
 
 # Run test/coverage
-run `find test -name '*.js' -depth 1 -not -name test-trace-agent.js`
+run `find test -maxdepth 1 -name '*.js' -not -name test-trace-agent.js`
 run test/test-trace-agent.js
 
-run `find test/hooks -name '*.js' -depth 1 -not -name test-trace-express.js`
+run `find test/hooks -maxdepth 1 -name '*.js' -not -name test-trace-express.js`
 run test/hooks/test-trace-express.js
 
 for test in test/standalone/test-*.js ;
