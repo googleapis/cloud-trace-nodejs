@@ -43,8 +43,8 @@ var formatBuffer = function(buffer) {
 
 describe('tracewriter publishing', function() {
 
-  var agent;
   it('should publish on unhandled exception', function(done) {
+    var agent;
     process.removeAllListeners('uncaughtException'); // Remove mocha handler
     var buf;
     var scope = nock(uri)
