@@ -44,11 +44,13 @@ describe('index.js', function() {
     function() {
       agent.stop();
       assert.throws(agent.get, Error);
+      assert.throws(trace.get, Error);
   });
 
   it('should throw an error if `startAgent` is called on an active agent',
     function() {
       assert.throws(agent.startAgent, Error);
+      assert.throws(trace.startAgent, Error);
   });
 
   it('should by default be set to throw an error if '+
@@ -70,8 +72,10 @@ describe('index.js', function() {
 
   it('should report if it is active', function() {
     assert.strictEqual(agent.isActive(), true);
+    assert.strictEqual(trace.isActive(), true);
     agent.stop();
     assert.strictEqual(agent.isActive(), false);
+    assert.strictEqual(trace.isActive(), false);
   });
 
   it('should be harmless to stop before a start', function() {
