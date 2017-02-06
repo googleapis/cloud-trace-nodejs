@@ -36,6 +36,44 @@ describe('index.js', function() {
     agent.stop();
   });
 
+  it('should get the agent with `Trace.get`', function() {
+    assert.strictEqual(agent, trace.get());
+  });
+
+  it('should throw an error if `get` is called on an inactive agent',
+    function() {
+      agent.stop();
+      assert.throws(agent.get, Error);
+  });
+
+  it('should throw an error if `startAgent` is called on an active agent',
+    function() {
+      assert.throws(agent.startAgent, Error);
+  });
+
+  it('should by default be set to throw an error if '+
+     '`startAgent` is called on an active agent',
+     function() {
+       assert.strictEqual(agent.__DISABLE_START_CHECK__, false);
+  });
+
+  it('can be allowed to let `startAgent` be called multiple times ' +
+     'without a call to `stop`',
+     function() {
+       agent._disableStartCheck();
+       assert.strictEqual(agent.__DISABLE_START_CHECK__, true);
+       // If the disabling of the start check failed, the following
+       // line will throw an error
+       agent.startAgent();
+     }
+  );
+
+  it('should report if it is active', function() {
+    assert.strictEqual(agent.isActive(), true);
+    agent.stop();
+    assert.strictEqual(agent.isActive(), false);
+  });
+
   it('should be harmless to stop before a start', function() {
     agent.stop();
     agent.stop();
