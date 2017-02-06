@@ -47,9 +47,8 @@ function TraceAgent(config, logger) {
   this.policy = tracingPolicy.createTracePolicy(config);
 
   if (config.onUncaughtException !== 'ignore') {
-    var that = this;
     this.unhandledException = function() {
-      that.traceWriter.flushBuffer_(that.config_.projectId);
+      traceAgent.traceWriter.flushBuffer_(traceAgent.config_.projectId);
       if (config.onUncaughtException === 'flushAndExit') {
         setTimeout(function() {
           process.exit(1);
