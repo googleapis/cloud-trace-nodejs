@@ -53,20 +53,18 @@ describe('index.js', function() {
       assert.throws(trace.startAgent, Error);
   });
 
-  it('should by default be set to throw an error if '+
-     '`startAgent` is called on an active agent',
-     function() {
-       assert.strictEqual(agent.__DISABLE_START_CHECK__, false);
-  });
-
   it('can be allowed to let `startAgent` be called multiple times ' +
      'without a call to `stop`',
      function() {
-       agent._disableStartCheck();
-       assert.strictEqual(agent.__DISABLE_START_CHECK__, true);
+       agent.stop();
        // If the disabling of the start check failed, the following
        // line will throw an error
-       agent.startAgent();
+       agent.startAgent({
+         forceNewAgent_: true
+       });
+       agent.startAgent({
+         forceNewAgent_: true
+       });
      }
   );
 
