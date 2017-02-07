@@ -44,8 +44,6 @@ var toInstrument = Object.create(null, {
   'hapi': { enumerable: true, value: { file: './userspace/hook-hapi.js',
       patches: {} } },
   'http': { enumerable: true, value: { file: './core/hook-http.js',
-      patches: {} } },
-  'mysql': { enumerable: true, value: { file: './userspace/hook-mysql.js',
       patches: {} } }
 });
 
