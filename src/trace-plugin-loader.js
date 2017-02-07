@@ -116,7 +116,7 @@ function activate(agent) {
       if (!patchSet) {
         // Load the plugin object
         var plugin = originalModuleLoad(instrumentation.file, module, false);
-        patchSet = [];
+        patchSet = {};
         plugin.forEach(function(patch) {
           if (semver.satisfies(version, patch.versions)) {
             patchSet[patch.file] = {
@@ -126,6 +126,10 @@ function activate(agent) {
             };
           }
         });
+        if (Object.keys(patchSet).length === 0) {
+          logger.warn(moduleRoot + ': version ' + version + ' not supported ' + 
+            'by plugin.');
+        }
         instrumentation.patches[moduleRoot][version] = patchSet;
       }
       Object.keys(patchSet).forEach(function(file) {
