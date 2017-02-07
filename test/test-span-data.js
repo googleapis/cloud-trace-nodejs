@@ -28,11 +28,11 @@ var cls = require('../src/cls.js');
 describe('SpanData', function() {
 
   var agent;
-  beforeEach(function() {
+  before(function() {
     agent = require('..').start({ samplingRate: 0 }).private_();
   });
 
-  afterEach(function() {
+  after(function() {
     agent.stop();
   });
 

@@ -95,11 +95,7 @@ var initConfig = function(projectConfig) {
  */
 var publicAgent = {
   isActive: function() {
-    // TODO: The use of agent.isRunning() is only needed because the
-    //       _private() function is used in testing.
-    //       Remove the _private() function so that agent.isRunning()
-    //       can be removed.
-    return agent !== phantomTraceAgent && agent.isRunning();
+    return agent !== phantomTraceAgent;
   },
 
   startSpan: function(name, labels) {
@@ -248,10 +244,6 @@ function start(config) {
   return publicAgent;
 }
 
-function isActive() {
-  return publicAgent.isActive();
-}
-
 function get() {
   return publicAgent.get();
 }
@@ -259,7 +251,6 @@ function get() {
 global._google_trace_agent = publicAgent;
 module.exports = {
   start: start,
-  isActive: isActive,
   get: get
 };
 

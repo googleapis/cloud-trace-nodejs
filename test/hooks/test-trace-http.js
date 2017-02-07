@@ -19,6 +19,8 @@ var common = require('./common.js');
 var constants = require('../../src/constants.js');
 var TraceLabels = require('../../src/trace-labels.js');
 
+var trace = require('../..');
+
 var assert = require('assert');
 
 describe('test-trace-http', function() {
@@ -26,7 +28,7 @@ describe('test-trace-http', function() {
   var http;
   var server;
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 }).private_();
+    agent = trace.start({ samplingRate: 0 }).private_();
     http = require('http');
 
     server = http.Server(function(req, res) {
@@ -38,7 +40,7 @@ describe('test-trace-http', function() {
   });
 
   after(function() {
-    agent.stop();
+    trace.get().stop();
   });
 
   afterEach(function() {
@@ -254,12 +256,12 @@ describe('https', function() {
   var agent;
   var https;
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 }).private_();
+    agent = trace.start({ samplingRate: 0 }).private_();
     https = require('https');
   });
 
   after(function() {
-    agent.stop();
+    trace.get().stop();
   });
 
   afterEach(function() {
