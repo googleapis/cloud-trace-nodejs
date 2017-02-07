@@ -5,7 +5,7 @@
 The trace agent is driven by a set of plugins that describe how to patch a
 module to generate trace spans when that module is used. We provide plugins for
 some well-known modules such as express, mongodb, and http, and provide a plugin
-API for third-party developers to create their own.
+API for developers to create their own.
 
 ## Outline
 
@@ -16,12 +16,13 @@ Each patch object should contain the following fields:
 
 * `file`: The path to the file whose exports should be patched, relative to the
   root of the module. You can specify an empty string, or omit this field
-  entirely, to specify the root itself.
+  entirely, to specify the export of the module itself.
 * `versions`: A `semver` expression which will be used to control whether the
   specified file will be patched based on the module version; the patch will
-  only be applied if the module version satisfies this expression. This might be
-  useful if your plugin only works on some versions of a module, or if you are
-  patching internal mechanisms that are specific to a certain range of versions.
+  only be applied if the loaded module version satisfies this expression. This
+  might be useful if your plugin only works on some versions of a module, or if
+  you are patching internal mechanisms that are specific to a certain range of
+  versions.
 * `patch`: A function describing how the given file should be patched. It will
   be passed two arguments: the object exported from the file, and an object that
   exposes functions for creating spans and propagating context (see
@@ -53,16 +54,16 @@ patch other parts of the module as well.
 Developers wishing to trace their applications may specify, in the
 [configuration][config-js] object passed to the trace agent, a `plugins` field
 with a key-value pair (module name, path to plugin). For
-example, to patch just `express` with a plugin named `TODO`:
+example, to patch just `express` with a plugin at `./plugins/plugin-express.js`:
 
 require('@google-cloud/trace-agent').start({
-  config: {
-    express: 'TODO'
+  plugins: {
+    express: path.join(__dirname, 'plugins/express.js')
   }
 })
 
-At this time, the path to the plugin may either be a module name (`'TODO'`) or
-an absolute path to the plugin (`__dirname + '/TODO'`).
+At this time, the path to the plugin may either be a module name or an absolute
+path to the plugin.
 
 ## What the API provides
 
@@ -107,6 +108,11 @@ in the same context, or `null` if one doesn't exist.
 * `fn`: `function(Transaction): any`
 * Returns `any`
 
+Runs the given function in a root span corresponding to an incoming request,
+passing it the result of calling `api.createTransaction(options)`. The provided
+function should accept a nullable `Transaction` object. If `null` is provided,
+the function should proceed as if nothing is being traced.
+
 #### `transaction.runInChildSpan(options, fn)`
 * `options`: [`TraceOptions`](trace-span-options)
 * `fn`: `function(ChildSpan): any`
@@ -115,11 +121,6 @@ in the same context, or `null` if one doesn't exist.
 Runs the given function in a child span corresponding to an incoming request.
 The provided function should accept a `ChildSpan` object, which represents a
 child span.
-
-Runs the given function in a root span corresponding to an incoming request,
-passing it the result of calling `api.createTransaction(options)`. The provided
-function should accept a nullable `Transaction` object. If `null` is provided,
-the function should proceed as if nothing is being traced.
 
 #### `transaction.addLabel(key, value) | childSpan.addLabel(key, value)`
 * `key`: `string`
