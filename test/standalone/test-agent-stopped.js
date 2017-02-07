@@ -21,81 +21,83 @@ var http = require('http');
 
 process.env.GCLOUD_PROJECT = 0;
 
-describe('express', function() {
-  it('should not break if no project number is found', function(done) {
-    var agent = require('../..');
-    agent.start();
-    var app = require('../hooks/fixtures/express4')();
+describe('test-agent-stopped', function() {
+  var agent;
+  before(function() {
+    agent = require('../..')().startAgent();
+  });
+
+  after(function() {
     agent.stop();
-    app.get('/', function (req, res) {
-      res.send('hi');
-    });
-    var server = app.listen(8080, function() {
-      http.get('http://localhost:8080', function(res) {
-        var result = '';
-        res.on('data', function(data) { result += data; });
-        res.on('end', function() {
-          assert.equal('hi', result);
-          server.close();
-          done();
+  });
+
+  describe('express', function() {
+    it('should not break if no project number is found', function(done) {
+      var app = require('../hooks/fixtures/express4')();
+      app.get('/', function (req, res) {
+        res.send('hi');
+      });
+      var server = app.listen(8080, function() {
+        http.get('http://localhost:8080', function(res) {
+          var result = '';
+          res.on('data', function(data) { result += data; });
+          res.on('end', function() {
+            assert.equal('hi', result);
+            server.close();
+            done();
+          });
         });
       });
     });
   });
-});
 
-describe('hapi', function() {
-  it('should not break if no project number is found', function(done) {
-    var agent = require('../..');
-    agent.start();
-    var hapi = require('../hooks/fixtures/hapi8');
-    var server = new hapi.Server();
-    server.connection({ port: 8081 });
-    agent.stop();
-    server.route({
-      method: 'GET',
-      path: '/',
-      handler: function(req, reply) {
-        reply('hi');
-      }
-    });
-    server.start(function() {
-      http.get('http://localhost:8081', function(res) {
-        var result = '';
-        res.on('data', function(data) { result += data; });
-        res.on('end', function() {
-          assert.equal('hi', result);
-          server.stop();
-          done();
+  describe('hapi', function() {
+    it('should not break if no project number is found', function(done) {
+      var hapi = require('../hooks/fixtures/hapi8');
+      var server = new hapi.Server();
+      server.connection({ port: 8081 });
+      server.route({
+        method: 'GET',
+        path: '/',
+        handler: function(req, reply) {
+          reply('hi');
+        }
+      });
+      server.start(function() {
+        http.get('http://localhost:8081', function(res) {
+          var result = '';
+          res.on('data', function(data) { result += data; });
+          res.on('end', function() {
+            assert.equal('hi', result);
+            server.stop();
+            done();
+          });
         });
       });
     });
   });
-});
 
-describe('restify', function() {
-  it('should not break if no project number is found', function(done) {
-    var agent = require('../..');
-    agent.start();
-    var restify = require('../hooks/fixtures/restify4');
-    var server = restify.createServer();
-    agent.stop();
-    server.get('/', function (req, res, next) {
-      res.writeHead(200, {
-        'Content-Type': 'text/plain'
+  describe('restify', function() {
+    it('should not break if no project number is found', function(done) {
+      var restify = require('../hooks/fixtures/restify4');
+      var server = restify.createServer();
+      server.get('/', function (req, res, next) {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain'
+        });
+        res.write('hi');
+        res.end();
+        return next();
       });
-      res.write('hi');
-      res.end();
-      return next();
-    });
-    server.listen(8082, function() {
-      http.get('http://localhost:8082', function(res) {
-        var result = '';
-        res.on('data', function(data) { result += data; });
-        res.on('end', function() {
-          assert.equal('hi', result);
-          server.close();
-          done();
+      server.listen(8082, function() {
+        http.get('http://localhost:8082', function(res) {
+          var result = '';
+          res.on('data', function(data) { result += data; });
+          res.on('end', function() {
+            assert.equal('hi', result);
+            server.close();
+            done();
+          });
         });
       });
     });

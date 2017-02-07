@@ -36,6 +36,7 @@ var traceAgent;
 function TraceAgent(config, logger) {
   this.config_ = config;
   this.logger = logger;
+  this.running = true;
 
   hooks.activate(this);
   pluginLoader.activate(this);
@@ -60,10 +61,18 @@ function TraceAgent(config, logger) {
   logger.info('trace agent activated');
 }
 
+TraceAgent.prototype.isRunning = function() {
+  return this.running;
+};
+
 /**
  * Halts this agent and unpatches any patched modules.
  */
 TraceAgent.prototype.stop = function() {
+  // TODO: This property is only needed because of the way the tests are
+  //       implemented.  Change the tests so that this property is not
+  //       needed.
+  this.running = false;
   hooks.deactivate();
   pluginLoader.deactivate();
   cls.destroyNamespace();

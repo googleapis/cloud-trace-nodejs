@@ -23,6 +23,16 @@ var path = require('path');
 nock.disableNetConnect();
 
 describe('test-trace-gcloud', function() {
+  var agent;
+  before(function() {
+    agent = require('../..')().startAgent({ samplingRate: 0,
+      enhancedDatabaseReporting: true }).private_();
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   // This does a gcloud.datastore.get() request that makes a gRPC 'lookup' call.
   // It attempts to authenticate using Google Auth by connecting to
   // 'accounts.google.com:443/o/oauth2/token', but fails because of Nock.
@@ -36,7 +46,7 @@ describe('test-trace-gcloud', function() {
     this.timeout(20000);
     process.env.GOOGLE_APPLICATION_CREDENTIALS =
         path.join(__dirname, '..', 'fixtures', 'gcloud-credentials.json');
-    common.runInTransaction(function(endTransaction) {
+    common.runInTransaction(agent, function(endTransaction) {
       var gcloud = require('../hooks/fixtures/google-cloud0.44');
       var ds = gcloud.datastore();
       var key = ds.key(['bad', 'key']);
@@ -46,13 +56,13 @@ describe('test-trace-gcloud', function() {
         assert.strictEqual(err.code, 401);
         assert.notStrictEqual(
             err.message.indexOf('accounts.google.com:443/o/oauth2/token'), -1);
-        var trace = common.getMatchingSpan(grpcPredicate);
+        var trace = common.getMatchingSpan(agent, grpcPredicate);
         assert(trace);
         assert.notStrictEqual(trace.labels.argument.indexOf(
             '"keys":[{"path":[{"kind":"bad","name":"key"}]}]'), -1);
         assert(trace.labels.error);
         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-        common.cleanTraces();
+        common.cleanTraces(agent);
         done();
       });
     });

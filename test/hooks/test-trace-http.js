@@ -20,23 +20,34 @@ var constants = require('../../src/constants.js');
 var TraceLabels = require('../../src/trace-labels.js');
 
 var assert = require('assert');
-var http = require('http');
-
-var server = http.Server(function(req, res) {
-  setTimeout(function() {
-    res.writeHead(200);
-    res.end(common.serverRes);
-  }, common.serverWait);
-});
 
 describe('test-trace-http', function() {
+  var agent;
+  var http;
+  var server;
+  before(function() {
+    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    http = require('http');
+
+    server = http.Server(function(req, res) {
+      setTimeout(function() {
+        res.writeHead(200);
+        res.end(common.serverRes);
+      }, common.serverWait);
+    });
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   afterEach(function() {
-    common.cleanTraces();
+    common.cleanTraces(agent);
     server.close();
   });
 
   it('should accurately measure get time with callback', function(done) {
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         http.get({port: common.serverPort}, function(res) {
           var result = '';
@@ -44,7 +55,7 @@ describe('test-trace-http', function() {
           res.on('end', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect();
+            common.assertDurationCorrect(agent);
             done();
           });
         });
@@ -53,12 +64,12 @@ describe('test-trace-http', function() {
   });
 
   it('should accurately measure get time, no callback', function(done) {
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         http.get({port: common.serverPort, headers: {}});
         setTimeout(function() {
           endTransaction();
-          common.assertDurationCorrect();
+          common.assertDurationCorrect(agent);
           done();
         }, common.serverWait * 1.5);
       })
@@ -66,7 +77,7 @@ describe('test-trace-http', function() {
   });
 
   it('should not trace api requests', function(done) {
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         var headers = {};
         headers[constants.TRACE_API_HEADER_NAME] = 'yay';
@@ -74,7 +85,7 @@ describe('test-trace-http', function() {
         setTimeout(function() {
           endTransaction();
           // The only trace present should be the outer transaction
-          var traces = common.getTraces();
+          var traces = common.getTraces(agent);
           assert.equal(traces.length, 1);
           assert.equal(traces[0].spans[0].name, 'outer');
           done();
@@ -84,7 +95,7 @@ describe('test-trace-http', function() {
   });
 
   it('should not break with no target', function(done) {
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         http.get().on('error', function(err) {
           endTransaction();
@@ -95,7 +106,7 @@ describe('test-trace-http', function() {
   });
 
   it('should accurately measure get time, string url', function(done) {
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         http.get('http://localhost:' + common.serverPort);
         setTimeout(function() {
@@ -107,12 +118,12 @@ describe('test-trace-http', function() {
   });
 
   it('should not include query parameters in span name', function(done) {
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         http.get('http://localhost:' + common.serverPort + '/?foo=bar');
         setTimeout(function() {
           endTransaction();
-          var traces = common.getTraces();
+          var traces = common.getTraces(agent);
           assert.equal(traces.length, 1);
           assert.equal(traces[0].spans[1].name, 'localhost');
           done();
@@ -129,13 +140,13 @@ describe('test-trace-http', function() {
       }, 10000);
     });
     server.timeout = common.serverWait;
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         var req = http.get({port: common.serverPort});
         req.on('error', function() {
           endTransaction();
-          common.assertDurationCorrect();
-          var span = common.getMatchingSpan(function(span) { 
+          common.assertDurationCorrect(agent);
+          var span = common.getMatchingSpan(agent, function(span) { 
             return span.name !== 'outer'; 
           });
           assert.equal(span.labels[TraceLabels.ERROR_DETAILS_NAME],
@@ -150,7 +161,7 @@ describe('test-trace-http', function() {
   });
 
   it('should accurately measure get time, event emitter', function(done) {
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         var req = http.get({port: common.serverPort});
         req.on('response', function(res) {
@@ -159,7 +170,7 @@ describe('test-trace-http', function() {
           res.on('end', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect();
+            common.assertDurationCorrect(agent);
             done();
           });
         });
@@ -174,7 +185,7 @@ describe('test-trace-http', function() {
         res.end(common.serverRes);
       }, common.serverWait / 2);
     });
-    server.listen(common.serverPort, common.runInTransaction.bind(null,
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         var req = http.request({port: common.serverPort}, function(res) {
           var result = '';
@@ -182,7 +193,7 @@ describe('test-trace-http', function() {
           res.on('end', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect();
+            common.assertDurationCorrect(agent);
             server.close();
             done();
           });
@@ -203,7 +214,7 @@ describe('test-trace-http', function() {
         res.end();
       }, 5000);
     });
-    slowServer.listen(common.serverPort, common.runInTransaction.bind(null,
+    slowServer.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         var completed = 0;
         var handleResponse = function(res) {
@@ -212,7 +223,7 @@ describe('test-trace-http', function() {
           res.on('end', function() {
             if (++completed === 5) {
               endTransaction();
-              var spans = common.getMatchingSpans(function(span) {
+              var spans = common.getMatchingSpans(agent, function(span) {
                 return span.name !== 'outer';
               });
               assert.equal(spans.length, 5);
@@ -240,13 +251,22 @@ describe('test-trace-http', function() {
 });
 
 describe('https', function() {
+  var agent;
+  var https;
+  before(function() {
+    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    https = require('https');
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   afterEach(function() {
-    common.cleanTraces();
+    common.cleanTraces(agent);
   });
 
   it('should accurately measure https#get time with callback', function(done) {
-    var https = require('https');
-
     var options = {
       key: common.serverKey,
       cert: common.serverCert
@@ -258,7 +278,7 @@ describe('https', function() {
         res.end(common.serverRes);
       }, common.serverWait);
     });
-    secureServer.listen(common.serverPort, common.runInTransaction.bind(null,
+    secureServer.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
         https.get({port: common.serverPort, rejectUnauthorized: false}, function(res) {
           var result = '';
@@ -266,7 +286,7 @@ describe('https', function() {
           res.on('end', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect();
+            common.assertDurationCorrect(agent);
             secureServer.close();
             done();
           });

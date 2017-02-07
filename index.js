@@ -95,7 +95,11 @@ var initConfig = function(projectConfig) {
  */
 var publicAgent = {
   isActive: function() {
-    return agent !== phantomTraceAgent;
+    // TODO: The use of agent.isRunning() is only needed because the
+    //       _private() function is used in testing.
+    //       Remove the _private() function so that agent.isRunning()
+    //       can be removed.
+    return agent !== phantomTraceAgent && agent.isRunning();
   },
 
   startSpan: function(name, labels) {
@@ -122,14 +126,12 @@ var publicAgent = {
     return agent.addTransactionLabel(key, value);
   },
 
-  start: function(projectConfig) {
-    if (this.isActive()) { // already started.
-      agent.logger.warn('Calling start on already started agent.' +
-        'New configuration will be ignored.');
-      return this;
-    }
-
+  startAgent: function(projectConfig) {
     var config = initConfig(projectConfig);
+
+    if (this.isActive() && !config.forceNewAgent_) { // already started.
+      throw new Error('Cannot call start on an already started agent.');
+    }
 
     if (!config.enabled) {
       return this;
@@ -229,9 +231,63 @@ var publicAgent = {
   private_: function() { return agent; }
 };
 
-module.exports = global._google_trace_agent = publicAgent;
+/**
+ * <p class="notice">
+ *   *This module is experimental, and should be used by early adopters. This
+ *   module uses APIs that may be undocumented and subject to change without
+ *   notice.*
+ * </p>
+ *
+ * This module provides Stackdriver Trace support for Node.js applications.
+ * [Stackdriver Trace](https://cloud.google.com/cloud-trace/) is a feature of
+ * [Google Cloud Platform](https://cloud.google.com/) that collects latency
+ * data (traces) from your applications and displays it in near real-time in
+ * the [Google Cloud Console][cloud-console].
+ *
+ * @constructor
+ * @alias module:trace
+ *
+ * @resource [What is Stackdriver Trace]{@link
+ *   https://cloud.google.com/cloud-trace/}
+ *
+ * @param {object} options - [Configuration object](#/docs)
+ */
+// TODO: Remove this constructor.
+function Trace(options) {
+  if (!(this instanceof Trace)) {
+    return new Trace(options);
+  }
+}
+
+/**
+ * Start the Trace agent that will make your application available for
+ * tracing with Stackdriver Trace.
+ *
+ * @param {object=} config - Trace configuration
+ *
+ * @resource [Introductory video]{@link
+ * https://www.youtube.com/watch?v=NCFDqeo7AeY}
+ *
+ * @example
+ * trace.startAgent();
+ */
+Trace.prototype.startAgent = function(config) {
+  publicAgent.startAgent(config);
+  return publicAgent;
+};
+
+Trace.prototype.isActive = function() {
+  return publicAgent.isActive();
+};
+
+Trace.prototype.get = function() {
+  return publicAgent.get();
+};
+
+global._google_trace_agent = publicAgent;
+module.exports = Trace;
 
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {
-  module.exports.start();
+  module.exports().startAgent();
 }

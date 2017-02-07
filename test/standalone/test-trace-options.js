@@ -20,15 +20,23 @@
 //   ex) docker -d
 // Run a mongo image binding the mongo port
 //   ex) docker run -p 27017:27017 -d mongo
-require('../..').start({ samplingRate: 0 });
-
 var common = require('../hooks/common.js');
 
 var assert = require('assert');
-var express = require('../hooks/fixtures/express4');
 var http = require('http');
 
 describe('express + mongo with trace options header', function() {
+  var agent;
+  var express;
+  before(function() {
+    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    express = require('../hooks/fixtures/express4');
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   it('should trace when enabled', function(done) {
     var app = express();
     app.get('/', function (req, res) {
@@ -39,8 +47,8 @@ describe('express + mongo with trace options header', function() {
     var server = app.listen(common.serverPort, function() {
       var shouldTraceOptions = [1,3,5,7];
       var shouldNotTraceOptions = [0,2,4,6];
-      sendRequests(shouldTraceOptions, shouldTraceOptions.length, function() {
-        sendRequests(shouldNotTraceOptions, 0, function() {
+      sendRequests(agent, shouldTraceOptions, shouldTraceOptions.length, function() {
+        sendRequests(agent, shouldNotTraceOptions, 0, function() {
           server.close();
           done();
         });
@@ -49,7 +57,7 @@ describe('express + mongo with trace options header', function() {
   });
 });
 
-function sendRequests(options, expectedTraceCount, done) {
+function sendRequests(agent, options, expectedTraceCount, done) {
   var doneCount = 0;
   options.forEach(function(option) {
     var headers = {};
@@ -58,8 +66,8 @@ function sendRequests(options, expectedTraceCount, done) {
       res.on('data', function() {});
       res.on('end', function() {
         if (++doneCount === options.length) {
-          assert.equal(common.getTraces().length, expectedTraceCount);
-          common.cleanTraces();
+          assert.equal(common.getTraces(agent).length, expectedTraceCount);
+          common.cleanTraces(agent);
           done();
         }
       });

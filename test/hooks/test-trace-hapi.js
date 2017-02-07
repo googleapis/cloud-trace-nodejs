@@ -42,10 +42,20 @@ Object.keys(versions).forEach(function(version) {
     // v11 started using ES6 features (const)
     return;
   }
-  var hapi = require(versions[version]);
   describe(version, function() {
+    var agent;
+    var hapi;
+    before(function() {
+      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      hapi = require(versions[version]);
+    });
+
+    after(function() {
+      agent.stop();
+    });
+
     afterEach(function(done) {
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.stop(done);
     });
 
@@ -62,7 +72,7 @@ Object.keys(versions).forEach(function(version) {
         }
       });
       server.start(function() {
-        common.doRequest('GET', done, hapiPredicate);
+        common.doRequest(agent, 'GET', done, hapiPredicate);
       });
     });
 
@@ -79,7 +89,7 @@ Object.keys(versions).forEach(function(version) {
         }
       });
       server.start(function() {
-        common.doRequest('POST', done, hapiPredicate);
+        common.doRequest(agent, 'POST', done, hapiPredicate);
       });
     });
 
@@ -99,7 +109,7 @@ Object.keys(versions).forEach(function(version) {
         handler: { custom: { val: common.serverRes } }
       });
       server.start(function() {
-        common.doRequest('GET', done, hapiPredicate);
+        common.doRequest(agent, 'GET', done, hapiPredicate);
       });
     });
 
@@ -128,7 +138,7 @@ Object.keys(versions).forEach(function(version) {
       }, function(err) {
         assert(!err);
         server.start(function() {
-          common.doRequest('GET', done, hapiPredicate);
+          common.doRequest(agent, 'GET', done, hapiPredicate);
         });
       });
     });
@@ -156,7 +166,7 @@ Object.keys(versions).forEach(function(version) {
       });
       server.start(function() {
         assert(afterSuccess);
-        common.doRequest('GET', done, hapiPredicate);
+        common.doRequest(agent, 'GET', done, hapiPredicate);
       });
     });
 
@@ -184,7 +194,7 @@ Object.keys(versions).forEach(function(version) {
           assert(extensionSuccess);
           done();
         };
-        common.doRequest('GET', cb, hapiPredicate);
+        common.doRequest(agent, 'GET', cb, hapiPredicate);
       });
     });
 
@@ -200,7 +210,7 @@ Object.keys(versions).forEach(function(version) {
       });
       server.start(function() {
         http.get({port: common.serverPort}, function(res) {
-          var labels = common.getMatchingSpan(hapiPredicate).labels;
+          var labels = common.getMatchingSpan(agent, hapiPredicate).labels;
           assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
           assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
           assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
@@ -222,7 +232,7 @@ Object.keys(versions).forEach(function(version) {
       });
       server.start(function() {
         http.get({port: common.serverPort}, function(res) {
-          var labels = common.getMatchingSpan(hapiPredicate).labels;
+          var labels = common.getMatchingSpan(agent, hapiPredicate).labels;
           var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
           // Ensure that our middleware is on top of the stack
           assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
@@ -243,7 +253,7 @@ Object.keys(versions).forEach(function(version) {
       });
       server.start(function() {
         http.get({path: '/?a=b', port: common.serverPort}, function(res) {
-          var span = common.getMatchingSpan(hapiPredicate);
+          var span = common.getMatchingSpan(agent, hapiPredicate);
           assert.equal(span.name, '/');
           done();
         });
