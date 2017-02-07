@@ -36,10 +36,7 @@ var fs = require('fs');
 // will result in the module itself being patched.
 // Note: the order in which filenames are defined in the hooks determines the
 // order in which they are loaded.
-var toInstrument = Object.create(null, {
-  'express': { enumerable: true, value: { file: './userspace/hook-express.js',
-      patches: {} } }
-});
+var toInstrument = Object.create(null);
 
 var logger;
 
