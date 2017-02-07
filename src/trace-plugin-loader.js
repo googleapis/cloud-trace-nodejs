@@ -23,6 +23,7 @@ var semver = require('semver');
 var PluginAPI = require('./trace-plugin-interface.js');
 
 var plugins = Object.create(null);
+var activated = false;
 
 var logger;
 
@@ -85,9 +86,11 @@ function checkLoadedModules() {
 }
 
 function activate(agent) {
-  if (logger) {
+  if (activated) {
     logger.error('Plugins activated more than once.');
+    return;
   }
+  activated = true;
   logger = agent.logger;
 
   // Create a new object exposing functions to create trace spans and propagate
@@ -207,6 +210,7 @@ function deactivate() {
       }
     }
   }
+  activated = false;
 
   // unhook module.load
   shimmer.unwrap(Module, '_load');
