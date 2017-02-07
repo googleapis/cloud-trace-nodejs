@@ -54,7 +54,7 @@ Object.keys(versions).forEach(function(version) {
   var grpc;
   describe('express + ' + version, function() {
     before(function(done) {
-      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      agent = require('../..').start({ samplingRate: 0 }).private_();
       express = require('../hooks/fixtures/express4');
       grpc = require(versions[version]);
 

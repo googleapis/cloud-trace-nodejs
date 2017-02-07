@@ -40,7 +40,7 @@ describe('mongodb + express', function() {
   var oldDebug;
   var mongoose;
   before(function() {
-    agent = require('../..')().startAgent().get().private_();
+    agent = require('../..').start().get().private_();
     mongoose = require('./fixtures/mongoose4');
     oldDebug = agent.logger.debug;
     agent.logger.debug = function(error) {

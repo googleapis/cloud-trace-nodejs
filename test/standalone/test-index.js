@@ -22,14 +22,14 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 var assert = require('assert');
-var trace = require('../..')();
+var trace = require('../..');
 var cls = require('../../src/cls.js');
 var TraceLabels = require('../../src/trace-labels.js');
 
 describe('index.js', function() {
   var agent;
   beforeEach(function() {
-    agent = trace.startAgent();
+    agent = trace.start();
   });
 
   afterEach(function(){
@@ -47,22 +47,22 @@ describe('index.js', function() {
       assert.throws(trace.get, Error);
   });
 
-  it('should throw an error if `startAgent` is called on an active agent',
+  it('should throw an error if `start` is called on an active agent',
     function() {
-      assert.throws(agent.startAgent, Error);
-      assert.throws(trace.startAgent, Error);
+      assert.throws(agent.start, Error);
+      assert.throws(trace.start, Error);
   });
 
-  it('can be allowed to let `startAgent` be called multiple times ' +
+  it('can be allowed to let `start` be called multiple times ' +
      'without a call to `stop`',
      function() {
        agent.stop();
        // If the disabling of the start check failed, the following
        // line will throw an error
-       agent.startAgent({
+       agent.start({
          forceNewAgent_: true
        });
-       agent.startAgent({
+       agent.start({
          forceNewAgent_: true
        });
      }
@@ -86,13 +86,13 @@ describe('index.js', function() {
     agent.stop(); // harmless to stop before a start.
     assert(!nodule[property].__unwrap,
       property + ' already wrapped before start');
-    agent = trace.startAgent();
+    agent = trace.start();
     assert(nodule[property].__unwrap,
       property + ' should get wrapped on start');
     agent.stop();
     assert(!nodule[property].__unwrap,
       property + ' should get unwrapped on stop');
-    agent = trace.startAgent();
+    agent = trace.start();
     assert(nodule[property].__unwrap,
       property + ' should get wrapped on start');
     agent.stop();

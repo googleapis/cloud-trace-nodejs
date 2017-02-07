@@ -28,7 +28,7 @@ describe('express + mongo with trace options header + sampling', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..')().startAgent({ samplingRate: 1 }).private_();
+    agent = require('../..').start({ samplingRate: 1 }).private_();
     express = require('../hooks/fixtures/express4');
   });
 

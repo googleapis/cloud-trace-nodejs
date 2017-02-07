@@ -36,7 +36,7 @@ Object.keys(versions).forEach(function(version) {
     var agent;
     var restify;
     before(function() {
-      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      agent = require('../..').start({ samplingRate: 0 }).private_();
       restify = require(versions[version]);
 
       // Mute stderr to satiate appveyor

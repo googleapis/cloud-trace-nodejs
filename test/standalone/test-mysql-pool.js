@@ -26,8 +26,8 @@ if (semver.satisfies(process.version, '>=4')) {
     var agent;
     var Hapi;
     before(function() {
-      agent = require('../..')().startAgent({ samplingRate: 0,
-                                              enhancedDatabaseReporting: true }).private_();
+      agent = require('../..').start({ samplingRate: 0,
+                                       enhancedDatabaseReporting: true }).private_();
       Hapi = require('../hooks/fixtures/hapi13');
     });
 

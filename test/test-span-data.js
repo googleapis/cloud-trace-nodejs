@@ -29,7 +29,7 @@ describe('SpanData', function() {
 
   var agent;
   beforeEach(function() {
-    agent = require('..')().startAgent({ samplingRate: 0 }).private_();
+    agent = require('..').start({ samplingRate: 0 }).private_();
   });
 
   afterEach(function() {
