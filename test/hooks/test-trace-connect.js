@@ -28,7 +28,7 @@ describe('test-trace-connect', function() {
   var agent;
   var connect;
   before(function() {
-    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    agent = require('../..').start({ samplingRate: 0 }).private_();
     connect = require('./fixtures/connect3');
     // Mute stderr to satiate appveyor
     write = process.stderr.write;

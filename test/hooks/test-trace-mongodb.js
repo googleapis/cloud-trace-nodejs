@@ -35,7 +35,7 @@ Object.keys(versions).forEach(function(version) {
     var mongodb;
     var server;
     before(function() {
-      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      agent = require('../..').start({ samplingRate: 0 }).private_();
       mongodb = require(versions[version]);
     });
 

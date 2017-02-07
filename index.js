@@ -126,7 +126,7 @@ var publicAgent = {
     return agent.addTransactionLabel(key, value);
   },
 
-  startAgent: function(projectConfig) {
+  start: function(projectConfig) {
     var config = initConfig(projectConfig);
 
     if (this.isActive() && !config.forceNewAgent_) { // already started.
@@ -232,34 +232,6 @@ var publicAgent = {
 };
 
 /**
- * <p class="notice">
- *   *This module is experimental, and should be used by early adopters. This
- *   module uses APIs that may be undocumented and subject to change without
- *   notice.*
- * </p>
- *
- * This module provides Stackdriver Trace support for Node.js applications.
- * [Stackdriver Trace](https://cloud.google.com/cloud-trace/) is a feature of
- * [Google Cloud Platform](https://cloud.google.com/) that collects latency
- * data (traces) from your applications and displays it in near real-time in
- * the [Google Cloud Console][cloud-console].
- *
- * @constructor
- * @alias module:trace
- *
- * @resource [What is Stackdriver Trace]{@link
- *   https://cloud.google.com/cloud-trace/}
- *
- * @param {object} options - [Configuration object](#/docs)
- */
-// TODO: Remove this constructor.
-function Trace(options) {
-  if (!(this instanceof Trace)) {
-    return new Trace(options);
-  }
-}
-
-/**
  * Start the Trace agent that will make your application available for
  * tracing with Stackdriver Trace.
  *
@@ -269,25 +241,29 @@ function Trace(options) {
  * https://www.youtube.com/watch?v=NCFDqeo7AeY}
  *
  * @example
- * trace.startAgent();
+ * trace.start();
  */
-Trace.prototype.startAgent = function(config) {
-  publicAgent.startAgent(config);
+function start(config) {
+  publicAgent.start(config);
   return publicAgent;
-};
+}
 
-Trace.prototype.isActive = function() {
+function isActive() {
   return publicAgent.isActive();
-};
+}
 
-Trace.prototype.get = function() {
+function get() {
   return publicAgent.get();
-};
+}
 
 global._google_trace_agent = publicAgent;
-module.exports = Trace;
+module.exports = {
+  start: start,
+  isActive: isActive,
+  get: get
+};
 
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {
-  module.exports().startAgent();
+  module.exports.start();
 }
