@@ -201,19 +201,6 @@ function activate(agent) {
 }
 
 function deactivate() {
-  for (var moduleName in plugins) {
-    var instrumentation = plugins[moduleName];
-    for (var moduleRoot in instrumentation.patches) {
-      var modulePatch = instrumentation.patches[moduleRoot];
-      for (var patchedFile in modulePatch) {
-        var hook = modulePatch[patchedFile];
-        logger.info('Attempting to unpatch ' + moduleName);
-        if (hook.unpatch !== undefined) {
-          hook.unpatch(hook.module);
-        }
-      }
-    }
-  }
   activated = false;
 
   // unhook module.load
