@@ -16,18 +16,27 @@
 'use strict';
 
 var common = require('../hooks/common.js');
+var cls = require('../../src/cls.js');
 var http = require('http');
 var assert = require('assert');
-var express = require('../hooks/fixtures/express4');
 var constants = require('../../src/constants.js');
 
 describe('test-trace-header-context', function() {
-  beforeEach(function() {
-    require('../..').start();
+  var agent;
+  var express;
+  before(function() {
+    agent = require('../..')().start({ samplingRate: 0 }).private_();
+    express = require('../hooks/fixtures/express4');
+  });
+
+  after(function() {
+    agent.stop();
   });
 
   afterEach(function() {
-    require('../..').stop();
+    // TODO: Investigate why this is needed
+    cls.destroyNamespace();
+    agent.namespace = cls.createNamespace();
   });
 
   it('should work with string url', function(done) {
@@ -40,14 +49,14 @@ describe('test-trace-header-context', function() {
     app.get('/self', function(req, res) {
       assert(req.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
       res.send(common.serverRes);
-      var traces = common.getTraces();
+      var traces = common.getTraces(agent);
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.close();
       done();
     });
@@ -66,14 +75,14 @@ describe('test-trace-header-context', function() {
     app.get('/self', function(req, res) {
       assert(req.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
       res.send(common.serverRes);
-      var traces = common.getTraces();
+      var traces = common.getTraces(agent);
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.close();
       done();
     });
@@ -98,14 +107,14 @@ describe('test-trace-header-context', function() {
         req.headers[constants.TRACE_CONTEXT_HEADER_NAME].slice(8),
         ';o=1');
       res.send(common.serverRes);
-      var traces = common.getTraces();
+      var traces = common.getTraces(agent);
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.close();
       done();
     });

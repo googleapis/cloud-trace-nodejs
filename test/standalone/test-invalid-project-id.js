@@ -19,14 +19,15 @@
 delete process.env.GCLOUD_PROJECT;
 
 var assert = require('assert');
-var agent = require('../..');
 
 describe('index.js', function() {
   it('should complain when config.projectId is not a string or number', function() {
-    agent.start({projectId: '0', enabled: true, logLevel: 0});
+    var agent = require('../..')().start({projectId: '0', enabled: true, logLevel: 0});
     assert(agent.isActive());
     agent.stop();
-    agent.start({projectId: {test: false}, enabled: true, logLevel: 0});
+    
+    agent = require('../..')().start({projectId: {test: false}, enabled: true, logLevel: 0});
     assert(!agent.isActive());
+    agent.stop();
   });
 });

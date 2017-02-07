@@ -19,7 +19,7 @@
 var assert = require('assert');
 var nock = require('nock');
 var cls = require('../../src/cls.js');
-var agent = require('../..');
+var trace = require('../..')();
 var request = require('request');
 
 nock.disableNetConnect();
@@ -44,6 +44,7 @@ var formatBuffer = function(buffer) {
 describe('tracewriter publishing', function() {
 
   it('should publish on unhandled exception', function(done) {
+    var agent;
     process.removeAllListeners('uncaughtException'); // Remove mocha handler
     var buf;
     var scope = nock(uri)
@@ -62,11 +63,12 @@ describe('tracewriter publishing', function() {
       }, 20);
     });
     process.nextTick(function() {
-      var privateAgent = agent.start({
+      agent = trace.start({
         bufferSize: 1000,
         samplingRate: 0,
         onUncaughtException: 'flush'
-      }).private_();
+      });
+      var privateAgent = agent.private_();
       privateAgent.traceWriter.request_ = request; // Avoid authing
       cls.getNamespace().run(function() {
         queueSpans(2, privateAgent);

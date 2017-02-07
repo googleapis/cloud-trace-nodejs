@@ -22,20 +22,23 @@ var constants = require('../../src/constants.js');
 var common = require('./common.js');
 var semver = require('semver');
 var versions = {
-  restify4: require('./fixtures/restify4')
+  restify4: './fixtures/restify4'
 };
 if (semver.satisfies(process.version, '<7')) {
-  versions.restify3 = require('./fixtures/restify3');
+  versions.restify3 = './fixtures/restify3';
 }
 
 var server;
 var write;
 
 Object.keys(versions).forEach(function(version) {
-  var restify = versions[version];
-
   describe(version, function() {
+    var agent;
+    var restify;
     before(function() {
+      agent = require('../..')().start({ samplingRate: 0 }).private_();
+      restify = require(versions[version]);
+
       // Mute stderr to satiate appveyor
       write = process.stderr.write;
       process.stderr.write = function(c, e, cb) {
@@ -47,9 +50,10 @@ Object.keys(versions).forEach(function(version) {
     });
     after(function() {
       process.stderr.write = write;
+      agent.stop();
     });
     afterEach(function() {
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.close();
     });
 
@@ -66,7 +70,7 @@ Object.keys(versions).forEach(function(version) {
         }, common.serverWait);
       });
       server.listen(common.serverPort, function(){
-        common.doRequest('GET', done, restifyPredicate);
+        common.doRequest(agent, 'GET', done, restifyPredicate);
       });
     });
 
@@ -83,7 +87,7 @@ Object.keys(versions).forEach(function(version) {
         }, common.serverWait);
       });
       server.listen(common.serverPort, function(){
-        common.doRequest('POST', done, restifyPredicate);
+        common.doRequest(agent, 'POST', done, restifyPredicate);
       });
     });
 
@@ -104,7 +108,7 @@ Object.keys(versions).forEach(function(version) {
         }, common.serverWait / 2);
       });
       server.listen(common.serverPort, function(){
-        common.doRequest('GET', done, restifyPredicate);
+        common.doRequest(agent, 'GET', done, restifyPredicate);
       });
     });
 
@@ -121,7 +125,7 @@ Object.keys(versions).forEach(function(version) {
         }, common.serverWait);
       });
       server.listen(common.serverPort, function(){
-        common.doRequest('GET', done, restifyPredicate);
+        common.doRequest(agent, 'GET', done, restifyPredicate);
       });
     });
 
@@ -143,7 +147,7 @@ Object.keys(versions).forEach(function(version) {
         }, common.serverWait / 2);
       });
       server.listen(common.serverPort, function(){
-        common.doRequest('GET', done, restifyPredicate);
+        common.doRequest(agent, 'GET', done, restifyPredicate);
       });
     });
 
@@ -159,7 +163,7 @@ Object.keys(versions).forEach(function(version) {
       });
       server.listen(common.serverPort, function(){
         http.get({port: common.serverPort}, function(res) {
-          var labels = common.getMatchingSpan(restifyPredicate).labels;
+          var labels = common.getMatchingSpan(agent, restifyPredicate).labels;
           assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
           assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
           assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
@@ -181,7 +185,7 @@ Object.keys(versions).forEach(function(version) {
       });
       server.listen(common.serverPort, function() {
         http.get({port: common.serverPort}, function(res) {
-          var labels = common.getMatchingSpan(restifyPredicate).labels;
+          var labels = common.getMatchingSpan(agent, restifyPredicate).labels;
           var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
           // Ensure that our middleware is on top of the stack
           assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
@@ -202,7 +206,7 @@ Object.keys(versions).forEach(function(version) {
       });
       server.listen(common.serverPort, function() {
         http.get({path: '/?a=b', port: common.serverPort}, function(res) {
-          var span = common.getMatchingSpan(restifyPredicate);
+          var span = common.getMatchingSpan(agent, restifyPredicate);
           assert.equal(span.name, '/');
           done();
         });

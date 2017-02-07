@@ -15,13 +15,24 @@
  */
 'use strict';
 
-var agent = require('../..').start({ignoreUrls: ['/test'], samplingRate: 0});
-
 var assert = require('assert');
 var http = require('http');
-var express = require('../hooks/fixtures/express4');
 
 describe('test-ignore-urls', function() {
+  var agent;
+  var express;
+  before(function() {
+    agent = require('../..')().start({
+      ignoreUrls: ['/test'],
+      samplingRate: 0
+    });
+    express = require('../hooks/fixtures/express4');
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   it('should not trace ignored urls', function(done) {
     var app = express();
     app.get('/test', function (req, res) {

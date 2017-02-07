@@ -19,7 +19,7 @@
 var assert = require('assert');
 var nock = require('nock');
 var cls = require('../../src/cls.js');
-var agent = require('../..');
+var trace = require('../..')();
 var request = require('request');
 
 nock.disableNetConnect();
@@ -51,7 +51,8 @@ describe('tracewriter publishing', function() {
           assert.equal(JSON.stringify(body), JSON.stringify(parsedOriginal));
           return true;
         }).reply(200);
-    var privateAgent = agent.start({bufferSize: 2, samplingRate: 0}).private_();
+    var agent = trace.start({bufferSize: 2, samplingRate: 0});
+    var privateAgent = agent.private_();
     privateAgent.traceWriter.request_ = request; // Avoid authing
     cls.getNamespace().run(function() {
       queueSpans(2, privateAgent);
@@ -72,7 +73,8 @@ describe('tracewriter publishing', function() {
           assert.equal(JSON.stringify(body), JSON.stringify(parsedOriginal));
           return true;
         }).reply(200);
-    var privateAgent = agent.start({flushDelaySeconds: 0.01, samplingRate: -1}).private_();
+    var agent = trace.start({flushDelaySeconds: 0.01, samplingRate: -1});
+    var privateAgent = agent.private_();
     privateAgent.traceWriter.request_ = request; // Avoid authing
     cls.getNamespace().run(function() {
       queueSpans(1, privateAgent);
@@ -93,7 +95,8 @@ describe('tracewriter publishing', function() {
           assert.equal(JSON.stringify(body), JSON.stringify(parsedOriginal));
           return true;
         }).replyWithError('Simulated Network Error');
-    var privateAgent = agent.start({bufferSize: 2, samplingRate: -1}).private_();
+    var agent = trace.start({bufferSize: 2, samplingRate: -1});
+    var privateAgent = agent.private_();
     privateAgent.traceWriter.request_ = request; // Avoid authing
     cls.getNamespace().run(function() {
       queueSpans(2, privateAgent);
