@@ -101,8 +101,8 @@ Transaction.prototype.getTraceContext = function() {
 };
 
 /**
- * Runs the given function in a child span, passing it an object that
- * exposes an interface for adding labels and closing the span.
+ * Runs the given function in a child span nested in the underlying root span
+ * of this transaction.
  * @param {object} options An object that specifies options for how the child
  * span is created and propogated.
  * @param {string} options.name The name to apply to the child span.
@@ -111,6 +111,20 @@ Transaction.prototype.getTraceContext = function() {
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the child span, starting from the top;
  * this should be set to avoid including frames in the plugin. Defaults to 0.
+ * @returns A new ChildSpan object.
+ */
+Transaction.prototype.createChildSpan = function(options, fn) {
+  options = options || {};
+  var childContext = this.agent_.startSpan(options.name, {},
+    options.skipFrames ? options.skipFrames + 1 : 1);
+  return new ChildSpan(this.agent_, childContext);
+};
+
+/**
+ * Runs the given function in a child span, passing it an object that
+ * exposes an interface for adding labels and closing the span.
+ * @param {object} options An object that specifies options for how the child
+ * span is created and propogated. @see Transaction.prototype.createChildSpan
  * @param {function(ChildSpan)} fn A function that will be called exactly
  * once, with a ChildSpan object exposing an interface operating on the child
  * span.
