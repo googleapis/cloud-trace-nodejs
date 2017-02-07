@@ -196,7 +196,8 @@ frameworks, incoming requests that are known to come from other services that
 are also integrated with Stackdriver Trace (through the
 ['x-cloud-trace-context'][stackdriver-trace-faq]
 field in request headers) should build spans that are aware of the information
-serialized in this field, known as the trace context.
+serialized in this field, known as the trace context. (For more information,
+see the [Dapper][dapper-paper] paper describing the distributed tracing system.)
 
 It is up to plugin developers to extract serialized trace context from incoming
 requests and propagate it in outgoing requests. The Plugin API accepts the
@@ -226,3 +227,4 @@ Binds the given event emitter to the current context.
 
 [config-js]: https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/blob/master/config.js
 [stackdriver-trace-faq]: https://cloud.google.com/trace/docs/faq
+[dapper-paper]: https://research.google.com/pubs/pub36356.html
