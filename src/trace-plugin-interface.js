@@ -189,12 +189,17 @@ PluginAPI.prototype.getTransaction = function() {
  * @param {function(?Transaction)} fn A function that will be called exactly
  * once. If the incoming request should be traced, a root span will be created,
  * and this function will be called with a Transaction object exposing functions
- * operating on the root span; otherwise, it will be called without any
- * arguments.
+ * operating on the root span; otherwise, it will be called with null as an
+ * argument.
  * @returns The return value of calling fn.
  */
 PluginAPI.prototype.runInRootSpan = function(options, fn) {
   var that = this;
+  if (!this.agent_.namespace) {
+    this.logger_.warn('Trace agent: CLS namespace not present; not running in' +
+      'root span.');
+    return fn(null);
+  }
   return this.agent_.namespace.runAndReturn(function() {
     var skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
     var transaction = createTransaction_(that, options, skipFrames);
@@ -205,8 +210,8 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
 /**
  * Convenience method which obtains a Transaction object with getTransaction()
  * and calls its runInChildSpan function on the given arguments. If there is
- * no current Transaction object, the provided function will be called without
- * arguments.
+ * no current Transaction object, the provided function will be called with
+ * null as an argument.
  * @param {object} options An object that specifies options for how the root
  * span is created and propogated. @see Transaction.prototype.runInChildSpan
  * @param {function(?Transaction)} fn A function that will be called exactly
@@ -223,7 +228,7 @@ PluginAPI.prototype.runInChildSpan = function(options, fn) {
   } else {
     this.logger_.warn(options.name + ': Attempted to run in child span ' +
       'without root');
-    return fn();
+    return fn(null);
   }
 };
 
@@ -234,6 +239,10 @@ PluginAPI.prototype.runInChildSpan = function(options, fn) {
  * @param {function} fn A function to which to bind the trace context.
  */
 PluginAPI.prototype.wrap = function(fn) {
+  if (!this.agent_.namespace) {
+    this.logger_.warn('Trace agent: No CLS namespace to bind function to');
+    return fn;
+  }
   return this.agent_.namespace.bind(fn);
 };
 
@@ -244,6 +253,9 @@ PluginAPI.prototype.wrap = function(fn) {
  * the trace context binded to them.
  */
 PluginAPI.prototype.wrapEmitter = function(emitter) {
+  if (!this.agent_.namespace) {
+    this.logger_.warn('Trace agent: No CLS namespace to bind emitter to');
+  }
   this.agent_.namespace.bindEmitter(emitter);
 };
 
