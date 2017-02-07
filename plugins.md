@@ -56,11 +56,13 @@ Developers wishing to trace their applications may specify, in the
 with a key-value pair (module name, path to plugin). For
 example, to patch just `express` with a plugin at `./plugins/plugin-express.js`:
 
+```js
 require('@google-cloud/trace-agent').start({
   plugins: {
     express: path.join(__dirname, 'plugins/express.js')
   }
 })
+```
 
 At this time, the path to the plugin may either be a module name or an absolute
 path to the plugin.
@@ -74,8 +76,8 @@ The `api` object, in short, provides functions that facilitate the following:
   current application.
 - Parsing and serializing trace contexts for the sake of propagating them over
   the network.
-- Binding callbacks and event emitters with a CLS namespace in order to
-  propagate trace contexts across asynchronous boundaries.
+- Binding callbacks and event emitters in order to propagate trace contexts
+  across asynchronous boundaries.
 
 In addition to the above, the `api` object also provides a number of well-known
 label keys and constants through `api.labels` and `api.constants` respectively.
@@ -87,7 +89,7 @@ them, and close them. `transaction` and `childSpan` are instances of
 `Transaction` and `ChildSpan`, respectively.
 
 #### `api.createTransaction(options)`
-* `options`: [`TraceOptions`](trace-span-options)
+* `options`: [`TraceOptions`](#trace-span-options)
 * Returns `Transaction`
 
 Creates and returns a new `Transaction` object. A `Transaction` object
@@ -107,7 +109,7 @@ Returns a Transaction object that corresponds to a root span started earlier
 in the same context, or `null` if one doesn't exist.
 
 #### `api.runInRootSpan(options, fn)`
-* `options`: [`TraceOptions`](trace-span-options)
+* `options`: [`TraceOptions`](#trace-span-options)
 * `fn`: `function(Transaction): any`
 * Returns `any`
 
@@ -117,13 +119,13 @@ function should accept a nullable `Transaction` object. If `null` is provided,
 the function should proceed as if nothing is being traced.
 
 #### `transaction.runInChildSpan(options, fn)`
-* `options`: [`TraceOptions`](trace-span-options)
+* `options`: [`TraceOptions`](#trace-span-options)
 * `fn`: `function(ChildSpan): any`
 * Returns `any`
 
 Runs the given function in a child span corresponding to an incoming request.
-The provided function should accept a `ChildSpan` object, which represents a
-child span.
+The provided function is guaranteed to be called with a `ChildSpan` object,
+which represents a child span.
 
 #### `transaction.addLabel(key, value) | childSpan.addLabel(key, value)`
 * `key`: `string`
@@ -137,7 +139,7 @@ Ends the span associated with the calling object. This function should only be
 called once.
 
 #### `api.runInChildSpan(options, fn)`
-* `options`: [`TraceOptions`](trace-span-options)
+* `options`: [`TraceOptions`](#trace-span-options)
 * `fn`: `function(ChildSpan): any`
 * Returns `any`
 
@@ -158,10 +160,11 @@ fields:
 * `traceContext`: `string`
   * Optional for root spans, ignored for child spans
   * A serialized trace context. If the module being traced is a web framework,
-    the plugin that patches this module should attempt to extract this from
-    an incoming request header and set this field. Omitting this field will
-    never cause an error, but may cause trace spans that correspond to a single
-    request across several services to appear disassociated with each other.
+    the plugin that patches this module should attempt to extract this from an
+    incoming request header and set this field; omitting this field may cause
+    trace spans that correspond to a single request across several services in a
+    distributed environment (e.g. microservices) to appear disassociated with
+    one another.
     See also [Cross-Service Trace Contexts](#cross-service-trace-contexts).
 * `url`: `string`
   * Optional for root spans, ignored for child spans
