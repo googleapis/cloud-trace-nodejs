@@ -1,5 +1,25 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-02-07, Version 0.6.2 (Experimental), @kjin
+
+### Notable changes
+
+**dependencies**:
+
+  * [[`ba0182ce46`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ba0182ce46)] - Update google-cloud/common (#359) (Matthew Loring) [#359](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/359)
+
+**bug fixes**:
+
+  * [[`f8f8145c63`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f8f8145c63)] - Follow-Up Fixes for gRPC (#357) (Kelvin Jin) [#357](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/357)
+  * [[`62e6c66d0d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/62e6c66d0d)] - Fix gRPC Server root span reference issue (#350) (Kelvin Jin) [#350](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/350)
+
+### Commits
+
+* [[`9c8e6109b1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9c8e6109b1)] - Grpc test server always waits serverWait before responding (#360) (Matthew Loring) [#360](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/360)
+* [[`ba0182ce46`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ba0182ce46)] - Update google-cloud/common (#359) (Matthew Loring) [#359](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/359)
+* [[`f8f8145c63`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f8f8145c63)] - Follow-Up Fixes for gRPC (#357) (Kelvin Jin) [#357](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/357)
+* [[`62e6c66d0d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/62e6c66d0d)] - Fix gRPC Server root span reference issue (#350) (Kelvin Jin) [#350](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/350)
+
 ## 2017-01-19, Version 0.6.1 (Experimental), @matthewloring
 
 ### Commits
