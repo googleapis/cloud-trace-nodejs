@@ -252,6 +252,7 @@ var publicAgent = {
  *
  * @param {object} options - [Configuration object](#/docs)
  */
+// TODO: Remove this constructor.
 function Trace(options) {
   if (!(this instanceof Trace)) {
     return new Trace(options);
