@@ -18,9 +18,19 @@
 
 var common = require('../hooks/common.js');
 var cluster = require('cluster');
-var express = require('../hooks/fixtures/express4');
 
 describe('test-trace-cluster', function() {
+  var agent;
+  var express;
+  before(function() {
+    agent = require('../..').start({samplingRate: 0}).private_();
+    express = require('../hooks/fixtures/express4');
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   it('should not interfere with express span', function(done) {
     if (cluster.isMaster) {
       cluster.fork();
@@ -41,7 +51,7 @@ describe('test-trace-cluster', function() {
           server.close();
           done();
         };
-        common.doRequest('GET', finalize, expressPredicate);
+        common.doRequest(agent, 'GET', finalize, expressPredicate);
       });
     }
   });

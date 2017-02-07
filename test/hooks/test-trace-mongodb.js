@@ -25,15 +25,24 @@ var traceLabels = require('../../src/trace-labels.js');
 var assert = require('assert');
 
 var versions = {
-  mongodb1: require('./fixtures/mongodb-core1'),
-  mongodb2: require('./fixtures/mongodb-core2')
+  mongodb1: './fixtures/mongodb-core1',
+  mongodb2: './fixtures/mongodb-core2'
 };
 
 Object.keys(versions).forEach(function(version) {
-  var mongodb = versions[version];
-  var server;
-
   describe(version, function() {
+    var agent;
+    var mongodb;
+    var server;
+    before(function() {
+      agent = require('../..').start({ samplingRate: 0 }).private_();
+      mongodb = require(versions[version]);
+    });
+
+    after(function() {
+      agent.stop();
+    });
+
     beforeEach(function(done) {
       server = new mongodb.Server({
         host: 'localhost',
@@ -55,7 +64,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     afterEach(function(done) {
-      common.cleanTraces();
+      common.cleanTraces(agent);
       server.command('testdb.$cmd', {dropDatabase: 1}, function(err, res) {
         assert.ifError(err);
         assert.strictEqual(res.result.dropped, 'testdb');
@@ -70,12 +79,13 @@ Object.keys(versions).forEach(function(version) {
         f2: false,
         f3: 1729
       };
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         server.insert('testdb.simples', [data], function(err, res) {
           endTransaction();
           assert.ifError(err);
           assert.strictEqual(res.result.n, 1);
           var trace = common.getMatchingSpan(
+              agent,
               mongoPredicate.bind(null, 'mongo-insert'));
           assert(trace);
           done();
@@ -84,7 +94,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should trace an update', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         server.update('testdb.simples', [{
           q: {f1: 'sim'},
           u: {'$set': {f2: false}}
@@ -93,6 +103,7 @@ Object.keys(versions).forEach(function(version) {
           assert.ifError(err);
           assert.strictEqual(res.result.n, 1);
           var trace = common.getMatchingSpan(
+              agent,
               mongoPredicate.bind(null, 'mongo-update'));
           assert(trace);
           done();
@@ -101,7 +112,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should trace a query', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         server.cursor('testdb.simples', {
           find: 'testdb.simples',
           query: {f1: 'sim'}
@@ -110,6 +121,7 @@ Object.keys(versions).forEach(function(version) {
           assert.ifError(err);
           assert.strictEqual(doc.f3, 42);
           var trace = common.getMatchingSpan(
+              agent,
               mongoPredicate.bind(null, 'mongo-cursor'));
           assert(trace);
           done();
@@ -118,7 +130,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should trace a remove', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         server.remove('testdb.simples', [{
           q: {f1: 'sim'},
           limit: 0
@@ -127,6 +139,7 @@ Object.keys(versions).forEach(function(version) {
           assert.ifError(err);
           assert.strictEqual(res.result.n, 1);
           var trace = common.getMatchingSpan(
+              agent,
               mongoPredicate.bind(null, 'mongo-remove'));
           assert(trace);
           done();
@@ -135,11 +148,12 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should trace a command', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         server.command('admin.$cmd', {ismaster: true}, function(err, res) {
           endTransaction();
           assert.ifError(err);
           var trace = common.getMatchingSpan(
+              agent,
               mongoPredicate.bind(null, 'mongo-comman'));
           assert(trace);
           done();
@@ -154,13 +168,13 @@ Object.keys(versions).forEach(function(version) {
       }).next(function(err, doc) {
         assert.ifError(err);
         assert.strictEqual(doc.f3, 42);
-        assert.strictEqual(common.getTraces().length, 0);
+        assert.strictEqual(common.getTraces(agent).length, 0);
         done();
       });
     });
 
     it('should remove trace frames from stack', function(done) {
-      common.runInTransaction(function(endTransaction) {
+      common.runInTransaction(agent, function(endTransaction) {
         server.cursor('testdb.simples', {
           find: 'testdb.simples',
           query: {f1: 'sim'}
@@ -169,6 +183,7 @@ Object.keys(versions).forEach(function(version) {
           assert.ifError(err);
           assert.strictEqual(doc.f3, 42);
           var trace = common.getMatchingSpan(
+              agent,
               mongoPredicate.bind(null, 'mongo-cursor'));
           var labels = trace.labels;
           var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);

@@ -16,7 +16,6 @@
 'use strict';
 
 var common = require('../hooks/common.js');
-var koa = require('../hooks/fixtures/koa1');
 var http = require('http');
 var assert = require('assert');
 var constants = require('../../src/constants.js');
@@ -25,9 +24,20 @@ var TraceLabels = require('../../src/trace-labels.js');
 var server;
 
 describe('test-trace-koa', function() {
+  var agent;
+  var koa;
+  before(function() {
+    agent = require('../..').start().private_();
+    koa = require('../hooks/fixtures/koa1');
+  });
+
   afterEach(function() {
-    common.cleanTraces();
+    common.cleanTraces(agent);
     server.close();
+  });
+
+  after(function() {
+    agent.stop();
   });
 
   it('should accurately measure get time, get', function(done) {
@@ -40,7 +50,7 @@ describe('test-trace-koa', function() {
       };
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest('GET', done, koaPredicate);
+      common.doRequest(agent, 'GET', done, koaPredicate);
     });
   });
 
@@ -65,7 +75,7 @@ describe('test-trace-koa', function() {
             TraceLabels.HTTP_SOURCE_IP,
             TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY
           ];
-          var span = common.getMatchingSpan(koaPredicate);
+          var span = common.getMatchingSpan(agent, koaPredicate);
           expectedKeys.forEach(function(key) {
             assert(span.labels[key]);
           });
@@ -86,7 +96,7 @@ describe('test-trace-koa', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(koaPredicate).labels;
+        var labels = common.getMatchingSpan(agent, koaPredicate).labels;
         var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our middleware is on top of the stack
         assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
@@ -106,7 +116,7 @@ describe('test-trace-koa', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({path: '/?a=b', port: common.serverPort}, function(res) {
-        var name = common.getMatchingSpan(koaPredicate).name;
+        var name = common.getMatchingSpan(agent, koaPredicate).name;
         assert.equal(name, '/');
         done();
       });

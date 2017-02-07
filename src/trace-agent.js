@@ -18,6 +18,7 @@
 
 var cls = require('./cls');
 var hooks = require('./hooks/index.js');
+var pluginLoader = require('./trace-plugin-loader.js');
 var Trace = require('./trace.js');
 var SpanData = require('./span-data.js');
 var TraceWriter = require('./trace-writer.js');
@@ -35,8 +36,10 @@ var traceAgent;
 function TraceAgent(config, logger) {
   this.config_ = config;
   this.logger = logger;
+  this.running = true;
 
   hooks.activate(this);
+  pluginLoader.activate(this);
 
   this.namespace = cls.createNamespace();
   this.traceWriter = new TraceWriter(logger, config);
@@ -58,11 +61,20 @@ function TraceAgent(config, logger) {
   logger.info('trace agent activated');
 }
 
+TraceAgent.prototype.isRunning = function() {
+  return this.running;
+};
+
 /**
  * Halts this agent and unpatches any patched modules.
  */
 TraceAgent.prototype.stop = function() {
+  // TODO: This property is only needed because of the way the tests are
+  //       implemented.  Change the tests so that this property is not
+  //       needed.
+  this.running = false;
   hooks.deactivate();
+  pluginLoader.deactivate();
   cls.destroyNamespace();
   this.traceWriter.stop();
   this.namespace = null;

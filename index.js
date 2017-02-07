@@ -95,7 +95,11 @@ var initConfig = function(projectConfig) {
  */
 var publicAgent = {
   isActive: function() {
-    return agent !== phantomTraceAgent;
+    // TODO: The use of agent.isRunning() is only needed because the
+    //       _private() function is used in testing.
+    //       Remove the _private() function so that agent.isRunning()
+    //       can be removed.
+    return agent !== phantomTraceAgent && agent.isRunning();
   },
 
   startSpan: function(name, labels) {
@@ -123,13 +127,11 @@ var publicAgent = {
   },
 
   start: function(projectConfig) {
-    if (this.isActive()) { // already started.
-      agent.logger.warn('Calling start on already started agent.' +
-        'New configuration will be ignored.');
-      return this;
-    }
-
     var config = initConfig(projectConfig);
+
+    if (this.isActive() && !config.forceNewAgent_) { // already started.
+      throw new Error('Cannot call start on an already started agent.');
+    }
 
     if (!config.enabled) {
       return this;
@@ -229,7 +231,37 @@ var publicAgent = {
   private_: function() { return agent; }
 };
 
-module.exports = global._google_trace_agent = publicAgent;
+/**
+ * Start the Trace agent that will make your application available for
+ * tracing with Stackdriver Trace.
+ *
+ * @param {object=} config - Trace configuration
+ *
+ * @resource [Introductory video]{@link
+ * https://www.youtube.com/watch?v=NCFDqeo7AeY}
+ *
+ * @example
+ * trace.start();
+ */
+function start(config) {
+  publicAgent.start(config);
+  return publicAgent;
+}
+
+function isActive() {
+  return publicAgent.isActive();
+}
+
+function get() {
+  return publicAgent.get();
+}
+
+global._google_trace_agent = publicAgent;
+module.exports = {
+  start: start,
+  isActive: isActive,
+  get: get
+};
 
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {

@@ -33,7 +33,7 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 
 3. Include and start the library *as the very first action in your application*:
 
-        require('@google/cloud-trace').start();
+        var agent = require('@google/cloud-trace').start();
 
   If you use `--require` in your start up command, make sure that the trace agent is --required first.
 
