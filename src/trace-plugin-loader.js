@@ -112,7 +112,7 @@ function activate(agent) {
       if (!instrumentation.patches[moduleRoot]) {
         instrumentation.patches[moduleRoot] = {};
       }
-      var patchSet = instrumentation.patches[moduleRoot][version];
+      var patchSet = instrumentation.patches[moduleRoot];
       if (!patchSet) {
         // Load the plugin object
         var plugin = originalModuleLoad(instrumentation.file, module, false);
@@ -130,7 +130,7 @@ function activate(agent) {
           logger.warn(moduleRoot + ': version ' + version + ' not supported ' + 
             'by plugin.');
         }
-        instrumentation.patches[moduleRoot][version] = patchSet;
+        instrumentation.patches[moduleRoot] = patchSet;
       }
       Object.keys(patchSet).forEach(function(file) {
         var patch = patchSet[file];
