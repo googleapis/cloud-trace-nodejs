@@ -118,7 +118,7 @@ function activate(agent) {
         var plugin = originalModuleLoad(instrumentation.file, module, false);
         patchSet = {};
         plugin.forEach(function(patch) {
-          if (semver.satisfies(version, patch.versions)) {
+          if (!patch.versions || semver.satisfies(version, patch.versions)) {
             patchSet[patch.file] = {
               file: patch.file || '',
               patch: patch.patch,
@@ -146,7 +146,7 @@ function activate(agent) {
         }
         patch.active = true;
       });
-      var rootPatch = patchSet.filter(function(patch) { return !patch.name; })[0];
+      var rootPatch = patchSet[''];
       if (rootPatch && rootPatch.intercept) {
         return rootPatch.module;
       } else {
