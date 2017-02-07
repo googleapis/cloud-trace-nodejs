@@ -18,8 +18,8 @@
 
 var assert = require('assert');
 var nock = require('nock');
-var cls = require('../../src/cls.js');
-var trace = require('../..');
+var cls = require('../src/cls.js');
+var trace = require('..');
 var request = require('request');
 
 nock.disableNetConnect();

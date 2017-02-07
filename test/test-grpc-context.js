@@ -15,17 +15,17 @@
  */
 'use strict';
 
-var common = require('../hooks/common.js');
+var common = require('./hooks/common.js');
 
 var assert = require('assert');
 var http = require('http');
 
 var versions = {
-  grpc1: '../hooks/fixtures/grpc1'
+  grpc1: './hooks/fixtures/grpc1'
 };
 
 var grpcPort = 50051;
-var protoFile = __dirname + '/../fixtures/test-grpc.proto';
+var protoFile = __dirname + '/fixtures/test-grpc.proto';
 var client, grpcServer, server;
 
 function makeHttpRequester(callback, expectedReqs) {
@@ -54,8 +54,8 @@ Object.keys(versions).forEach(function(version) {
   var grpc;
   describe('express + ' + version, function() {
     before(function(done) {
-      agent = require('../..').start({ samplingRate: 0 }).private_();
-      express = require('../hooks/fixtures/express4');
+      agent = require('..').start({ samplingRate: 0 }).private_();
+      express = require('./hooks/fixtures/express4');
       grpc = require(versions[version]);
 
       agent.logger.debug = function(error, uri) {

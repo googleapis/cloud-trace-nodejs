@@ -15,18 +15,18 @@
  */
 'use strict';
 
-var common = require('../hooks/common.js');
-var cls = require('../../src/cls.js');
+var common = require('./hooks/common.js');
+var cls = require('../src/cls.js');
 var http = require('http');
 var assert = require('assert');
-var constants = require('../../src/constants.js');
+var constants = require('../src/constants.js');
 
 describe('test-trace-header-context', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 }).private_();
-    express = require('../hooks/fixtures/express4');
+    agent = require('..').start({ samplingRate: 0 }).private_();
+    express = require('./hooks/fixtures/express4');
   });
 
   after(function() {

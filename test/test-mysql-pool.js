@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var common = require('../hooks/common.js');
+var common = require('./hooks/common.js');
 var assert = require('assert');
 var http = require('http');
 var semver = require('semver');
@@ -26,9 +26,9 @@ if (semver.satisfies(process.version, '>=4')) {
     var agent;
     var Hapi;
     before(function() {
-      agent = require('../..').start({ samplingRate: 0,
+      agent = require('..').start({ samplingRate: 0,
                                        enhancedDatabaseReporting: true }).private_();
-      Hapi = require('../hooks/fixtures/hapi13');
+      Hapi = require('./hooks/fixtures/hapi13');
     });
 
     after(function() {
@@ -39,7 +39,7 @@ if (semver.satisfies(process.version, '>=4')) {
       var server = new Hapi.Server();
       server.connection({ port: common.serverPort });
       server.register({
-        register: require('../hooks/fixtures/hapi-plugin-mysql3'),
+        register: require('./hooks/fixtures/hapi-plugin-mysql3'),
         options: {
           host     : 'localhost',
           user     : 'root',

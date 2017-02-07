@@ -18,7 +18,7 @@
 var path = require('path');
 var assert = require('assert');
 var nock = require('nock');
-var cls = require('../../src/cls.js');
+var cls = require('../src/cls.js');
 
 var queueSpans = function(n, privateAgent) {
   for (var i = 0; i < n; i++) {
@@ -30,13 +30,13 @@ process.env.GCLOUD_PROJECT = 0;
 
 describe('test-config-credentials', function() {
   it('should use the keyFilename field of the config object', function(done) {
-    var credentials = require('../fixtures/gcloud-credentials.json');
+    var credentials = require('./fixtures/gcloud-credentials.json');
     var config = {
       bufferSize: 2,
       samplingRate: 0,
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json')
     };
-    var agent = require('../..').start(config);
+    var agent = require('..').start(config);
     nock.disableNetConnect();
     var scope = nock('https://accounts.google.com')
       .intercept('/o/oauth2/token', 'POST', function(body) {
@@ -66,9 +66,9 @@ describe('test-config-credentials', function() {
     var config = {
       bufferSize: 2,
       samplingRate: 0,
-      credentials: require('../fixtures/gcloud-credentials.json')
+      credentials: require('./fixtures/gcloud-credentials.json')
     };
-    var agent = require('../..').start(config);
+    var agent = require('..').start(config);
     nock.disableNetConnect();
     var scope = nock('https://accounts.google.com')
       .intercept('/o/oauth2/token', 'POST', function(body) {
@@ -107,7 +107,7 @@ describe('test-config-credentials', function() {
       credentials: correctCredentials,
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json')
     };
-    var agent = require('../..').start(config);
+    var agent = require('..').start(config);
     nock.disableNetConnect();
     var scope = nock('https://accounts.google.com')
       .intercept('/o/oauth2/token', 'POST', function(body) {

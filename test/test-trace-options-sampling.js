@@ -20,7 +20,7 @@
 //   ex) docker -d
 // Run a mongo image binding the mongo port
 //   ex) docker run -p 27017:27017 -d mongo
-var common = require('../hooks/common.js');
+var common = require('./hooks/common.js');
 var assert = require('assert');
 var http = require('http');
 
@@ -28,8 +28,8 @@ describe('express + mongo with trace options header + sampling', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..').start({ samplingRate: 1 }).private_();
-    express = require('../hooks/fixtures/express4');
+    agent = require('..').start({ samplingRate: 1 }).private_();
+    express = require('./hooks/fixtures/express4');
   });
 
   after(function() {

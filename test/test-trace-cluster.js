@@ -16,15 +16,15 @@
 
 'use strict';
 
-var common = require('../hooks/common.js');
+var common = require('./hooks/common.js');
 var cluster = require('cluster');
 
 describe('test-trace-cluster', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..').start({samplingRate: 0}).private_();
-    express = require('../hooks/fixtures/express4');
+    agent = require('..').start({samplingRate: 0}).private_();
+    express = require('./hooks/fixtures/express4');
   });
 
   after(function() {

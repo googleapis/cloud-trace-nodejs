@@ -23,7 +23,7 @@ var write;
 describe('test-hooks-no-project-num', function(){
   var agent;
   before(function() {
-    agent = require('../..').start();
+    agent = require('..').start();
   });
 
   after(function() {
@@ -45,7 +45,7 @@ describe('test-hooks-no-project-num', function(){
       process.stderr.write = write;
     });
     it('mongo', function(done) {
-      var mongoose = require('../hooks/fixtures/mongoose4');
+      var mongoose = require('./hooks/fixtures/mongoose4');
       var Simple = mongoose.model('Simple', new mongoose.Schema({
         f1: String,
         f2: Boolean,
@@ -62,7 +62,7 @@ describe('test-hooks-no-project-num', function(){
     });
 
     it('redis', function(done) {
-      var redis = require('../hooks/fixtures/redis2.3');
+      var redis = require('./hooks/fixtures/redis2.3');
       var client = redis.createClient();
       client.set('i', 1, function() {
         client.quit(function() {
@@ -73,7 +73,7 @@ describe('test-hooks-no-project-num', function(){
 
     it('express', function(done) {
       var http = require('http');
-      var express = require('../hooks/fixtures/express4');
+      var express = require('./hooks/fixtures/express4');
       var app = express();
       var server;
       app.get('/', function (req, res) {
@@ -88,7 +88,7 @@ describe('test-hooks-no-project-num', function(){
 
     it('restify', function(done) {
       var http = require('http');
-      var restify = require('../hooks/fixtures/restify4');
+      var restify = require('./hooks/fixtures/restify4');
       var server = restify.createServer();
       server.get('/', function (req, res, next) {
         res.writeHead(200, {
@@ -106,7 +106,7 @@ describe('test-hooks-no-project-num', function(){
 
     it('hapi', function(done) {
       var http = require('http');
-      var hapi = require('../hooks/fixtures/hapi8');
+      var hapi = require('./hooks/fixtures/hapi8');
       var server = new hapi.Server();
       server.connection({ port: 8081 });
       server.route({
@@ -131,7 +131,7 @@ describe('test-hooks-no-project-num', function(){
     });
 
     it('mysql', function(done) {
-      var mysql = require('../hooks/fixtures/mysql2');
+      var mysql = require('./hooks/fixtures/mysql2');
       var pool = mysql.createPool({
         host     : 'localhost',
         user     : 'root',
