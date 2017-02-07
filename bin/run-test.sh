@@ -42,8 +42,7 @@ function run {
 run `find test -maxdepth 1 -name '*.js' -not -name test-trace-agent.js`
 run test/test-trace-agent.js
 
-run `find test/hooks -maxdepth 1 -name '*.js' -not -name test-trace-express.js`
-run test/hooks/test-trace-express.js
+run test/hooks/*.js
 
 for test in test/standalone/test-*.js ;
 do
