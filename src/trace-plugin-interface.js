@@ -223,10 +223,32 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
 
 /**
  * Convenience method which obtains a Transaction object with getTransaction()
+ * and creates a new child span nested within this transaction. If there is
+ * no current Transaction object, this function returns null.
+ * @param {object} options An object that specifies options for how the child
+ * span is created and propogated. @see Transaction.prototype.createChildSpan
+ * @returns A new ChildSpan object, or null if there is no active root span.
+ */
+PluginAPI.prototype.createChildSpan = function(options, fn) {
+  var transaction = this.getTransaction();
+  if (transaction) {
+    options = options || {};
+    var childContext = transaction.agent_.startSpan(options.name, {},
+      options.skipFrames ? options.skipFrames + 1 : 1);
+    return new ChildSpan(transaction.agent_, childContext);
+  } else {
+    this.logger_.warn(options.name + ': Attempted to create child span ' +
+      'without root');
+    return null;
+  }
+};
+
+/**
+ * Convenience method which obtains a Transaction object with getTransaction()
  * and calls its runInChildSpan function on the given arguments. If there is
  * no current Transaction object, the provided function will be called with
  * null as an argument.
- * @param {object} options An object that specifies options for how the root
+ * @param {object} options An object that specifies options for how the child
  * span is created and propogated. @see Transaction.prototype.runInChildSpan
  * @param {function(?Transaction)} fn A function that will be called exactly
  * once. @see Transaction.prototype.runInChildSpan
