@@ -77,6 +77,9 @@ The `api` object, in short, provides functions that facilitate the following:
 - Binding callbacks and event emitters with a CLS namespace in order to
   propagate trace contexts across asynchronous boundaries.
 
+In addition to the above, the `api` object also provides a number of well-known
+label keys and constants through `api.labels` and `api.constants` respectively.
+
 ### Trace Spans
 
 These functions provide the capability to create trace spans, add labels to
@@ -196,6 +199,9 @@ It is up to plugin developers to extract serialized trace context from incoming
 requests and propagate it in outgoing requests. The Plugin API accepts the
 serialized trace context as an [option](#trace-span-options) when creating new
 trace spans.
+
+The string `'x-cloud-trace-context'` is provided as
+`api.constants.TRACE_CONTEXT_HEADER_NAME`.
 
 #### `transaction.getTraceContext()` | `childSpan.getTraceContext()`
 * Returns `string`
