@@ -35,7 +35,6 @@ function ChildSpan(agent, span) {
   this.agent_ = agent;
   this.span_ = span;
   this.serializedTraceContext_ = agent.generateTraceContext(span, true);
-  this.closed_ = false;
 }
 
 /**
@@ -51,10 +50,6 @@ ChildSpan.prototype.addLabel = function(key, value) {
  * Ends the underlying span. This function should only be called once.
  */
 ChildSpan.prototype.endSpan = function() {
-  if (this.closed_) {
-    this.agent_.logger.error('A span ended more than once.');
-  }
-  this.closed_ = true;
   this.span_.close();
 };
 
@@ -78,7 +73,6 @@ function Transaction(agent, context) {
   this.agent_ = agent;
   this.context_ = context;
   this.serializedTraceContext_ = agent.generateTraceContext(context, true);
-  this.closed_ = false;
 }
 
 /**
@@ -94,10 +88,6 @@ Transaction.prototype.addLabel = function(key, value) {
  * Ends the underlying span. This function should only be called once.
  */
 Transaction.prototype.endSpan = function() {
-  if (this.closed_) {
-    this.agent_.logger.error('A span ended more than once.');
-  }
-  this.closed_ = true;
   this.context_.close();
 };
 
