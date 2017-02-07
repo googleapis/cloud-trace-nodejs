@@ -15,13 +15,21 @@
  */
 'use strict';
 
-var agent = require('../..')().startAgent({samplingRate: 0});
-
 var assert = require('assert');
 var http = require('http');
-var express = require('../hooks/fixtures/express4');
 
 describe('test-default-ignore-ah-health', function() {
+  var agent;
+  var express;
+  before(function() {
+    agent = require('../..')().startAgent({samplingRate: 0});
+    express = require('../hooks/fixtures/express4');
+  });
+
+  after(function() {
+    agent.stop();
+  });
+
   it('should ignore /_ah/health traces by default', function(done) {
     var app = express();
     app.get('/_ah/health', function (req, res) {

@@ -17,25 +17,16 @@
 
 var common = require('../hooks/common.js');
 
-var agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
-
 var assert = require('assert');
-var express = require('../hooks/fixtures/express4');
 var http = require('http');
 
 var versions = {
-  grpc1: require('../hooks/fixtures/grpc1')
+  grpc1: '../hooks/fixtures/grpc1'
 };
 
 var grpcPort = 50051;
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';
 var client, grpcServer, server;
-
-agent.logger.debug = function(error, uri) {
-  if (error.indexOf('http') !== -1) {
-    assert.notStrictEqual(uri.indexOf('localhost'), -1);
-  }
-};
 
 function makeHttpRequester(callback, expectedReqs) {
   var pendingHttpReqs = expectedReqs;
@@ -58,10 +49,21 @@ function requestAndSendHTTPStatus(res, expectedReqs) {
 }
 
 Object.keys(versions).forEach(function(version) {
-  var grpc = versions[version];
-
+  var agent;
+  var express;
+  var grpc;
   describe('express + ' + version, function() {
     before(function(done) {
+      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      express = require('../hooks/fixtures/express4');
+      grpc = require(versions[version]);
+
+      agent.logger.debug = function(error, uri) {
+        if (error.indexOf('http') !== -1) {
+          assert.notStrictEqual(uri.indexOf('localhost'), -1);
+        }
+      };
+
       var proto = grpc.load(protoFile).nodetest;
       var app = express();
 
@@ -146,6 +148,7 @@ Object.keys(versions).forEach(function(version) {
     after(function() {
       grpcServer.forceShutdown();
       server.close();
+      agent.stop();
     });
 
     afterEach(function() {
