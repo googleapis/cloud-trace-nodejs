@@ -22,7 +22,7 @@ describe('test-default-ignore-ah-health', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..')().startAgent({samplingRate: 0});
+    agent = require('../..')().start({samplingRate: 0});
     express = require('../hooks/fixtures/express4');
   });
 

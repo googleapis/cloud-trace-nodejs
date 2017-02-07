@@ -126,7 +126,7 @@ var publicAgent = {
     return agent.addTransactionLabel(key, value);
   },
 
-  startAgent: function(projectConfig) {
+  start: function(projectConfig) {
     var config = initConfig(projectConfig);
 
     if (this.isActive() && !config.forceNewAgent_) { // already started.
@@ -269,10 +269,10 @@ function Trace(options) {
  * https://www.youtube.com/watch?v=NCFDqeo7AeY}
  *
  * @example
- * trace.startAgent();
+ * trace.start();
  */
-Trace.prototype.startAgent = function(config) {
-  publicAgent.startAgent(config);
+Trace.prototype.start = function(config) {
+  publicAgent.start(config);
   return publicAgent;
 };
 
@@ -289,5 +289,5 @@ module.exports = Trace;
 
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {
-  module.exports().startAgent();
+  module.exports().start();
 }

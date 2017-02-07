@@ -22,7 +22,7 @@ describe('test-ignore-urls', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..')().startAgent({
+    agent = require('../..')().start({
       ignoreUrls: ['/test'],
       samplingRate: 0
     });

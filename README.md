@@ -33,7 +33,7 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 
 3. Include and start the library *as the very first action in your application*:
 
-        var agent = require('@google/cloud-trace')().startAgent();
+        var agent = require('@google/cloud-trace')().start();
 
   If you use `--require` in your start up command, make sure that the trace agent is --required first.
 
@@ -47,7 +47,7 @@ If you are running somewhere other than the Google Cloud Platform, see [running 
 
 See [the default configuration](config.js) for a list of possible configuration options. These options can be passed to the agent through the object argument to the start command shown above:
 
-        require('@google/cloud-trace')().startAgent({samplingRate: 500});
+        require('@google/cloud-trace')().start({samplingRate: 500});
 
 Alternatively, you can provide configuration through a config file. This can be useful if you want to load our module using `--require` on the command line instead of editing your main script. You can start by copying the default config file and modifying it to suit your needs. The `GCLOUD_DIAGNOSTICS_CONFIG` environment variable should point to your configuration file.
 
@@ -142,7 +142,7 @@ For any of the web frameworks listed above (`express`, `hapi`, and `restify`), a
 The API is exposed by the `agent` returned by a call to `start`:
 
 ```javascript
-  var agent = require('@google/cloud-trace')().startAgent();
+  var agent = require('@google/cloud-trace')().start();
 ```
 
 For child spans, you can either use the `startSpan` and `endSpan` API, or use the `runInSpan` function that uses a callback-style. For root spans, you must use `runInRootSpan`.

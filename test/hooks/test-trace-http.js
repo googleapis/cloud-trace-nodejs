@@ -26,7 +26,7 @@ describe('test-trace-http', function() {
   var http;
   var server;
   before(function() {
-    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    agent = require('../..')().start({ samplingRate: 0 }).private_();
     http = require('http');
 
     server = http.Server(function(req, res) {
@@ -254,7 +254,7 @@ describe('https', function() {
   var agent;
   var https;
   before(function() {
-    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    agent = require('../..')().start({ samplingRate: 0 }).private_();
     https = require('https');
   });
 

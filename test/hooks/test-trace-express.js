@@ -28,7 +28,7 @@ describe('test-trace-express', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+    agent = require('../..')().start({ samplingRate: 0 }).private_();
     express = require('./fixtures/express4');
 
     // Mute stderr to satiate appveyor

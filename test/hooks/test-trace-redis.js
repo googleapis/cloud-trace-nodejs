@@ -38,7 +38,7 @@ Object.keys(versions).forEach(function(version) {
     var agent;
     var redis;
     before(function() {
-      agent = require('../..')().startAgent({ samplingRate: 0 }).private_();
+      agent = require('../..')().start({ samplingRate: 0 }).private_();
       redis = require(versions[version]);
     });
 

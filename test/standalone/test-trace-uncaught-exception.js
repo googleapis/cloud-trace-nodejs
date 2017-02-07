@@ -63,7 +63,7 @@ describe('tracewriter publishing', function() {
       }, 20);
     });
     process.nextTick(function() {
-      agent = trace.startAgent({
+      agent = trace.start({
         bufferSize: 1000,
         samplingRate: 0,
         onUncaughtException: 'flush'

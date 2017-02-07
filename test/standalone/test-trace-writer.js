@@ -51,7 +51,7 @@ describe('tracewriter publishing', function() {
           assert.equal(JSON.stringify(body), JSON.stringify(parsedOriginal));
           return true;
         }).reply(200);
-    var agent = trace.startAgent({bufferSize: 2, samplingRate: 0});
+    var agent = trace.start({bufferSize: 2, samplingRate: 0});
     var privateAgent = agent.private_();
     privateAgent.traceWriter.request_ = request; // Avoid authing
     cls.getNamespace().run(function() {
@@ -73,7 +73,7 @@ describe('tracewriter publishing', function() {
           assert.equal(JSON.stringify(body), JSON.stringify(parsedOriginal));
           return true;
         }).reply(200);
-    var agent = trace.startAgent({flushDelaySeconds: 0.01, samplingRate: -1});
+    var agent = trace.start({flushDelaySeconds: 0.01, samplingRate: -1});
     var privateAgent = agent.private_();
     privateAgent.traceWriter.request_ = request; // Avoid authing
     cls.getNamespace().run(function() {
@@ -95,7 +95,7 @@ describe('tracewriter publishing', function() {
           assert.equal(JSON.stringify(body), JSON.stringify(parsedOriginal));
           return true;
         }).replyWithError('Simulated Network Error');
-    var agent = trace.startAgent({bufferSize: 2, samplingRate: -1});
+    var agent = trace.start({bufferSize: 2, samplingRate: -1});
     var privateAgent = agent.private_();
     privateAgent.traceWriter.request_ = request; // Avoid authing
     cls.getNamespace().run(function() {

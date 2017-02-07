@@ -23,7 +23,7 @@ var write;
 describe('test-hooks-no-project-num', function(){
   var agent;
   before(function() {
-    agent = require('../..')().startAgent();
+    agent = require('../..')().start();
   });
 
   after(function() {
