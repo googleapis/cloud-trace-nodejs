@@ -34,6 +34,7 @@ describe('test-trace-header-context', function() {
   });
 
   afterEach(function() {
+    // TODO: Investigate why this is needed
     cls.destroyNamespace();
     agent.namespace = cls.createNamespace();
   });
