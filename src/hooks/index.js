@@ -41,9 +41,22 @@ var toInstrument = Object.create(null, {
       patches: {} } },
   'grpc': { enumerable: true, value: { file: './userspace/hook-grpc.js',
       patches: {} } },
-  'http': { enumerable: true, value: { file: './core/hook-http.js',
+  'http': { enumerable: true, value: { file: './core/hook-http.js',  patches: {}}},
+  'hapi': { enumerable: true, value: { file: './userspace/hook-hapi.js',
+      patches: {} } },
+  'koa': { enumerable: true, value: { file: './userspace/hook-koa.js',
+      patches: {} } },
+  'mongodb-core': { enumerable: true, value: { file: './userspace/hook-mongodb-core.js',
+      patches: {} } },
+  'mysql': { enumerable: true, value: { file: './userspace/hook-mysql.js',
+      patches: {} } },
+  'redis': { enumerable: true, value: { file: './userspace/hook-redis.js',
+      patches: {} } },
+  'restify': { enumerable: true, value: { file: './userspace/hook-restify.js',
+      patches: {} } },
+  'connect': { enumerable: true, value: { file: './userspace/hook-connect.js',
       patches: {} } }
-});
+  });
 
 var logger;
 

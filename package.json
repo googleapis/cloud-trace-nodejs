@@ -43,6 +43,7 @@
     "is": "^3.2.0",
     "lodash.findindex": "^4.4.0",
     "lodash.isequal": "^4.0.0",
+    "lodash.merge": "^4.6.0",
     "methods": "^1.1.1",
     "semver": "^5.0.1",
     "shimmer": "^1.0.0",

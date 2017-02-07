@@ -47,7 +47,8 @@ module.exports = {
       'mongodb-core': path.join(__dirname, 'src/plugins/plugin-mongodb-core.js'),
       'mysql': path.join(__dirname, 'src/plugins/plugin-mysql.js'),
       'redis': path.join(__dirname, 'src/plugins/plugin-redis.js'),
-      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
+      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js'),
+      http: path.join(__dirname, 'src/plugins/plugin-http.js')
     },
 
     // Valid entries are:
