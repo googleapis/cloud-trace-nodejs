@@ -24,10 +24,10 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 var emptyLogger = {
-  warn: function() {},
-  info: function() {},
-  error: function() {},
-  debug: function() {}
+  warn: console.warn,
+  info: console.info,
+  error: console.error,
+  debug: console.log
 };
 
 var assert = require('assert');
@@ -45,8 +45,9 @@ describe('Trace Agent', function() {
   it('should return the same object on repeated application', function() {
     // TODO: This line will silently fail if a logger is not supplied as
     //       the second argument.
+    var agent1 = file.get(config, emptyLogger);
     var agent2 = file.get(config, emptyLogger);
-    assert.strictEqual(agent, agent2);
+    assert.strictEqual(agent1, agent2);
   });
 
   describe('isTraceAgentRequest', function() {

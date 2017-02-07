@@ -39,11 +39,8 @@ function run {
 }
 
 # Run test/coverage
-run `find test -maxdepth 1 -name '*.js' -not -name test-trace-agent.js`
-run test/test-trace-agent.js
-
-run test/hooks/*.js
-
+run test
+run test/hooks
 for test in test/standalone/test-*.js ;
 do
   if [[ ! $(node --version) =~ v0\.12\..* || ! "${test}" =~ .*trace\-koa\.js ]]
