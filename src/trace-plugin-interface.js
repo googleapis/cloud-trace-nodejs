@@ -101,7 +101,7 @@ Transaction.prototype.getTraceContext = function() {
 };
 
 /**
- * Runs the given function in a child span nested in the underlying root span
+ * Creates a child span nested in the underlying root span
  * of this transaction.
  * @param {object} options An object that specifies options for how the child
  * span is created and propogated.
