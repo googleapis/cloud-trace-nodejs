@@ -69,11 +69,9 @@ describe('index.js', function() {
   );
 
   it('should report if it is active', function() {
-    assert.strictEqual(agent.isActive(), true);
-    assert.strictEqual(trace.isActive(), true);
+    assert.ok(agent.isActive());
     agent.stop();
-    assert.strictEqual(agent.isActive(), false);
-    assert.strictEqual(trace.isActive(), false);
+    assert.ok(!agent.isActive());
   });
 
   it('should be harmless to stop before a start', function() {

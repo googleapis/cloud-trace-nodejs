@@ -18,6 +18,6 @@
 var assert = require('assert');
 var agent = require('../../');
 
-assert(agent.isActive());
+assert(agent.get().isActive());
 agent.get().stop();
 console.log('Preload test passed.');

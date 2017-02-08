@@ -29,167 +29,174 @@ var versions = {
   mongodb2: './fixtures/mongodb-core2'
 };
 
-Object.keys(versions).forEach(function(version) {
-  describe(version, function() {
-    var agent;
-    var mongodb;
-    var server;
-    before(function() {
-      agent = require('../..').start({ samplingRate: 0 }).private_();
-      mongodb = require(versions[version]);
-    });
+describe('mongodb', function() {
+  var agent;
 
-    after(function() {
-      agent.stop();
-    });
+  before(function() {
+    agent = require('../..').start({ samplingRate: 0 }).private_();
+  });
 
-    beforeEach(function(done) {
-      server = new mongodb.Server({
-        host: 'localhost',
-        port: 27017
+  after(function() {
+    agent.stop();
+  });
+
+  Object.keys(versions).forEach(function(version) {
+    describe(version, function() {
+      var mongodb;
+      var server;
+
+      before(function() {
+        mongodb = require(versions[version]);
       });
-      var sim = {
-        f1: 'sim',
-        f2: true,
-        f3: 42
-      };
-      server.on('connect', function(_server) {
-        server.insert('testdb.simples', [sim], function(err, res) {
+
+      beforeEach(function(done) {
+        server = new mongodb.Server({
+          host: 'localhost',
+          port: 27017
+        });
+        var sim = {
+          f1: 'sim',
+          f2: true,
+          f3: 42
+        };
+        server.on('connect', function(_server) {
+          server.insert('testdb.simples', [sim], function(err, res) {
+            assert.ifError(err);
+            assert.strictEqual(res.result.n, 1);
+            done();
+          });
+        });
+        server.connect();
+      });
+
+      afterEach(function(done) {
+        common.cleanTraces(agent);
+        server.command('testdb.$cmd', {dropDatabase: 1}, function(err, res) {
           assert.ifError(err);
-          assert.strictEqual(res.result.n, 1);
+          assert.strictEqual(res.result.dropped, 'testdb');
+          server.destroy();
           done();
         });
       });
-      server.connect();
-    });
 
-    afterEach(function(done) {
-      common.cleanTraces(agent);
-      server.command('testdb.$cmd', {dropDatabase: 1}, function(err, res) {
-        assert.ifError(err);
-        assert.strictEqual(res.result.dropped, 'testdb');
-        server.destroy();
-        done();
-      });
-    });
-
-    it('should trace an insert', function(done) {
-      var data = {
-        f1: 'val',
-        f2: false,
-        f3: 1729
-      };
-      common.runInTransaction(agent, function(endTransaction) {
-        server.insert('testdb.simples', [data], function(err, res) {
-          endTransaction();
-          assert.ifError(err);
-          assert.strictEqual(res.result.n, 1);
-          var trace = common.getMatchingSpan(
-              agent,
-              mongoPredicate.bind(null, 'mongo-insert'));
-          assert(trace);
-          done();
+      it('should trace an insert', function(done) {
+        var data = {
+          f1: 'val',
+          f2: false,
+          f3: 1729
+        };
+        common.runInTransaction(agent, function(endTransaction) {
+          server.insert('testdb.simples', [data], function(err, res) {
+            endTransaction();
+            assert.ifError(err);
+            assert.strictEqual(res.result.n, 1);
+            var trace = common.getMatchingSpan(
+                agent,
+                mongoPredicate.bind(null, 'mongo-insert'));
+            assert(trace);
+            done();
+          });
         });
       });
-    });
 
-    it('should trace an update', function(done) {
-      common.runInTransaction(agent, function(endTransaction) {
-        server.update('testdb.simples', [{
-          q: {f1: 'sim'},
-          u: {'$set': {f2: false}}
-        }], function(err, res) {
-          endTransaction();
-          assert.ifError(err);
-          assert.strictEqual(res.result.n, 1);
-          var trace = common.getMatchingSpan(
-              agent,
-              mongoPredicate.bind(null, 'mongo-update'));
-          assert(trace);
-          done();
+      it('should trace an update', function(done) {
+        common.runInTransaction(agent, function(endTransaction) {
+          server.update('testdb.simples', [{
+            q: {f1: 'sim'},
+            u: {'$set': {f2: false}}
+          }], function(err, res) {
+            endTransaction();
+            assert.ifError(err);
+            assert.strictEqual(res.result.n, 1);
+            var trace = common.getMatchingSpan(
+                agent,
+                mongoPredicate.bind(null, 'mongo-update'));
+            assert(trace);
+            done();
+          });
         });
       });
-    });
 
-    it('should trace a query', function(done) {
-      common.runInTransaction(agent, function(endTransaction) {
+      it('should trace a query', function(done) {
+        common.runInTransaction(agent, function(endTransaction) {
+          server.cursor('testdb.simples', {
+            find: 'testdb.simples',
+            query: {f1: 'sim'}
+          }).next(function(err, doc) {
+            endTransaction();
+            assert.ifError(err);
+            assert.strictEqual(doc.f3, 42);
+            var trace = common.getMatchingSpan(
+                agent,
+                mongoPredicate.bind(null, 'mongo-cursor'));
+            assert(trace);
+            done();
+          });
+        });
+      });
+
+      it('should trace a remove', function(done) {
+        common.runInTransaction(agent, function(endTransaction) {
+          server.remove('testdb.simples', [{
+            q: {f1: 'sim'},
+            limit: 0
+          }], function(err, res) {
+            endTransaction();
+            assert.ifError(err);
+            assert.strictEqual(res.result.n, 1);
+            var trace = common.getMatchingSpan(
+                agent,
+                mongoPredicate.bind(null, 'mongo-remove'));
+            assert(trace);
+            done();
+          });
+        });
+      });
+
+      it('should trace a command', function(done) {
+        common.runInTransaction(agent, function(endTransaction) {
+          server.command('admin.$cmd', {ismaster: true}, function(err, res) {
+            endTransaction();
+            assert.ifError(err);
+            var trace = common.getMatchingSpan(
+                agent,
+                mongoPredicate.bind(null, 'mongo-comman'));
+            assert(trace);
+            done();
+          });
+        });
+      });
+
+      it('should not break if no parent transaction', function(done) {
         server.cursor('testdb.simples', {
           find: 'testdb.simples',
           query: {f1: 'sim'}
         }).next(function(err, doc) {
-          endTransaction();
           assert.ifError(err);
           assert.strictEqual(doc.f3, 42);
-          var trace = common.getMatchingSpan(
-              agent,
-              mongoPredicate.bind(null, 'mongo-cursor'));
-          assert(trace);
+          assert.strictEqual(common.getTraces(agent).length, 0);
           done();
         });
       });
-    });
 
-    it('should trace a remove', function(done) {
-      common.runInTransaction(agent, function(endTransaction) {
-        server.remove('testdb.simples', [{
-          q: {f1: 'sim'},
-          limit: 0
-        }], function(err, res) {
-          endTransaction();
-          assert.ifError(err);
-          assert.strictEqual(res.result.n, 1);
-          var trace = common.getMatchingSpan(
-              agent,
-              mongoPredicate.bind(null, 'mongo-remove'));
-          assert(trace);
-          done();
-        });
-      });
-    });
-
-    it('should trace a command', function(done) {
-      common.runInTransaction(agent, function(endTransaction) {
-        server.command('admin.$cmd', {ismaster: true}, function(err, res) {
-          endTransaction();
-          assert.ifError(err);
-          var trace = common.getMatchingSpan(
-              agent,
-              mongoPredicate.bind(null, 'mongo-comman'));
-          assert(trace);
-          done();
-        });
-      });
-    });
-
-    it('should not break if no parent transaction', function(done) {
-      server.cursor('testdb.simples', {
-        find: 'testdb.simples',
-        query: {f1: 'sim'}
-      }).next(function(err, doc) {
-        assert.ifError(err);
-        assert.strictEqual(doc.f3, 42);
-        assert.strictEqual(common.getTraces(agent).length, 0);
-        done();
-      });
-    });
-
-    it('should remove trace frames from stack', function(done) {
-      common.runInTransaction(agent, function(endTransaction) {
-        server.cursor('testdb.simples', {
-          find: 'testdb.simples',
-          query: {f1: 'sim'}
-        }).next(function(err, doc) {
-          endTransaction();
-          assert.ifError(err);
-          assert.strictEqual(doc.f3, 42);
-          var trace = common.getMatchingSpan(
-              agent,
-              mongoPredicate.bind(null, 'mongo-cursor'));
-          var labels = trace.labels;
-          var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
-          assert.notStrictEqual(-1,
-            stack.stack_frame[0].method_name.indexOf('next_trace'));
-          done();
+      it('should remove trace frames from stack', function(done) {
+        common.runInTransaction(agent, function(endTransaction) {
+          server.cursor('testdb.simples', {
+            find: 'testdb.simples',
+            query: {f1: 'sim'}
+          }).next(function(err, doc) {
+            endTransaction();
+            assert.ifError(err);
+            assert.strictEqual(doc.f3, 42);
+            var trace = common.getMatchingSpan(
+                agent,
+                mongoPredicate.bind(null, 'mongo-cursor'));
+            var labels = trace.labels;
+            var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+            assert.notStrictEqual(-1,
+              stack.stack_frame[0].method_name.indexOf('next_trace'));
+            done();
+          });
         });
       });
     });
