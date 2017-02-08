@@ -101,26 +101,6 @@ Transaction.prototype.getTraceContext = function() {
 };
 
 /**
- * Creates a child span nested in the underlying root span
- * of this transaction.
- * @param {object} options An object that specifies options for how the child
- * span is created and propogated.
- * @param {string} options.name The name to apply to the child span.
- * @param {?string} options.traceContext The serialized form of an object that
- * contains information about an existing trace context.
- * @param {?number} options.skipFrames The number of stack frames to skip when
- * collecting call stack information for the child span, starting from the top;
- * this should be set to avoid including frames in the plugin. Defaults to 0.
- * @returns A new ChildSpan object.
- */
-Transaction.prototype.createChildSpan = function(options, fn) {
-  options = options || {};
-  var childContext = this.agent_.startSpan(options.name, {},
-    options.skipFrames ? options.skipFrames + 1 : 1);
-  return new ChildSpan(this.agent_, childContext);
-};
-
-/**
  * PluginAPI constructor. Don't call directly - a plugin object will be passed to
  * plugin themselves
  * TODO(kjin): Should be called something else
@@ -212,13 +192,13 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
  * span is created and propogated. @see Transaction.prototype.createChildSpan
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
-PluginAPI.prototype.createChildSpan = function(options, fn) {
+PluginAPI.prototype.createChildSpan = function(options) {
   var transaction = this.getTransaction();
   if (transaction) {
     options = options || {};
-    var childContext = transaction.agent_.startSpan(options.name, {},
+    var childContext = this.agent_.startSpan(options.name, {},
       options.skipFrames ? options.skipFrames + 1 : 1);
-    return new ChildSpan(transaction.agent_, childContext);
+    return new ChildSpan(this.agent_, childContext);
   } else {
     this.logger_.warn(options.name + ': Attempted to create child span ' +
       'without root');
