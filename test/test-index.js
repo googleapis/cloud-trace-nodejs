@@ -22,9 +22,9 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 var assert = require('assert');
-var trace = require('../..');
-var cls = require('../../src/cls.js');
-var TraceLabels = require('../../src/trace-labels.js');
+var trace = require('..');
+var cls = require('../src/cls.js');
+var TraceLabels = require('../src/trace-labels.js');
 
 describe('index.js', function() {
   var agent;
@@ -115,7 +115,7 @@ describe('index.js', function() {
   });
 
   it('should wrap/unwrap express on start/stop', function() {
-    var express = require('../hooks/fixtures/express4');
+    var express = require('./hooks/fixtures/express4');
     var patchedMethods = require('methods');
     patchedMethods.push('use', 'route', 'param', 'all');
     patchedMethods.forEach(function(method) {
@@ -124,12 +124,12 @@ describe('index.js', function() {
   });
 
   it('should wrap/unwrap hapi on start/stop', function() {
-    var hapi = require('../hooks/fixtures/hapi8');
+    var hapi = require('./hooks/fixtures/hapi8');
     wrapTest(agent, hapi.Server.prototype, 'connection');
   });
 
   it('should wrap/unwrap mongodb-core on start/stop', function() {
-    var mongo = require('../hooks/fixtures/mongodb-core1');
+    var mongo = require('./hooks/fixtures/mongodb-core1');
     wrapTest(agent, mongo.Server.prototype, 'command');
     wrapTest(agent, mongo.Server.prototype, 'insert');
     wrapTest(agent, mongo.Server.prototype, 'update');
@@ -138,13 +138,13 @@ describe('index.js', function() {
   });
 
   it('should wrap/unwrap redis on start/stop', function() {
-    var redis = require('../hooks/fixtures/redis0.12');
+    var redis = require('./hooks/fixtures/redis0.12');
     wrapTest(agent, redis.RedisClient.prototype, 'send_command');
     wrapTest(agent, redis, 'createClient');
   });
 
   it('should wrap/unwrap restify on start/stop', function() {
-    var restify = require('../hooks/fixtures/restify4');
+    var restify = require('./hooks/fixtures/restify4');
     wrapTest(agent, restify, 'createServer');
   });
 

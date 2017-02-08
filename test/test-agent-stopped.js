@@ -24,7 +24,7 @@ process.env.GCLOUD_PROJECT = 0;
 describe('test-agent-stopped', function() {
   var agent;
   before(function() {
-    agent = require('../..').start();
+    agent = require('..').start();
   });
 
   after(function() {
@@ -33,7 +33,7 @@ describe('test-agent-stopped', function() {
 
   describe('express', function() {
     it('should not break if no project number is found', function(done) {
-      var app = require('../hooks/fixtures/express4')();
+      var app = require('./hooks/fixtures/express4')();
       app.get('/', function (req, res) {
         res.send('hi');
       });
@@ -53,7 +53,7 @@ describe('test-agent-stopped', function() {
 
   describe('hapi', function() {
     it('should not break if no project number is found', function(done) {
-      var hapi = require('../hooks/fixtures/hapi8');
+      var hapi = require('./hooks/fixtures/hapi8');
       var server = new hapi.Server();
       server.connection({ port: 8081 });
       server.route({
@@ -79,7 +79,7 @@ describe('test-agent-stopped', function() {
 
   describe('restify', function() {
     it('should not break if no project number is found', function(done) {
-      var restify = require('../hooks/fixtures/restify4');
+      var restify = require('./hooks/fixtures/restify4');
       var server = restify.createServer();
       server.get('/', function (req, res, next) {
         res.writeHead(200, {

@@ -19,7 +19,7 @@
 var proxyquire  = require('proxyquire');
 var assert = require('assert');
 var nock = require('nock');
-var traceLabels = require('../../src/trace-labels.js');
+var traceLabels = require('../src/trace-labels.js');
 
 nock.disableNetConnect();
 
@@ -39,7 +39,7 @@ describe('agent interaction with metadata service', function() {
         }, callback);
       }
     });
-    trace = require('../..');
+    trace = require('..');
   });
 
   afterEach(function() {

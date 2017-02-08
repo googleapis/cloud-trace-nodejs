@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var common = require('../hooks/common.js');
+var common = require('./hooks/common.js');
 var nock = require('nock');
 var assert = require('assert');
 var path = require('path');
@@ -25,7 +25,7 @@ nock.disableNetConnect();
 describe('test-trace-gcloud', function() {
   var agent;
   before(function() {
-    agent = require('../..').start({ samplingRate: 0,
+    agent = require('..').start({ samplingRate: 0,
       enhancedDatabaseReporting: true }).private_();
   });
 
@@ -45,9 +45,9 @@ describe('test-trace-gcloud', function() {
     // flakiness.
     this.timeout(20000);
     process.env.GOOGLE_APPLICATION_CREDENTIALS =
-        path.join(__dirname, '..', 'fixtures', 'gcloud-credentials.json');
+        path.join(__dirname, 'fixtures', 'gcloud-credentials.json');
     common.runInTransaction(agent, function(endTransaction) {
-      var gcloud = require('../hooks/fixtures/google-cloud0.44');
+      var gcloud = require('./hooks/fixtures/google-cloud0.44');
       var ds = gcloud.datastore();
       var key = ds.key(['bad', 'key']);
       ds.get(key, function(err, entity) {
