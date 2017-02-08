@@ -121,23 +121,6 @@ Transaction.prototype.createChildSpan = function(options, fn) {
 };
 
 /**
- * Runs the given function in a child span, passing it an object that
- * exposes an interface for adding labels and closing the span.
- * @param {object} options An object that specifies options for how the child
- * span is created and propogated. @see Transaction.prototype.createChildSpan
- * @param {function(ChildSpan)} fn A function that will be called exactly
- * once, with a ChildSpan object exposing an interface operating on the child
- * span.
- * @returns The return value of calling fn.
- */
-Transaction.prototype.runInChildSpan = function(options, fn) {
-  options = options || {};
-  var childContext = this.agent_.startSpan(options.name, {},
-    options.skipFrames ? options.skipFrames + 1 : 1);
-  return fn(new ChildSpan(this.agent_, childContext));
-};
-
-/**
  * PluginAPI constructor. Don't call directly - a plugin object will be passed to
  * plugin themselves
  * TODO(kjin): Should be called something else
@@ -240,31 +223,6 @@ PluginAPI.prototype.createChildSpan = function(options, fn) {
     this.logger_.warn(options.name + ': Attempted to create child span ' +
       'without root');
     return null;
-  }
-};
-
-/**
- * Convenience method which obtains a Transaction object with getTransaction()
- * and calls its runInChildSpan function on the given arguments. If there is
- * no current Transaction object, the provided function will be called with
- * null as an argument.
- * @param {object} options An object that specifies options for how the child
- * span is created and propogated. @see Transaction.prototype.runInChildSpan
- * @param {function(?Transaction)} fn A function that will be called exactly
- * once. @see Transaction.prototype.runInChildSpan
- * @returns The return value of calling fn.
- */
-PluginAPI.prototype.runInChildSpan = function(options, fn) {
-  var transaction = this.getTransaction();
-  if (transaction) {
-    options = options || {};
-    var childContext = transaction.agent_.startSpan(options.name, {},
-      options.skipFrames ? options.skipFrames + 1 : 1);
-    return fn(new ChildSpan(transaction.agent_, childContext));
-  } else {
-    this.logger_.warn(options.name + ': Attempted to run in child span ' +
-      'without root');
-    return fn(null);
   }
 };
 
