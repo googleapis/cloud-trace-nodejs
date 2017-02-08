@@ -112,7 +112,7 @@ function activate(agent) {
       if (!instrumentation.patches[moduleRoot]) {
         instrumentation.patches[moduleRoot] = {};
       }
-      var patchSet = instrumentation.patches[moduleRoot];
+      var patchSet = instrumentation.patches[moduleRoot][version];
       if (!patchSet) {
         // Load the plugin object
         var plugin = originalModuleLoad(instrumentation.file, module, false);
@@ -130,7 +130,7 @@ function activate(agent) {
           logger.warn(moduleRoot + ': version ' + version + ' not supported ' + 
             'by plugin.');
         }
-        instrumentation.patches[moduleRoot] = patchSet;
+        instrumentation.patches[moduleRoot][version] = patchSet;
       }
       Object.keys(patchSet).forEach(function(file) {
         var patch = patchSet[file];
@@ -144,7 +144,6 @@ function activate(agent) {
         if (patch.intercept) {
           patch.module = patch.intercept(patch.module, api);
         }
-        patch.active = true;
       });
       var rootPatch = patchSet[''];
       if (rootPatch && rootPatch.intercept) {
@@ -154,39 +153,21 @@ function activate(agent) {
       }
     }
 
-    function moduleAlreadyPatched(instrumentation, moduleRoot) {
-      if (!instrumentation.patches[moduleRoot]) {
-        return false;
-      }
-      var modulePatch = instrumentation.patches[moduleRoot];
-      return !!modulePatch && Object.keys(modulePatch).every(function(curr) {
-        return modulePatch[curr].active;
-      }, true);
-    }
-
-    // If this is a reactivation, we may have a cached list of modules from last
-    // time that we need to go and patch pro-actively.
-    for (var moduleName in plugins) {
-      var instrumentation = plugins[moduleName];
-      for (var moduleRoot in instrumentation.patches) {
-        var modulePatch = instrumentation.patches[moduleRoot];
-        if (modulePatch) {
-          loadAndPatch(instrumentation, moduleRoot, null);
-        }
-      }
+    function moduleAlreadyPatched(instrumentation, moduleRoot, version) {
+      return instrumentation.patches[moduleRoot] &&
+        instrumentation.patches[moduleRoot][version];
     }
 
     // Future requires get patched as they get loaded.
     return function Module_load(request, parent, isMain) {
       var instrumentation = plugins[request];
 
-      if (instrumentation &&
-          agent.config().excludedHooks.indexOf(request) === -1) {
+      if (instrumentation) {
         var moduleRoot = findModulePath(request, parent);
-        if (moduleAlreadyPatched(instrumentation, moduleRoot)) {
+        var moduleVersion = findModuleVersion(moduleRoot, originalModuleLoad);
+        if (moduleAlreadyPatched(instrumentation, moduleRoot, moduleVersion)) {
           return originalModuleLoad.apply(this, arguments);
         }
-        var moduleVersion = findModuleVersion(moduleRoot, originalModuleLoad);
         logger.info('Patching ' + request + ' at version ' + moduleVersion);
         var patchedRoot = loadAndPatch(instrumentation, moduleRoot,
           moduleVersion);
