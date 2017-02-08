@@ -17,7 +17,6 @@
 'use strict';
 
 var shimmer = require('shimmer');
-var SpanData = require('../span-data.js');
 
 function createClientWrap(api, createClient) {
   return function createClientTrace() {
@@ -81,19 +80,10 @@ function startSpanFromArguments(api, cmd, args, cb, send_command) {
   return send_command(cmd, args, wrapCallback(api, span, cb));
 }
 
-function validRootSpan(root, cmd, args) {
-  if (!root) {
-    return false;
-  } else if (root === SpanData.nullSpan) {
-    return false;
-  }
-  return true;
-}
-
 function internalSendCommandWrap(api, internal_send_command) {
   return function internal_send_command_trace(cmd, args, cb) {
     var root = api.getTransaction();
-    if (!validRootSpan(root, cmd, args)) {
+    if (!root) {
       return internal_send_command.call(this, cmd, args, cb);
     }
     if (arguments.length === 1 && typeof cmd === 'object') {
@@ -108,7 +98,7 @@ function internalSendCommandWrap(api, internal_send_command) {
 function sendCommandWrap(api, send_command) {
   return function send_command_trace(cmd, args, cb) {
     var root = api.getTransaction();
-    if (!validRootSpan(root, cmd, args)) {
+    if (!root) {
       return send_command.call(this, cmd, args, cb);
     }
     return startSpanFromArguments(api, cmd, args, cb, send_command.bind(this));
