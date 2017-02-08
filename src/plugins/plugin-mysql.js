@@ -1,34 +1,45 @@
+/**
+ * Copyright 2017 Google Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 'use strict';
 
-var cls = require('../../../src/cls.js');
 var shimmer = require('shimmer');
-var SpanData = require('../../../src/span-data.js');
 
 var SUPPORTED_VERSIONS = '^2.9.x';
 
 function createQueryWrap(api, createQuery) {
   return function createQuery_trace(sql, values, cb) {
-    var root = cls.getRootContext();
-    if (!root) {
-      return createQuery.apply(this, arguments);
-    } else if (root === SpanData.nullSpan) {
-      return createQuery.apply(this, arguments);
-    }
-    var span = api.startSpan('mysql-query');
+    var span = api.createChildSpan({
+      name: 'mysql-query'
+    });
     var query = createQuery.apply(this, arguments);
-    if (api.enhancedDatabaseReportingEnabled()) {
-      span.addLabel('sql', query.sql);
-      if (query.values) {
-        span.addLabel('values', query.values);
+    if (span) {
+      if (api.enhancedDatabaseReportingEnabled()) {
+        span.addLabel('sql', query.sql);
+        if (query.values) {
+          span.addLabel('values', query.values);
+        }
       }
-    }
-    cls.getNamespace().bindEmitter(query);
-    if (query._callback) {
-      query._callback = wrapCallback(api, span, query._callback);
-    } else {
-      query.on('end', function() {
-        api.endSpan(span);
-      });
+      api.wrapEmitter(query);
+      if (query._callback) {
+        query._callback = wrapCallback(api, span, query._callback);
+      } else {
+        query.on('end', function() {
+          span.endSpan();
+        });
+      }
     }
     return query;
   };
@@ -45,21 +56,19 @@ function wrapCallback(api, span, done) {
         labels.result = res;
       }
     }
-    api.endSpan(span, labels);
+    span.endSpan(labels);
     if (done) {
       done(err, res);
     }
   };
-  return cls.getNamespace().bind(fn);
+  return api.wrap(fn);
 }
 
-function wrapGetConnection(getConnection) {
+function wrapGetConnection(api, getConnection) {
   return function getConnection_trace(cb) {
-    return getConnection.call(this, cls.getNamespace().bind(cb));
+    return getConnection.call(this, api.wrap(cb));
   };
 }
-
-////////////////////////////////////////////////////////////////////////////////
 
 module.exports = [
   {
@@ -73,7 +82,8 @@ module.exports = [
     file: 'lib/Pool.js',
     versions: SUPPORTED_VERSIONS,
     patch: function(Pool, api) {
-      shimmer.wrap(Pool.prototype, 'getConnection', wrapGetConnection);
+      shimmer.wrap(Pool.prototype, 'getConnection',
+                   wrapGetConnection.bind(null, api));
     }
   }
 ];
