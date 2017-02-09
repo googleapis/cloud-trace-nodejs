@@ -83,8 +83,9 @@ function activate(agent) {
         patchSet = {};
         plugin.forEach(function(patch) {
           if (!patch.versions || semver.satisfies(version, patch.versions)) {
-            patchSet[patch.file] = {
-              file: patch.file || '',
+            var file = patch.file || '';
+            patchSet[file] = {
+              file: file,
               patch: patch.patch,
               intercept: patch.intercept
             };
