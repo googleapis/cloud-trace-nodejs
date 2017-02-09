@@ -18,50 +18,14 @@
 var Module = require('module');
 var shimmer = require('shimmer');
 var path = require('path');
-var fs = require('fs');
 var semver = require('semver');
+var util = require('./util.js');
 var PluginAPI = require('./trace-plugin-interface.js');
 
 var plugins = Object.create(null);
 var activated = false;
 
 var logger;
-
-/**
- * Determines the path at which the requested module will be loaded given
- * the provided parent module.
- *
- * @param {string} request The name of the module to be loaded.
- * @param {object} parent The module into which the requested module will be loaded.
- */
-function findModulePath(request, parent) {
-  var mainScriptDir = path.dirname(Module._resolveFilename(request, parent));
-  var resolvedModule = Module._resolveLookupPaths(request, parent);
-  var paths = resolvedModule[1];
-  for (var i = 0, PL = paths.length; i < PL; i++) {
-    if (mainScriptDir.indexOf(paths[i]) === 0) {
-      return path.join(paths[i], request.replace('/', path.sep));
-    }
-  }
-  return null;
-}
-
-/**
- * Determines the version of the module located at `modulePath`.
- *
- * @param {?string} modulePath The absolute path to the root directory of the
- *    module being loaded. This may be null if we are loading an internal module
- *    such as http.
- */
-function findModuleVersion(modulePath, load) {
-  if (modulePath) {
-    var pjson = path.join(modulePath, 'package.json');
-    if (fs.existsSync(pjson)) {
-      return load(pjson).version;
-    }
-  }
-  return process.version;
-}
 
 function checkLoadedModules() {
   for (var moduleName in plugins) {
@@ -163,8 +127,8 @@ function activate(agent) {
       var instrumentation = plugins[request];
 
       if (instrumentation) {
-        var moduleRoot = findModulePath(request, parent);
-        var moduleVersion = findModuleVersion(moduleRoot, originalModuleLoad);
+        var moduleRoot = util.findModulePath(request, parent);
+        var moduleVersion = util.findModuleVersion(moduleRoot, originalModuleLoad);
         if (moduleAlreadyPatched(instrumentation, moduleRoot, moduleVersion)) {
           return originalModuleLoad.apply(this, arguments);
         }
@@ -190,7 +154,5 @@ function deactivate() {
 
 module.exports = {
   activate: activate,
-  deactivate: deactivate,
-  findModulePath: findModulePath,
-  findModuleVersion: findModuleVersion
+  deactivate: deactivate
 };
