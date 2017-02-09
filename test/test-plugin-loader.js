@@ -35,7 +35,7 @@ var fakeModules = {};
 // being "exported" by this module. In addition, providing version makes it
 // accessible by calling findModuleVersion.
 function addModuleMock(moduleName, version, mock) {
-  fakeModules[moduleName] = {
+  fakeModules[moduleName.replace('/', path.sep)] = {
     exports: mock,
     version: version
   };
@@ -68,8 +68,8 @@ describe('Trace Plugin Loader', function() {
     // real thing
     shimmer.wrap(Module, '_load', function(originalModuleLoad) {
       return function wrappedModuleLoad(modulePath) {
-        if (fakeModules[modulePath]) {
-          return fakeModules[modulePath].exports;
+        if (fakeModules[modulePath.replace('/', path.sep)]) {
+          return fakeModules[modulePath.replace('/', path.sep)].exports;
         }
         return originalModuleLoad.apply(this, arguments);
       };
@@ -79,7 +79,7 @@ describe('Trace Plugin Loader', function() {
     pluginLoader = proxyquire('../src/trace-plugin-loader.js', {
       './util.js': {
         findModulePath: function(request) {
-          return request;
+          return request.replace('/', path.sep);
         },
         findModuleVersion: function(modulePath) {
           return fakeModules[modulePath].version;
@@ -209,12 +209,12 @@ describe('Trace Plugin Loader', function() {
           require('module-g/predicate').get() + '.';
       }
     });
-    addModuleMock(path.join('module-g', 'subject'), '', {
+    addModuleMock('module-g/subject', '', {
       get: function() {
         return 'bad tests';
       }
     });
-    addModuleMock(path.join('module-g', 'predicate'), '', {
+    addModuleMock('module-g/predicate', '', {
       get: function() {
         return 'don\'t make sense';
       }
