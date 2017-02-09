@@ -61,22 +61,6 @@ function TraceAgent(config, logger) {
 }
 
 /**
- * Halts this agent and unpatches any patched modules.
- */
-TraceAgent.prototype.stop = function() {
-  hooks.deactivate();
-  pluginLoader.deactivate();
-  cls.destroyNamespace();
-  this.traceWriter.stop();
-  this.namespace = null;
-  traceAgent = null;
-  if (this.config_.onUncaughtException !== 'ignore') {
-    process.removeListener('uncaughtException', this.unhandledException);
-  }
-  this.logger.info('trace agent deactivated');
-};
-
-/**
  * Returns the agent configuration
  * @return {object} configuration
  */
@@ -304,7 +288,7 @@ TraceAgent.prototype.generateTraceContext = function(spanData, traced) {
 
 module.exports = {
   get: function(config, logger) {
-    if (traceAgent) {
+    if (traceAgent && !config.forceNewAgent_) {
       if (!isEqual(config, traceAgent.config_)) {
         traceAgent.logger.warn('New configuration does not match configuration' +
           'of existing agent. The old configuration will be used.\nNew: ' +

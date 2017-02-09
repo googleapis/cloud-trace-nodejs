@@ -34,7 +34,8 @@ describe('test-config-credentials', function() {
     var config = {
       bufferSize: 2,
       samplingRate: 0,
-      keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json')
+      keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
+      forceNewAgent_: true
     };
     var agent = require('..').start(config);
     nock.disableNetConnect();
@@ -53,7 +54,6 @@ describe('test-config-credentials', function() {
     nock('https://cloudtrace.googleapis.com')
       .intercept('/v1/projects/0/traces', 'PATCH', function() {
         scope.done();
-        agent.stop();
         setImmediate(done);
         return true;
       }).reply(200);
@@ -66,7 +66,8 @@ describe('test-config-credentials', function() {
     var config = {
       bufferSize: 2,
       samplingRate: 0,
-      credentials: require('./fixtures/gcloud-credentials.json')
+      credentials: require('./fixtures/gcloud-credentials.json'),
+      forceNewAgent_: true
     };
     var agent = require('..').start(config);
     nock.disableNetConnect();
@@ -85,7 +86,6 @@ describe('test-config-credentials', function() {
     nock('https://cloudtrace.googleapis.com')
       .intercept('/v1/projects/0/traces', 'PATCH', function() {
         scope.done();
-        agent.stop();
         setImmediate(done);
         return true;
       }).reply(200);
@@ -105,7 +105,8 @@ describe('test-config-credentials', function() {
       bufferSize: 2,
       samplingRate: 0,
       credentials: correctCredentials,
-      keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json')
+      keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
+      forceNewAgent_: true
     };
     var agent = require('..').start(config);
     nock.disableNetConnect();
@@ -114,7 +115,6 @@ describe('test-config-credentials', function() {
         assert.equal(body.client_id, correctCredentials.client_id);
         assert.equal(body.client_secret, correctCredentials.client_secret);
         assert.equal(body.refresh_token, correctCredentials.refresh_token);
-        agent.stop();
         return true;
       }).reply(200, {
         refresh_token: 'hello',
@@ -125,7 +125,6 @@ describe('test-config-credentials', function() {
     nock('https://cloudtrace.googleapis.com')
       .intercept('/v1/projects/0/traces', 'PATCH', function() {
         scope.done();
-        agent.stop();
         setImmediate(done);
         return true;
       }).reply(200);

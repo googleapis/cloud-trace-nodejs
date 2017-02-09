@@ -224,7 +224,6 @@ Object.keys(versions).forEach(function(version) {
 
     after(function() {
       server.forceShutdown();
-      agent.stop();
     });
 
     afterEach(function() {

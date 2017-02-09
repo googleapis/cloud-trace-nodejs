@@ -27,7 +27,6 @@ var constants = require('./src/constants.js');
 var gcpMetadata = require('gcp-metadata');
 var semver = require('semver');
 var traceUtil = require('./src/util.js');
-var SpanData = require('./src/span-data.js');
 var util = require('util');
 
 var modulesLoadedBeforeTrace = [];
@@ -42,33 +41,8 @@ for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
 
 var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
 
-/**
- * Phantom implementation of the trace agent. This allows API users to decouple
- * the enable/disable logic from the calls to the tracing API. The phantom API
- * has a lower overhead than isEnabled checks inside the API functions.
- * @private
- */
-var phantomTraceAgent = {
-  startSpan: function() { return SpanData.nullSpan; },
-  endSpan: function(spanData) { spanData.close(); },
-  runInSpan: function(name, labels, fn) {
-    if (typeof(labels) === 'function') {
-      fn = labels;
-    }
-    fn(function() {});
-  },
-  runInRootSpan: function(name, labels, fn) {
-    if (typeof(labels) === 'function') {
-      fn = labels;
-    }
-    fn(function() {});
-  },
-  setTransactionName: function() {},
-  addTransactionLabel: function() {}
-};
-
 /** @private */
-var agent = phantomTraceAgent;
+var agent = null;
 
 var initConfig = function(projectConfig) {
   var config = {};
@@ -95,7 +69,8 @@ var initConfig = function(projectConfig) {
  */
 var publicAgent = {
   isActive: function() {
-    return agent !== phantomTraceAgent;
+    // TODO: remove
+    return !!agent;
   },
 
   startSpan: function(name, labels) {
@@ -186,12 +161,9 @@ var publicAgent = {
           }
         }
         if (err) {
-          // Fatal error. Disable the agent.
           logger.error('Unable to acquire the project number from metadata ' +
             'service. Please provide a valid project number as an env. ' +
-            'variable, or through config.projectId passed to start(). ' +
-            'Disabling trace agent. ' + err);
-          publicAgent.stop();
+            'variable, or through config.projectId passed to start(). ' + err);
           return;
         }
         config.projectId = projectId;
@@ -211,13 +183,6 @@ var publicAgent = {
       return this;
     }
     throw new Error('The agent must be initialized by calling start.');
-  },
-
-  stop: function() {
-    if (this.isActive()) {
-      agent.stop();
-      agent = phantomTraceAgent;
-    }
   },
 
   /**

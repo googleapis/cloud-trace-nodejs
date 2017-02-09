@@ -26,10 +26,6 @@ describe('test-hooks-no-project-num', function(){
     agent = require('..').start();
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   describe('should not break without project num', function() {
     before(function() {
       // Mute stderr to satiate appveyor

@@ -31,10 +31,6 @@ if (semver.satisfies(process.version, '>=4')) {
       Hapi = require('./hooks/fixtures/hapi13');
     });
 
-    after(function() {
-      agent.stop();
-    });
-
     it('should work with connection pool access', function(done) {
       var server = new Hapi.Server();
       server.connection({ port: common.serverPort });

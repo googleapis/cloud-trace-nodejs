@@ -44,10 +44,6 @@ describe('hapi', function() {
     agent = require('../..').start({ samplingRate: 0 }).private_();
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   Object.keys(versions).forEach(function(version) {
     if (version.substring(4) > 10 && semver.satisfies(process.version, '<4')) {
       // v11 started using ES6 features (const)

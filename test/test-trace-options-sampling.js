@@ -32,10 +32,6 @@ describe('express + mongo with trace options header + sampling', function() {
     express = require('./hooks/fixtures/express4');
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   it('should trace when enabled', function(done) {
     var app = express();
     app.get('/', function (req, res) {

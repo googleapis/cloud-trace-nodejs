@@ -29,10 +29,6 @@ describe('test-ignore-urls', function() {
     express = require('./hooks/fixtures/express4');
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   it('should not trace ignored urls', function(done) {
     var app = express();
     app.get('/test', function (req, res) {

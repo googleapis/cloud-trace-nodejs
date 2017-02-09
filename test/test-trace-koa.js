@@ -36,10 +36,6 @@ describe('test-trace-koa', function() {
     server.close();
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   it('should accurately measure get time, get', function(done) {
     var app = koa();
     app.use(function* () {

@@ -23,14 +23,12 @@ var trace = require('..');
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_TRACE_LOGLEVEL', function() {
-    var agent = trace.start();
+    var agent = trace.start({forceNewAgent_: true});
     assert.equal(agent.private_().config_.logLevel, 4);
-    agent.stop();
   });
 
   it('should prefer env to config', function() {
-    var agent = trace.start({logLevel: 2});
+    var agent = trace.start({logLevel: 2, forceNewAgent_: true});
     assert.equal(agent.private_().config_.logLevel, 4);
-    agent.stop();
   });
 });

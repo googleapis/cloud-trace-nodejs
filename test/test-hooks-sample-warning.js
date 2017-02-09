@@ -34,10 +34,6 @@ describe('express + dbs', function() {
     agent = require('..').start({ samplingRate: 0 }).private_();
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   beforeEach(function() {
     oldDebug = agent.logger.debug;
     var newDebug = function(error) {

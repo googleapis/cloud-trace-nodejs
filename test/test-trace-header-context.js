@@ -29,10 +29,6 @@ describe('test-trace-header-context', function() {
     express = require('./hooks/fixtures/express4');
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   afterEach(function() {
     // TODO: Investigate why this is needed
     cls.destroyNamespace();

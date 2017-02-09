@@ -29,22 +29,15 @@ var TraceLabels = require('../src/trace-labels.js');
 describe('index.js', function() {
   var agent;
   beforeEach(function() {
-    agent = trace.start();
+    agent = trace.start({ forceNewAgent_: true });
   });
 
-  afterEach(function(){
-    agent.stop();
+  afterEach(function() {
+    agent.private_().traceWriter.buffer_ = [];
   });
 
   it('should get the agent with `Trace.get`', function() {
     assert.strictEqual(agent, trace.get());
-  });
-
-  it('should throw an error if `get` is called on an inactive agent',
-    function() {
-      agent.stop();
-      assert.throws(agent.get, Error);
-      assert.throws(trace.get, Error);
   });
 
   it('should throw an error if `start` is called on an active agent',
@@ -52,50 +45,11 @@ describe('index.js', function() {
       assert.throws(agent.start, Error);
       assert.throws(trace.start, Error);
   });
-
-  it('can be allowed to let `start` be called multiple times ' +
-     'without a call to `stop`',
-     function() {
-       agent.stop();
-       // If the disabling of the start check failed, the following
-       // line will throw an error
-       agent.start({
-         forceNewAgent_: true
-       });
-       agent.start({
-         forceNewAgent_: true
-       });
-     }
-  );
-
-  it('should report if it is active', function() {
-    assert.ok(agent.isActive());
-    agent.stop();
-    assert.ok(!agent.isActive());
-  });
-
-  it('should be harmless to stop before a start', function() {
-    agent.stop();
-    agent.stop();
-    agent.stop();
-  });
-
+  
   function wrapTest(agent, nodule, property) {
-    agent.stop(); // harmless to stop before a start.
-    assert(!nodule[property].__unwrap,
-      property + ' already wrapped before start');
-    agent = trace.start();
+    agent = trace.start({ forceNewAgent_: true });
     assert(nodule[property].__unwrap,
       property + ' should get wrapped on start');
-    agent.stop();
-    assert(!nodule[property].__unwrap,
-      property + ' should get unwrapped on stop');
-    agent = trace.start();
-    assert(nodule[property].__unwrap,
-      property + ' should get wrapped on start');
-    agent.stop();
-    assert(!nodule[property].__unwrap,
-      property + ' should get unwrapped on stop');
   }
 
   it('should wrap/unwrap module._load on start/stop', function() {
@@ -146,38 +100,8 @@ describe('index.js', function() {
     wrapTest(agent, restify, 'createServer');
   });
 
-  it('should have equivalent enabled and disabled structure', function() {
-    assert.equal(typeof agent, 'object');
-    assert.equal(typeof agent.startSpan, 'function');
-    assert.equal(typeof agent.endSpan, 'function');
-    assert.equal(typeof agent.runInSpan, 'function');
-    assert.equal(typeof agent.runInRootSpan, 'function');
-    assert.equal(typeof agent.setTransactionName, 'function');
-    assert.equal(typeof agent.addTransactionLabel, 'function');
-    agent.stop();
-    assert.equal(typeof agent, 'object');
-    assert.equal(typeof agent.startSpan, 'function');
-    assert.equal(typeof agent.endSpan, 'function');
-    assert.equal(typeof agent.runInSpan, 'function');
-    assert.equal(typeof agent.runInRootSpan, 'function');
-    assert.equal(typeof agent.setTransactionName, 'function');
-    assert.equal(typeof agent.addTransactionLabel, 'function');
-  });
-
   it('should return the initialized agent on get', function() {
     assert.equal(agent.get(), agent);
-  });
-
-  it('should allow start, end, runIn span calls when disabled', function() {
-    agent.stop();
-    var span = agent.startSpan();
-    agent.endSpan(span);
-    assert(span);
-    var reached = false;
-    agent.runInSpan('custom', function() {
-      reached = true;
-    });
-    assert(reached);
   });
 
   it('should produce real spans when enabled', function() {

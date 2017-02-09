@@ -34,14 +34,13 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
                 .get('/computeMetadata/v1/instance/id').reply(200)
                 .get('/computeMetadata/v1/project/project-id').reply(200);
-    var agent = require('..').start();
+    var agent = require('..').start({forceNewAgent_: true});
     require('http'); // Must require http to force patching of the module
     var oldDebug = agent.private_().logger.debug;
     agent.private_().logger.debug = newDebug;
     setTimeout(function() {
       agent.private_().logger.debug = oldDebug;
       scope.done();
-      agent.stop();
       done();
     }, 200); // Need to wait for metadata access attempt
   });
@@ -53,7 +52,11 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/instance/id').reply(200);
     var apiScope = nock('https://cloudtrace.googleapis.com')
                 .patch('/v1/projects/0/traces').reply(200);
-    var agent = require('..').start({ projectId: '0', bufferSize: 1 });
+    var agent = require('..').start({
+      projectId: '0',
+      bufferSize: 1,
+      forceNewAgent_: true
+    });
     agent.private_().traceWriter.request_ = request;
     require('http'); // Must require http to force patching of the module
     var oldDebug = agent.private_().logger.debug;
@@ -65,7 +68,6 @@ describe('test-no-self-tracing', function() {
         agent.private_().logger.debug = oldDebug;
         metadataScope.done();
         apiScope.done();
-        agent.stop();
         done();
       }, 200); // Need to wait for publish attempt
     });

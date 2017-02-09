@@ -45,10 +45,6 @@ describe('test-trace-mongoose', function() {
     Simple = mongoose.model('Simple', simpleSchema);
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   beforeEach(function(done) {
     var sim = new Simple({
       f1: 'sim',

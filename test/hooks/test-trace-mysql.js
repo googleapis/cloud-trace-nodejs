@@ -43,10 +43,6 @@ describe('test-trace-mysql', function() {
     });
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   beforeEach(function(done) {
     pool.getConnection(function(err, conn) {
       assert(!err, 'Skipping: Failed to connect to mysql.');

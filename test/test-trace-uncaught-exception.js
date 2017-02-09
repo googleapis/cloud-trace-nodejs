@@ -55,9 +55,9 @@ describe('tracewriter publishing', function() {
         }).reply(200);
     process.on('uncaughtException', function() {
       setTimeout(function() {
-        assert.equal(process.listeners('uncaughtException').length, 2);
-        agent.stop();
-        assert.equal(process.listeners('uncaughtException').length, 1);
+        var numListeners = process.listeners('uncaughtException').length;
+        process.removeAllListeners('uncaughtException');
+        assert.equal(numListeners, 2);
         scope.done();
         done();
       }, 20);
