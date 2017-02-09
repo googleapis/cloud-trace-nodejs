@@ -119,18 +119,18 @@ describe('Trace Plugin Loader', function() {
       'module-a': 'module-a-plugin',
       'module-b': 'module-b-plugin'
     }));
-    assert.deepStrictEqual(patched, [],
+    assert.deepEqual(patched, [],
       'No patches are initially loaded');
     require('module-a');
-    assert.deepStrictEqual(patched, ['a'],
+    assert.deepEqual(patched, ['a'],
       'Patches are applied when the relevant patch is loaded');
     assert(logs.info.indexOf('Patching module-a at version 1.0.0') !== -1,
       'Info log is emitted when a module if patched');
     require('module-a');
-    assert.deepStrictEqual(patched, ['a'],
+    assert.deepEqual(patched, ['a'],
       'Patches aren\'t applied twice');
     require('module-b');
-    assert.deepStrictEqual(patched, ['a', 'b'],
+    assert.deepEqual(patched, ['a', 'b'],
       'Multiple plugins can be loaded, and file can be set to an empty string');
   });
 
@@ -187,12 +187,12 @@ describe('Trace Plugin Loader', function() {
       'module-e': 'module-e-plugin',
       'module-f': 'module-f-plugin'
     }));
-    assert.deepStrictEqual(patched, []);
+    assert.deepEqual(patched, []);
     require('module-e');
-    assert.deepStrictEqual(patched, ['e-1.x'],
+    assert.deepEqual(patched, ['e-1.x'],
       'Only patches with a correct semver condition are loaded');
     require('module-f');
-    assert.deepStrictEqual(patched, ['e-1.x'],
+    assert.deepEqual(patched, ['e-1.x'],
       'No patches are loaded if the module version isn\'t supported at all');
     assert(logs.warn.indexOf('module-f: version 2.0.0 not supported') !== -1,
       'A warning is printed if the module version isn\'t supported at all');
