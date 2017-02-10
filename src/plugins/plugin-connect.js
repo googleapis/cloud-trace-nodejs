@@ -17,16 +17,13 @@
 
 var urlParse = require('url').parse;
 
-var constants = require('../constants.js');
-var TraceLabels = require('../trace-labels.js');
-
 var SUPPORTED_VERSIONS = '3.x';
 
 function middleware(api, req, res, next) {
   var originalEnd = res.end;
   var options = {
     name: urlParse(req.originalUrl).pathname,
-    traceContext: req.headers[constants.TRACE_CONTEXT_HEADER_NAME.toLowerCase()],
+    traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME.toLowerCase()],
     skipFrames: 3
   };
   api.runInRootSpan(options, function(transaction) {
@@ -44,13 +41,13 @@ function middleware(api, req, res, next) {
 
     // we use the path part of the url as the span name and add the full
     // url as a label
-    transaction.addLabel(TraceLabels.HTTP_METHOD_LABEL_KEY, req.method);
-    transaction.addLabel(TraceLabels.HTTP_URL_LABEL_KEY, url);
-    transaction.addLabel(TraceLabels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+    transaction.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
+    transaction.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
+    transaction.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
     var context = transaction.getTraceContext();
     if (context) {
-      res.setHeader(constants.TRACE_CONTEXT_HEADER_NAME, context);
+      res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
     } else {
       // TODO: Determine if this message is still needed
       // agent.logger.warn('Connect: Attempted to generate trace context for nullSpan');
@@ -67,7 +64,7 @@ function middleware(api, req, res, next) {
       }
 
       transaction.addLabel(
-        TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+        api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
       transaction.endSpan();
 
       return returned;
