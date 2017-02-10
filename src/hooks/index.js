@@ -48,8 +48,6 @@ var toInstrument = Object.create(null, {
   'mysql': { enumerable: true, value: { file: './userspace/hook-mysql.js',
       patches: {} } },
   'redis': { enumerable: true, value: { file: './userspace/hook-redis.js',
-      patches: {} } },
-  'connect': { enumerable: true, value: { file: './userspace/hook-connect.js',
       patches: {} } }
 });
 
