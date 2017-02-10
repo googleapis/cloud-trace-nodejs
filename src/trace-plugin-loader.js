@@ -18,50 +18,14 @@
 var Module = require('module');
 var shimmer = require('shimmer');
 var path = require('path');
-var fs = require('fs');
 var semver = require('semver');
+var util = require('./util.js');
 var PluginAPI = require('./trace-plugin-interface.js');
 
 var plugins = Object.create(null);
 var activated = false;
 
 var logger;
-
-/**
- * Determines the path at which the requested module will be loaded given
- * the provided parent module.
- *
- * @param {string} request The name of the module to be loaded.
- * @param {object} parent The module into which the requested module will be loaded.
- */
-function findModulePath(request, parent) {
-  var mainScriptDir = path.dirname(Module._resolveFilename(request, parent));
-  var resolvedModule = Module._resolveLookupPaths(request, parent);
-  var paths = resolvedModule[1];
-  for (var i = 0, PL = paths.length; i < PL; i++) {
-    if (mainScriptDir.indexOf(paths[i]) === 0) {
-      return path.join(paths[i], request.replace('/', path.sep));
-    }
-  }
-  return null;
-}
-
-/**
- * Determines the version of the module located at `modulePath`.
- *
- * @param {?string} modulePath The absolute path to the root directory of the
- *    module being loaded. This may be null if we are loading an internal module
- *    such as http.
- */
-function findModuleVersion(modulePath, load) {
-  if (modulePath) {
-    var pjson = path.join(modulePath, 'package.json');
-    if (fs.existsSync(pjson)) {
-      return load(pjson).version;
-    }
-  }
-  return process.version;
-}
 
 function checkLoadedModules() {
   for (var moduleName in plugins) {
@@ -116,16 +80,21 @@ function activate(agent) {
       if (!patchSet) {
         // Load the plugin object
         var plugin = originalModuleLoad(instrumentation.file, module, false);
-        patchSet = [];
+        patchSet = {};
         plugin.forEach(function(patch) {
-          if (semver.satisfies(version, patch.versions)) {
-            patchSet[patch.file] = {
-              file: patch.file || '',
+          if (!patch.versions || semver.satisfies(version, patch.versions)) {
+            var file = patch.file || '';
+            patchSet[file] = {
+              file: file,
               patch: patch.patch,
               intercept: patch.intercept
             };
           }
         });
+        if (Object.keys(patchSet).length === 0) {
+          logger.warn(moduleRoot + ': version ' + version + ' not supported ' + 
+            'by plugin.');
+        }
         instrumentation.patches[moduleRoot][version] = patchSet;
       }
       Object.keys(patchSet).forEach(function(file) {
@@ -140,9 +109,8 @@ function activate(agent) {
         if (patch.intercept) {
           patch.module = patch.intercept(patch.module, api);
         }
-        patch.active = true;
       });
-      var rootPatch = patchSet.filter(function(patch) { return !patch.name; })[0];
+      var rootPatch = patchSet[''];
       if (rootPatch && rootPatch.intercept) {
         return rootPatch.module;
       } else {
@@ -150,39 +118,21 @@ function activate(agent) {
       }
     }
 
-    function moduleAlreadyPatched(instrumentation, moduleRoot) {
-      if (!instrumentation.patches[moduleRoot]) {
-        return false;
-      }
-      var modulePatch = instrumentation.patches[moduleRoot];
-      return !!modulePatch && Object.keys(modulePatch).every(function(curr) {
-        return modulePatch[curr].active;
-      }, true);
-    }
-
-    // If this is a reactivation, we may have a cached list of modules from last
-    // time that we need to go and patch pro-actively.
-    for (var moduleName in plugins) {
-      var instrumentation = plugins[moduleName];
-      for (var moduleRoot in instrumentation.patches) {
-        var modulePatch = instrumentation.patches[moduleRoot];
-        if (modulePatch) {
-          loadAndPatch(instrumentation, moduleRoot, null);
-        }
-      }
+    function moduleAlreadyPatched(instrumentation, moduleRoot, version) {
+      return instrumentation.patches[moduleRoot] &&
+        instrumentation.patches[moduleRoot][version];
     }
 
     // Future requires get patched as they get loaded.
     return function Module_load(request, parent, isMain) {
       var instrumentation = plugins[request];
 
-      if (instrumentation &&
-          agent.config().excludedHooks.indexOf(request) === -1) {
-        var moduleRoot = findModulePath(request, parent);
-        if (moduleAlreadyPatched(instrumentation, moduleRoot)) {
+      if (instrumentation) {
+        var moduleRoot = util.findModulePath(request, parent);
+        var moduleVersion = util.findModuleVersion(moduleRoot, originalModuleLoad);
+        if (moduleAlreadyPatched(instrumentation, moduleRoot, moduleVersion)) {
           return originalModuleLoad.apply(this, arguments);
         }
-        var moduleVersion = findModuleVersion(moduleRoot, originalModuleLoad);
         logger.info('Patching ' + request + ' at version ' + moduleVersion);
         var patchedRoot = loadAndPatch(instrumentation, moduleRoot,
           moduleVersion);
@@ -197,19 +147,6 @@ function activate(agent) {
 }
 
 function deactivate() {
-  for (var moduleName in plugins) {
-    var instrumentation = plugins[moduleName];
-    for (var moduleRoot in instrumentation.patches) {
-      var modulePatch = instrumentation.patches[moduleRoot];
-      for (var patchedFile in modulePatch) {
-        var hook = modulePatch[patchedFile];
-        logger.info('Attempting to unpatch ' + moduleName);
-        if (hook.unpatch !== undefined) {
-          hook.unpatch(hook.module);
-        }
-      }
-    }
-  }
   activated = false;
 
   // unhook module.load
@@ -218,7 +155,5 @@ function deactivate() {
 
 module.exports = {
   activate: activate,
-  deactivate: deactivate,
-  findModulePath: findModulePath,
-  findModuleVersion: findModuleVersion
+  deactivate: deactivate
 };
