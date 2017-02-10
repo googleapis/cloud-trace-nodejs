@@ -43,7 +43,7 @@ function middleware(api, request, reply) {
   api.runInRootSpan(options, function(transaction) {
     if (!transaction) {
       // TODO: Determine if this message is still needed
-      console.info('Hapi: no namespace found, ignoring request');
+      //console.info('Hapi: no namespace found, ignoring request');
       return reply.continue();
     }
 
