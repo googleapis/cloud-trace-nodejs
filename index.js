@@ -27,6 +27,7 @@ var constants = require('./src/constants.js');
 var gcpMetadata = require('gcp-metadata');
 var semver = require('semver');
 var traceUtil = require('./src/util.js');
+var SpanData = require('./src/span-data.js');
 var util = require('util');
 
 var modulesLoadedBeforeTrace = [];
@@ -41,8 +42,33 @@ for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
 
 var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
 
+/**
+ * Phantom implementation of the trace agent. This allows API users to decouple
+ * the enable/disable logic from the calls to the tracing API. The phantom API
+ * has a lower overhead than isEnabled checks inside the API functions.
+ * @private
+ */
+var phantomTraceAgent = {
+  startSpan: function() { return SpanData.nullSpan; },
+  endSpan: function(spanData) { spanData.close(); },
+  runInSpan: function(name, labels, fn) {
+    if (typeof(labels) === 'function') {
+      fn = labels;
+    }
+    fn(function() {});
+  },
+  runInRootSpan: function(name, labels, fn) {
+    if (typeof(labels) === 'function') {
+      fn = labels;
+    }
+    fn(function() {});
+  },
+  setTransactionName: function() {},
+  addTransactionLabel: function() {}
+};
+
 /** @private */
-var agent = null;
+var agent = phantomTraceAgent;
 
 var initConfig = function(projectConfig) {
   var config = {};
@@ -69,8 +95,7 @@ var initConfig = function(projectConfig) {
  */
 var publicAgent = {
   isActive: function() {
-    // TODO: remove
-    return !!agent;
+    return agent !== phantomTraceAgent;
   },
 
   startSpan: function(name, labels) {
