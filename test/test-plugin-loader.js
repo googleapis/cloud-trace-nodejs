@@ -295,4 +295,23 @@ describe('Trace Plugin Loader', function() {
     assert.strictEqual(require('module-h').getVersion(), '1.0.0 is ok',
       'First loaded version doesn\'t get patched again');
   });
+
+  /**
+   * Uses module interception to 
+   */
+  it('can intercept modules', function() {
+    addModuleMock('module-i', '1.0.0', function() { return 1; });
+    addModuleMock('module-i-plugin', '', [{
+      intercept: function(originalModule, api) {
+        return function() { return originalModule() + 1; };
+      }
+    }]);
+    assert.strictEqual(require('module-i')(), 1);
+    // Activate plugin loader
+    pluginLoader.activate(createFakeAgent({
+      'module-i': 'module-i-plugin'
+    }));
+    assert.strictEqual(require('module-i')(), 2,
+      'Module can be intercepted');
+  });
 });
