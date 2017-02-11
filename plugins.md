@@ -118,14 +118,13 @@ passing it the result of calling `api.createTransaction(options)`. The provided
 function should accept a nullable `Transaction` object. If `null` is provided,
 the function should proceed as if nothing is being traced.
 
-#### `transaction.runInChildSpan(options, fn)`
+#### `api.createChildSpan(options)`
 * `options`: [`TraceOptions`](#trace-span-options)
-* `fn`: `function(ChildSpan): any`
-* Returns `any`
+* Returns `ChildSpan`
 
-Runs the given function in a child span corresponding to an incoming request.
-The provided function is guaranteed to be called with a `ChildSpan` object,
-which represents a child span.
+If a current transaction is available (through `api.getTransaction`), then
+create a child span corresponding to an incoming request and return it.
+Otherwise, returns null.
 
 #### `transaction.addLabel(key, value) | childSpan.addLabel(key, value)`
 * `key`: `string`
@@ -182,7 +181,7 @@ fields:
 
 ### Trace Agent Configuration
 
-#### `api.enhancedReportingEnabled()`
+#### `api.enhancedDatabaseReportingEnabled()`
 * Returns `boolean`
 
 Returns a boolean value describing whether the trace agent was started with
@@ -214,6 +213,11 @@ Gets the trace context serialized as a string.
 
 ### Context Propagation
 
+These functions help provide context propagation for root spans. Context should
+be propagated anywhere control is yielded to the user; this is either through
+a callback or an emitter. This will enable child spans to be associated with the
+correct root span.
+
 #### `api.bind(fn)`
 * `fn`: `function`
 * Returns `function` (same signature as `fn`)
@@ -223,7 +227,8 @@ Binds the given function to the current context.
 #### `api.bindEmitter(emitter)`
 * `emitter`: `EventEmitter`
 
-Binds the given event emitter to the current context.
+Binds any event handlers subsequently attached to the given emitter to the
+current context.
 
 [config-js]: https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/blob/master/config.js
 [stackdriver-trace-faq]: https://cloud.google.com/trace/docs/faq
