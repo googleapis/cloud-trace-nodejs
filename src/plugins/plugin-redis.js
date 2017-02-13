@@ -181,7 +181,6 @@ module.exports = [
     },
     unpatch: function(redis) {
       unwrapInternalSendCommand(redis);
-      unwrapCreateStream(redis);
       unwrapCreateClient(redis);
     }
   },
