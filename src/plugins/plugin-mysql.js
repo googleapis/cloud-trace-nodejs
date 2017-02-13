@@ -76,6 +76,9 @@ module.exports = [
     versions: SUPPORTED_VERSIONS,
     patch: function(Connection, api) {
       shimmer.wrap(Connection, 'createQuery', createQueryWrap.bind(null, api));
+    },
+    unpatch: function(Connection) {
+      shimmer.unwrap(Connection, 'createQuery');
     }
   },
   {
@@ -84,6 +87,9 @@ module.exports = [
     patch: function(Pool, api) {
       shimmer.wrap(Pool.prototype, 'getConnection',
                    wrapGetConnection.bind(null, api));
+    },
+    unpatch: function(Pool) {
+      shimmer.unwrap(Pool.prototype, 'getConnection');
     }
   }
 ];
