@@ -97,6 +97,9 @@ module.exports = [
     patch: function(koa, api_) {
       api = api_;
       shimmer.wrap(koa.prototype, 'use', useWrap);
+    },
+    unpatch: function(koa) {
+      shimmer.unwrap(koa.prototype, 'use');
     }
   }
 ];
