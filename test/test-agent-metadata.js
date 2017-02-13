@@ -46,7 +46,7 @@ describe('agent interaction with metadata service', function() {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/project-id')
-                .times(1)
+                .times(2)
                 .reply(200, '1234');
     agent = trace.start({logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {

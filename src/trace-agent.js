@@ -61,6 +61,22 @@ function TraceAgent(config, logger) {
 }
 
 /**
+ * Halts this agent and unpatches any patched modules.
+ */
+TraceAgent.prototype.stop = function() {
+  hooks.deactivate();
+  config.enabled = false;
+  this.policy = tracingPolicy.createTracePolicy(config);
+  this.traceWriter.stop();
+  this.namespace = null;
+  traceAgent = null;
+  if (this.config_.onUncaughtException !== 'ignore') {
+    process.removeListener('uncaughtException', this.unhandledException);
+  }
+  this.logger.info('trace agent deactivated');
+};
+
+/**
  * Returns the agent configuration
  * @return {object} configuration
  */

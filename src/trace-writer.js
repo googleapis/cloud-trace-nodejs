@@ -62,13 +62,7 @@ function TraceWriter(logger, config) {
   // the project number (potentially from the network.)
   var that = this;
   that.getProjectId(function(err, project) {
-    if (err) {
-      logger.error('Unable to acquire the project number from metadata ' +
-        'service. Please provide a valid project number as an env. ' +
-        'variable, or through config.projectId passed to start(). ' + err);
-      that.isActive = false;
-      return;
-    }
+    if (err) { return; } // ignore as index.js takes care of this.
     that.scheduleFlush_(project);
   });
 
@@ -151,16 +145,6 @@ TraceWriter.prototype.getProjectId = function(callback) {
     property: 'project-id',
     headers: headers
   }, function(err, response, projectId) {
-    if (response && response.statusCode !== 200) {
-      if (response.statusCode === 503) {
-        err = new Error('Metadata service responded with a 503 status ' +
-          'code. This may be due to a temporary server error; please try ' +
-          'again later.');
-      } else {
-        err = new Error('Metadata service responded with the following ' +
-          'status code: ' + response.statusCode);
-      }
-    }
     if (err) {
       callback(err);
       return;
@@ -202,15 +186,10 @@ TraceWriter.prototype.writeSpan = function(spanData) {
 TraceWriter.prototype.queueTrace_ = function(trace) {
   var that = this;
 
-  if (!that.isActive) {
-    return;
-  }
-
   that.getProjectId(function(err, project) {
     if (err) {
       that.logger_.info('No project number, dropping trace.');
-      that.isActive = false;
-      return;
+      return; // ignore as index.js takes care of this.
     }
 
     trace.projectId = project;

@@ -21,7 +21,6 @@ var nock = require('nock');
 var cls = require('../src/cls.js');
 var trace = require('..');
 var request = require('request');
-var proxyquire = require('proxyquire');
 
 nock.disableNetConnect();
 
@@ -43,45 +42,6 @@ var formatBuffer = function(buffer) {
 };
 
 describe('tracewriter publishing', function() {
-  before(function() {
-    // Setup: Monkeypatch gcp-metadata to not ask for retries at all.
-    var retryRequest = require('retry-request');
-    proxyquire('gcp-metadata', {
-      'retry-request': function(requestOps, callback) {
-        return retryRequest(requestOps, {
-          retries: 0
-        }, callback);
-      }
-    });
-  });
-
-  it('should stop when the project number cannot be acquired', function(done) {
-    nock.disableNetConnect();
-    var scope = nock('http://metadata.google.internal')
-                .get('/computeMetadata/v1/project/project-id')
-                .times(1)
-                .reply(404);
-    
-    var projectId = process.env.GCLOUD_PROJECT;
-
-    delete process.env.GCLOUD_PROJECT;
-    var agent = trace.start({logLevel: 0, forceNewAgent_: true});
-    var privateAgent = agent.private_();
-    process.env.GCLOUD_PROJECT = projectId;
-    setTimeout(function() {
-      // Check that the trace writer is not active.
-      assert.ok(!privateAgent.traceWriter.isActive);
-      cls.getNamespace().run(function() {
-        queueSpans(2, privateAgent);
-        // Make sure the trace writer buffer is still empty.
-        // It should be because the trace writer should have been disabled when
-        // the project ID couldn't be discovered.
-        assert.strictEqual(privateAgent.traceWriter.buffer_.length, 0);
-        scope.done();
-        done();
-      });
-    }, 100);
-  });
 
   it('should publish when queue fills', function(done) {
     var buf;

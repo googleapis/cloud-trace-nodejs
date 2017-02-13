@@ -21,15 +21,21 @@ var tracingPolicy = require('../src/tracing-policy.js');
 
 describe('FilterPolicy', function() {
   it('should not allow filtered urls', function() {
-    var policy = tracingPolicy.createTracePolicy({samplingRate: 0,
-      ignoreUrls: ['/_ah/health', /\/book*/]});
+    var policy = tracingPolicy.createTracePolicy({
+      samplingRate: 0,
+      enabled: true,
+      ignoreUrls: ['/_ah/health', /\/book*/]
+    });
     assert(!policy.shouldTrace(null, '/_ah/health'));
     assert(!policy.shouldTrace(null, '/book/test'));
   });
 
   it('should allow non-filtered urls', function() {
-    var policy = tracingPolicy.createTracePolicy({samplingRate: 0,
-      ignoreUrls: ['/_ah/health']});
+    var policy = tracingPolicy.createTracePolicy({
+      samplingRate: 0,
+      enabled: true,
+      ignoreUrls: ['/_ah/health']
+    });
     assert(policy.shouldTrace(null, '/_ah/background'));
   });
 });
@@ -38,7 +44,10 @@ describe('RateLimiterPolicy', function() {
   var tracesPerSecond = [10, 50, 150, 200, 500, 1000];
   tracesPerSecond.forEach(function(traceCount) {
     it('should throttle traces, ' + traceCount, function() {
-      var policy = tracingPolicy.createTracePolicy({samplingRate: traceCount});
+      var policy = tracingPolicy.createTracePolicy({
+        samplingRate: traceCount,
+        enabled: true
+      });
       testAllowedTraces(policy, traceCount);
     });
   });

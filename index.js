@@ -24,6 +24,7 @@ require('continuation-local-storage');
 
 var common = require('@google-cloud/common');
 var constants = require('./src/constants.js');
+var gcpMetadata = require('gcp-metadata');
 var semver = require('semver');
 var traceUtil = require('./src/util.js');
 var SpanData = require('./src/span-data.js');
@@ -167,7 +168,33 @@ var publicAgent = {
         JSON.stringify(modulesLoadedBeforeTrace));
     }
 
-    if (config.projectId && typeof config.projectId !== 'string') {
+    if (typeof config.projectId === 'undefined') {
+      // Queue the work to acquire the projectId (potentially from the
+      // network.)
+      gcpMetadata.project({
+        property: 'project-id',
+        headers: headers
+      }, function(err, response, projectId) {
+        if (response && response.statusCode !== 200) {
+          if (response.statusCode === 503) {
+            err = new Error('Metadata service responded with a 503 status ' +
+              'code. This may be due to a temporary server error; please try ' +
+              'again later.');
+          } else {
+            err = new Error('Metadata service responded with the following ' +
+              'status code: ' + response.statusCode);
+          }
+        }
+        if (err) {
+          logger.error('Unable to acquire the project number from metadata ' +
+            'service. Please provide a valid project number as an env. ' +
+            'variable, or through config.projectId passed to start(). ' + err);
+          agent.stop();
+          return this;
+        }
+        config.projectId = projectId;
+      });
+    } else if (typeof config.projectId !== 'string') {
       logger.error('config.projectId, if provided, must be a string. ' +
         'Disabling trace agent.');
       return this;
