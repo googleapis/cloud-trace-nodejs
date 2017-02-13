@@ -127,51 +127,90 @@ function wrapCallback(api, span, done) {
   return api.wrap(fn);
 }
 
+function wrapInternalSendCommand(redis, api) {
+  shimmer.wrap(redis.RedisClient.prototype, 'internal_send_command',
+               internalSendCommandWrap.bind(null, api));
+}
+
+function unwrapInternalSendCommand(redis) {
+  shimmer.unwrap(redis.RedisClient.prototype, 'internal_send_command');
+}
+
+function wrapCreateClient(redis, api) {
+  shimmer.wrap(redis, 'createClient', createClientWrap.bind(null, api));
+}
+
+function unwrapCreateClient(redis) {
+  shimmer.unwrap(redis, 'createClient');
+}
+
+function wrapCreateStream(redis, api) {
+  shimmer.wrap(redis.RedisClient.prototype, 'create_stream',
+               createStreamWrap.bind(null, api));
+}
+
+function unwrapCreateStream(redis) {
+  shimmer.unwrap(redis.RedisClient.prototype, 'create_stream');
+}
+
+function wrapSendCommand(redis, api) {
+  shimmer.wrap(redis.RedisClient.prototype, 'send_command',
+               sendCommandWrap.bind(null, api));
+}
+
+function unwrapSendCommand(redis) {
+  shimmer.unwrap(redis.RedisClient.prototype, 'send_command');
+}
+
+function wrapInstallStreamListeners(redis, api) {
+  shimmer.wrap(redis.RedisClient.prototype, 'install_stream_listeners',
+               streamListenersWrap.bind(null, api));
+}
+
+function unwrapInstallStreamListeners(redis) {
+  shimmer.unwrap(redis.RedisClient.prototype, 'install_stream_listeners');
+}
+
 module.exports = [
   {
     file: '',
     versions: '2.6',
     patch: function(redis, api) {
-      shimmer.wrap(redis.RedisClient.prototype, 'internal_send_command',
-                   internalSendCommandWrap.bind(null, api));
-      shimmer.wrap(redis, 'createClient', createClientWrap.bind(null, api));
+      wrapInternalSendCommand(redis, api);
+      wrapCreateClient(redis, api);
     },
     unpatch: function(redis) {
-      shimmer.unwrap(redis.RedisClient.prototype, 'internal_send_command');
-      shimmer.unwrap(redis.RedisClient.prototype, 'create_stream');
-      shimmer.unwrap(redis, 'createClient');
+      unwrapInternalSendCommand(redis);
+      unwrapCreateStream(redis);
+      unwrapCreateClient(redis);
     }
   },
   {
     file: '',
     versions: '>2.3.x <2.6',
     patch: function(redis, api) {
-      shimmer.wrap(redis.RedisClient.prototype, 'send_command',
-                   sendCommandWrap.bind(null, api));
-      shimmer.wrap(redis.RedisClient.prototype, 'create_stream',
-                   createStreamWrap.bind(null, api));
-      shimmer.wrap(redis, 'createClient', createClientWrap.bind(null, api));
+      wrapSendCommand(redis, api);
+      wrapCreateStream(redis, api);
+      wrapCreateClient(redis, api);
     },
     unpatch: function(redis) {
-      shimmer.unwrap(redis.RedisClient.prototype, 'send_command');
-      shimmer.unwrap(redis.RedisClient.prototype, 'create_stream');
-      shimmer.unwrap(redis, 'createClient');
+      unwrapSendCommand(redis);
+      unwrapCreateStream(redis);
+      unwrapCreateClient(redis);
     }
   },
   {
     file: '',
     versions: '<=2.3.x',
     patch: function(redis, api) {
-      shimmer.wrap(redis.RedisClient.prototype, 'send_command',
-                   sendCommandWrap.bind(null, api));
-      shimmer.wrap(redis.RedisClient.prototype, 'install_stream_listeners',
-                   streamListenersWrap.bind(null, api));
-      shimmer.wrap(redis, 'createClient', createClientWrap.bind(null, api));
+      wrapSendCommand(redis, api);
+      wrapInstallStreamListeners(redis, api);
+      wrapCreateClient(redis, api);
     },
     unpatch: function(redis) {
-      shimmer.unwrap(redis.RedisClient.prototype, 'send_command');
-      shimmer.unwrap(redis.RedisClient.prototype, 'install_stream_listeners');
-      shimmer.unwrap(redis, 'createClient');
+      unwrapSendCommand(redis);
+      unwrapInstallStreamListeners(redis);
+      unwrapCreateClient(redis);
     }
   }
 ];
