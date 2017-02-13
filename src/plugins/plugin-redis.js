@@ -176,10 +176,12 @@ module.exports = [
     file: '',
     versions: '2.6',
     patch: function(redis, api) {
+      wrapCreateStream(redis, api);
       wrapInternalSendCommand(redis, api);
       wrapCreateClient(redis, api);
     },
     unpatch: function(redis) {
+      unwrapCreateStream(redis);
       unwrapInternalSendCommand(redis);
       unwrapCreateClient(redis);
     }
