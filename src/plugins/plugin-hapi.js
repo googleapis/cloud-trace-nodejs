@@ -86,6 +86,9 @@ module.exports = [
       shimmer.wrap(hapi.Server.prototype,
                    'connection',
                    connectionWrap.bind(null, api));
+    },
+    unpatch: function(hapi) {
+      shimmer.unwrap(hapi.Server.prototype, 'connection');
     }
   }
 ];
