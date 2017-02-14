@@ -57,6 +57,33 @@ describe('agent interaction with metadata service', function() {
     }, 500);
   });
 
+  it('should preserve public interface when stopped', function(done) {
+      nock.disableNetConnect();
+      var scope = nock('http://metadata.google.internal')
+                  .get('/computeMetadata/v1/project/project-id')
+                  .times(2)
+                  .reply(404, 'foo');
+      assert.equal(typeof agent, 'object');
+      assert.equal(typeof agent.startSpan, 'function');
+      assert.equal(typeof agent.endSpan, 'function');
+      assert.equal(typeof agent.runInSpan, 'function');
+      assert.equal(typeof agent.runInRootSpan, 'function');
+      assert.equal(typeof agent.setTransactionName, 'function');
+      assert.equal(typeof agent.addTransactionLabel, 'function');
+      agent = trace.start({logLevel: 0});
+      setTimeout(function() {
+        assert.equal(typeof agent, 'object');
+        assert.equal(typeof agent.startSpan, 'function');
+        assert.equal(typeof agent.endSpan, 'function');
+        assert.equal(typeof agent.runInSpan, 'function');
+        assert.equal(typeof agent.runInRootSpan, 'function');
+        assert.equal(typeof agent.setTransactionName, 'function');
+        assert.equal(typeof agent.addTransactionLabel, 'function');
+        scope.done();
+        done();
+      }, 500);
+  });
+
   it('should activate with projectId from metadata service', function(done) {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')

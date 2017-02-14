@@ -33,6 +33,9 @@ describe('index.js', function() {
   });
 
   afterEach(function() {
+    // Not necessary to make tests pass, but calling stop() suppresses
+    // plugin loader error message that occurs when activating several times
+    // in a row
     agent.private_().stop();
     agent.private_().traceWriter.buffer_ = [];
   });

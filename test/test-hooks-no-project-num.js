@@ -37,7 +37,7 @@ describe('test-hooks-no-project-num', function(){
         }
       };
     });
-  after(function() {
+    after(function() {
       process.stderr.write = write;
     });
     it('mongo', function(done) {

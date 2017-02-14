@@ -169,6 +169,7 @@ var publicAgent = {
     }
 
     if (typeof config.projectId === 'undefined') {
+      var that = this;
       // Queue the work to acquire the projectId (potentially from the
       // network.)
       gcpMetadata.project({
@@ -189,9 +190,11 @@ var publicAgent = {
           logger.error('Unable to acquire the project number from metadata ' +
             'service. Please provide a valid project number as an env. ' +
             'variable, or through config.projectId passed to start(). ' + err);
-          agent.stop();
-          agent = phantomTraceAgent;
-          return this;
+          if (that.isActive()) {
+            agent.stop();
+            agent = phantomTraceAgent;
+          }
+          return;
         }
         config.projectId = projectId;
       });

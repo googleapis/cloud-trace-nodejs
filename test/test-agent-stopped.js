@@ -24,7 +24,7 @@ process.env.GCLOUD_PROJECT = 0;
 describe('test-agent-stopped', function() {
   var agent;
   before(function() {
-    agent = require('..').start({forceNewAgent_: true});
+    agent = require('..').start();
   });
 
   describe('express', function() {
