@@ -51,17 +51,14 @@ function streamListenersWrap(api, install_stream_listeners) {
 }
 
 function setupSpan(api, cmd, args, skipped_frames) {
-  var labels = { command: cmd };
-  if (api.enhancedDatabaseReportingEnabled()) {
-    labels.arguments = JSON.stringify(args);
-  }
   var span = api.createChildSpan({
     name: 'redis-' + cmd,
     skipFrames: skipped_frames + 1
   });
-  Object.keys(labels).forEach(function(key) {
-    span.addLabel(key, labels[key]);
-  });
+  span.addLabel('command', cmd);
+  if (api.enhancedDatabaseReportingEnabled()) {
+    span.addLabel('arguments', JSON.stringify(args));
+  }
   return span;
 }
 
@@ -97,8 +94,8 @@ function internalSendCommandWrap(api, internal_send_command) {
 
 function sendCommandWrap(api, send_command) {
   return function send_command_trace(cmd, args, cb) {
-    var root = api.getTransaction();
-    if (!root) {
+    var transaction = api.getTransaction();
+    if (!transaction) {
       return send_command.call(this, cmd, args, cb);
     }
     return startSpanFromArguments(api, cmd, args, cb, send_command.bind(this));
@@ -107,18 +104,14 @@ function sendCommandWrap(api, send_command) {
 
 function wrapCallback(api, span, done) {
   var fn = function(err, res) {
-    var labels = {};
     if (api.enhancedDatabaseReportingEnabled()) {
       if (err) {
-        labels.error = err;
+        span.addLabel('error', err);
       }
       if (res) {
-        labels.result = res;
+        span.addLabel('result', res);
       }
     }
-    Object.keys(labels).forEach(function(key) {
-      span.addLabel(key, labels[key]);
-    });
     span.endSpan();
     if (done) {
       done(err, res);
