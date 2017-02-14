@@ -78,9 +78,18 @@ function patchModuleRoot(express, api) {
   methods.forEach(function(method) {
     shimmer.wrap(express.application, method, applicationActionWrap);
   });
-  express._plugin_patched = true;
+}
+
+function unpatchModuleRoot(express) {
+  methods.forEach(function(method) {
+    shimmer.unwrap(express.application, method);
+  });
 }
 
 module.exports = [
-  { versions: SUPPORTED_VERSIONS, patch: patchModuleRoot }
+  {
+    versions: SUPPORTED_VERSIONS,
+    patch: patchModuleRoot,
+    unpatch: unpatchModuleRoot
+  }
 ];
