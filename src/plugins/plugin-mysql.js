@@ -47,16 +47,15 @@ function createQueryWrap(api, createQuery) {
 
 function wrapCallback(api, span, done) {
   var fn = function(err, res) {
-    var labels = {};
     if (api.enhancedDatabaseReportingEnabled()) {
       if (err) {
-        labels.error = err;
+        span.addLabel('error', err);
       }
       if (res) {
-        labels.result = res;
+        span.addLabel('result', res);
       }
     }
-    span.endSpan(labels);
+    span.endSpan();
     if (done) {
       done(err, res);
     }
