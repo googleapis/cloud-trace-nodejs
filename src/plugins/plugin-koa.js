@@ -42,8 +42,8 @@ function* middleware(next) {
     traceContext: this.req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME],
     skipFrames: 3
   };
-  api.runInRootSpan(options, function(transaction) {
-    if (!transaction) {
+  api.runInRootSpan(options, function(root) {
+    if (!root) {
       return;
     }
 
@@ -56,11 +56,11 @@ function* middleware(next) {
     // we use the path part of the url as the span name and add the full
     // url as a label
     // req.path would be more desirable but is not set at the time our middlewear runs.
-    transaction.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
-    transaction.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
-    transaction.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+    root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
+    root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
+    root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
-    var context = transaction.getTraceContext();
+    var context = root.getTraceContext();
     if (context) {
       res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
     }
@@ -75,12 +75,12 @@ function* middleware(next) {
       const returned = res.end(chunk, encoding);
 
       if (req.route && req.route.path) {
-        transaction.addLabel(
+        root.addLabel(
           'koa/request.route.path', req.route.path);
       }
-      transaction.addLabel(
+      root.addLabel(
           api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-      transaction.endSpan();
+      root.endSpan();
 
       return returned;
     };
