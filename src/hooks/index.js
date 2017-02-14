@@ -45,8 +45,6 @@ var toInstrument = Object.create(null, {
       patches: {} } },
   'http': { enumerable: true, value: { file: './core/hook-http.js',
       patches: {} } },
-  'mongodb-core': { enumerable: true, value: { file: './userspace/hook-mongodb-core.js',
-      patches: {} } },
   'mysql': { enumerable: true, value: { file: './userspace/hook-mysql.js',
       patches: {} } },
   'redis': { enumerable: true, value: { file: './userspace/hook-redis.js',

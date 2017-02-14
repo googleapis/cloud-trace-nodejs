@@ -42,7 +42,8 @@ module.exports = {
     // This field is experimental.
     plugins: {
       'restify': path.join(__dirname, 'src/plugins/plugin-restify.js'),
-      'koa': path.join(__dirname, 'src/plugins/plugin-koa.js')
+      'koa': path.join(__dirname, 'src/plugins/plugin-koa.js'),
+      'mongodb-core': path.join(__dirname, 'src/plugins/plugin-mongodb-core.js')
     },
 
     // Valid entries are:
