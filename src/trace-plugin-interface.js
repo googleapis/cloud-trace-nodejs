@@ -26,10 +26,10 @@ var is = require('is');
  */
 
 /**
- * An object that is associated with a single child span. It exposes
- * functions for adding labels to or closing the associated span.
+ * An object that represents a single child span. It exposes functions for
+ * adding labels to or closing the span.
  * @param {TraceAgent} agent The underlying trace agent object.
- * @param {SpanData} span An object containing information about the child span.
+ * @param {SpanData} span The internal data structure backing the child span.
  */
 function ChildSpan(agent, span) {
   this.agent_ = agent;
@@ -38,7 +38,7 @@ function ChildSpan(agent, span) {
 }
 
 /**
- * Adds a label to the underlying span.
+ * Adds a label to the child span.
  * @param {string} key The name of the label to add.
  * @param {*} value The value of the label to add.
  */
@@ -47,7 +47,7 @@ ChildSpan.prototype.addLabel = function(key, value) {
 };
 
 /**
- * Ends the underlying span. This function should only be called once.
+ * Ends the child span. This function should only be called once.
  */
 ChildSpan.prototype.endSpan = function() {
   this.span_.close();
@@ -63,32 +63,31 @@ ChildSpan.prototype.getTraceContext = function() {
 };
 
 /**
- * An object that is associated with a single root span. It exposes
- * functions for adding labels to or closing the associated span.
+ * An object that represents a single root span. It exposes functions for adding
+ * labels to or closing the span.
  * @param {TraceAgent} agent The underlying trace agent object.
- * @param {SpanData} context An object containing information about the
- * root span.
+ * @param {SpanData} span The internal data structure backing the root span.
  */
-function Transaction(agent, context) {
+function RootSpan(agent, span) {
   this.agent_ = agent;
-  this.context_ = context;
-  this.serializedTraceContext_ = agent.generateTraceContext(context, true);
+  this.span_ = span;
+  this.serializedTraceContext_ = agent.generateTraceContext(span, true);
 }
 
 /**
- * Adds a label to the underlying span.
+ * Adds a label to the span.
  * @param {string} key The name of the label to add.
  * @param {*} value The value of the label to add.
  */
-Transaction.prototype.addLabel = function(key, value) {
-  this.context_.addLabel(key, value);
+RootSpan.prototype.addLabel = function(key, value) {
+  this.span_.addLabel(key, value);
 };
 
 /**
- * Ends the underlying span. This function should only be called once.
+ * Ends the span. This function should only be called once.
  */
-Transaction.prototype.endSpan = function() {
-  this.context_.close();
+RootSpan.prototype.endSpan = function() {
+  this.span_.close();
 };
 
 /**
@@ -96,7 +95,7 @@ Transaction.prototype.endSpan = function() {
  * 'x-cloud-trace-context' field in an HTTP request header to support
  * distributed tracing.
  */
-Transaction.prototype.getTraceContext = function() {
+RootSpan.prototype.getTraceContext = function() {
   return this.serializedTraceContext_;
 };
 
@@ -121,8 +120,8 @@ PluginAPI.prototype.enhancedDatabaseReportingEnabled = function() {
 };
 
 /**
- * Creates a new Transaction object corresponding to an incoming request, which
- * exposes methods operating on the root span.
+ * Creates and returns a new RootSpan object corresponding to an incoming
+ * request.
  * @param {object} options An object that specifies options for how the root
  * span is created and propogated.
  * @param {string} options.name The name to apply to the root span.
@@ -133,25 +132,25 @@ PluginAPI.prototype.enhancedDatabaseReportingEnabled = function() {
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the root span, starting from the top;
  * this should be set to avoid including frames in the plugin. Defaults to 0.
- * @returns A new Transaction object, or null if the trace agent's policy has
+ * @returns A new RootSpan object, or null if the trace agent's policy has
  * disabled tracing for the given set of options.
  */
-PluginAPI.prototype.createTransaction = function(options) {
+PluginAPI.prototype.createRootSpan = function(options) {
   var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-  return createTransaction_(this, options, skipFrames);
+  return createRootSpan_(this, options, skipFrames);
 };
 
 /**
- * Returns a Transaction object that corresponds to a root span started earlier
+ * Returns a RootSpan object that corresponds to a root span started earlier
  * in the same context, or null if one doesn't exist.
- * @returns A new Transaction object, or null if a root span doesn't exist in
+ * @returns A new RootSpan object, or null if a root span doesn't exist in
  * the current context.
  */
-PluginAPI.prototype.getTransaction = function() {
+PluginAPI.prototype.getRootSpan = function() {
   if (cls.getRootContext()) {
-    return new Transaction(this.agent_, cls.getRootContext());
+    return new RootSpan(this.agent_, cls.getRootContext());
   } else {
-    this.logger_.warn('Attempted to get transaction handle when it doesn\'t' + 
+    this.logger_.warn('Attempted to get root span when it doesn\'t' + 
       ' exist');
     return null;
   }
@@ -162,10 +161,10 @@ PluginAPI.prototype.getTransaction = function() {
  * possibly passing it an object that exposes an interface for adding labels
  * and closing the span.
  * @param {object} options An object that specifies options for how the root
- * span is created and propogated. @see PluginAPI.prototype.createTransaction
- * @param {function(?Transaction)} fn A function that will be called exactly
+ * span is created and propogated. @see PluginAPI.prototype.createRootSpan
+ * @param {function(?RootSpan)} fn A function that will be called exactly
  * once. If the incoming request should be traced, a root span will be created,
- * and this function will be called with a Transaction object exposing functions
+ * and this function will be called with a RootSpan object exposing functions
  * operating on the root span; otherwise, it will be called with null as an
  * argument.
  * @returns The return value of calling fn.
@@ -179,22 +178,22 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
   }
   return this.agent_.namespace.runAndReturn(function() {
     var skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
-    var transaction = createTransaction_(that, options, skipFrames);
-    return fn(transaction);
+    var rootSpan = createRootSpan_(that, options, skipFrames);
+    return fn(rootSpan);
   });
 };
 
 /**
- * Convenience method which obtains a Transaction object with getTransaction()
- * and creates a new child span nested within this transaction. If there is
- * no current Transaction object, this function returns null.
+ * Creates and returns a new ChildSpan object nested within the root span object
+ * returned by getRootSpan. If there is no current RootSpan object, this
+ * function returns null.
  * @param {object} options An object that specifies options for how the child
- * span is created and propogated. @see Transaction.prototype.createChildSpan
+ * span is created and propogated.
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
 PluginAPI.prototype.createChildSpan = function(options) {
-  var transaction = this.getTransaction();
-  if (transaction) {
+  var rootSpan = this.getRootSpan();
+  if (rootSpan) {
     options = options || {};
     var childContext = this.agent_.startSpan(options.name, {},
       options.skipFrames ? options.skipFrames + 1 : 1);
@@ -241,7 +240,7 @@ module.exports = PluginAPI;
 
 // Module-private functions
 
-function createTransaction_(api, options, skipFrames) {
+function createRootSpan_(api, options, skipFrames) {
   options = options || {};
   // If the options object passed in has the getTraceContext field set,
   // try to retrieve the header field containing incoming trace metadata.
@@ -257,5 +256,5 @@ function createTransaction_(api, options, skipFrames) {
     incomingTraceContext.traceId,
     incomingTraceContext.spanId,
     skipFrames + 1);
-  return new Transaction(api.agent_, rootContext);
+  return new RootSpan(api.agent_, rootContext);
 }
