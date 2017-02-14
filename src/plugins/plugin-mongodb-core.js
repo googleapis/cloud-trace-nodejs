@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 'use strict';
 
 var shimmer = require('shimmer');
@@ -23,8 +22,8 @@ var SUPPORTED_VERSIONS = '1 - 2';
 
 function nextWrap(api, next) {
   return function next_trace(cb) {
-    var transaction = api.getTransaction();
-    if (!transaction) {
+    var root = api.getRootSpan();
+    if (!root) {
       return next.apply(this, arguments);
     }
     var span = api.createChildSpan({
@@ -41,8 +40,8 @@ function nextWrap(api, next) {
 function wrapWithLabel(api, label) {
   return function(original) {
     return function mongo_operation_trace(ns, ops, options, callback) {
-      var transaction = api.getTransaction();
-      if (!transaction) {
+      var root = api.getRootSpan();
+      if (!root) {
         return original.apply(this, arguments);
       }
       var span = api.createChildSpan({
