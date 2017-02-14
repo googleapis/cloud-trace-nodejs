@@ -94,7 +94,7 @@ function getMatchingSpans(agent, predicate) {
     throw new Error('getMatchingSpans() expected 2 arguments.  ' +
       'Received: ' + arguments.length);
   }
-
+  
   var list = [];
   getTraces(agent).forEach(function(trace) {
     trace.spans.forEach(function(span) {
