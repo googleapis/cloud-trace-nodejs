@@ -26,8 +26,8 @@ function middleware(api, req, res, next) {
     traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME.toLowerCase()],
     skipFrames: 3
   };
-  api.runInRootSpan(options, function(transaction) {
-    if (!transaction) {
+  api.runInRootSpan(options, function(root) {
+    if (!root) {
       // TODO: Determine if this message is needed
       // agent.logger.info('Connect: no namespace found, ignoring request');
       return next();
@@ -41,11 +41,11 @@ function middleware(api, req, res, next) {
 
     // we use the path part of the url as the span name and add the full
     // url as a label
-    transaction.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
-    transaction.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
-    transaction.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+    root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
+    root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
+    root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
-    var context = transaction.getTraceContext();
+    var context = root.getTraceContext();
     if (context) {
       res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
     } else {
@@ -59,13 +59,13 @@ function middleware(api, req, res, next) {
       var returned = res.end(data, encoding, callback);
 
       if (req.route && req.route.path) {
-        transaction.addLabel(
+        root.addLabel(
           'connect/request.route.path', req.route.path);
       }
 
-      transaction.addLabel(
+      root.addLabel(
         api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-      transaction.endSpan();
+      root.endSpan();
 
       return returned;
     };
