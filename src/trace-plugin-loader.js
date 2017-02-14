@@ -73,10 +73,7 @@ function activate(agent) {
   // hook into Module._load so that we can hook into userspace frameworks
   shimmer.wrap(Module, '_load', function(originalModuleLoad) {
     function loadAndPatch(instrumentation, moduleRoot, version) {
-      if (!instrumentation.patches[moduleRoot]) {
-        instrumentation.patches[moduleRoot] = {};
-      }
-      var patchSet = instrumentation.patches[moduleRoot][version];
+      var patchSet = instrumentation.patches[moduleRoot];
       if (!patchSet) {
         // Load the plugin object
         var plugin = originalModuleLoad(instrumentation.file, module, false);
@@ -87,17 +84,18 @@ function activate(agent) {
             patchSet[file] = {
               file: file,
               patch: patch.patch,
+              unpatch: patch.unpatch,
               intercept: patch.intercept
             };
           }
         });
         if (Object.keys(patchSet).length === 0) {
-          logger.warn(moduleRoot + ': version ' + version + ' not supported ' + 
+          logger.warn(moduleRoot + ': version ' + version + ' not supported ' +
             'by plugin.');
         }
-        instrumentation.patches[moduleRoot][version] = patchSet;
+        instrumentation.patches[moduleRoot] = patchSet;
       }
-      Object.keys(patchSet).forEach(function(file) {
+      for (var file in patchSet) {
         var patch = patchSet[file];
         if (!patch.module) {
           var loadPath = moduleRoot ? path.join(moduleRoot, patch.file) : patch.file;
@@ -109,7 +107,7 @@ function activate(agent) {
         if (patch.intercept) {
           patch.module = patch.intercept(patch.module, api);
         }
-      });
+      }
       var rootPatch = patchSet[''];
       if (rootPatch && rootPatch.intercept) {
         return rootPatch.module;
@@ -119,14 +117,12 @@ function activate(agent) {
     }
 
     function moduleAlreadyPatched(instrumentation, moduleRoot, version) {
-      return instrumentation.patches[moduleRoot] &&
-        instrumentation.patches[moduleRoot][version];
+      return instrumentation.patches[moduleRoot];
     }
 
     // Future requires get patched as they get loaded.
     return function Module_load(request, parent, isMain) {
       var instrumentation = plugins[request];
-
       if (instrumentation) {
         var moduleRoot = util.findModulePath(request, parent);
         var moduleVersion = util.findModuleVersion(moduleRoot, originalModuleLoad);
@@ -140,17 +136,32 @@ function activate(agent) {
           return patchedRoot;
         }
       }
-
       return originalModuleLoad.apply(this, arguments);
     };
   });
 }
 
 function deactivate() {
-  activated = false;
+  if (activated) {
+    activated = false;
+    for (var moduleName in plugins) {
+      var instrumentation = plugins[moduleName];
+      for (var moduleRoot in instrumentation.patches) {
+        var patchSet = instrumentation.patches[moduleRoot];
+        for (var file in patchSet) {
+          var patch = patchSet[file];
+          if (patch.unpatch !== undefined) {
+            logger.info('Unpatching' + moduleName);
+            patch.unpatch(patch.module);
+          }
+        }
+      }
+    }
+    plugins = {};
 
-  // unhook module.load
-  shimmer.unwrap(Module, '_load');
+    // unhook module.load
+    shimmer.unwrap(Module, '_load');
+  }
 }
 
 module.exports = {

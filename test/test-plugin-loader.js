@@ -252,52 +252,12 @@ describe('Trace Plugin Loader', function() {
       'Files internal to a module are patched');
   });
 
-  /**
-   * Alternately loads two versions of the same module, and checks that each one
-   * is patched differently.
-   */
-  it('can patch multiple different versions of the same module', function() {
-    var v1 = { getVersion: function() { return '1.0.0'; } };
-    var v2 = { getVersion: function() { return '2.0.0'; } };
-    addModuleMock('module-h', '1.0.0', v1);
-    addModuleMock('module-h-plugin', '', [
-      {
-        versions: '1.x',
-        patch: function(originalModule, api) {
-          shimmer.wrap(originalModule, 'getVersion', function(origGetVersion) {
-            return function() {
-              return origGetVersion() + ' is ok';
-            };
-          });
-        }
-      },
-      {
-        versions: '2.x',
-        patch: function(originalModule, api) {
-          shimmer.wrap(originalModule, 'getVersion', function(origGetVersion) {
-            return function() {
-              return origGetVersion() + ' is better';
-            };
-          });
-        }
-      }
-    ]);
-    // Activate plugin loader
-    pluginLoader.activate(createFakeAgent({
-      'module-h': 'module-h-plugin'
-    }));
-    assert.strictEqual(require('module-h').getVersion(), '1.0.0 is ok',
-      'Initial patch is correct');
-    addModuleMock('module-h', '2.0.0', v2);
-    assert.strictEqual(require('module-h').getVersion(), '2.0.0 is better',
-      'Second loaded version is also patched');
-    addModuleMock('module-h', '1.0.0', v1);
-    assert.strictEqual(require('module-h').getVersion(), '1.0.0 is ok',
-      'First loaded version doesn\'t get patched again');
-  });
+  // TODO(kjin): Add test to check that two modules with different versions
+  // can be loaded at the same time. Current test harness is insufficient for
+  // doing this.
 
   /**
-   * Uses module interception to 
+   * Uses module interception to completely replace a module export
    */
   it('can intercept modules', function() {
     addModuleMock('module-i', '1.0.0', function() { return 1; });
@@ -313,5 +273,39 @@ describe('Trace Plugin Loader', function() {
     }));
     assert.strictEqual(require('module-i')(), 2,
       'Module can be intercepted');
+  });
+
+  /**
+   * Patches a module, then immediately unpatches it, then patches it again to
+   * show that patching isn't irreversible (and neither is unpatching)
+   */
+  it('can unpatch', function() {
+    // Unfortunately, intercepted modules cannot be patched.
+    addModuleMock('module-j', '1.0.0', {
+      getPatchMode: function() { return 'none'; }
+    });
+    addModuleMock('module-j-plugin', '', [{
+      patch: function(originalModule, api) {
+        shimmer.wrap(originalModule, 'getPatchMode', function() {
+          return function() { return 'patch'; };
+        });
+      },
+      unpatch: function(originalModule) {
+        shimmer.unwrap(originalModule, 'getPatchMode');
+      }
+    }]);
+    assert.strictEqual(require('module-j').getPatchMode(), 'none');
+    pluginLoader.activate(createFakeAgent({
+      'module-j': 'module-j-plugin'
+    }));
+    assert.strictEqual(require('module-j').getPatchMode(), 'patch');
+    pluginLoader.deactivate();
+    assert.strictEqual(require('module-j').getPatchMode(), 'none',
+      'Module gets unpatched');
+    pluginLoader.activate(createFakeAgent({
+      'module-j': 'module-j-plugin'
+    }));
+    assert.strictEqual(require('module-j').getPatchMode(), 'patch',
+      'Patches still work after unpatching');
   });
 });
