@@ -79,7 +79,7 @@ function startSpanFromArguments(api, cmd, args, cb, send_command) {
 
 function internalSendCommandWrap(api, internal_send_command) {
   return function internal_send_command_trace(cmd, args, cb) {
-    var root = api.getTransaction();
+    var root = api.getRootSpan();
     if (!root) {
       return internal_send_command.call(this, cmd, args, cb);
     }
@@ -94,8 +94,8 @@ function internalSendCommandWrap(api, internal_send_command) {
 
 function sendCommandWrap(api, send_command) {
   return function send_command_trace(cmd, args, cb) {
-    var transaction = api.getTransaction();
-    if (!transaction) {
+    var root = api.getRootSpan();
+    if (!root) {
       return send_command.call(this, cmd, args, cb);
     }
     return startSpanFromArguments(api, cmd, args, cb, send_command.bind(this));
