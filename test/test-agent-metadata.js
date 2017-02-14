@@ -42,6 +42,21 @@ describe('agent interaction with metadata service', function() {
     trace = require('..');
   });
 
+  it('should stop when the project number cannot be acquired', function(done) {
+    nock.disableNetConnect();
+    var scope = nock('http://metadata.google.internal')
+                .get('/computeMetadata/v1/project/project-id')
+                .times(2)
+                .reply(404, 'foo');
+
+    agent = trace.start({logLevel: 0});
+    setTimeout(function() {
+      assert.ok(!agent.isActive());
+      scope.done();
+      done();
+    }, 500);
+  });
+
   it('should activate with projectId from metadata service', function(done) {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')

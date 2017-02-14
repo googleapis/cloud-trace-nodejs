@@ -190,6 +190,7 @@ var publicAgent = {
             'service. Please provide a valid project number as an env. ' +
             'variable, or through config.projectId passed to start(). ' + err);
           agent.stop();
+          agent = phantomTraceAgent;
           return this;
         }
         config.projectId = projectId;

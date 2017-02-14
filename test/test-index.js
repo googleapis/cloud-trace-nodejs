@@ -33,6 +33,7 @@ describe('index.js', function() {
   });
 
   afterEach(function() {
+    agent.private_().stop();
     agent.private_().traceWriter.buffer_ = [];
   });
 
@@ -46,14 +47,23 @@ describe('index.js', function() {
       assert.throws(trace.start, Error);
   });
   
-  function wrapTest(agent, nodule, property) {
+  function wrapTest(nodule, property) {
+    agent.private_().stop();
+    assert(!nodule[property].__unwrap,
+      property + ' should get unwrapped on stop');
+    agent = trace.start({ forceNewAgent_: true });
+    assert(nodule[property].__unwrap,
+      property + ' should get wrapped on start');
+    agent.private_().stop();
+    assert(!nodule[property].__unwrap,
+      property + ' should get unwrapped on stop');
     agent = trace.start({ forceNewAgent_: true });
     assert(nodule[property].__unwrap,
       property + ' should get wrapped on start');
   }
 
   it('should wrap/unwrap module._load on start/stop', function() {
-    wrapTest(agent, require('module'), '_load');
+    wrapTest(require('module'), '_load');
   });
 
   it('should not attach exception handler with ignore option', function() {
@@ -63,7 +73,7 @@ describe('index.js', function() {
 
   it('should wrap/unwrap http on start/stop', function() {
     var http = require('http');
-    wrapTest(agent, http, 'request');
+    wrapTest(http, 'request');
   });
 
   it('should wrap/unwrap express on start/stop', function() {
@@ -71,33 +81,33 @@ describe('index.js', function() {
     var patchedMethods = require('methods');
     patchedMethods.push('use', 'route', 'param', 'all');
     patchedMethods.forEach(function(method) {
-      wrapTest(agent, express.application, method);
+      wrapTest(express.application, method);
     });
   });
 
   it('should wrap/unwrap hapi on start/stop', function() {
     var hapi = require('./hooks/fixtures/hapi8');
-    wrapTest(agent, hapi.Server.prototype, 'connection');
+    wrapTest(hapi.Server.prototype, 'connection');
   });
 
   it('should wrap/unwrap mongodb-core on start/stop', function() {
     var mongo = require('./hooks/fixtures/mongodb-core1');
-    wrapTest(agent, mongo.Server.prototype, 'command');
-    wrapTest(agent, mongo.Server.prototype, 'insert');
-    wrapTest(agent, mongo.Server.prototype, 'update');
-    wrapTest(agent, mongo.Server.prototype, 'remove');
-    wrapTest(agent, mongo.Cursor.prototype, 'next');
+    wrapTest(mongo.Server.prototype, 'command');
+    wrapTest(mongo.Server.prototype, 'insert');
+    wrapTest(mongo.Server.prototype, 'update');
+    wrapTest(mongo.Server.prototype, 'remove');
+    wrapTest(mongo.Cursor.prototype, 'next');
   });
 
   it('should wrap/unwrap redis on start/stop', function() {
     var redis = require('./hooks/fixtures/redis0.12');
-    wrapTest(agent, redis.RedisClient.prototype, 'send_command');
-    wrapTest(agent, redis, 'createClient');
+    wrapTest(redis.RedisClient.prototype, 'send_command');
+    wrapTest(redis, 'createClient');
   });
 
   it('should wrap/unwrap restify on start/stop', function() {
     var restify = require('./hooks/fixtures/restify4');
-    wrapTest(agent, restify, 'createServer');
+    wrapTest(restify, 'createServer');
   });
 
   it('should return the initialized agent on get', function() {
