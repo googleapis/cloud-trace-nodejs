@@ -123,6 +123,8 @@ describe('index.js', function() {
           assert(duration > 190);
           assert(duration < 300);
           assert.equal(span.labels.key, 'val');
+          // mocha seems to schedule the next test in the same context in 0.12.
+          cls.setRootContext(null);
           done();
         }, 200);
       });
@@ -167,6 +169,8 @@ describe('index.js', function() {
           assert(duration > 190);
           assert(duration < 300);
           assert.equal(span.labels.key, 'val');
+          // mocha seems to schedule the next test in the same context in 0.12.
+          cls.setRootContext(null);
           done();
         }, 200);
       });
