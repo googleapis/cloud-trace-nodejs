@@ -29,11 +29,7 @@ describe('SpanData', function() {
 
   var agent;
   before(function() {
-    agent = require('..').start({ samplingRate: 0 }).private_();
-  });
-
-  after(function() {
-    agent.stop();
+    agent = require('..').start({samplingRate: 0}).private_();
   });
 
   it('has correct default values', function() {

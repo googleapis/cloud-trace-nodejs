@@ -107,6 +107,10 @@ module.exports = {
     // field is set, the contents of the pointed file will be used for
     // authentication instead of your application default credentials.
     // If credentials is also set, the value of keyFilename will be ignored.
-    keyFilename: null
+    keyFilename: null,
+
+    // For testing purposes only.
+    // Used by unit tests to force loading of a new agent if one exists already.
+    forceNewAgent_: false
   }
 };

@@ -27,10 +27,6 @@ describe('test-trace-cluster', function() {
     express = require('./hooks/fixtures/express4');
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   it('should not interfere with express span', function(done) {
     if (cluster.isMaster) {
       cluster.fork();

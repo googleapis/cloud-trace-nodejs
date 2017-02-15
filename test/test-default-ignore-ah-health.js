@@ -26,10 +26,6 @@ describe('test-default-ignore-ah-health', function() {
     express = require('./hooks/fixtures/express4');
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   it('should ignore /_ah/health traces by default', function(done) {
     var app = express();
     app.get('/_ah/health', function (req, res) {

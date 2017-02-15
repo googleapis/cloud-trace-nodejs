@@ -148,7 +148,6 @@ Object.keys(versions).forEach(function(version) {
     after(function() {
       grpcServer.forceShutdown();
       server.close();
-      agent.stop();
     });
 
     afterEach(function() {

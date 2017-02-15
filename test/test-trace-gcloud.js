@@ -29,10 +29,6 @@ describe('test-trace-gcloud', function() {
       enhancedDatabaseReporting: true }).private_();
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   // This does a gcloud.datastore.get() request that makes a gRPC 'lookup' call.
   // It attempts to authenticate using Google Auth by connecting to
   // 'accounts.google.com:443/o/oauth2/token', but fails because of Nock.

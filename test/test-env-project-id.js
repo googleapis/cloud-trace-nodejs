@@ -23,14 +23,12 @@ var trace = require('..');
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_PROJECT', function() {
-    var agent = trace.start();
+    var agent = trace.start({forceNewAgent_: true});
     assert.equal(agent.private_().config_.projectId, 1729);
-    agent.stop();
   });
 
   it('should prefer env to config', function() {
-    var agent = trace.start({projectId: 1927});
+    var agent = trace.start({projectId: 1927, forceNewAgent_: true});
     assert.equal(agent.private_().config_.projectId, 1729);
-    agent.stop();
   });
 });

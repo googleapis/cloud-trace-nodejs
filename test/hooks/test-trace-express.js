@@ -42,7 +42,6 @@ describe('test-trace-express', function() {
   });
   after(function() {
     process.stderr.write = write;
-    agent.stop();
   });
   afterEach(function() {
     common.cleanTraces(agent);

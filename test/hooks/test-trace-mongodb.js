@@ -36,10 +36,6 @@ describe('mongodb', function() {
     agent = require('../..').start({ samplingRate: 0 }).private_();
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   Object.keys(versions).forEach(function(version) {
     describe(version, function() {
       var mongodb;

@@ -35,10 +35,6 @@ describe('restify', function() {
     agent = require('../..').start({ samplingRate: 0 }).private_();
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   var server;
   var write;
 

@@ -27,10 +27,6 @@ describe('test-agent-stopped', function() {
     agent = require('..').start();
   });
 
-  after(function() {
-    agent.stop();
-  });
-
   describe('express', function() {
     it('should not break if no project number is found', function(done) {
       var app = require('./hooks/fixtures/express4')();

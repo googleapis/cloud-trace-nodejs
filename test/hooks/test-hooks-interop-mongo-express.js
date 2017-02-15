@@ -53,7 +53,6 @@ describe('mongodb + express', function() {
     //     for this test and test-trace-express.js to both
     //     pass.
     delete require.cache[require.resolve('./fixtures/express4')];
-    agent.stop();
   });
 
   it('should not lose context on startup', function(done) {

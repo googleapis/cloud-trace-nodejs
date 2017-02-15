@@ -120,7 +120,6 @@ function checkLoadedModules(logger) {
 }
 
 function activate(agent) {
-
   logger = agent.logger;
 
   checkLoadedModules(logger);

@@ -169,6 +169,7 @@ var publicAgent = {
     }
 
     if (typeof config.projectId === 'undefined') {
+      var that = this;
       // Queue the work to acquire the projectId (potentially from the
       // network.)
       gcpMetadata.project({
@@ -186,12 +187,13 @@ var publicAgent = {
           }
         }
         if (err) {
-          // Fatal error. Disable the agent.
           logger.error('Unable to acquire the project number from metadata ' +
             'service. Please provide a valid project number as an env. ' +
-            'variable, or through config.projectId passed to start(). ' +
-            'Disabling trace agent. ' + err);
-          publicAgent.stop();
+            'variable, or through config.projectId passed to start(). ' + err);
+          if (that.isActive()) {
+            agent.stop();
+            agent = phantomTraceAgent;
+          }
           return;
         }
         config.projectId = projectId;
@@ -211,13 +213,6 @@ var publicAgent = {
       return this;
     }
     throw new Error('The agent must be initialized by calling start.');
-  },
-
-  stop: function() {
-    if (this.isActive()) {
-      agent.stop();
-      agent = phantomTraceAgent;
-    }
   },
 
   /**

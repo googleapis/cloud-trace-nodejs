@@ -64,9 +64,16 @@ function TraceAgent(config, logger) {
  * Halts this agent and unpatches any patched modules.
  */
 TraceAgent.prototype.stop = function() {
+  // Deactivate plugins. This calls unpatch() for all plugin patches that
+  // support it.
   hooks.deactivate();
   pluginLoader.deactivate();
-  cls.destroyNamespace();
+  // Even though plugins should be unpatched, setting a new policy that
+  // never generates traces allows persisting wrapped methods (either because
+  // they are already instantiated or the plugin doesn't unpatch them) to
+  // short-circuit out of trace generation logic.
+  this.policy = new tracingPolicy.TraceNonePolicy();
+  // Stop the trace writer from publishing any new traces.
   this.traceWriter.stop();
   this.namespace = null;
   traceAgent = null;
@@ -304,7 +311,7 @@ TraceAgent.prototype.generateTraceContext = function(spanData, traced) {
 
 module.exports = {
   get: function(config, logger) {
-    if (traceAgent) {
+    if (traceAgent && !config.forceNewAgent_) {
       if (!isEqual(config, traceAgent.config_)) {
         traceAgent.logger.warn('New configuration does not match configuration' +
           'of existing agent. The old configuration will be used.\nNew: ' +

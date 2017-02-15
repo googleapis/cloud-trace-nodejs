@@ -42,10 +42,6 @@ describe('agent interaction with metadata service', function() {
     trace = require('..');
   });
 
-  afterEach(function() {
-    agent.stop();
-  });
-
   it('should stop when the project number cannot be acquired', function(done) {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
@@ -61,13 +57,40 @@ describe('agent interaction with metadata service', function() {
     }, 500);
   });
 
+  it('should preserve public interface when stopped', function(done) {
+      nock.disableNetConnect();
+      var scope = nock('http://metadata.google.internal')
+                  .get('/computeMetadata/v1/project/project-id')
+                  .times(2)
+                  .reply(404, 'foo');
+      assert.equal(typeof agent, 'object');
+      assert.equal(typeof agent.startSpan, 'function');
+      assert.equal(typeof agent.endSpan, 'function');
+      assert.equal(typeof agent.runInSpan, 'function');
+      assert.equal(typeof agent.runInRootSpan, 'function');
+      assert.equal(typeof agent.setTransactionName, 'function');
+      assert.equal(typeof agent.addTransactionLabel, 'function');
+      agent = trace.start({logLevel: 0});
+      setTimeout(function() {
+        assert.equal(typeof agent, 'object');
+        assert.equal(typeof agent.startSpan, 'function');
+        assert.equal(typeof agent.endSpan, 'function');
+        assert.equal(typeof agent.runInSpan, 'function');
+        assert.equal(typeof agent.runInRootSpan, 'function');
+        assert.equal(typeof agent.setTransactionName, 'function');
+        assert.equal(typeof agent.addTransactionLabel, 'function');
+        scope.done();
+        done();
+      }, 500);
+  });
+
   it('should activate with projectId from metadata service', function(done) {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/project-id')
                 .times(2)
                 .reply(200, '1234');
-    agent = trace.start({logLevel: 0});
+    agent = trace.start({logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
       assert.ok(agent.isActive());
       assert.equal(agent.private_().config().projectId, '1234');
@@ -79,13 +102,13 @@ describe('agent interaction with metadata service', function() {
   it('should not query metadata service when config.projectId is set',
     function() {
       nock.disableNetConnect();
-      agent = trace.start({projectId: '0', logLevel: 0});
+      agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     });
 
   it('should not query metadata service when env. var. is set', function() {
     nock.disableNetConnect();
     process.env.GCLOUD_PROJECT=0;
-    agent = trace.start({logLevel: 0});
+    agent = trace.start({logLevel: 0, forceNewAgent_: true});
     delete process.env.GCLOUD_PROJECT;
   });
 
@@ -96,7 +119,7 @@ describe('agent interaction with metadata service', function() {
                 .times(1)
                 .reply(200, 'host');
 
-    agent = trace.start({projectId: '0', logLevel: 0});
+    agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -115,7 +138,7 @@ describe('agent interaction with metadata service', function() {
                 .times(1)
                 .reply(200, '1729');
 
-    agent = trace.start({projectId: '0', logLevel: 0});
+    agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -129,7 +152,7 @@ describe('agent interaction with metadata service', function() {
 
   it('shouldn\'t add id or hostname labels if not present', function(done) {
     nock.disableNetConnect();
-    agent = trace.start({projectId: '0', logLevel: 0});
+    agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -146,7 +169,7 @@ describe('agent interaction with metadata service', function() {
     process.env.GAE_MODULE_NAME = 'foo';
     process.env.GAE_MODULE_VERSION = '20151119t120000';
     process.env.GAE_MINOR_VERSION = '91992';
-    agent = trace.start({projectId: '0', logLevel: 0});
+    agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -165,7 +188,7 @@ describe('agent interaction with metadata service', function() {
     process.env.GAE_MODULE_NAME = 'default';
     process.env.GAE_MODULE_VERSION = '20151119t130000';
     process.env.GAE_MINOR_VERSION = '81818';
-    agent = trace.start({projectId: '0', logLevel: 0});
+    agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
       agent.private_().namespace.run(function() {
         var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -191,7 +214,7 @@ describe('agent interaction with metadata service', function() {
                   .reply(200, 'host');
 
       delete process.env.GAE_MODULE_NAME;
-      agent = trace.start({projectId: '0', logLevel: 0});
+      agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
       setTimeout(function() {
         agent.private_().namespace.run(function() {
           var spanData = agent.private_().createRootSpanData('name', 5, 0);
@@ -213,7 +236,7 @@ describe('agent interaction with metadata service', function() {
                   .reply(404);
 
       delete process.env.GAE_MODULE_NAME;
-      agent = trace.start({projectId: '0', logLevel: 0});
+      agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
       setTimeout(function() {
         agent.private_().namespace.run(function() {
           var spanData = agent.private_().createRootSpanData('name', 5, 0);

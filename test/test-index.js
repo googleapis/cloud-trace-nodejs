@@ -27,24 +27,14 @@ var cls = require('../src/cls.js');
 var TraceLabels = require('../src/trace-labels.js');
 
 describe('index.js', function() {
-  var agent;
-  beforeEach(function() {
-    agent = trace.start();
-  });
+  var agent = trace.start();
 
-  afterEach(function(){
-    agent.stop();
+  afterEach(function() {
+    agent.private_().traceWriter.buffer_ = [];
   });
 
   it('should get the agent with `Trace.get`', function() {
     assert.strictEqual(agent, trace.get());
-  });
-
-  it('should throw an error if `get` is called on an inactive agent',
-    function() {
-      agent.stop();
-      assert.throws(agent.get, Error);
-      assert.throws(trace.get, Error);
   });
 
   it('should throw an error if `start` is called on an active agent',
@@ -52,141 +42,10 @@ describe('index.js', function() {
       assert.throws(agent.start, Error);
       assert.throws(trace.start, Error);
   });
-
-  it('can be allowed to let `start` be called multiple times ' +
-     'without a call to `stop`',
-     function() {
-       agent.stop();
-       // If the disabling of the start check failed, the following
-       // line will throw an error
-       agent.start({
-         forceNewAgent_: true
-       });
-       agent.start({
-         forceNewAgent_: true
-       });
-     }
-  );
-
-  it('should report if it is active', function() {
-    assert.ok(agent.isActive());
-    agent.stop();
-    assert.ok(!agent.isActive());
-  });
-
-  it('should be harmless to stop before a start', function() {
-    agent.stop();
-    agent.stop();
-    agent.stop();
-  });
-
-  function wrapTest(agent, nodule, property) {
-    agent.stop(); // harmless to stop before a start.
-    assert(!nodule[property].__unwrap,
-      property + ' already wrapped before start');
-    agent = trace.start();
-    assert(nodule[property].__unwrap,
-      property + ' should get wrapped on start');
-    agent.stop();
-    assert(!nodule[property].__unwrap,
-      property + ' should get unwrapped on stop');
-    agent = trace.start();
-    assert(nodule[property].__unwrap,
-      property + ' should get wrapped on start');
-    agent.stop();
-    assert(!nodule[property].__unwrap,
-      property + ' should get unwrapped on stop');
-  }
-
-  it('should wrap/unwrap module._load on start/stop', function() {
-    wrapTest(agent, require('module'), '_load');
-  });
-
+  
   it('should not attach exception handler with ignore option', function() {
     // Mocha attaches 1 exception handler
     assert.equal(process.listeners('uncaughtException').length, 1);
-  });
-
-  it('should wrap/unwrap http on start/stop', function() {
-    var http = require('http');
-    wrapTest(agent, http, 'request');
-  });
-
-  it('should wrap/unwrap express on start/stop', function() {
-    var express = require('./hooks/fixtures/express4');
-    var patchedMethods = require('methods');
-    patchedMethods.push('use', 'route', 'param', 'all');
-    patchedMethods.forEach(function(method) {
-      wrapTest(agent, express.application, method);
-    });
-  });
-
-  it('should wrap/unwrap hapi on start/stop', function() {
-    var hapi = require('./hooks/fixtures/hapi8');
-    wrapTest(agent, hapi.Server.prototype, 'connection');
-  });
-
-  it('should wrap/unwrap mongodb-core on start/stop', function() {
-    var mongo = require('./hooks/fixtures/mongodb-core1');
-    wrapTest(agent, mongo.Server.prototype, 'command');
-    wrapTest(agent, mongo.Server.prototype, 'insert');
-    wrapTest(agent, mongo.Server.prototype, 'update');
-    wrapTest(agent, mongo.Server.prototype, 'remove');
-    wrapTest(agent, mongo.Cursor.prototype, 'next');
-  });
-
-  it('should wrap/unwrap redis on start/stop', function() {
-    var redis = require('./hooks/fixtures/redis0.12');
-    wrapTest(agent, redis.RedisClient.prototype, 'send_command');
-    wrapTest(agent, redis, 'createClient');
-  });
-
-  it('should wrap/unwrap restify on start/stop', function() {
-    var restify = require('./hooks/fixtures/restify4');
-    wrapTest(agent, restify, 'createServer');
-  });
-
-  it('should have equivalent enabled and disabled structure', function() {
-    assert.equal(typeof agent, 'object');
-    assert.equal(typeof agent.startSpan, 'function');
-    assert.equal(typeof agent.endSpan, 'function');
-    assert.equal(typeof agent.runInSpan, 'function');
-    assert.equal(typeof agent.runInRootSpan, 'function');
-    assert.equal(typeof agent.setTransactionName, 'function');
-    assert.equal(typeof agent.addTransactionLabel, 'function');
-    agent.stop();
-    assert.equal(typeof agent, 'object');
-    assert.equal(typeof agent.startSpan, 'function');
-    assert.equal(typeof agent.endSpan, 'function');
-    assert.equal(typeof agent.runInSpan, 'function');
-    assert.equal(typeof agent.runInRootSpan, 'function');
-    assert.equal(typeof agent.setTransactionName, 'function');
-    assert.equal(typeof agent.addTransactionLabel, 'function');
-  });
-
-  it('should return the initialized agent on get', function() {
-    assert.equal(agent.get(), agent);
-  });
-
-  it('should allow start, end, runIn span calls when disabled', function() {
-    agent.stop();
-    var span = agent.startSpan();
-    agent.endSpan(span);
-    assert(span);
-    var reached = false;
-    agent.runInSpan('custom', function() {
-      reached = true;
-    });
-    assert(reached);
-  });
-
-  it('should produce real spans when enabled', function() {
-    cls.getNamespace().run(function() {
-      agent.private_().createRootSpanData('root', 1, 2);
-      var spanData = agent.startSpan('sub');
-      agent.endSpan(spanData);
-      assert.equal(spanData.span.name, 'sub');
-    });
   });
 
   describe('labels', function(){
@@ -269,6 +128,8 @@ describe('index.js', function() {
           assert(duration > 190);
           assert(duration < 300);
           assert.equal(span.labels.key, 'val');
+          // mocha seems to schedule the next test in the same context in 0.12.
+          cls.setRootContext(null);
           done();
         }, 200);
       });
@@ -313,6 +174,8 @@ describe('index.js', function() {
           assert(duration > 190);
           assert(duration < 300);
           assert.equal(span.labels.key, 'val');
+          // mocha seems to schedule the next test in the same context in 0.12.
+          cls.setRootContext(null);
           done();
         }, 200);
       });

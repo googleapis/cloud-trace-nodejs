@@ -52,7 +52,12 @@ function TraceAllPolicy() {}
 
 TraceAllPolicy.prototype.shouldTrace = function() { return true; };
 
+function TraceNonePolicy() {}
+
+TraceNonePolicy.prototype.shouldTrace = function() { return false; };
+
 module.exports = {
+  TraceNonePolicy: TraceNonePolicy,
   createTracePolicy: function(config) {
     var basePolicy;
     if (config.samplingRate < 1) {
