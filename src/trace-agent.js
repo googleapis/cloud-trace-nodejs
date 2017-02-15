@@ -66,8 +66,7 @@ function TraceAgent(config, logger) {
 TraceAgent.prototype.stop = function() {
   hooks.deactivate();
   pluginLoader.deactivate();
-  this.config_.enabled = false;
-  this.policy = tracingPolicy.createTracePolicy(this.config_);
+  this.policy = new tracingPolicy.TraceNonePolicy();
   this.traceWriter.stop();
   this.namespace = null;
   traceAgent = null;

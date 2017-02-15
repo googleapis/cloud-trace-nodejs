@@ -57,10 +57,8 @@ function TraceNonePolicy() {}
 TraceNonePolicy.prototype.shouldTrace = function() { return false; };
 
 module.exports = {
+  TraceNonePolicy: TraceNonePolicy,
   createTracePolicy: function(config) {
-    if (!config.enabled) {
-      return new TraceNonePolicy();
-    }
     var basePolicy;
     if (config.samplingRate < 1) {
       basePolicy = new TraceAllPolicy();
