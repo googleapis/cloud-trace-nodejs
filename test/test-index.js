@@ -42,6 +42,11 @@ describe('index.js', function() {
       assert.throws(agent.start, Error);
       assert.throws(trace.start, Error);
   });
+  
+  it('should not attach exception handler with ignore option', function() {
+    // Mocha attaches 1 exception handler
+    assert.equal(process.listeners('uncaughtException').length, 1);
+  });
 
   describe('labels', function(){
     it('should add labels to spans', function() {

@@ -60,7 +60,6 @@ var toInstrument = Object.create(null, {
 });
 
 var logger;
-var activated = false;
 
 /**
  * Determines the path at which the requested module will be loaded given
@@ -121,10 +120,6 @@ function checkLoadedModules(logger) {
 }
 
 function activate(agent) {
-  if (activated) {
-    return;
-  }
-  activated = true;
   logger = agent.logger;
 
   checkLoadedModules(logger);
@@ -204,26 +199,23 @@ function activate(agent) {
 }
 
 function deactivate() {
-  if (activated) {
-    activated = false;
-    for (var moduleName in toInstrument) {
-      var instrumentation = toInstrument[moduleName];
-      for (var moduleRoot in instrumentation.patches) {
-        var modulePatch = instrumentation.patches[moduleRoot];
-        for (var patchedFile in modulePatch) {
-          var hook = modulePatch[patchedFile];
-          logger.info('Attempting to unpatch ' + moduleName);
-          if (hook.unpatch !== undefined) {
-            hook.unpatch(hook.module);
-          }
-          hook.active = false;
+  for (var moduleName in toInstrument) {
+    var instrumentation = toInstrument[moduleName];
+    for (var moduleRoot in instrumentation.patches) {
+      var modulePatch = instrumentation.patches[moduleRoot];
+      for (var patchedFile in modulePatch) {
+        var hook = modulePatch[patchedFile];
+        logger.info('Attempting to unpatch ' + moduleName);
+        if (hook.unpatch !== undefined) {
+          hook.unpatch(hook.module);
         }
+        hook.active = false;
       }
     }
-
-    // unhook module.load
-    shimmer.unwrap(Module, '_load');
   }
+
+  // unhook module.load
+  shimmer.unwrap(Module, '_load');
 }
 
 module.exports = {
