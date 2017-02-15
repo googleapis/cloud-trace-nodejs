@@ -27,16 +27,9 @@ var cls = require('../src/cls.js');
 var TraceLabels = require('../src/trace-labels.js');
 
 describe('index.js', function() {
-  var agent;
-  beforeEach(function() {
-    agent = trace.start({ forceNewAgent_: true });
-  });
+  var agent = trace.start();
 
   afterEach(function() {
-    // Not necessary to make tests pass, but calling stop() suppresses
-    // plugin loader error message that occurs when activating several times
-    // in a row
-    agent.private_().stop();
     agent.private_().traceWriter.buffer_ = [];
   });
 
@@ -48,82 +41,6 @@ describe('index.js', function() {
     function() {
       assert.throws(agent.start, Error);
       assert.throws(trace.start, Error);
-  });
-  
-  function wrapTest(nodule, property) {
-    agent.private_().stop();
-    assert(!nodule[property].__unwrap,
-      property + ' should get unwrapped on stop');
-    agent = trace.start({ forceNewAgent_: true });
-    assert(nodule[property].__unwrap,
-      property + ' should get wrapped on start');
-    agent.private_().stop();
-    assert(!nodule[property].__unwrap,
-      property + ' should get unwrapped on stop');
-    agent = trace.start({ forceNewAgent_: true });
-    assert(nodule[property].__unwrap,
-      property + ' should get wrapped on start');
-  }
-
-  it('should wrap/unwrap module._load on start/stop', function() {
-    wrapTest(require('module'), '_load');
-  });
-
-  it('should not attach exception handler with ignore option', function() {
-    // Mocha attaches 1 exception handler
-    assert.equal(process.listeners('uncaughtException').length, 1);
-  });
-
-  it('should wrap/unwrap http on start/stop', function() {
-    var http = require('http');
-    wrapTest(http, 'request');
-  });
-
-  it('should wrap/unwrap express on start/stop', function() {
-    var express = require('./hooks/fixtures/express4');
-    var patchedMethods = require('methods');
-    patchedMethods.push('use', 'route', 'param', 'all');
-    patchedMethods.forEach(function(method) {
-      wrapTest(express.application, method);
-    });
-  });
-
-  it('should wrap/unwrap hapi on start/stop', function() {
-    var hapi = require('./hooks/fixtures/hapi8');
-    wrapTest(hapi.Server.prototype, 'connection');
-  });
-
-  it('should wrap/unwrap mongodb-core on start/stop', function() {
-    var mongo = require('./hooks/fixtures/mongodb-core1');
-    wrapTest(mongo.Server.prototype, 'command');
-    wrapTest(mongo.Server.prototype, 'insert');
-    wrapTest(mongo.Server.prototype, 'update');
-    wrapTest(mongo.Server.prototype, 'remove');
-    wrapTest(mongo.Cursor.prototype, 'next');
-  });
-
-  it('should wrap/unwrap redis on start/stop', function() {
-    var redis = require('./hooks/fixtures/redis0.12');
-    wrapTest(redis.RedisClient.prototype, 'send_command');
-    wrapTest(redis, 'createClient');
-  });
-
-  it('should wrap/unwrap restify on start/stop', function() {
-    var restify = require('./hooks/fixtures/restify4');
-    wrapTest(restify, 'createServer');
-  });
-
-  it('should return the initialized agent on get', function() {
-    assert.equal(agent.get(), agent);
-  });
-
-  it('should produce real spans when enabled', function() {
-    cls.getNamespace().run(function() {
-      agent.private_().createRootSpanData('root', 1, 2);
-      var spanData = agent.startSpan('sub');
-      agent.endSpan(spanData);
-      assert.equal(spanData.span.name, 'sub');
-    });
   });
 
   describe('labels', function(){
