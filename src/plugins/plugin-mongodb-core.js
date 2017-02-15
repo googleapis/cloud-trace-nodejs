@@ -72,21 +72,16 @@ function wrapWithLabel(api, label) {
  */
 function wrapCallback(api, span, done) {
   var fn = function(err, res) {
-    var labels = {};
     if (api.enhancedDatabaseReportingEnabled()) {
       if (err) {
         // Errors may contain sensitive query parameters.
-        labels.mongoError = err;
+        span.addLabel('mongoError', err);
       }
       if (res) {
         var result = res.result ? res.result : res;
-        labels.results = traceUtil.stringifyPrefix(result,
-          api.databaseResultReportingSize());
+        span.addLabel('results', result);
       }
     }
-    Object.keys(labels).forEach(function(name) {
-      span.addLabel(name, labels[name]);
-    });
     span.endSpan();
     if (done) {
       done(err, res);

@@ -120,15 +120,6 @@ PluginAPI.prototype.enhancedDatabaseReportingEnabled = function() {
 };
 
 /**
- * Gets the value of databaseResultReportingSize in the trace agent's
- * configuration object.
- * @returns A number indicating the database result reporting size.
- */
-PluginAPI.prototype.databaseResultReportingSize = function() {
-  return this.agent_.config_.databaseResultReportingSize;
-};
-
-/**
  * Creates and returns a new RootSpan object corresponding to an incoming
  * request.
  * @param {object} options An object that specifies options for how the root
