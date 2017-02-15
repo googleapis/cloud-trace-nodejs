@@ -39,23 +39,23 @@ function patchModuleRoot(express, api) {
       url: req.originalUrl,
       skipFrames: 3
     };
-    api.runInRootSpan(options, function(transaction) {
-      if (!transaction) {
+    api.runInRootSpan(options, function(rootSpan) {
+      if (!rootSpan) {
         next();
         return;
       }
 
       // Set outgoing trace context.
       res.set(api.constants.TRACE_CONTEXT_HEADER_NAME,
-        transaction.getTraceContext());
+        rootSpan.getTraceContext());
 
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
       var url = req.protocol + '://' + req.hostname + req.originalUrl;
-      transaction.addLabel(labels.HTTP_METHOD_LABEL_KEY, req.method);
-      transaction.addLabel(labels.HTTP_URL_LABEL_KEY, url);
-      transaction.addLabel(labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+      rootSpan.addLabel(labels.HTTP_METHOD_LABEL_KEY, req.method);
+      rootSpan.addLabel(labels.HTTP_URL_LABEL_KEY, url);
+      rootSpan.addLabel(labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
       // wrap end
       var originalEnd = res.end;
@@ -64,10 +64,10 @@ function patchModuleRoot(express, api) {
         var returned = res.end(chunk, encoding);
 
         if (req.route && req.route.path) {
-          transaction.addLabel('express/request.route.path', req.route.path);
+          rootSpan.addLabel('express/request.route.path', req.route.path);
         }
-        transaction.addLabel(labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-        transaction.endSpan();
+        rootSpan.addLabel(labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+        rootSpan.endSpan();
         return returned;
       };
 
