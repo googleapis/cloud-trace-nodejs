@@ -86,10 +86,8 @@ function unpatchModuleRoot(express) {
   });
 }
 
-module.exports = [
-  {
+module.exports = [{
     versions: SUPPORTED_VERSIONS,
     patch: patchModuleRoot,
     unpatch: unpatchModuleRoot
-  }
-];
+}];
