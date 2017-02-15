@@ -16,7 +16,6 @@
 'use strict';
 
 var shimmer = require('shimmer');
-var traceUtil = require('../util.js');
 
 var SUPPORTED_VERSIONS = '1 - 2';
 
