@@ -17,7 +17,6 @@
 
 var assert = require('assert');
 var traceLabels = require('../../src/trace-labels.js');
-var findIndex = require('lodash.findindex');
 
 var versions = {
   grpc1: './fixtures/grpc1'
@@ -326,22 +325,13 @@ Object.keys(versions).forEach(function(version) {
         assert.strictEqual(args.length, 4,
           'expected one call for each of four gRPC method types but got ' +
           args.length + ' instead');
-        for (var i = 0; i < args.length; i++) {
-          assert.strictEqual(args[i].length, 1);
-        }
         var prefix = 'grpc:/nodetest.Tester/Test';
-        assert.notStrictEqual(findIndex(args, function(arg) {
-          return arg[0] === prefix + 'Unary';
-        }, -1));
-        assert.notStrictEqual(findIndex(args, function(arg) {
-          return arg[0] === prefix + 'ClientStream';
-        }, -1));
-        assert.notStrictEqual(findIndex(args, function(arg) {
-          return arg[0] === prefix + 'ServerStream';
-        }, -1));
-        assert.notStrictEqual(findIndex(args, function(arg) {
-          return arg[0] === prefix + 'BidiStream';
-        }, -1));
+        // calls to shouldTrace should be in the order which the client method
+        // of each type was called.
+        assert.deepEqual(args[3], [prefix + 'Unary', undefined]);
+        assert.deepEqual(args[2], [prefix + 'ClientStream', undefined]);
+        assert.deepEqual(args[1], [prefix + 'ServerStream', undefined]);
+        assert.deepEqual(args[0], [prefix + 'BidiStream', undefined]);
         done();
       };
       next = callUnary.bind(null, client, next);

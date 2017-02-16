@@ -38,8 +38,6 @@ var fs = require('fs');
 // order in which they are loaded.
 var toInstrument = Object.create(null, {
   'express': { enumerable: true, value: { file: './userspace/hook-express.js',
-      patches: {} } },
-  'grpc': { enumerable: true, value: { file: './userspace/hook-grpc.js',
       patches: {} } }
 });
 
