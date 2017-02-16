@@ -157,7 +157,7 @@ function deactivate() {
         }
       }
     }
-    plugins = {};
+    plugins = Object.create(null);
 
     // unhook module.load
     shimmer.unwrap(Module, '_load');

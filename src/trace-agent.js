@@ -75,6 +75,7 @@ TraceAgent.prototype.stop = function() {
   this.policy = new tracingPolicy.TraceNonePolicy();
   // Stop the trace writer from publishing any new traces.
   this.traceWriter.stop();
+  cls.destroyNamespace();
   this.namespace = null;
   traceAgent = null;
   if (this.config_.onUncaughtException !== 'ignore') {
