@@ -15,6 +15,8 @@
  */
 'use strict';
 
+var path = require('path');
+
 // Default configuration
 module.exports = {
   trace: {
@@ -38,7 +40,9 @@ module.exports = {
     // An empty object means that no modules will be automatically traced at
     // all.
     // This field is experimental.
-    plugins: {},
+    plugins: {
+      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
+    },
 
     // Valid entries are:
     // 'express', 'hapi', 'http', 'restify'

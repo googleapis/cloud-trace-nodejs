@@ -53,8 +53,6 @@ var toInstrument = Object.create(null, {
       patches: {} } },
   'redis': { enumerable: true, value: { file: './userspace/hook-redis.js',
       patches: {} } },
-  'restify': { enumerable: true, value: { file: './userspace/hook-restify.js',
-      patches: {} } },
   'connect': { enumerable: true, value: { file: './userspace/hook-connect.js',
       patches: {} } }
 });
