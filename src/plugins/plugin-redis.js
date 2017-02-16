@@ -66,6 +66,9 @@ function setupSpan(api, cmd, args, skipped_frames) {
 }
 
 function startSpanFromArguments(api, cmd, args, cb, send_command) {
+  // If the arguments cannot be processed in this plugin, let redis process
+  // them so that if they are incorrect, redis reports an error instead of
+  // this plugin.
   if (!cmd || !args || typeof cmd !== 'string' || !Array.isArray(args) ||
     (cb && typeof cb !== 'function')) {
     return send_command(cmd, args, cb);
@@ -84,6 +87,7 @@ function startSpanFromArguments(api, cmd, args, cb, send_command) {
 }
 
 function internalSendCommandWrap(api, internal_send_command) {
+  // TODO: Document and simplify this code.
   return function internal_send_command_trace(cmd, args, cb) {
     if (arguments.length === 1 && typeof cmd === 'object') {
       var span = setupSpan(api, cmd.command, cmd.args, 0);
