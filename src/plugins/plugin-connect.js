@@ -20,7 +20,6 @@ var urlParse = require('url').parse;
 var SUPPORTED_VERSIONS = '3.x';
 
 function middleware(api, req, res, next) {
-  var originalEnd = res.end;
   var options = {
     name: urlParse(req.originalUrl).pathname,
     traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME.toLowerCase()],
@@ -28,8 +27,6 @@ function middleware(api, req, res, next) {
   };
   api.runInRootSpan(options, function(root) {
     if (!root) {
-      // TODO: Determine if this message is needed
-      // agent.logger.info('Connect: no namespace found, ignoring request');
       return next();
     }
 
@@ -48,12 +45,10 @@ function middleware(api, req, res, next) {
     var context = root.getTraceContext();
     if (context) {
       res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
-    } else {
-      // TODO: Determine if this message is still needed
-      // agent.logger.warn('Connect: Attempted to generate trace context for nullSpan');
     }
 
     // wrap end
+    var originalEnd = res.end;
     res.end = function(data, encoding, callback) {
       res.end = originalEnd;
       var returned = res.end(data, encoding, callback);
