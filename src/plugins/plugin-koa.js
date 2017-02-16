@@ -64,10 +64,6 @@ function* middleware(next) {
     if (context) {
       res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
     }
-    //else {
-    //  TODO: Determine if this is still needed
-    //  agent.logger.warn('koa: Attempted to generate trace context for nullSpan');
-    //}
 
     // wrap end
     res.end = function(chunk, encoding) {
