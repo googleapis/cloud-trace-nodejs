@@ -21,13 +21,10 @@ var SUPPORTED_VERSIONS = '1 - 2';
 
 function nextWrap(api, next) {
   return function next_trace(cb) {
-    var root = api.getRootSpan();
-    if (!root) {
+    var span = api.createChildSpan({ name: 'mongo-cursor' });
+    if (!span) {
       return next.apply(this, arguments);
     }
-    var span = api.createChildSpan({
-      name: 'mongo-cursor'
-    });
     span.addLabel('db', this.ns);
     if (api.enhancedDatabaseReportingEnabled()) {
       span.addLabel('cmd', JSON.stringify(this.cmd));
@@ -39,13 +36,10 @@ function nextWrap(api, next) {
 function wrapWithLabel(api, label) {
   return function(original) {
     return function mongo_operation_trace(ns, ops, options, callback) {
-      var root = api.getRootSpan();
-      if (!root) {
+      var span = api.createChildSpan({ name: label });
+      if (!span) {
         return original.apply(this, arguments);
       }
-      var span = api.createChildSpan({
-        name: label
-      });
       span.addLabel('db', ns);
       if (api.enhancedDatabaseReportingEnabled()) {
         span.addLabel('operations', JSON.stringify(ops));
