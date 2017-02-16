@@ -55,6 +55,9 @@ function setupSpan(api, cmd, args, skipped_frames) {
     name: 'redis-' + cmd,
     skipFrames: skipped_frames + 1
   });
+  if (!span) {
+    return null;
+  }
   span.addLabel('command', cmd);
   if (api.enhancedDatabaseReportingEnabled()) {
     span.addLabel('arguments', JSON.stringify(args));
@@ -74,17 +77,19 @@ function startSpanFromArguments(api, cmd, args, cb, send_command) {
     }
   }
   var span = setupSpan(api, cmd, args, 1);
+  if (!span) {
+    return send_command(cmd, args, cb);
+  }
   return send_command(cmd, args, wrapCallback(api, span, cb));
 }
 
 function internalSendCommandWrap(api, internal_send_command) {
   return function internal_send_command_trace(cmd, args, cb) {
-    var root = api.getRootSpan();
-    if (!root) {
-      return internal_send_command.call(this, cmd, args, cb);
-    }
     if (arguments.length === 1 && typeof cmd === 'object') {
       var span = setupSpan(api, cmd.command, cmd.args, 0);
+      if (!span) {
+        return internal_send_command.call(this, cmd, args, cb);
+      }
       cmd.callback = wrapCallback(api, span, cmd.callback);
       return internal_send_command.call(this, cmd);
     }
@@ -94,10 +99,6 @@ function internalSendCommandWrap(api, internal_send_command) {
 
 function sendCommandWrap(api, send_command) {
   return function send_command_trace(cmd, args, cb) {
-    var root = api.getRootSpan();
-    if (!root) {
-      return send_command.call(this, cmd, args, cb);
-    }
     return startSpanFromArguments(api, cmd, args, cb, send_command.bind(this));
   };
 }
