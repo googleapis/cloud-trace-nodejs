@@ -44,6 +44,7 @@ module.exports = {
       'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
       'koa': path.join(__dirname, 'src/plugins/plugin-koa.js'),
       'mongodb-core': path.join(__dirname, 'src/plugins/plugin-mongodb-core.js'),
+      'redis': path.join(__dirname, 'src/plugins/plugin-redis.js'),
       'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
     },
 
