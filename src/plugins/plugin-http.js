@@ -62,14 +62,17 @@ function patchRequest (http, api) {
       options.headers = options.headers || {};
 
       var uri = extractUrl(options);
-      var requestLifecycleSpan = api.createChildSpan({name: getSpanName(options)});
+      var requestLifecycleSpan =
+          api.createChildSpan({name: getSpanName(options)});
       if (!requestLifecycleSpan) {
         return request.apply(this, arguments);
       }
 
-      requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, options.method);
+      requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
+                                    options.method);
       requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
-      options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] = requestLifecycleSpan.getTraceContext();
+      options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
+          requestLifecycleSpan.getTraceContext();
       var req = request.call(this, options, function(res) {
         api.wrapEmitter(res);
         var numBytes = 0;
