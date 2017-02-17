@@ -20,6 +20,7 @@ var url = require('url');
 var isString = require('is').string;
 var merge = require('lodash.merge');
 var httpAgent = require('_http_agent');
+var constants = require('../constants.js');
 var TRACE_AGENT_REQUEST_HEADER = require('../constants.js').TRACE_AGENT_REQUEST_HEADER;
 
 function isTraceAgentRequest (options) {
@@ -39,7 +40,7 @@ function setTraceHeader(parsedOptions, context, api) {
   if (context) {
     return merge(parsedOptions, {
       headers: {
-        [api.labels.TRACE_CONTEXT_HEADER_NAME]: context
+        [constants.TRACE_CONTEXT_HEADER_NAME]: context
       }
     });
   }
