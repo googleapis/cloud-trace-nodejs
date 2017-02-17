@@ -40,8 +40,6 @@ var toInstrument = Object.create(null, {
   'express': { enumerable: true, value: { file: './userspace/hook-express.js',
       patches: {} } },
   'grpc': { enumerable: true, value: { file: './userspace/hook-grpc.js',
-      patches: {} } },
-  'http': { enumerable: true, value: { file: './core/hook-http.js',
       patches: {} } }
 });
 
