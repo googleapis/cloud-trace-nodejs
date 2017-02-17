@@ -41,8 +41,6 @@ var toInstrument = Object.create(null, {
       patches: {} } },
   'grpc': { enumerable: true, value: { file: './userspace/hook-grpc.js',
       patches: {} } },
-  'hapi': { enumerable: true, value: { file: './userspace/hook-hapi.js',
-      patches: {} } },
   'http': { enumerable: true, value: { file: './core/hook-http.js',
       patches: {} } }
 });
