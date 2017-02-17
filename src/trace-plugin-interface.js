@@ -44,7 +44,6 @@ function ChildSpan(agent, span) {
  */
 ChildSpan.prototype.addLabel = function(key, value) {
   this.span_.addLabel(key, value);
-  return this;
 };
 
 /**
@@ -225,7 +224,6 @@ PluginAPI.prototype.wrap = function(fn) {
  * This is necessary in order to create child spans correctly in event handlers.
  * @param {EventEmitter} emitter An event emitter whose handlers should have
  * the trace context binded to them.
- * @returns {EventEmitter} - returns the given event emitter
  */
 PluginAPI.prototype.wrapEmitter = function(emitter) {
   if (!this.agent_.namespace) {

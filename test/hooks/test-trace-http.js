@@ -50,8 +50,6 @@ describe('test-trace-http', function() {
           res.on('data', function(data) { result += data; });
           res.on('end', function() {
             endTransaction();
-            // console.log('here is the result', res.statusCode, res.headers);
-            // console.log(agent.endTime, agent.startTime);
             assert.equal(common.serverRes, result);
             common.assertDurationCorrect(agent);
             done();
