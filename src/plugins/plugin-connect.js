@@ -19,54 +19,56 @@ var urlParse = require('url').parse;
 
 var SUPPORTED_VERSIONS = '3.x';
 
-function middleware(api, req, res, next) {
-  var options = {
-    name: urlParse(req.originalUrl).pathname,
-    traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME.toLowerCase()],
-    skipFrames: 3
-  };
-  api.runInRootSpan(options, function(root) {
-    if (!root) {
-      return next();
-    }
-
-    api.wrapEmitter(req);
-    api.wrapEmitter(res);
-
-    var url = (req.headers['X-Forwarded-Proto'] || 'http') +
-      '://' + req.headers.host + req.originalUrl;
-
-    // we use the path part of the url as the span name and add the full
-    // url as a label
-    root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
-    root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
-    root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
-
-    var context = root.getTraceContext();
-    if (context) {
-      res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
-    }
-
-    // wrap end
-    var originalEnd = res.end;
-    res.end = function(data, encoding, callback) {
-      res.end = originalEnd;
-      var returned = res.end(data, encoding, callback);
-
-      if (req.route && req.route.path) {
-        root.addLabel(
-          'connect/request.route.path', req.route.path);
+function createMiddleware(api) {
+  return function middleware(req, res, next) {
+    var options = {
+      name: urlParse(req.originalUrl).pathname,
+      traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME.toLowerCase()],
+      skipFrames: 3
+    };
+    api.runInRootSpan(options, function(root) {
+      if (!root) {
+        return next();
       }
 
-      root.addLabel(
-        api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-      root.endSpan();
+      api.wrapEmitter(req);
+      api.wrapEmitter(res);
 
-      return returned;
-    };
+      var url = (req.headers['X-Forwarded-Proto'] || 'http') +
+        '://' + req.headers.host + req.originalUrl;
 
-    next();
-  });
+      // we use the path part of the url as the span name and add the full
+      // url as a label
+      root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
+      root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
+      root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+
+      var context = root.getTraceContext();
+      if (context) {
+        res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
+      }
+
+      // wrap end
+      var originalEnd = res.end;
+      res.end = function(data, encoding, callback) {
+        res.end = originalEnd;
+        var returned = res.end(data, encoding, callback);
+
+        if (req.route && req.route.path) {
+          root.addLabel(
+            'connect/request.route.path', req.route.path);
+        }
+
+        root.addLabel(
+          api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+        root.endSpan();
+
+        return returned;
+      };
+
+      next();
+    });
+  };
 }
 
 module.exports = [
@@ -76,7 +78,7 @@ module.exports = [
     intercept: function(connect, api) {
       return function() {
         var app = connect();
-        app.use(middleware.bind(null, api));
+        app.use(createMiddleware(api));
         return app;
       };
     }

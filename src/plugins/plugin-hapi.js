@@ -20,62 +20,66 @@ var urlParse = require('url').parse;
 
 var SUPPORTED_VERSIONS = '8 - 16';
 
-function connectionWrap(api, connection) {
-  return function connectionTrace() {
-    var server = connection.apply(this, arguments);
-    server.ext('onRequest', middleware.bind(null, api));
-    return server;
+function createConnectionWrap(api) {
+  return function connectionWrap(connection) {
+    return function connectionTrace() {
+      var server = connection.apply(this, arguments);
+      server.ext('onRequest', createMiddleware(api));
+      return server;
+    };
   };
 }
 
-function middleware(api, request, reply) {
-  var req = request.raw.req;
-  var res = request.raw.res;
-  var originalEnd = res.end;
-  var options = {
-    name: urlParse(req.url).pathname,
-    traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME],
-    skipFrames: 3
-  };
-  api.runInRootSpan(options, function(root) {
-    if (!root) {
-      return reply.continue();
-    }
-
-    api.wrapEmitter(req);
-    api.wrapEmitter(res);
-
-    var url = (req.headers['X-Forwarded-Proto'] || 'http') +
-    '://' + req.headers.host + req.url;
-  
-    // we use the path part of the url as the span name and add the full
-    // url as a label
-    // req.path would be more desirable but is not set at the time our middlewear runs.
-    root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
-    root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
-    root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
-
-    var context = root.getTraceContext();
-    res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
-
-    // wrap end
-    res.end = function(chunk, encoding) {
-      res.end = originalEnd;
-      var returned = res.end(chunk, encoding);
-
-      if (req.route && req.route.path) {
-        root.addLabel(
-          'hapi/request.route.path', req.route.path);
-      }
-      root.addLabel(
-          api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-      root.endSpan();
-
-      return returned;
+function createMiddleware(api) {
+  return function middleware(request, reply) {
+    var req = request.raw.req;
+    var res = request.raw.res;
+    var originalEnd = res.end;
+    var options = {
+      name: urlParse(req.url).pathname,
+      traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME],
+      skipFrames: 3
     };
+    api.runInRootSpan(options, function(root) {
+      if (!root) {
+        return reply.continue();
+      }
 
-    return reply.continue();
-  });
+      api.wrapEmitter(req);
+      api.wrapEmitter(res);
+
+      var url = (req.headers['X-Forwarded-Proto'] || 'http') +
+      '://' + req.headers.host + req.url;
+    
+      // we use the path part of the url as the span name and add the full
+      // url as a label
+      // req.path would be more desirable but is not set at the time our middlewear runs.
+      root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
+      root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
+      root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+
+      var context = root.getTraceContext();
+      res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
+
+      // wrap end
+      res.end = function(chunk, encoding) {
+        res.end = originalEnd;
+        var returned = res.end(chunk, encoding);
+
+        if (req.route && req.route.path) {
+          root.addLabel(
+            'hapi/request.route.path', req.route.path);
+        }
+        root.addLabel(
+            api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+        root.endSpan();
+
+        return returned;
+      };
+
+      return reply.continue();
+    });
+  };
 }
 
 module.exports = [
@@ -85,7 +89,7 @@ module.exports = [
     patch: function(hapi, api) {
       shimmer.wrap(hapi.Server.prototype,
                    'connection',
-                   connectionWrap.bind(null, api));
+                   createConnectionWrap(api));
     },
     unpatch: function(hapi) {
       shimmer.unwrap(hapi.Server.prototype, 'connection');

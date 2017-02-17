@@ -19,17 +19,19 @@ var shimmer = require('shimmer');
 
 var SUPPORTED_VERSIONS = '1 - 2';
 
-function nextWrap(api, next) {
-  return function next_trace(cb) {
-    var span = api.createChildSpan({ name: 'mongo-cursor' });
-    if (!span) {
-      return next.apply(this, arguments);
-    }
-    span.addLabel('db', this.ns);
-    if (api.enhancedDatabaseReportingEnabled()) {
-      span.addLabel('cmd', JSON.stringify(this.cmd));
-    }
-    return next.call(this, wrapCallback(api, span, cb));
+function createNextWrap(api) {
+  return function nextWrap(next) {
+    return function next_trace(cb) {
+      var span = api.createChildSpan({ name: 'mongo-cursor' });
+      if (!span) {
+        return next.apply(this, arguments);
+      }
+      span.addLabel('db', this.ns);
+      if (api.enhancedDatabaseReportingEnabled()) {
+        span.addLabel('cmd', JSON.stringify(this.cmd));
+      }
+      return next.call(this, wrapCallback(api, span, cb));
+    };
   };
 }
 
@@ -83,9 +85,11 @@ function wrapCallback(api, span, done) {
   return api.wrap(fn);
 }
 
-function onceWrap(api, once) {
-  return function once_trace(event, cb) {
-    return once.call(this, event, api.wrap(cb));
+function createOnceWrap(api) {
+  return function onceWrap(once) {
+    return function once_trace(event, cb) {
+      return once.call(this, event, api.wrap(cb));
+    };
   };
 }
 
@@ -94,7 +98,7 @@ module.exports = [
     file: 'lib/connection/pool.js',
     versions: SUPPORTED_VERSIONS,
     patch: function(pool, api) {
-      shimmer.wrap(pool.prototype, 'once', onceWrap.bind(null, api));
+      shimmer.wrap(pool.prototype, 'once', createOnceWrap(api));
     },
     unpatch: function(pool) {
       shimmer.unwrap(pool.prototype, 'once');
@@ -108,7 +112,7 @@ module.exports = [
       shimmer.wrap(mongo.Server.prototype, 'insert', wrapWithLabel(api, 'mongo-insert'));
       shimmer.wrap(mongo.Server.prototype, 'update', wrapWithLabel(api, 'mongo-update'));
       shimmer.wrap(mongo.Server.prototype, 'remove', wrapWithLabel(api, 'mongo-remove'));
-      shimmer.wrap(mongo.Cursor.prototype, 'next', nextWrap.bind(null, api));
+      shimmer.wrap(mongo.Cursor.prototype, 'next', createNextWrap(api));
     },
     unpatch: function(mongo) {
       shimmer.unwrap(mongo.Server.prototype, 'command');

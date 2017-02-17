@@ -19,30 +19,32 @@ var shimmer = require('shimmer');
 
 var SUPPORTED_VERSIONS = '^2.9.x';
 
-function createQueryWrap(api, createQuery) {
-  return function createQuery_trace(sql, values, cb) {
-    var span = api.createChildSpan({
-      name: 'mysql-query'
-    });
-    var query = createQuery.apply(this, arguments);
-    if (!span) {
-      return query;
-    }
-    if (api.enhancedDatabaseReportingEnabled()) {
-      span.addLabel('sql', query.sql);
-      if (query.values) {
-        span.addLabel('values', query.values);
-      }
-    }
-    api.wrapEmitter(query);
-    if (query._callback) {
-      query._callback = wrapCallback(api, span, query._callback);
-    } else {
-      query.on('end', function() {
-        span.endSpan();
+function createCreateQueryWrap(api) {
+  return function createQueryWrap(createQuery) {
+    return function createQuery_trace(sql, values, cb) {
+      var span = api.createChildSpan({
+        name: 'mysql-query'
       });
-    }
-    return query;
+      var query = createQuery.apply(this, arguments);
+      if (!span) {
+        return query;
+      }
+      if (api.enhancedDatabaseReportingEnabled()) {
+        span.addLabel('sql', query.sql);
+        if (query.values) {
+          span.addLabel('values', query.values);
+        }
+      }
+      api.wrapEmitter(query);
+      if (query._callback) {
+        query._callback = wrapCallback(api, span, query._callback);
+      } else {
+        query.on('end', function() {
+          span.endSpan();
+        });
+      }
+      return query;
+    };
   };
 }
 
@@ -64,9 +66,11 @@ function wrapCallback(api, span, done) {
   return api.wrap(fn);
 }
 
-function wrapGetConnection(api, getConnection) {
-  return function getConnection_trace(cb) {
-    return getConnection.call(this, api.wrap(cb));
+function createWrapGetConnection(api) {
+  return function wrapGetConnection(getConnection) {
+    return function getConnection_trace(cb) {
+      return getConnection.call(this, api.wrap(cb));
+    };
   };
 }
 
@@ -75,7 +79,7 @@ module.exports = [
     file: 'lib/Connection.js',
     versions: SUPPORTED_VERSIONS,
     patch: function(Connection, api) {
-      shimmer.wrap(Connection, 'createQuery', createQueryWrap.bind(null, api));
+      shimmer.wrap(Connection, 'createQuery', createCreateQueryWrap(api));
     },
     unpatch: function(Connection) {
       shimmer.unwrap(Connection, 'createQuery');
@@ -86,7 +90,7 @@ module.exports = [
     versions: SUPPORTED_VERSIONS,
     patch: function(Pool, api) {
       shimmer.wrap(Pool.prototype, 'getConnection',
-                   wrapGetConnection.bind(null, api));
+                   createWrapGetConnection(api));
     },
     unpatch: function(Pool) {
       shimmer.unwrap(Pool.prototype, 'getConnection');
