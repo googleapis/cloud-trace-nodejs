@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2015 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,6 @@ var url = require('url');
 var isString = require('is').string;
 var merge = require('lodash.merge');
 var httpAgent = require('_http_agent');
-var constants = require('../constants.js');
-var TRACE_AGENT_REQUEST_HEADER = require('../constants.js').TRACE_AGENT_REQUEST_HEADER;
-
-function isTraceAgentRequest (options) {
-  return options && options.headers &&
-    !!options.headers[TRACE_AGENT_REQUEST_HEADER];
-}
 
 function getSpanName(options) {
   if (isString(options)) {
@@ -39,6 +32,10 @@ function getSpanName(options) {
 function extractUrl(options) {
   var uri = options;
   var agent = options._defaultAgent || httpAgent.globalAgent;
+  // In theory we should use url.format here. However, that is
+  // broken. See: https://github.com/joyent/node/issues/9117 and
+  // https://github.com/nodejs/io.js/pull/893
+  // Let's do things the same way _http_client does it.
   return isString(uri) ? uri :
     (options.protocol || agent.protocol) + '//' +
     (options.hostname || options.host || 'localhost') +
@@ -52,6 +49,7 @@ function patchRequest (http, api) {
       if (!options) {
         return request.apply(this, arguments);
       }
+
       // Don't trace ourselves lest we get into infinite loops
       // Note: this would not be a problem if we guarantee buffering
       // of trace api calls. If there is no buffering then each trace is
@@ -59,21 +57,19 @@ function patchRequest (http, api) {
       if (isTraceAgentRequest(options)) {
         return request.apply(this, arguments);
       }
-      var root = api.getRootSpan();
-      if (!root) {
-        // !! We cannot distinguish lack-of root-span from context-loss !!
-        // What's the new logger target?
-        // console.log('Untraced http uri:', options);
-        return request.apply(this, arguments);
-      }
+
       options = isString(options) ? url.parse(options) : merge({}, options);
       options.headers = options.headers || {};
+
       var uri = extractUrl(options);
       var requestLifecycleSpan = api.createChildSpan({name: getSpanName(options)});
-      requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
-        options.method || 'GET');
+      if (!requestLifecycleSpan) {
+        return request.apply(this, arguments);
+      }
+
+      requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, options.method);
       requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
-      options.headers[constants.TRACE_CONTEXT_HEADER_NAME] = root.getTraceContext();
+      options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] = requestLifecycleSpan.getTraceContext();
       var req = request.call(this, options, function(res) {
         api.wrapEmitter(res);
         var numBytes = 0;
@@ -106,6 +102,12 @@ function patchRequest (http, api) {
       return req;
     };
   });
+
+  function isTraceAgentRequest (options) {
+    return options && options.headers &&
+      !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
+  }
+
 }
 
 module.exports = [
