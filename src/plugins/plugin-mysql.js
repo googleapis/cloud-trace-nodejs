@@ -25,21 +25,22 @@ function createQueryWrap(api, createQuery) {
       name: 'mysql-query'
     });
     var query = createQuery.apply(this, arguments);
-    if (span) {
-      if (api.enhancedDatabaseReportingEnabled()) {
-        span.addLabel('sql', query.sql);
-        if (query.values) {
-          span.addLabel('values', query.values);
-        }
+    if (!span) {
+      return query;
+    }
+    if (api.enhancedDatabaseReportingEnabled()) {
+      span.addLabel('sql', query.sql);
+      if (query.values) {
+        span.addLabel('values', query.values);
       }
-      api.wrapEmitter(query);
-      if (query._callback) {
-        query._callback = wrapCallback(api, span, query._callback);
-      } else {
-        query.on('end', function() {
-          span.endSpan();
-        });
-      }
+    }
+    api.wrapEmitter(query);
+    if (query._callback) {
+      query._callback = wrapCallback(api, span, query._callback);
+    } else {
+      query.on('end', function() {
+        span.endSpan();
+      });
     }
     return query;
   };
