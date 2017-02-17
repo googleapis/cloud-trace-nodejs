@@ -22,8 +22,12 @@ var findIndex = require('lodash.findindex');
 var SKIP_FRAMES = 3;
 
 function patchClient(client, api) {
-  // Wraps a callback so that the current span for this trace is also ended when
-  // the callback (done) is invoked.
+  /**
+   * Wraps a callback so that the current span for this trace is also ended when
+   * the callback is invoked.
+   * @param {SpanData} span - The span that should end after this callback.
+   * @param {function(?Error, value=)} done - The callback to be wrapped.
+   */
   function wrapCallback(span, done) {
     var fn = function(err, res) {
       if (api.enhancedDatabaseReportingEnabled()) {
@@ -40,6 +44,12 @@ function patchClient(client, api) {
     return api.wrap(fn);
   }
 
+  /**
+   * This function is passed to shimmer.wrap in makeClientConstructorWrap below.
+   * It starts a child span immediately before the client method is invoked,
+   * and ends it either in a callback or stream event handler, depending on the
+   * method type.
+   */
   function makeClientMethod(method) {
     return function clientMethodTrace() {
       // The span name will be of form "grpc:/[Service]/[MethodName]".
@@ -52,8 +62,9 @@ function patchClient(client, api) {
       // Check if the response is through a stream or a callback.
       if (!method.responseStream) {
         // We need to wrap the callback with the context, to propagate it.
-        // The callback is always required. It should be the only function in the
-        // arguments, since we cannot send a function as an argument through gRPC.
+        // The callback is always required. It should be the only function in
+        // the arguments, since we cannot send a function as an argument through
+        // gRPC.
         var cbIndex = findIndex(arguments, function(arg) {
           return typeof arg === 'function';
         });
@@ -108,8 +119,10 @@ function patchClient(client, api) {
     };
   }
 
-  // Modifies `makeClientConstructor` so that all of the methods available
-  // through the client are wrapped upon calling the client object constructor.
+  /**
+   * Modifies `makeClientConstructor` so that all of the methods available
+   * through the client are wrapped upon calling the client object constructor.
+   */
   function makeClientConstructorWrap(makeClientConstructor) {
     return function makeClientConstructorTrace(methods) {
       var Client = makeClientConstructor.apply(this, arguments);
@@ -130,8 +143,8 @@ function unpatchClient(client) {
 
 function patchServer(server, api) {
   /**
-   * A helper function to record metadata in a trace span. The return value of this
-   * function can be used as the 'wrapper' argument to wrap sendMetadata.
+   * A helper function to record metadata in a trace span. The return value of
+   * this function can be used as the 'wrapper' argument to wrap sendMetadata.
    * sendMetadata is a member of each of ServerUnaryCall, ServerWriteableStream,
    * ServerReadableStream, and ServerDuplexStream.
    * @param rootSpan The span object to which the metadata should be added.
@@ -140,7 +153,8 @@ function patchServer(server, api) {
   function sendMetadataWrapper(rootSpan) {
     return function (sendMetadata) {
       return function sendMetadataTrace(responseMetadata) {
-        rootSpan.addLabel('metadata', JSON.stringify(responseMetadata.getMap()));
+        rootSpan.addLabel('metadata',
+          JSON.stringify(responseMetadata.getMap()));
         return sendMetadata.apply(this, arguments);
       };
     };
@@ -233,12 +247,12 @@ function patchServer(server, api) {
           // Propagate context to stream event handlers.
           api.wrapEmitter(stream);
           // stream is a WriteableStream. Emitting a 'finish' or 'error' event
-          // suggests that no more data will be sent, so we end the span in these
-          // event handlers.
+          // suggests that no more data will be sent, so we end the span in
+          // these event handlers.
           stream.on('finish', function () {
-            // End the span unless there is an error. (If there is, the span will
-            // be ended in the error event handler. This is to ensure that the
-            // 'error' label is applied.)
+            // End the span unless there is an error. (If there is, the span
+            // will be ended in the error event handler. This is to ensure that
+            // the 'error' label is applied.)
             if (stream.status.code === 0) {
               endSpan();
             }
@@ -298,7 +312,8 @@ function patchServer(server, api) {
                 rootSpan.addLabel('result', JSON.stringify(result));
               }
               if (trailer) {
-                rootSpan.addLabel('trailing_metadata', JSON.stringify(trailer.getMap()));
+                rootSpan.addLabel('trailing_metadata',
+                  JSON.stringify(trailer.getMap()));
               }
             }
             rootSpan.endSpan();
@@ -346,8 +361,8 @@ function patchServer(server, api) {
           // Propagate context in stream event handlers.
           api.wrapEmitter(stream);
           // stream is a Duplex. Emitting a 'finish' or 'error' event
-          // suggests that no more data will be sent, so we end the span in these
-          // event handlers.
+          // suggests that no more data will be sent, so we end the span in
+          // these event handlers.
           // Similar to client streams, the trace span should measure the time
           // until the server has finished sending data back to the client, not
           // the time that all data has been received from the client.
@@ -376,16 +391,18 @@ function patchServer(server, api) {
    * @returns {Function} registerTrace The new wrapper function.
    */
   function serverRegisterWrap(register) {
-    return function registerTrace(name, handler, serialize, deserialize, method_type) {
-      // register(n, h, s, d, m) is called in addService once for each service method.
-      // Its role is to assign the serialize, deserialize, and user logic handlers
-      // for each exposed service method. Here, we wrap these functions depending on the
-      // method type.
+    return function registerTrace(name, handler, serialize, deserialize,
+        method_type) {
+      // register(n, h, s, d, m) is called in addService once for each service
+      // method. Its role is to assign the serialize, deserialize, and user
+      // logic handlers for each exposed service method. Here, we wrap these
+      // functions depending on the method type.
       var result = register.apply(this, arguments);
       var handlerSet = this.handlers[name];
       var requestName = 'grpc:' + name;
-      // Proceed to wrap methods that are invoked when a gRPC service call is made.
-      // In every case, the function 'func' is the user-implemented handling function.
+      // Proceed to wrap methods that are invoked when a gRPC service call is
+      // made. In every case, the function 'func' is the user-implemented
+      // handling function.
       switch (method_type) {
         case 'unary':
           wrapUnary(handlerSet, requestName);
