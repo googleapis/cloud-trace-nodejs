@@ -157,7 +157,11 @@ function patchServer(server, api) {
     // We wrap it so that a span is started immediately beforehand, and ended
     // when the callback provided to it as an argument is invoked.
     shimmer.wrap(handlerSet, 'func', function (serverMethod) {
-      var rootSpanOptions = { url: requestName, skipFrames: SKIP_FRAMES };
+      var rootSpanOptions = {
+        name: requestName,
+        url: requestName,
+        skipFrames: SKIP_FRAMES
+      };
       return function serverMethodTrace(call, callback) {
         var that = this;
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
@@ -203,7 +207,11 @@ function patchServer(server, api) {
     // We wrap it so that a span is started immediately beforehand, and ended
     // when there is no data to be sent from the server.
     shimmer.wrap(handlerSet, 'func', function (serverMethod) {
-      var rootSpanOptions = { url: requestName, skipFrames: SKIP_FRAMES };
+      var rootSpanOptions = {
+        name: requestName,
+        url: requestName,
+        skipFrames: SKIP_FRAMES
+      };
       return function serverMethodTrace(stream) {
         var that = this;
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
@@ -258,7 +266,11 @@ function patchServer(server, api) {
     // We wrap it so that a span is started immediately beforehand, and ended
     // when the callback provided to it as an argument is invoked.
     shimmer.wrap(handlerSet, 'func', function (serverMethod) {
-      var rootSpanOptions = { url: requestName, skipFrames: SKIP_FRAMES };
+      var rootSpanOptions = {
+        name: requestName,
+        url: requestName,
+        skipFrames: SKIP_FRAMES
+      };
       return function serverMethodTrace(stream, callback) {
         var that = this;
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
@@ -309,7 +321,11 @@ function patchServer(server, api) {
     // We wrap it so that a span is started immediately beforehand, and ended
     // when there is no data to be sent from the server.
     shimmer.wrap(handlerSet, 'func', function (serverMethod) {
-      var rootSpanOptions = { url: requestName, skipFrames: SKIP_FRAMES };
+      var rootSpanOptions = {
+        name: requestName,
+        url: requestName,
+        skipFrames: SKIP_FRAMES
+      };
       return function serverMethodTrace(stream) {
         var that = this;
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
