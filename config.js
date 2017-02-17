@@ -43,12 +43,12 @@ module.exports = {
     plugins: {
       'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
       'hapi': path.join(__dirname, 'src/plugins/plugin-hapi.js'),
+      'http': path.join(__dirname, 'src/plugins/plugin-http.js'),
       'koa': path.join(__dirname, 'src/plugins/plugin-koa.js'),
       'mongodb-core': path.join(__dirname, 'src/plugins/plugin-mongodb-core.js'),
       'mysql': path.join(__dirname, 'src/plugins/plugin-mysql.js'),
       'redis': path.join(__dirname, 'src/plugins/plugin-redis.js'),
-      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js'),
-      http: path.join(__dirname, 'src/plugins/plugin-http.js')
+      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
     },
 
     // Valid entries are:

@@ -36,7 +36,7 @@ function getSpanName(requestOptions) {
   return requestOptions.hostname || requestOptions.host || 'localhost';
 }
 
-function setTraceHeader(parsedOptions, context, api) {
+function setTraceHeader(parsedOptions, context) {
   if (context) {
     return merge(parsedOptions, {
       headers: {
@@ -76,14 +76,10 @@ function patchedHTTPRequest(requestOptions, callback, request, api) {
   var parsedOptions = parseRequestOptions(requestOptions);
   var uri = extractUrl(parsedOptions);
   var requestLifecycleSpan = api.createChildSpan({name: getSpanName(parsedOptions)});
-  if (!requestLifecycleSpan) {
-    // Bail out since we couldn't get a span
-    return request.call(request, requestOptions, callback);
-  }
   requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
     parsedOptions.method || 'GET');
   requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
-  parsedOptions = setTraceHeader(parsedOptions, requestLifecycleSpan.getTraceContext(), api);
+  parsedOptions = setTraceHeader(parsedOptions, requestLifecycleSpan.getTraceContext());
   var req = request.call(request, parsedOptions, function (res) {
     api.wrapEmitter(res);
     var numBytes = 0;
@@ -91,13 +87,11 @@ function patchedHTTPRequest(requestOptions, callback, request, api) {
       numBytes += chunk.length;
     });
     res.on('end', function () {
-      if (requestLifecycleSpan) {
-        requestLifecycleSpan
-          .addLabel(api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
-        requestLifecycleSpan
-          .addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-        requestLifecycleSpan.endSpan();
-      }
+      requestLifecycleSpan
+        .addLabel(api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
+      requestLifecycleSpan
+        .addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+      requestLifecycleSpan.endSpan();
     });
     if (callback) {
       return callback(res);
@@ -105,7 +99,7 @@ function patchedHTTPRequest(requestOptions, callback, request, api) {
   });
   api.wrapEmitter(req);
   req.on('error', function (e) {
-    if (e && requestLifecycleSpan) {
+    if (e) {
       requestLifecycleSpan.addLabel(api.labels.ERROR_DETAILS_NAME, e.name);
       requestLifecycleSpan
         .addLabel(api.labels.ERROR_DETAILS_MESSAGE, e.message);

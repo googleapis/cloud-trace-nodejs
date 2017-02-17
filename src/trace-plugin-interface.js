@@ -232,7 +232,6 @@ PluginAPI.prototype.wrapEmitter = function(emitter) {
     this.logger_.warn('Trace agent: No CLS namespace to bind emitter to');
   }
   this.agent_.namespace.bindEmitter(emitter);
-  return emitter;
 };
 
 PluginAPI.prototype.constants = constants;

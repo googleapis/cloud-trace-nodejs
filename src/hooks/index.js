@@ -41,7 +41,7 @@ var toInstrument = Object.create(null, {
       patches: {} } },
   'grpc': { enumerable: true, value: { file: './userspace/hook-grpc.js',
       patches: {} } }
-  });
+});
 
 var logger;
 
