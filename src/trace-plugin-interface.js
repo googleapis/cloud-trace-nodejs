@@ -249,7 +249,8 @@ function createRootSpan_(api, options, skipFrames) {
     incomingTraceContext = api.agent_.parseContextFromHeader(options.traceContext);
   }
   incomingTraceContext = incomingTraceContext || {};
-  if (options.url && !api.agent_.shouldTrace(options.url, incomingTraceContext.options)) {
+  if (!api.agent_.shouldTrace(options.url || '',
+        incomingTraceContext.options)) {
     return null;
   }
   var rootContext = api.agent_.createRootSpanData(options.name,
