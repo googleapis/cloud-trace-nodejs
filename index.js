@@ -124,14 +124,9 @@ var publicAgent = {
 
   start: function(projectConfig) {
     var config = initConfig(projectConfig);
-    
-    if (this.isActive()) { // already started.
-      if (config.forceNewAgent_) { // for testing only
-        agent.stop();
-        agent = phantomTraceAgent;
-      } else {
-        throw new Error('Cannot call start on an already started agent.');
-      }
+
+    if (this.isActive() && !config.forceNewAgent_) { // already started.
+      throw new Error('Cannot call start on an already started agent.');
     }
 
     if (!config.enabled) {

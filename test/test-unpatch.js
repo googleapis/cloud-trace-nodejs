@@ -27,6 +27,7 @@ describe('index.js', function() {
   });
 
   afterEach(function() {
+    agent.private_().stop();
     checkUnpatches.forEach(function(f) { f(); });
     checkUnpatches = [];
   });
