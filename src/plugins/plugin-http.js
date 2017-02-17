@@ -125,13 +125,14 @@ module.exports = [
   {
     file: 'http',
     patch: function (http, api) {
-      ['request'].forEach(function (methodName) {
-        shimmer.wrap(http, methodName, function (originalMethod) {
-          return function (options, callback) {
-            return patchedHTTPRequest(options, callback, originalMethod, api);
-          };
-        });
+      shimmer.wrap(http, 'request', function (originalMethod) {
+        return function (options, callback) {
+          return patchedHTTPRequest(options, callback, originalMethod, api);
+        };
       });
+    },
+    unpatch: function (http) {
+      shimmer.unwrap(http, 'request');
     }
   }
 ];
