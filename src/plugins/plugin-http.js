@@ -69,11 +69,8 @@ function patchedHTTPRequest(requestOptions, callback, request, api) {
   } else if (isTraceAgentRequest(requestOptions)) {
     return request.call(request, requestOptions, callback);
   } else if (!api.getRootSpan()) {
-    if (isString(requestOptions)) {
-      requestOptions = url.parse(requestOptions);
-    }
     // What's the new logger target?
-    // console.log('Untraced http uri:', extractUrl(requestOptions));
+    // console.log('Untraced http uri:', requestOptions);
     return request.call(request, requestOptions, callback);
   }
   var parsedOptions = parseRequestOptions(requestOptions);
@@ -112,11 +109,11 @@ function patchedHTTPRequest(requestOptions, callback, request, api) {
       requestLifecycleSpan.addLabel(api.labels.ERROR_DETAILS_NAME, e.name);
       requestLifecycleSpan
         .addLabel(api.labels.ERROR_DETAILS_MESSAGE, e.message);
-      requestLifecycleSpan.endSpan();
     } else if (!e) {
       // What's the new logger target?
       // console.error('HTTP request error was null or undefined', e);
     }
+    requestLifecycleSpan.endSpan();
   });
   return req;
 }

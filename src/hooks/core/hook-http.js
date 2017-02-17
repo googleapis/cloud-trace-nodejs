@@ -54,6 +54,10 @@ function requestWrap(request) {
       return request.apply(this, arguments);
     }
 
+    // JUST AS A SIDE-NOTE FOR THE COMMIT HISTORY --
+    // DON'T ____EVER____ DO THIS. IT CHANGES THE DEFAULT
+    // BEHAVIOUR OF A CORE FUNCTION WHICH OTHER MODULES RELY
+    // ON FOR CONSISTENT BEHAVIOUR
     options = (typeof options === 'string') ?
       url.parse(options) : clone(options);
     options.headers = options.headers || {};
