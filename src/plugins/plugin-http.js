@@ -28,100 +28,90 @@ function isTraceAgentRequest (options) {
     !!options.headers[TRACE_AGENT_REQUEST_HEADER];
 }
 
-function getSpanName(requestOptions) {
-  if (isString(requestOptions)) {
-    requestOptions = url.parse(requestOptions);
+function getSpanName(options) {
+  if (isString(options)) {
+    options = url.parse(options);
   }
   // c.f. _http_client.js ClientRequest constructor
-  return requestOptions.hostname || requestOptions.host || 'localhost';
+  return options.hostname || options.host || 'localhost';
 }
 
-function setTraceHeader(parsedOptions, context) {
-  if (context) {
-    return merge(parsedOptions, {
-      headers: {
-        [constants.TRACE_CONTEXT_HEADER_NAME]: context
-      }
-    });
-  }
-  return parsedOptions;
-}
-
-function extractUrl(parsedOptions) {
-  var uri = parsedOptions;
-  var agent = parsedOptions._defaultAgent || httpAgent.globalAgent;
+function extractUrl(options) {
+  var uri = options;
+  var agent = options._defaultAgent || httpAgent.globalAgent;
   return isString(uri) ? uri :
-    (parsedOptions.protocol || agent.protocol) + '//' +
-    (parsedOptions.hostname || parsedOptions.host || 'localhost') +
-    ((isString(parsedOptions.port) ? (':' + parsedOptions.port) : '')) +
-    (parsedOptions.path || parsedOptions.pathName || '/');
+    (options.protocol || agent.protocol) + '//' +
+    (options.hostname || options.host || 'localhost') +
+    ((isString(options.port) ? (':' + options.port) : '')) +
+    (options.path || options.pathName || '/');
 }
 
-function parseRequestOptions(requestOptions) {
-  return isString(requestOptions) ?
-    merge({headers: {}}, url.parse(requestOptions)) :
-    merge({headers: {}}, requestOptions);
-}
-
-function patchedHTTPRequest(requestOptions, callback, request, api) {
-  if (!requestOptions) {
-    return request.call(request, requestOptions, callback);
-  } else if (isTraceAgentRequest(requestOptions)) {
-    return request.call(request, requestOptions, callback);
-  } else if (!api.getRootSpan()) {
-    // What's the new logger target?
-    // console.log('Untraced http uri:', requestOptions);
-    return request.call(request, requestOptions, callback);
-  }
-  var parsedOptions = parseRequestOptions(requestOptions);
-  var uri = extractUrl(parsedOptions);
-  var requestLifecycleSpan = api.createChildSpan({name: getSpanName(parsedOptions)});
-  requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
-    parsedOptions.method || 'GET');
-  requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
-  parsedOptions = setTraceHeader(parsedOptions, requestLifecycleSpan.getTraceContext());
-  var req = request.call(request, parsedOptions, function (res) {
-    api.wrapEmitter(res);
-    var numBytes = 0;
-    res.on('data', function (chunk) {
-      numBytes += chunk.length;
-    });
-    res.on('end', function () {
-      requestLifecycleSpan
-        .addLabel(api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
-      requestLifecycleSpan
-        .addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-      requestLifecycleSpan.endSpan();
-    });
-    if (callback) {
-      return callback(res);
-    }
+function patchRequest (http, api) {
+  return shimmer.wrap(http, 'request', function requestWrap(request) {
+    return function request_trace(options, callback) {
+      if (!options) {
+        return request.apply(this, arguments);
+      }
+      // Don't trace ourselves lest we get into infinite loops
+      // Note: this would not be a problem if we guarantee buffering
+      // of trace api calls. If there is no buffering then each trace is
+      // an http call which will get a trace which will be an http call
+      if (isTraceAgentRequest(options)) {
+        return request.apply(this, arguments);
+      }
+      var root = api.getRootSpan();
+      if (!root) {
+        // !! We cannot distinguish lack-of root-span from context-loss !!
+        // What's the new logger target?
+        // console.log('Untraced http uri:', options);
+        return request.apply(this, arguments);
+      }
+      options = isString(options) ? url.parse(options) : merge({}, options);
+      options.headers = options.headers || {};
+      var uri = extractUrl(options);
+      var requestLifecycleSpan = api.createChildSpan({name: getSpanName(options)});
+      requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
+        options.method || 'GET');
+      requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
+      options.headers[constants.TRACE_CONTEXT_HEADER_NAME] = root.getTraceContext();
+      var req = request.call(this, options, function(res) {
+        api.wrapEmitter(res);
+        var numBytes = 0;
+        res.on('data', function (chunk) {
+          numBytes += chunk.length;
+        });
+        res.on('end', function () {
+          requestLifecycleSpan
+            .addLabel(api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
+          requestLifecycleSpan
+            .addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+          requestLifecycleSpan.endSpan();
+        });
+        if (callback) {
+          return callback(res);
+        }
+      });
+      api.wrapEmitter(req);
+      req.on('error', function (e) {
+        if (e) {
+          requestLifecycleSpan.addLabel(api.labels.ERROR_DETAILS_NAME, e.name);
+          requestLifecycleSpan
+            .addLabel(api.labels.ERROR_DETAILS_MESSAGE, e.message);
+        } else {
+          // What's the new logger target?
+          // console.error('HTTP request error was null or undefined', e);
+        }
+        requestLifecycleSpan.endSpan();
+      });
+      return req;
+    };
   });
-  api.wrapEmitter(req);
-  req.on('error', function (e) {
-    if (e) {
-      requestLifecycleSpan.addLabel(api.labels.ERROR_DETAILS_NAME, e.name);
-      requestLifecycleSpan
-        .addLabel(api.labels.ERROR_DETAILS_MESSAGE, e.message);
-    } else if (!e) {
-      // What's the new logger target?
-      // console.error('HTTP request error was null or undefined', e);
-    }
-    requestLifecycleSpan.endSpan();
-  });
-  return req;
 }
 
 module.exports = [
   {
     file: 'http',
-    patch: function (http, api) {
-      shimmer.wrap(http, 'request', function (originalMethod) {
-        return function (options, callback) {
-          return patchedHTTPRequest(options, callback, originalMethod, api);
-        };
-      });
-    },
+    patch: patchRequest,
     unpatch: function (http) {
       shimmer.unwrap(http, 'request');
     }
