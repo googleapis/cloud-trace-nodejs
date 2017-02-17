@@ -195,7 +195,7 @@ PluginAPI.prototype.createChildSpan = function(options) {
   var rootSpan = this.getRootSpan();
   if (rootSpan) {
     options = options || {};
-    var childContext = this.agent_.startSpan(options.name, {},
+    var childContext = this.agent_.startSpan(options.name || options.url, {},
       options.skipFrames ? options.skipFrames + 1 : 1);
     return new ChildSpan(this.agent_, childContext);
   } else {
@@ -249,10 +249,11 @@ function createRootSpan_(api, options, skipFrames) {
     incomingTraceContext = api.agent_.parseContextFromHeader(options.traceContext);
   }
   incomingTraceContext = incomingTraceContext || {};
-  if (options.url && !api.agent_.shouldTrace(options.url, incomingTraceContext.options)) {
+  if (!api.agent_.shouldTrace(options.url || '',
+        incomingTraceContext.options)) {
     return null;
   }
-  var rootContext = api.agent_.createRootSpanData(options.name,
+  var rootContext = api.agent_.createRootSpanData(options.name || options.url,
     incomingTraceContext.traceId,
     incomingTraceContext.spanId,
     skipFrames + 1);
