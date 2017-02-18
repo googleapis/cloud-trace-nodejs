@@ -57,24 +57,19 @@ cp.execFileSync('npm', ['install']);
 
 // Reformat tests to use newly installed express
 console.log('Reformating tests');
-var gcloud_require = 'require(\'' + path.join(__dirname, '..', '..') +
-    '\').start({ forceNewAgent_: true });';
 glob(test_glob, function(err, files) {
   error = error || err;
   for (var i = 0; i < files.length; i++) {
-    cp.execFileSync('sed', ['-i.bak', 's#\'use strict\';#' +
-        '\'use strict\';' + gcloud_require + '#g', files[i]]);
-    if (cp.spawnSync('grep', ['-q', gcloud_require, files[i]]).status) {
-      cp.execSync('echo "' + gcloud_require + '" | cat - ' + files[i] +
-          ' >' +  files[i] + '.instru.js' + '&& mv ' + files[i] +
-          '.instru.js' + ' ' + files[i]);
-    }
-    cp.execFileSync('sed', ['-i.bak', 's#require(\'\\.\\./\\?\')#require(\'express\')#',
+    cp.execFileSync('sed', ['-i', 's#require(\'\\.\\./\\?\')#require(\'express\')#',
         files[i]]);
   }
   // Run tests
   console.log('Running tests');
-  var results = cp.spawnSync('mocha', [test_glob]);
+  var results = cp.spawnSync('mocha', [
+    '--require',
+    path.join(__dirname, 'start-agent.js'),
+    test_glob
+  ]);
   console.log(results.output[1].toString() || results.output[2].toString());
   error = error || results.status;
 
