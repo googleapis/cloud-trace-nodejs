@@ -29,6 +29,8 @@ describe('test-trace-header-context', function() {
   });
 
   afterEach(function() {
+    // On node 0.12, mocha may run multiple tests in the same
+    // cls context, we need to manually clean out the context.
     common.clearNamespace(agent);
   });
 

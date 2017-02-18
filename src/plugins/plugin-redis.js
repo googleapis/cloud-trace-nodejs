@@ -94,12 +94,13 @@ function startSpanFromArguments(api, cmd, args, cb, send_command) {
 
 function createInternalSendCommandWrap(api) {
   return function internalSendCommandWrap(internal_send_command) {
-    // TODO: Document and simplify this code.
     return function internal_send_command_trace(cmd, args, cb) {
       if (arguments.length === 1 && typeof cmd === 'object') {
+        // New versions of redis (2.4+) use a single options object instead
+        // of separate named arguments.
         var span = setupSpan(api, cmd.command, cmd.args, 0);
         if (!span) {
-          return internal_send_command.call(this, cmd, args, cb);
+          return internal_send_command.call(this, cmd);
         }
         cmd.callback = wrapCallback(api, span, cmd.callback);
         return internal_send_command.call(this, cmd);

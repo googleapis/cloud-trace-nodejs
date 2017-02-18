@@ -45,9 +45,6 @@ function patchRestify(restify, api) {
       skipFrames: 3
     };
 
-    // TODO(ofrobots): can this be moved to the inner scope near the req.end
-    // clobber?
-    var originalEnd = res.end;
     api.runInRootSpan(options, function(rootSpan) {
       if (!rootSpan) {
         return next();
@@ -67,6 +64,7 @@ function patchRestify(restify, api) {
       rootSpan.addLabel(api.labels.HTTP_SOURCE_IP,
                         req.connection.remoteAddress);
 
+      var originalEnd = res.end;
       res.end = function(chunk, encoding) {
         res.end = originalEnd;
         var returned = res.end(chunk, encoding);
