@@ -256,7 +256,7 @@ TraceWriter.prototype.publish_ = function(projectId, json) {
   }, function(err, response, body) {
     if (err) {
       that.logger_.error('TraceWriter: error: ',
-        (response && response.statusCode) || '', err);
+        ((response && response.statusCode) || '') + '\n' +  err.message + '\n' + err.stack);
     } else {
       that.logger_.info('TraceWriter: published. statusCode: ' + response.statusCode);
     }
