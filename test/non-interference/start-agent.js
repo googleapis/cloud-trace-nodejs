@@ -15,6 +15,20 @@
  */
 'use strict';
 
+var shimmer = require('shimmer');
+var agent = require('../../src/trace-agent.js');
+// Stub getTraceContext so that it always returns the same thing.
+shimmer.wrap(agent, 'get', function(original) {
+  return function() {
+    var privateAgent = original.apply(this, arguments);
+    shimmer.wrap(privateAgent, 'generateTraceContext', function() {
+      return function() {
+        return 'ffeeddccbbaa99887766554433221100/0?o=1';
+      };
+    });
+    return privateAgent;
+  };
+});
 require('../..').start({
   logLevel: 1,
   samplingRate: 0
