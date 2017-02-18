@@ -24,11 +24,12 @@ require('continuation-local-storage');
 
 var common = require('@google-cloud/common');
 var constants = require('./src/constants.js');
+var TraceLabels = require('./src/trace-labels.js');
 var gcpMetadata = require('gcp-metadata');
 var semver = require('semver');
 var traceUtil = require('./src/util.js');
-var SpanData = require('./src/span-data.js');
 var util = require('util');
+var PluginApi = require('./src/trace-plugin-interface.js');
 
 var modulesLoadedBeforeTrace = [];
 
@@ -43,31 +44,23 @@ for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
 var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
 
 /**
- * Phantom implementation of the trace agent. This allows API users to decouple
+ * Phantom implementation of the trace api. This allows API users to decouple
  * the enable/disable logic from the calls to the tracing API. The phantom API
  * has a lower overhead than isEnabled checks inside the API functions.
  * @private
  */
 var phantomTraceAgent = {
-  startSpan: function() { return SpanData.nullSpan; },
-  endSpan: function(spanData) { spanData.close(); },
-  runInSpan: function(name, labels, fn) {
-    if (typeof(labels) === 'function') {
-      fn = labels;
-    }
-    fn(function() {});
-  },
-  runInRootSpan: function(name, labels, fn) {
-    if (typeof(labels) === 'function') {
-      fn = labels;
-    }
-    fn(function() {});
-  },
-  setTransactionName: function() {},
-  addTransactionLabel: function() {}
+  enhancedDatabaseReportingEnabled: function() { return false; },
+  runInRootSpan: function(opts, fn) { return fn(PluginApi.nullSpan); },
+  createChildSpan: function(opts) { return PluginApi.nullSpan; },
+  wrap: function(fn) { return fn; },
+  wrapEmitter: function(ee) { return ee; },
+  constants: constants,
+  labels: TraceLabels
 };
 
 /** @private */
+// This can be either a PhantomAgent or PluginAPI object.
 var agent = phantomTraceAgent;
 
 var initConfig = function(projectConfig) {
@@ -91,36 +84,36 @@ var initConfig = function(projectConfig) {
 };
 
 /**
- * The singleton public agent. This is the public API of the module.
+ * The singleton public api. This is the public API of the module.
  */
 var publicAgent = {
   isActive: function() {
     return agent !== phantomTraceAgent;
   },
 
-  startSpan: function(name, labels) {
-    return agent.startSpan(name, labels);
+  enhancedDatabaseReportingEnabled: function() {
+    return agent.enhancedDatabaseReportingEnabled();
   },
 
-  endSpan: function(spanData, labels) {
-    return agent.endSpan(spanData, labels);
+  runInRootSpan: function(opts, fn) {
+    return agent.runInRootSpan(opts, fn);
   },
 
-  runInSpan: function(name, labels, fn) {
-    return agent.runInSpan(name, labels, fn);
+  createChildSpan: function(opts) {
+    return agent.createChildSpan(opts);
   },
 
-  runInRootSpan: function(name, labels, fn) {
-    return agent.runInRootSpan(name, labels, fn);
+  wrap: function(fn) {
+    return agent.wrap(fn);
   },
 
-  setTransactionName: function(name) {
-    return agent.setTransactionName(name);
+  wrapEmitter: function(ee) {
+    return agent.wrapEmitter(ee);
   },
 
-  addTransactionLabel: function(key, value) {
-    return agent.addTransactionLabel(key, value);
-  },
+  constants: constants,
+
+  labels: TraceLabels,
 
   start: function(projectConfig) {
     var config = initConfig(projectConfig);
@@ -191,7 +184,7 @@ var publicAgent = {
             'service. Please provide a valid project number as an env. ' +
             'variable, or through config.projectId passed to start(). ' + err);
           if (that.isActive()) {
-            agent.stop();
+            agent.agent_.stop();
             agent = phantomTraceAgent;
           }
           return;
@@ -204,7 +197,7 @@ var publicAgent = {
       return this;
     }
 
-    agent = require('./src/trace-agent.js').get(config, logger);
+    agent = new PluginApi(require('./src/trace-agent.js').get(config, logger));
     return this; // for chaining
   },
 
@@ -219,7 +212,7 @@ var publicAgent = {
    * For use in tests only.
    * @private
    */
-  private_: function() { return agent; }
+  private_: function() { return agent.agent_; }
 };
 
 /**

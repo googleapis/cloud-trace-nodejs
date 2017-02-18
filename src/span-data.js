@@ -156,13 +156,6 @@ function StackFrame(className, methodName, fileName, lineNumber, columnNumber) {
   }
 }
 
-SpanData.nullSpan = {
-  createChildSpanData: function() { return SpanData.nullSpan; },
-  addLabel: function() {},
-  addLabels: function() {},
-  close: function() {}
-};
-
 /**
  * Export SpanData.
  */

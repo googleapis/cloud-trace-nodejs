@@ -100,6 +100,12 @@ RootSpan.prototype.getTraceContext = function() {
   return this.serializedTraceContext_;
 };
 
+var nullSpan = {
+  addLabel: function(k, v) {},
+  endSpan: function() {},
+  getTraceContext: function() { return ''; }
+};
+
 /**
  * PluginAPI constructor. Don't call directly - a plugin object will be passed to
  * plugin themselves
@@ -131,43 +137,6 @@ PluginAPI.prototype.summarizeDatabaseResults = function(res) {
 };
 
 /**
- * Creates and returns a new RootSpan object corresponding to an incoming
- * request.
- * @param {object} options An object that specifies options for how the root
- * span is created and propogated.
- * @param {string} options.name The name to apply to the root span.
- * @param {?string} options.url A URL associated with the root span, if
- * applicable.
- * @param {?string} options.traceContext The serialized form of an object that
- * contains information about an existing trace context.
- * @param {?number} options.skipFrames The number of stack frames to skip when
- * collecting call stack information for the root span, starting from the top;
- * this should be set to avoid including frames in the plugin. Defaults to 0.
- * @returns A new RootSpan object, or null if the trace agent's policy has
- * disabled tracing for the given set of options.
- */
-PluginAPI.prototype.createRootSpan = function(options) {
-  var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-  return createRootSpan_(this, options, skipFrames);
-};
-
-/**
- * Returns a RootSpan object that corresponds to a root span started earlier
- * in the same context, or null if one doesn't exist.
- * @returns A new RootSpan object, or null if a root span doesn't exist in
- * the current context.
- */
-PluginAPI.prototype.getRootSpan = function() {
-  if (cls.getRootContext()) {
-    return new RootSpan(this.agent_, cls.getRootContext());
-  } else {
-    this.logger_.warn('Attempted to get root span when it doesn\'t' + 
-      ' exist');
-    return null;
-  }
-};
-
-/**
  * Runs the given function in a root span corresponding to an incoming request,
  * possibly passing it an object that exposes an interface for adding labels
  * and closing the span.
@@ -187,6 +156,10 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
       'root span.');
     return fn(null);
   }
+  if (cls.getRootContext()) {
+    this.logger_.warn('Trace agent: Cannot create nested root spans.');
+    return fn(null);
+  }
   return this.agent_.namespace.runAndReturn(function() {
     var skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
     var rootSpan = createRootSpan_(that, options, skipFrames);
@@ -195,15 +168,14 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
 };
 
 /**
- * Creates and returns a new ChildSpan object nested within the root span object
- * returned by getRootSpan. If there is no current RootSpan object, this
- * function returns null.
+ * Creates and returns a new ChildSpan object nested within the root span. If
+ * there is no current RootSpan object, this function returns null.
  * @param {object} options An object that specifies options for how the child
  * span is created and propogated.
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
 PluginAPI.prototype.createChildSpan = function(options) {
-  var rootSpan = this.getRootSpan();
+  var rootSpan = getRootSpan_(this);
   if (rootSpan) {
     options = options || {};
     var childContext = this.agent_.startSpan(options.name, {},
@@ -247,6 +219,8 @@ PluginAPI.prototype.constants = constants;
 
 PluginAPI.prototype.labels = TraceLabels;
 
+PluginAPI.nullSpan = nullSpan;
+
 module.exports = PluginAPI;
 
 // Module-private functions
@@ -269,4 +243,14 @@ function createRootSpan_(api, options, skipFrames) {
     incomingTraceContext.spanId,
     skipFrames + 1);
   return new RootSpan(api.agent_, rootContext);
+}
+
+function getRootSpan_(api) {
+  if (cls.getRootContext()) {
+    return new RootSpan(api.agent_, cls.getRootContext());
+  } else {
+    api.logger_.warn('Attempted to get root span when it doesn\'t' +
+      ' exist');
+    return null;
+  }
 }

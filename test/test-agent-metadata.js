@@ -59,28 +59,33 @@ describe('agent interaction with metadata service', function() {
   });
 
   it('should preserve public interface when stopped', function(done) {
-      nock.disableNetConnect();
-      var scope = nock('http://metadata.google.internal')
-                  .get('/computeMetadata/v1/project/project-id')
-                  .times(2)
-                  .reply(404, 'foo');
       assert.equal(typeof agent, 'object');
-      assert.equal(typeof agent.startSpan, 'function');
-      assert.equal(typeof agent.endSpan, 'function');
-      assert.equal(typeof agent.runInSpan, 'function');
+      assert.equal(typeof agent.isActive, 'function');
+      assert.equal(typeof agent.enhancedDatabaseReportingEnabled, 'function');
       assert.equal(typeof agent.runInRootSpan, 'function');
-      assert.equal(typeof agent.setTransactionName, 'function');
-      assert.equal(typeof agent.addTransactionLabel, 'function');
-      agent = trace.start({logLevel: 0});
+      assert.equal(typeof agent.createChildSpan, 'function');
+      assert.equal(typeof agent.wrap, 'function');
+      assert.equal(typeof agent.wrapEmitter, 'function');
+      assert.equal(typeof agent.constants, 'object');
+      assert.equal(typeof agent.labels, 'object');
+      agent = trace.start({logLevel: 0, enabled: false});
       setTimeout(function() {
         assert.equal(typeof agent, 'object');
-        assert.equal(typeof agent.startSpan, 'function');
-        assert.equal(typeof agent.endSpan, 'function');
-        assert.equal(typeof agent.runInSpan, 'function');
-        assert.equal(typeof agent.runInRootSpan, 'function');
-        assert.equal(typeof agent.setTransactionName, 'function');
-        assert.equal(typeof agent.addTransactionLabel, 'function');
-        scope.done();
+        assert.equal(agent.isActive(), false);
+        assert.equal(agent.enhancedDatabaseReportingEnabled(), false);
+        agent.runInRootSpan({}, function(root) {
+          assert.equal(typeof root.addLabel, 'function');
+          assert.equal(typeof root.endSpan, 'function');
+          assert.equal(root.getTraceContext(), '');
+        });
+        var child = agent.createChildSpan({});
+        assert.equal(typeof child.addLabel, 'function');
+        assert.equal(typeof child.endSpan, 'function');
+        assert.equal(child.getTraceContext(), '');
+        assert.strictEqual(agent.wrap(agent), agent);
+        assert.strictEqual(agent.wrapEmitter(agent), agent);
+        assert.equal(typeof agent.constants, 'object');
+        assert.equal(typeof agent.labels, 'object');
         done();
       }, 500);
   });

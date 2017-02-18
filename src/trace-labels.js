@@ -19,8 +19,7 @@
 /**
  * Well-known trace span label values.
  */
-function TraceLabels() {
-}
+var TraceLabels = {};
 
 
 /**

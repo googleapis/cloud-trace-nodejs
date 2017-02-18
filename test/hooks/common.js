@@ -47,11 +47,18 @@ function init(agent) {
   };
 }
 
+function replaceFunction(target, prop, fn) {
+  var old = target[prop];
+  target[prop] = fn;
+  return old;
+}
+
 function replaceDebugLogger(agent, fn) {
-  var privateAgent = agent.private_();
-  var oldDebug = privateAgent.logger.debug;
-  privateAgent.logger.debug = fn;
-  return oldDebug;
+  return replaceFunction(agent.private_().logger, 'debug', fn);
+}
+
+function replaceTracingPolicy(agent, fn) {
+  return replaceFunction(agent.private_(), 'policy', fn);
 }
 
 /**
@@ -248,6 +255,7 @@ module.exports = {
   runInTransaction: runInTransaction,
   getShouldTraceArgs: getShouldTraceArgs,
   replaceDebugLogger: replaceDebugLogger,
+  replaceTracingPolicy: replaceTracingPolicy,
   createRootSpanData: createRootSpanData,
   clearNamespace: clearNamespace,
   getConfig: getConfig,
