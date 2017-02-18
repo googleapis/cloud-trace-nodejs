@@ -38,12 +38,20 @@ var SERVER_KEY = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'));
 var SERVER_CERT = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
 
 function init(agent) {
-  agent._shouldTraceArgs = [];
-  var shouldTrace = agent.shouldTrace;
-  agent.shouldTrace = function() {
-    agent._shouldTraceArgs.push([].slice.call(arguments, 0));
+  var privateAgent = agent.private_();
+  privateAgent._shouldTraceArgs = [];
+  var shouldTrace = privateAgent.shouldTrace;
+  privateAgent.shouldTrace = function() {
+    privateAgent._shouldTraceArgs.push([].slice.call(arguments, 0));
     return shouldTrace.apply(this, arguments);
   };
+}
+
+function replaceDebugLogger(agent, fn) {
+  var privateAgent = agent.private_();
+  var oldDebug = privateAgent.logger.debug;
+  privateAgent.logger.debug = fn;
+  return oldDebug;
 }
 
 /**
@@ -55,8 +63,9 @@ function cleanTraces(agent) {
       'Received: ' + arguments.length);
   }
 
-  agent.traceWriter.buffer_ = [];
-  agent._shouldTraceArgs = [];
+  var privateAgent = agent.private_();
+  privateAgent.traceWriter.buffer_ = [];
+  privateAgent._shouldTraceArgs = [];
 }
 
 function getTraces(agent) {
@@ -65,7 +74,7 @@ function getTraces(agent) {
       'Received: ' + arguments.length);
   }
 
-  return agent.traceWriter.buffer_.map(JSON.parse);
+  return agent.private_().traceWriter.buffer_.map(JSON.parse);
 }
 
 function getShouldTraceArgs(agent) {
@@ -74,7 +83,7 @@ function getShouldTraceArgs(agent) {
       'Received: ' + arguments.length);
   }
 
-  return agent._shouldTraceArgs;
+  return agent.private_()._shouldTraceArgs;
 }
 
 function getMatchingSpan(agent, predicate) {
@@ -168,7 +177,7 @@ function runInTransaction(agent, fn) {
   }
 
   cls.getNamespace().run(function() {
-    var spanData = agent.createRootSpanData('outer');
+    var spanData = agent.private_().createRootSpanData('outer');
     fn(function() {
       spanData.close();
     });
@@ -185,15 +194,16 @@ function createChildSpan(agent, cb, duration) {
       'Received: ' + arguments.length);
   }
 
-  var span = agent.startSpan('inner');
+  var privateAgent = agent.private_();
+  var span = privateAgent.startSpan('inner');
   var t = setTimeout(function() {
-    agent.endSpan(span);
+    privateAgent.endSpan(span);
     if (cb) {
       cb();
     }
   }, duration);
   return function() {
-    agent.endSpan(span);
+    privateAgent.endSpan(span);
     clearTimeout(t);
   };
 }
@@ -210,6 +220,7 @@ module.exports = {
   getTraces: getTraces,
   runInTransaction: runInTransaction,
   getShouldTraceArgs: getShouldTraceArgs,
+  replaceDebugLogger: replaceDebugLogger,
   serverWait: SERVER_WAIT,
   serverRes: SERVER_RES,
   serverPort: SERVER_PORT,

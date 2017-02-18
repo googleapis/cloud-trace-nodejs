@@ -40,12 +40,12 @@ describe('mongodb + express', function() {
   var oldDebug;
   var mongoose;
   before(function() {
-    agent = require('../..').start().get().private_();
+    agent = require('../..').start();
     mongoose = require('./fixtures/mongoose4');
-    oldDebug = agent.logger.debug;
-    agent.logger.debug = function(error) {
-      assert(error.indexOf('mongo') === -1, error);
-    };
+    oldDebug = common.replaceDebugLogger(agent,
+      function(error) {
+        assert(error.indexOf('mongo') === -1, error);
+    });
   });
 
   after(function() {
@@ -70,7 +70,7 @@ describe('mongodb + express', function() {
       http.get({port: common.serverPort}, function(res) {
         server.close();
         common.cleanTraces(agent);
-        agent.logger.debug = oldDebug;
+        common.replaceDebugLogger(agent, oldDebug);
         done();
       });
     });
