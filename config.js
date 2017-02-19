@@ -29,10 +29,6 @@ module.exports = {
     // attached to spans representating database operations.
     enhancedDatabaseReporting: false,
 
-    // The maximum result size in characters to report on database spans if
-    // `enhancedDatabaseReporting` is enabled.
-    databaseResultReportingSize: 127,
-
     // An object describing which modules to trace. To enable tracing for a
     // module, add its name as a key under this object, as well as the
     // require-friendly module path of the plugin that implements tracing for
