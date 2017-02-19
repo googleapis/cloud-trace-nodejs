@@ -24,6 +24,8 @@ var common = require('./common.js');
 var traceLabels = require('../../src/trace-labels.js');
 var assert = require('assert');
 
+var RESULT_SIZE = 5;
+
 var versions = {
   mongodb1: './fixtures/mongodb-core1',
   mongodb2: './fixtures/mongodb-core2'
@@ -33,7 +35,11 @@ describe('mongodb', function() {
   var agent;
 
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 }).private_();
+    agent = require('../..').start({
+      samplingRate: 0,
+      enhancedDatabaseReporting: true,
+      databaseResultReportingSize: RESULT_SIZE
+    }).private_();
   });
 
   Object.keys(versions).forEach(function(version) {
@@ -191,6 +197,25 @@ describe('mongodb', function() {
             var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
             assert.notStrictEqual(-1,
               stack.stack_frame[0].method_name.indexOf('next_trace'));
+            done();
+          });
+        });
+      });
+
+      it('should limit result size', function(done) {
+        common.runInTransaction(agent, function(endTransaction) {
+          server.cursor('testdb.simples', {
+            find: 'testdb.simples',
+            query: {f1: 'sim'}
+          }).next(function(err, doc) {
+            endTransaction();
+            assert.ifError(err);
+            var trace = common.getMatchingSpan(
+                agent,
+                mongoPredicate.bind(null, 'mongo-cursor'));
+            var labels = trace.labels;
+            assert.equal(labels.result.length, RESULT_SIZE);
+            assert.equal(labels.result, '{_...');
             done();
           });
         });

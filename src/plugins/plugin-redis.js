@@ -124,7 +124,7 @@ function wrapCallback(api, span, done) {
         span.addLabel('error', err);
       }
       if (res) {
-        span.addLabel('result', res);
+        span.addLabel('result', api.summarizeDatabaseResults(res));
       }
     }
     span.endSpan();

@@ -19,6 +19,7 @@ var TraceLabels = require('./trace-labels.js');
 var cls = require('./cls.js');
 var constants = require('./constants.js');
 var is = require('is');
+var traceUtil = require('./util.js');
 
 /**
  * This file describes an interface for third-party plugins to enable tracing
@@ -117,6 +118,16 @@ function PluginAPI(agent) {
  */
 PluginAPI.prototype.enhancedDatabaseReportingEnabled = function() {
   return this.agent_.config_.enhancedDatabaseReporting;
+};
+
+/**
+ * Summarizes database results correctly applying the databaseResultReportingSize
+ * configuration option.
+ * @returns a summarization of `res`.
+ */
+PluginAPI.prototype.summarizeDatabaseResults = function(res) {
+  return traceUtil.stringifyPrefix(res,
+         this.agent_.config_.databaseResultReportingSize);
 };
 
 /**
