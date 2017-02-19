@@ -1,0 +1,8 @@
+{
+  "name": "pg6",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "pg": "^6.1.2"
+  }
+}
