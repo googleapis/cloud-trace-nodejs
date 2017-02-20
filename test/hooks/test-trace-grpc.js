@@ -230,13 +230,14 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should accurately measure time for unary requests', function(done) {
+      var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
         callUnary(client, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            common.assertDurationCorrect(agent, predicate);
+            common.assertDurationCorrect(agent, Date.now() - start, predicate);
             assert.strictEqual(trace.labels.argument, '{"n":42}');
             assert.strictEqual(trace.labels.result, '{"n":42}');
           };
@@ -251,13 +252,14 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should accurately measure time for client streaming requests', function(done) {
+      var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
         callClientStream(client, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            common.assertDurationCorrect(agent, predicate);
+            common.assertDurationCorrect(agent, Date.now() - start, predicate);
             assert.strictEqual(trace.labels.result, '{"n":45}');
           };
           assertTraceProperties(grpcClientPredicate);
@@ -270,13 +272,14 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should accurately measure time for server streaming requests', function(done) {
+      var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
         callServerStream(client, grpc, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            common.assertDurationCorrect(agent, predicate);
+            common.assertDurationCorrect(agent, Date.now() - start, predicate);
             assert.strictEqual(trace.labels.argument, '{"n":42}');
             return trace;
           };
@@ -292,13 +295,14 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should accurately measure time for bidi streaming requests', function(done) {
+      var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
         callBidi(client, grpc, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            common.assertDurationCorrect(agent, predicate);
+            common.assertDurationCorrect(agent, Date.now() - start, predicate);
             return trace;
           };
           var clientTrace = assertTraceProperties(grpcClientPredicate);
@@ -351,23 +355,29 @@ Object.keys(versions).forEach(function(version) {
       var queueCallTogether = function(first, second) {
         var prevNext = next;
         next = function() {
+          var startFirst, startSecond, endFirst;
           common.runInTransaction(agent, function(endTransaction) {
             var num = 0;
             common.cleanTraces(agent);
             var callback = function() {
+              if (num === 0) {
+                endFirst = Date.now();
+              }
               if (++num === 2) {
                 endTransaction();
                 var traces = common.getMatchingSpans(agent, grpcServerOuterPredicate);
                 assert(traces.length === 2);
                 assert(traces[0].spanId !== traces[1].spanId);
                 assert(traces[0].startTime !== traces[1].startTime);
-                common.assertSpanDurationCorrect(traces[0]);
-                common.assertSpanDurationCorrect(traces[1]);
+                common.assertSpanDurationCorrect(traces[0], endFirst - startFirst);
+                common.assertSpanDurationCorrect(traces[1], Date.now() - startSecond);
                 setImmediate(prevNext);
               }
             };
+            startFirst = Date.now();
             first(callback);
             setTimeout(function() {
+              startSecond = Date.now();
               second(callback);
             }, common.serverWait / 2);
           });
@@ -494,6 +504,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should trace metadata for server streaming requests', function(done) {
+      var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
         var stream = client.testServerStream({n: SEND_METADATA}, metadata);
         stream.on('data', function(data) {});
@@ -503,7 +514,7 @@ Object.keys(versions).forEach(function(version) {
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            common.assertDurationCorrect(agent, predicate);
+            common.assertDurationCorrect(agent, Date.now() - start, predicate);
             assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
           };
           assertTraceProperties(grpcClientPredicate);
@@ -514,6 +525,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should trace metadata for bidi streaming requests', function(done) {
+      var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
         var stream = client.testBidiStream(metadata);
         stream.on('data', function(data) {});
@@ -525,7 +537,7 @@ Object.keys(versions).forEach(function(version) {
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
-            common.assertDurationCorrect(agent, predicate);
+            common.assertDurationCorrect(agent, Date.now() - start, predicate);
             assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
           };
           assertTraceProperties(grpcClientPredicate);
@@ -537,6 +549,7 @@ Object.keys(versions).forEach(function(version) {
 
     if (version === 'grpc013') {
       it('should trace metadata for old arg orders (unary)', function(done) {
+        var start = Date.now();
         common.runInTransaction(agent, function(endTransaction) {
           client.testUnary({n: SEND_METADATA}, function(err, result) {
             endTransaction();
@@ -544,7 +557,7 @@ Object.keys(versions).forEach(function(version) {
             var assertTraceProperties = function(predicate) {
               var trace = common.getMatchingSpan(agent, predicate);
               assert(trace);
-              common.assertDurationCorrect(agent, predicate);
+              common.assertDurationCorrect(agent, Date.now() - start, predicate);
               assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
               return trace;
             };
@@ -558,6 +571,7 @@ Object.keys(versions).forEach(function(version) {
       });
 
       it('should trace metadata for old arg orders (stream)', function(done) {
+        var start = Date.now();
         common.runInTransaction(agent, function(endTransaction) {
           var stream = client.testClientStream(function(err, result) {
             endTransaction();
@@ -565,7 +579,7 @@ Object.keys(versions).forEach(function(version) {
             var assertTraceProperties = function(predicate) {
               var trace = common.getMatchingSpan(agent, predicate);
               assert(trace);
-              common.assertDurationCorrect(agent, predicate);
+              common.assertDurationCorrect(agent, Date.now() - start, predicate);
               assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
               return trace;
             };
@@ -581,6 +595,7 @@ Object.keys(versions).forEach(function(version) {
       });
     } else {
       it('should trace metadata for new arg orders (unary)', function(done) {
+        var start = Date.now();
         common.runInTransaction(agent, function(endTransaction) {
           client.testUnary({n: SEND_METADATA}, metadata, {},
               function(err, result) {
@@ -589,7 +604,7 @@ Object.keys(versions).forEach(function(version) {
                 var assertTraceProperties = function(predicate) {
                   var trace = common.getMatchingSpan(agent, predicate);
                   assert(trace);
-                  common.assertDurationCorrect(agent, predicate);
+                  common.assertDurationCorrect(agent, Date.now() - start, predicate);
                   assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
                   return trace;
                 };
@@ -603,6 +618,7 @@ Object.keys(versions).forEach(function(version) {
       });
 
       it('should trace metadata for new arg orders (stream)', function(done) {
+        var start = Date.now();
         common.runInTransaction(agent, function(endTransaction) {
           var stream = client.testClientStream(metadata, {},
               function(err, result) {
@@ -611,7 +627,7 @@ Object.keys(versions).forEach(function(version) {
                 var assertTraceProperties = function(predicate) {
                   var trace = common.getMatchingSpan(agent, predicate);
                   assert(trace);
-                  common.assertDurationCorrect(agent, predicate);
+                  common.assertDurationCorrect(agent, Date.now() - start, predicate);
                   assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
                   return trace;
                 };

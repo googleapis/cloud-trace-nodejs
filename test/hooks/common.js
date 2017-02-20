@@ -105,17 +105,17 @@ function getMatchingSpans(agent, predicate) {
   return list;
 }
 
-function assertSpanDurationCorrect(span) {
-  if (arguments.length !== 1) {
-    throw new Error('assertSpanDurationCorrect() expected 1 argument.  ' +
+function assertSpanDurationCorrect(span, expectedDuration) {
+  if (arguments.length !== 2) {
+    throw new Error('assertSpanDurationCorrect() expected 2 argument.  ' +
       'Received: ' + arguments.length);
   }
 
   var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
-  assert(duration > SERVER_WAIT * (1 - FORGIVENESS),
-      'Duration was ' + duration + ', expected ' + SERVER_WAIT);
-  assert(duration < SERVER_WAIT * (1 + FORGIVENESS),
-      'Duration was ' + duration + ', expected ' + SERVER_WAIT);
+  assert(duration > expectedDuration * (1 - FORGIVENESS),
+      'Duration was ' + duration + ', expected ' + expectedDuration);
+  assert(duration < expectedDuration * (1 + FORGIVENESS),
+      'Duration was ' + duration + ', expected ' + expectedDuration);
 }
 
 /**
@@ -130,9 +130,9 @@ function assertSpanDurationCorrect(span) {
  *
  * @param {function(?)=} predicate
  */
-function assertDurationCorrect(agent, predicate) {
-  if (arguments.length === 0) {
-    throw new Error('assertDurationCorrect() expected at lest one argument.  ' +
+function assertDurationCorrect(agent, expectedDuration, predicate) {
+  if (arguments.length < 2) {
+    throw new Error('assertDurationCorrect() expected at least two argument.  ' +
       'Received: ' + arguments.length);
   }
 
@@ -140,7 +140,7 @@ function assertDurationCorrect(agent, predicate) {
   // by the harness itself
   predicate = predicate || function(span) { return span.name !== 'outer'; };
   var span = getMatchingSpan(agent, predicate);
-  assertSpanDurationCorrect(span);
+  assertSpanDurationCorrect(span, expectedDuration);
 }
 
 function doRequest(agent, method, done, tracePredicate, path) {
@@ -149,12 +149,13 @@ function doRequest(agent, method, done, tracePredicate, path) {
       'Received: ' + arguments.length);
   }
 
+  var start = Date.now();
   http.get({port: SERVER_PORT, method: method, path: path || '/'}, function(res) {
     var result = '';
     res.on('data', function(data) { result += data; });
     res.on('end', function() {
       assert.equal(SERVER_RES, result);
-      assertDurationCorrect(agent, tracePredicate);
+      assertDurationCorrect(agent, Date.now() - start, tracePredicate);
       done();
     });
   });
