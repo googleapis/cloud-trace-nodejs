@@ -19,10 +19,11 @@ var path = require('path');
 var assert = require('assert');
 var nock = require('nock');
 var cls = require('../src/cls.js');
+var common = require('./hooks/common.js');
 
-var queueSpans = function(n, privateAgent) {
+var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {
-    privateAgent.createRootSpanData('name', 1, 0).close();
+    common.createRootSpanData(agent, 'name', 1, 0).close();
   }
 };
 
@@ -58,7 +59,7 @@ describe('test-config-credentials', function() {
         return true;
       }).reply(200);
     cls.getNamespace().run(function() {
-      queueSpans(2, agent.private_());
+      queueSpans(2, agent);
     });
   });
 
@@ -90,7 +91,7 @@ describe('test-config-credentials', function() {
         return true;
       }).reply(200);
     cls.getNamespace().run(function() {
-      queueSpans(2, agent.private_());
+      queueSpans(2, agent);
     });
   });
 
@@ -129,7 +130,7 @@ describe('test-config-credentials', function() {
         return true;
       }).reply(200);
     cls.getNamespace().run(function() {
-      queueSpans(2, agent.private_());
+      queueSpans(2, agent);
     });
   });
 });

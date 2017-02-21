@@ -25,6 +25,8 @@ var newDebug = function(error) {
   }
 };
 
+var common = require('./hooks/common.js');
+
 nock.disableNetConnect();
 
 describe('test-no-self-tracing', function() {
@@ -36,10 +38,9 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/project/project-id').reply(200);
     var agent = require('..').start({forceNewAgent_: true});
     require('http'); // Must require http to force patching of the module
-    var oldDebug = agent.private_().logger.debug;
-    agent.private_().logger.debug = newDebug;
+    var oldDebug = common.replaceDebugLogger(agent, newDebug);
     setTimeout(function() {
-      agent.private_().logger.debug = oldDebug;
+      common.replaceDebugLogger(agent, oldDebug);
       scope.done();
       done();
     }, 200); // Need to wait for metadata access attempt
@@ -57,15 +58,14 @@ describe('test-no-self-tracing', function() {
       bufferSize: 1,
       forceNewAgent_: true
     });
-    agent.private_().traceWriter.request_ = request;
+    common.getTraceWriter(agent).request_ = request;
     require('http'); // Must require http to force patching of the module
-    var oldDebug = agent.private_().logger.debug;
-    agent.private_().logger.debug = newDebug;
-    agent.private_().namespace.run(function() {
-      agent.private_().createRootSpanData('hi').close();
+    var oldDebug = common.replaceDebugLogger(agent, newDebug);
+    common.namespaceRun(agent, function() {
+      common.createRootSpanData(agent, 'hi').close();
       setTimeout(function() {
-        assert.equal(agent.private_().traceWriter.buffer_.length, 0);
-        agent.private_().logger.debug = oldDebug;
+        assert.equal(common.getTraceWriter(agent).buffer_.length, 0);
+        common.replaceDebugLogger(agent, oldDebug);
         metadataScope.done();
         apiScope.done();
         done();

@@ -18,6 +18,8 @@
 var assert = require('assert');
 var http = require('http');
 
+var common = require('./hooks/common.js');
+
 describe('test-ignore-urls', function() {
   var agent;
   var express;
@@ -40,7 +42,7 @@ describe('test-ignore-urls', function() {
         res.on('data', function(data) { result += data; });
         res.on('end', function() {
           assert.equal(result, 'hi');
-          assert.equal(agent.private_().traceWriter.buffer_.length, 0);
+          assert.equal(common.getTraceWriter(agent).buffer_.length, 0);
           server.close();
           done();
         });

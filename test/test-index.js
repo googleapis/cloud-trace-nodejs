@@ -24,13 +24,14 @@ if (!process.env.GCLOUD_PROJECT) {
 var assert = require('assert');
 var trace = require('..');
 var cls = require('../src/cls.js');
+var common = require('./hooks/common.js');
 var TraceLabels = require('../src/trace-labels.js');
 
 describe('index.js', function() {
   var agent = trace.start();
 
   afterEach(function() {
-    agent.private_().traceWriter.buffer_ = [];
+    common.getTraceWriter(agent).buffer_ = [];
   });
 
   it('should get the agent with `Trace.get`', function() {
@@ -51,7 +52,7 @@ describe('index.js', function() {
   describe('labels', function(){
     it('should add labels to spans', function() {
       cls.getNamespace().run(function() {
-        agent.private_().createRootSpanData('root', 1, 2);
+        common.createRootSpanData(agent, 'root', 1, 2);
         var spanData = agent.startSpan('sub', {test1: 'value'});
         agent.endSpan(spanData);
         var traceSpan = spanData.span;
@@ -63,7 +64,7 @@ describe('index.js', function() {
 
     it('should ignore non-object labels', function() {
       cls.getNamespace().run(function() {
-        agent.private_().createRootSpanData('root', 1, 2);
+        common.createRootSpanData(agent, 'root', 1, 2);
 
         var testLabels = [
           'foo',
@@ -93,14 +94,14 @@ describe('index.js', function() {
 
   it('should produce real spans runInSpan sync', function() {
     cls.getNamespace().run(function() {
-      var root = agent.private_().createRootSpanData('root', 1, 0);
+      var root = common.createRootSpanData(agent, 'root', 1, 0);
       var testLabel = { key: 'val' };
       agent.runInSpan('sub', testLabel, function() {});
       root.close();
       var spanPredicate = function(spanData) {
         return spanData.spans[1].name === 'sub';
       };
-      var matchingSpans = agent.private_().traceWriter.buffer_
+      var matchingSpans = common.getTraceWriter(agent).buffer_
                             .map(JSON.parse)
                             .filter(spanPredicate);
       assert.equal(matchingSpans.length, 1);
@@ -110,7 +111,7 @@ describe('index.js', function() {
 
   it('should produce real spans runInSpan async', function(done) {
     cls.getNamespace().run(function() {
-      var root = agent.private_().createRootSpanData('root', 1, 0);
+      var root = common.createRootSpanData(agent, 'root', 1, 0);
       var testLabel = { key: 'val' };
       agent.runInSpan('sub', function(endSpan) {
         setTimeout(function() {
@@ -119,7 +120,7 @@ describe('index.js', function() {
           var spanPredicate = function(spanData) {
             return spanData.spans[1].name === 'sub';
           };
-          var matchingSpans = agent.private_().traceWriter.buffer_
+          var matchingSpans = common.getTraceWriter(agent).buffer_
                                 .map(JSON.parse)
                                 .filter(spanPredicate);
           assert.equal(matchingSpans.length, 1);
@@ -146,7 +147,7 @@ describe('index.js', function() {
       var spanPredicate = function(spanData) {
         return spanData.spans[0].name === 'root' && spanData.spans[1].name === 'sub';
       };
-      var matchingSpans = agent.private_().traceWriter.buffer_
+      var matchingSpans = common.getTraceWriter(agent).buffer_
                             .map(JSON.parse)
                             .filter(spanPredicate);
       assert.equal(matchingSpans.length, 1);
@@ -165,7 +166,7 @@ describe('index.js', function() {
           var spanPredicate = function(spanData) {
             return spanData.spans[0].name === 'root' && spanData.spans[1].name === 'sub';
           };
-          var matchingSpans = agent.private_().traceWriter.buffer_
+          var matchingSpans = common.getTraceWriter(agent).buffer_
                                 .map(JSON.parse)
                                 .filter(spanPredicate);
           assert.equal(matchingSpans.length, 1);
@@ -199,7 +200,7 @@ describe('index.js', function() {
         var spanPredicate = function(spanData) {
           return spanData.spans[0].name === 'root';
         };
-        var matchingSpans = agent.private_().traceWriter.buffer_
+        var matchingSpans = common.getTraceWriter(agent).buffer_
           .map(JSON.parse)
           .filter(spanPredicate);
         assert.equal(matchingSpans.length, 1);
@@ -224,7 +225,7 @@ describe('index.js', function() {
 
   it('should set transaction name and labels', function() {
     cls.getNamespace().run(function() {
-      var spanData = agent.private_().createRootSpanData('root', 1, 2);
+      var spanData = common.createRootSpanData(agent, 'root', 1, 2);
       agent.setTransactionName('root2');
       agent.addTransactionLabel('key', 'value');
       assert.equal(spanData.span.name, 'root2');

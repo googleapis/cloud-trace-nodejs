@@ -23,7 +23,7 @@ describe('test-trace-cluster', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('..').start({samplingRate: 0}).private_();
+    agent = require('..').start({samplingRate: 0});
     express = require('./hooks/fixtures/express4');
   });
 

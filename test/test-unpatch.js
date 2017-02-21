@@ -19,6 +19,8 @@
 var assert = require('assert');
 var trace = require('..');
 
+var common = require('./hooks/common.js');
+
 describe('index.js', function() {
   var agent;
   var checkUnpatches = [];
@@ -27,7 +29,7 @@ describe('index.js', function() {
   });
 
   afterEach(function() {
-    agent.private_().stop();
+    common.stopAgent(agent);
     checkUnpatches.forEach(function(f) { f(); });
     checkUnpatches = [];
   });

@@ -21,7 +21,7 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 // We want to disable publishing to avoid conflicts with production.
-require('../../src/trace-writer').publish_ = function() {};
+// require('../../src/trace-writer').publish_ = function() {};
 
 var cls = require('../../src/cls.js');
 
@@ -226,6 +226,10 @@ function namespaceRun(agent, fn) {
   return agent.private_().namespace.run(fn);
 }
 
+function stopAgent(agent) {
+  agent.private_().stop();
+}
+
 module.exports = {
   init: init,
   assertSpanDurationCorrect: assertSpanDurationCorrect,
@@ -243,6 +247,7 @@ module.exports = {
   getConfig: getConfig,
   getTraceWriter: getTraceWriter,
   namespaceRun: namespaceRun,
+  stopAgent: stopAgent,
   serverWait: SERVER_WAIT,
   serverRes: SERVER_RES,
   serverPort: SERVER_PORT,

@@ -19,6 +19,7 @@
 var assert = require('assert');
 var nock = require('nock');
 var cls = require('../src/cls.js');
+var common = require('./hooks/common.js');
 var trace = require('..');
 var request = require('request');
 
@@ -29,9 +30,9 @@ var path = '/v1/projects/0/traces';
 
 process.env.GCLOUD_PROJECT = 0;
 
-var queueSpans = function(n, privateAgent) {
+var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {
-    privateAgent.createRootSpanData('name', 1, 0).close();
+    common.createRootSpanData(agent, 'name', 1, 0).close();
   }
 };
 
@@ -68,11 +69,11 @@ describe('tracewriter publishing', function() {
         samplingRate: 0,
         onUncaughtException: 'flush'
       });
-      var privateAgent = agent.private_();
-      privateAgent.traceWriter.request_ = request; // Avoid authing
+      var traceWriter = common.getTraceWriter(agent);
+      traceWriter.request_ = request; // Avoid authing
       cls.getNamespace().run(function() {
-        queueSpans(2, privateAgent);
-        buf = privateAgent.traceWriter.buffer_;
+        queueSpans(2, agent);
+        buf = traceWriter.buffer_;
         throw new Error(':(');
       });
     });
