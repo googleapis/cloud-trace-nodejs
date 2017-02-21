@@ -208,6 +208,24 @@ function createChildSpan(agent, cb, duration) {
   };
 }
 
+function createRootSpanData(agent, name, traceId, parentId, skipFrames,
+                            spanKind) {
+  return agent.private_().createRootSpanData(name, traceId, parentId,
+                                             skipFrames, spanKind);
+}
+
+function getTraceWriter(agent) {
+  return agent.private_().traceWriter;
+}
+
+function getConfig(agent) {
+  return agent.private_().config();
+}
+
+function namespaceRun(agent, fn) {
+  return agent.private_().namespace.run(fn);
+}
+
 module.exports = {
   init: init,
   assertSpanDurationCorrect: assertSpanDurationCorrect,
@@ -221,6 +239,10 @@ module.exports = {
   runInTransaction: runInTransaction,
   getShouldTraceArgs: getShouldTraceArgs,
   replaceDebugLogger: replaceDebugLogger,
+  createRootSpanData: createRootSpanData,
+  getConfig: getConfig,
+  getTraceWriter: getTraceWriter,
+  namespaceRun: namespaceRun,
   serverWait: SERVER_WAIT,
   serverRes: SERVER_RES,
   serverPort: SERVER_PORT,

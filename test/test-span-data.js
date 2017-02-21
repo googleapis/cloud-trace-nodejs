@@ -24,17 +24,18 @@ if (!process.env.GCLOUD_PROJECT) {
 var TraceLabels = require('../src/trace-labels.js');
 var assert = require('assert');
 var cls = require('../src/cls.js');
+var common = require('./hooks/common.js');
 
 describe('SpanData', function() {
 
   var agent;
   before(function() {
-    agent = require('..').start({samplingRate: 0}).private_();
+    agent = require('..').start({samplingRate: 0});
   });
 
   it('has correct default values', function() {
     cls.getNamespace().run(function() {
-      var spanData = agent.createRootSpanData('name', 1, 2);
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
       assert.ok(spanData.trace);
       assert.equal(spanData.trace.traceId, 1);
       assert.ok(spanData.span.spanId);
@@ -44,7 +45,7 @@ describe('SpanData', function() {
 
   it('creates children', function() {
     cls.getNamespace().run(function() {
-      var spanData = agent.createRootSpanData('name', 1, 2);
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
       var child = spanData.createChildSpanData('name2');
       assert.equal(child.span.name, 'name2');
       assert.equal(child.span.parentSpanId, spanData.span.spanId);
@@ -55,7 +56,7 @@ describe('SpanData', function() {
 
   it('closes', function() {
     cls.getNamespace().run(function() {
-      var spanData = agent.createRootSpanData('name', 1, 2);
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
       assert.ok(!spanData.span.isClosed());
       spanData.close();
       assert.ok(spanData.span.isClosed());
@@ -63,9 +64,9 @@ describe('SpanData', function() {
   });
 
   it('captures stack traces', function() {
-    agent.config().stackTraceLimit = 25;
+    common.getConfig(agent).stackTraceLimit = 25;
     cls.getNamespace().run(function() {
-      var spanData = agent.createRootSpanData('name', 1, 2, 1);
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2, 1);
       assert.ok(!spanData.span.isClosed());
       spanData.close();
       var stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
@@ -74,16 +75,16 @@ describe('SpanData', function() {
       var frames = JSON.parse(stack);
       assert.ok(frames && frames.stack_frame);
       assert.ok(Array.isArray(frames.stack_frame));
-      assert.equal(frames.stack_frame[0].method_name, 'Namespace.run [as run]');
+      assert.equal(frames.stack_frame[1].method_name, 'Namespace.run [as run]');
     });
   });
 
   it('should close all spans', function() {
     cls.getNamespace().run(function() {
-      var spanData = agent.createRootSpanData('hi');
+      var spanData = common.createRootSpanData(agent, 'hi');
       spanData.createChildSpanData('sub');
       spanData.close();
-      var traces = agent.traceWriter.buffer_.map(JSON.parse);
+      var traces = common.getTraceWriter(agent).buffer_.map(JSON.parse);
       for (var i = 0; i < traces.length; i++) {
         for (var j = 0; j < traces[i].spans.length; j++) {
           assert.notEqual(traces[i].spans[j].endTime, '');
