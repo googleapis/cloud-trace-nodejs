@@ -42,6 +42,7 @@ module.exports = {
     // This field is experimental.
     plugins: {
       'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
+      'express': path.join(__dirname, 'src/plugins/plugin-express.js'),
       'grpc': path.join(__dirname, 'src/plugins/plugin-grpc.js'),
       'hapi': path.join(__dirname, 'src/plugins/plugin-hapi.js'),
       'http': path.join(__dirname, 'src/plugins/plugin-http.js'),
