@@ -57,15 +57,17 @@ cp.execFileSync('npm', ['install']);
 // Reformat tests to use newly installed restify
 console.log('Reformating tests');
 var gcloud_require = 'require(\'' + path.join(__dirname, '..', '..') +
-    '\').start({ forceNewAgent_: true });';
+    '\').start({ forceNewAgent_: true, samplingRate: 0, projectId: \'0\', logLevel: 1 });';
 glob(test_glob, function(err, files) {
   for (var i = 0; i < files.length; i++) {
-    cp.execFileSync('sed', ['-i.bak', 's#\'use strict\';#' +
-        '\'use strict\'; ' + gcloud_require + '#g', files[i]]);
-    if (cp.spawnSync('grep', ['-q', gcloud_require, files[i]]).status) {
-      cp.execSync('echo "' + gcloud_require + '" | cat - ' + files[i] +
-          ' >' +  files[i] + '.instru.js' + '&& mv ' + files[i] +
-          '.instru.js' + ' ' + files[i]);
+    if (i === 0) {
+      cp.execFileSync('sed', ['-i.bak', 's#\'use strict\';#' +
+          '\'use strict\'; ' + gcloud_require + '#g', files[i]]);
+      if (cp.spawnSync('grep', ['-q', gcloud_require, files[i]]).status) {
+        cp.execSync('echo "' + gcloud_require + '" | cat - ' + files[i] +
+            ' >' +  files[i] + '.instru.js' + '&& mv ' + files[i] +
+            '.instru.js' + ' ' + files[i]);
+      }
     }
     cp.execFileSync('sed', ['-i.bak', 's#require(\'\\.\\./lib\')#require(\'restify\')#',
         files[i]]);
@@ -73,7 +75,10 @@ glob(test_glob, function(err, files) {
   // Run tests
   console.log('Running tests');
   var results = cp.spawnSync('make', ['test']);
-  console.log(results.output[1].toString() || results.output[2].toString());
+  var output = results.output[1].toString() || results.output[2].toString();
+  console.log(output);
+  assert(output.indexOf('FAILURES:') === -1);
+  assert(output.indexOf('OK:') !== -1);
 
   // Teardown
   console.log('Cleaning up');
