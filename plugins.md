@@ -1,6 +1,6 @@
-# Trace Plugin API Developer Guide
+# Trace Plugin Developer Guide
 
-**Note: The Trace Plugin API is experimental and is subject to change without notice.**
+**Note: The Trace API is experimental and is subject to change without notice.**
 
 The trace agent is driven by a set of plugins that describe how to patch a
 module to generate trace spans when that module is used. We provide plugins for
@@ -12,7 +12,7 @@ API for developers to create their own.
 A plugin consists of a set of *patch objects*. A patch object gives information
 about how a file in a module should be patched in order to create trace spans.
 
-Each patch object should contain the following fields:
+Each patch object can contain the following fields:
 
 * `file`: The path to the file whose exports should be patched, relative to the
   root of the module. You can specify an empty string, or omit this field
@@ -22,25 +22,54 @@ Each patch object should contain the following fields:
   only be applied if the loaded module version satisfies this expression. This
   might be useful if your plugin only works on some versions of a module, or if
   you are patching internal mechanisms that are specific to a certain range of
-  versions.
-* `patch`: A function describing how the given file should be patched. It will
-  be passed two arguments: the object exported from the file, and an object that
-  exposes functions for creating spans and propagating context (see
+  versions. If omitted, all versions of the module will be patched.
+* `patch`: A function describing how the module exports for a given file should
+  be patched. It will be passed two arguments: the object exported from the
+  file, and an instance of `TraceApi` (see
   [What the API provides](#what-the-api-provides) for more details).
+* `intercept`: A function describing how the module exports for a file should be
+  replaced with a new object. It accepts the same arguments as `patch`, but
+  unlike `patch`, it should return the object that will be treated as the
+  replacement value for `module.exports` (hence the name `intercept`).
+* `unpatch`: A function describing how the module exports for a given file
+  should be unpatched. This should generally mirror the logic in `patch`; for
+  example, if `patch` wraps a method, `unpatch` should unwrap it.
+
+If `patch` is supplied, then `unpatch` will be called if the agent must be
+disabled for any reason. This does not hold true for `intercept`: instead, the
+module exports for the original file will automatically be set to its original,
+unintercepted value.
+
+In addition, `patch` and `intercept` have overlapping functionality.
+
+For these reasons, plugins should not implement `patch` and/or `unpatch`
+alongside `intercept`. We strongly encourage plugin developers to implement
+patching and unpatching methods, using `intercept` only when needed.
 
 A plugin simply exports a list of patch objects.
 
 For example, here's what a plugin for `express` might export:
 
 ```js
-// express 4.x
+// Patches express 3.x/4.x.
+// Only the patch function corresponding to the version of express will be
+// called.
 
-function patchModuleRoot(expressModule, api) {
+function patchModuleRoot4x(expressModule, traceApi) {
+  // Patch expressModule using the traceApi object here.
+  // expressModule is the object retrieved with require('express').
+  // traceApi exposes methods to facilitate tracing, and is documented in detail
+  // in the section below.
+  // 
+}
+
+function patchModuleRoot3x(expressModule, traceApi) {
   // ...
 }
 
 module.exports = [
-  { file: '', versions: '4.x', patch: patchModuleRoot }
+  { file: '', versions: '4.x', patch: patchModuleRoot4x },
+  { file: '', versions: '3.x', patch: patchModuleRoot3x }
 ];
 ```
 
@@ -49,38 +78,25 @@ of the module, in which case the `file` field can set to `''` or omitted. Based
 on how the module being patched is implemented, however, it may be necessary to
 patch other parts of the module as well.
 
-### Enabling plugins in the Trace Agent
-
-Developers wishing to trace their applications may specify, in the
-[configuration][config-js] object passed to the trace agent, a `plugins` field
-with a key-value pair (module name, path to plugin). For
-example, to patch just `express` with a plugin at `./plugins/plugin-express.js`:
-
-```js
-require('@google-cloud/trace-agent').start({
-  plugins: {
-    express: path.join(__dirname, 'plugins/express.js')
-  }
-})
-```
-
-At this time, the path to the plugin may either be a module name or an absolute
-path to the plugin.
+We recommend using [`shimmer`](https://github.com/othiym23/shimmer) to modify
+function properties on objects.
 
 ## What the API provides
 
-The `api` object, in short, provides functions that facilitate the following:
+A `TraceApi` instance, in short, provides functions that facilitate the
+following:
 
 - Creating trace spans and add labels to them.
 - Getting information about how the trace agent was configured in the
   current application.
-- Parsing and serializing trace contexts for the sake of propagating them over
-  the network.
+- Parsing and serializing trace contexts to support distributed tracing between
+  microservices.
 - Binding callbacks and event emitters in order to propagate trace contexts
   across asynchronous boundaries.
 
-In addition to the above, the `api` object also provides a number of well-known
-label keys and constants through `api.labels` and `api.constants` respectively.
+In addition to the above, `TraceApi` also provides a number of well-known
+label keys and constants through its `labels` and `constants` fields
+respectively.
 
 ### Trace Spans
 
@@ -88,65 +104,55 @@ These functions provide the capability to create trace spans, add labels to
 them, and close them. `transaction` and `childSpan` are instances of
 `Transaction` and `ChildSpan`, respectively.
 
-#### `api.createTransaction(options)`
+#### `TraceApi#api.runInRootSpan(options, fn)`
 * `options`: [`TraceOptions`](#trace-span-options)
-* Returns `Transaction`
-
-Creates and returns a new `Transaction` object. A `Transaction` object
-represents a root-level trace span, and exposes functions for adding labels,
-ending the span, and serializing the current trace context. Note that the
-underlying root span is started when this function is called.
-
-This function consults the trace agent's tracing policy to determine whether a
-trace span should actually be started or not. If the tracing policy prohibits
-a new span to be created under the current circumstances, this function will
-return `null` instead.
-
-#### `api.getTransaction()`
-* Returns `Transaction`
-
-Returns a Transaction object that corresponds to a root span started earlier
-in the same context, or `null` if one doesn't exist.
-
-#### `api.runInRootSpan(options, fn)`
-* `options`: [`TraceOptions`](#trace-span-options)
-* `fn`: `function(Transaction): any`
+* `fn`: `function(?Span): any`
 * Returns `any`
 
-Runs the given function in a root span corresponding to an incoming request,
-passing it the result of calling `api.createTransaction(options)`. The provided
-function should accept a nullable `Transaction` object. If `null` is provided,
-the function should proceed as if nothing is being traced.
+Attempts to create a root span, run the given callback, and pass it a `Span`
+object if the root span was successfuly created. Otherwise, the given function
+is run with `null` as an argument. This may be for one of two reasons:
+* The trace policy, as specified by the user-given configuration, disallows
+  a root span from being created under the current circumstances.
+* The trace agent is disabled, either because it wasn't started at all, started
+  in disabled mode, or started in an environment where the GCP project ID could
+  not be obtained.
 
-#### `api.createChildSpan(options)`
+#### `TraceApi#createChildSpan(options)`
 * `options`: [`TraceOptions`](#trace-span-options)
-* Returns `ChildSpan`
+* Returns `?Span`
 
-If a current transaction is available (through `api.getTransaction`), then
-create a child span corresponding to an incoming request and return it.
-Otherwise, returns null.
+Attempts to create a child span, and returns a `Span` object if this is
+successful. Otherwise, it returns `null`. This may be for one of several
+reasons:
+* A root span wasn't created beforehand because an earlier call to
+  `runInRootSpan` didn't generate one.
+* A root span wasn't created beforehand because `runInRootSpan` was not called
+  at all.
+* A root span was created beforehand, but context was lost between then and now.
 
-#### `transaction.addLabel(key, value) | childSpan.addLabel(key, value)`
+Child spans are always associated with a parent root span, and must always be
+created within the context of its parent. See
+[`Context Propagation`](#context-propagation) for details on properly
+propagating root span context.
+
+#### `Span#addLabel(key, value)`
 * `key`: `string`
 * `value`: `any`
 
-Add a label to the span associated with the calling object.
+Add a label to the span associated with the calling object. If the value is not
+a string, it will be stringified with `util.inspect`.
 
-#### `transaction.endSpan() | childSpan.endSpan()`
+**Note:** Keys and values may be truncated according to the user's configuration
+and limits set on the Stackdriver Trace API. Keys must be less than 128 bytes,
+while values must be less than 16 kilobytes, as specified in the
+[Stackdriver Trace docs][stackdriver-trace-span]. The user may specify a smaller
+limit on value size through the `maximumLabelValueSize` configuration field.
+
+#### `Span#endSpan()`
 
 Ends the span associated with the calling object. This function should only be
 called once.
-
-#### `api.runInChildSpan(options, fn)`
-* `options`: [`TraceOptions`](#trace-span-options)
-* `fn`: `function(ChildSpan): any`
-* Returns `any`
-
-A shortcut for calling `api.getTransaction()` followed by
-`transaction.runInChildSpan(options, fn)`. Note that while this function accepts
-the same arguments as `transaction.runInChildSpan`, the function being passed in
-should handle being passed `null` as a parameter. This will be the case if
-`api.getTransaction` returns `null`.
 
 #### Trace Span Options
 
@@ -168,9 +174,13 @@ fields:
 * `url`: `string`
   * Optional for root spans, ignored for child spans
   * The URL of the incoming request. This only applies if the module being
-    traced is a web framework. If given, this field will be compared against the
-    trace agent's URL filtering policy to check whether a span should be
-    created.
+    traced is a web framework. If given, a label will automatically be created
+    for the new span for the url (under the key `url`). This field will also be
+    compared against the trace agent's URL filtering policy to check whether a
+    span should be created.
+  * Plugin developers should favor populating this field over using
+    `Span#addLabel` to add the `url`, as adding the url here bypasses user-set
+    label limits.
 * `skipFrames`: `number`
   * Optional; defaults to `0`
   * Trace spans include the call stack at the moment of creation as part of the
@@ -181,7 +191,7 @@ fields:
 
 ### Trace Agent Configuration
 
-#### `api.enhancedDatabaseReportingEnabled()`
+#### `TraceApi#enhancedDatabaseReportingEnabled()`
 * Returns `boolean`
 
 Returns a boolean value describing whether the trace agent was started with
@@ -206,7 +216,7 @@ trace spans.
 The string `'x-cloud-trace-context'` is provided as
 `api.constants.TRACE_CONTEXT_HEADER_NAME`.
 
-#### `transaction.getTraceContext()` | `childSpan.getTraceContext()`
+#### `Span#getTraceContext()`
 * Returns `string`
 
 Gets the trace context serialized as a string.
@@ -227,9 +237,10 @@ Binds the given function to the current context.
 #### `api.bindEmitter(emitter)`
 * `emitter`: `EventEmitter`
 
-Binds any event handlers subsequently attached to the given emitter to the
+Binds any event handlers subsequently attached to the given event emitter to the
 current context.
 
 [config-js]: https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/blob/master/config.js
 [stackdriver-trace-faq]: https://cloud.google.com/trace/docs/faq
+[stackdriver-trace-span]: https://cloud.google.com/trace/api/reference/rest/v1/projects.traces#TraceSpan
 [dapper-paper]: https://research.google.com/pubs/pub36356.html
