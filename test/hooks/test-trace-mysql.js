@@ -36,7 +36,7 @@ describe('test-trace-mysql', function() {
     agent = require('../..').start({
       enhancedDatabaseReporting: true,
       databaseResultReportingSize: RESULT_SIZE
-    }).private_();
+    });
     mysql = require('./fixtures/mysql2');
     pool = mysql.createPool({
       host     : 'localhost',

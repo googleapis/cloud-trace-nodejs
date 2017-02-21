@@ -19,7 +19,7 @@ var common = require('./common.js');
 var constants = require('../../src/constants.js');
 var TraceLabels = require('../../src/trace-labels.js');
 
-var agent = require('../..').start({ samplingRate: 0 }).private_();
+var agent = require('../..').start({ samplingRate: 0 });
 
 var assert = require('assert');
 
