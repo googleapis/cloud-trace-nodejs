@@ -18,7 +18,6 @@
 
 var assert = require('assert');
 var nock = require('nock');
-var request = require('request');
 var newDebug = function(error) {
   if (error.indexOf('http') !== -1) {
     assert(false, error);
@@ -58,13 +57,13 @@ describe('test-no-self-tracing', function() {
       bufferSize: 1,
       forceNewAgent_: true
     });
-    common.getTraceWriter(agent).request_ = request;
+    common.avoidTraceWriterAuth(agent);
     require('http'); // Must require http to force patching of the module
     var oldDebug = common.replaceDebugLogger(agent, newDebug);
-    common.namespaceRun(agent, function() {
-      common.createRootSpanData(agent, 'hi').close();
+    common.runInTransaction(agent, function(end) {
+      end();
       setTimeout(function() {
-        assert.equal(common.getTraceWriter(agent).buffer_.length, 0);
+        assert.equal(common.getTraces(agent).length, 0);
         common.replaceDebugLogger(agent, oldDebug);
         metadataScope.done();
         apiScope.done();

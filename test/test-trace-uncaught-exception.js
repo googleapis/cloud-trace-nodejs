@@ -21,7 +21,6 @@ var nock = require('nock');
 var cls = require('../src/cls.js');
 var common = require('./hooks/common.js');
 var trace = require('..');
-var request = require('request');
 
 nock.disableNetConnect();
 
@@ -32,14 +31,10 @@ process.env.GCLOUD_PROJECT = 0;
 
 var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {
-    common.createRootSpanData(agent, 'name', 1, 0).close();
+    common.runInTransaction(agent, function(end) {
+      end();
+    });
   }
-};
-
-var formatBuffer = function(buffer) {
-  return {
-    traces: buffer.map(function(e) { return JSON.parse(e); })
-  };
 };
 
 describe('tracewriter publishing', function() {
@@ -50,8 +45,7 @@ describe('tracewriter publishing', function() {
     var buf;
     var scope = nock(uri)
         .intercept(path, 'PATCH', function(body) {
-          var parsedOriginal = formatBuffer(buf);
-          assert.equal(JSON.stringify(body), JSON.stringify(parsedOriginal));
+          assert.equal(JSON.stringify(body.traces), JSON.stringify(buf));
           return true;
         }).reply(200);
     process.on('uncaughtException', function() {
@@ -69,11 +63,10 @@ describe('tracewriter publishing', function() {
         samplingRate: 0,
         onUncaughtException: 'flush'
       });
-      var traceWriter = common.getTraceWriter(agent);
-      traceWriter.request_ = request; // Avoid authing
+      common.avoidTraceWriterAuth(agent);
       cls.getNamespace().run(function() {
         queueSpans(2, agent);
-        buf = traceWriter.buffer_;
+        buf = common.getTraces(agent);
         throw new Error(':(');
       });
     });

@@ -29,7 +29,7 @@ if (process.argv[2] === '-i') {
   common = require('../../hooks/common.js');
   agent = require('../../..').start();
   // We want to drop all spans and avoid network ops
-  common.getTraceWriter(agent).writeSpan = function() {};
+  common.installNoopTraceWriter(agent);
 }
 
 var mongoose = require('mongoose');
@@ -51,12 +51,8 @@ var sim = new Simple({
 });
 
 var runInTransaction = function(fn) {
-  var cls = require('../../../src/cls.js');
-  cls.getNamespace().run(function() {
-    var span = common.createRootSpanData(agent, 'outer');
-    fn(function() {
-      span.close();
-    });
+  common.runInTransaction(agent, function(end) {
+    end();
   });
 };
 

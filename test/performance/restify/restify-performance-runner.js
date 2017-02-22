@@ -22,7 +22,7 @@ if (process.argv[2] === '-i') {
   var common = require('../../hooks/common.js');
   var agent = require('../../..').start();
   // We want to drop all spans and avoid network ops
-  common.getTraceWriter(agent).writeSpan = function() {};
+  common.installNoopTraceWriter(agent);
 }
 
 var restify = require('restify');

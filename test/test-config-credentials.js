@@ -23,7 +23,9 @@ var common = require('./hooks/common.js');
 
 var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {
-    common.createRootSpanData(agent, 'name', 1, 0).close();
+    common.runInTransaction(agent, function(end) {
+      end();
+    });
   }
 };
 
