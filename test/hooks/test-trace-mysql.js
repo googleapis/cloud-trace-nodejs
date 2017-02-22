@@ -38,12 +38,7 @@ describe('test-trace-mysql', function() {
       databaseResultReportingSize: RESULT_SIZE
     });
     mysql = require('./fixtures/mysql2');
-    pool = mysql.createPool({
-      host     : 'localhost',
-      user     : 'root',
-      password : 'Password12!',
-      database : 'test'
-    });
+    pool = mysql.createPool(require('../mysql-config.js'));
   });
 
   beforeEach(function(done) {

@@ -36,12 +36,7 @@ if (semver.satisfies(process.version, '>=4')) {
       server.connection({ port: common.serverPort });
       server.register({
         register: require('./hooks/fixtures/hapi-plugin-mysql3'),
-        options: {
-          host     : 'localhost',
-          user     : 'root',
-          password : 'Password12!',
-          database : 'test'
-        }
+        options: require('./mysql-config.js')
       }, function (err) {
         assert(!err);
         server.route({ 

@@ -1,0 +1,7 @@
+machine:
+  node:
+    version: 6
+  services:
+    - redis
+  environment:
+    GCLOUD_PROJECT: 0

@@ -31,7 +31,6 @@ describe('test-hooks-no-project-num', function(){
       // Mute stderr to satiate appveyor
       write = process.stderr.write;
       process.stderr.write = function(c, e, cb) {
-        assert(c.indexOf('DeprecationWarning') !== -1);
         if (cb) {
           cb();
         }
@@ -128,12 +127,7 @@ describe('test-hooks-no-project-num', function(){
 
     it('mysql', function(done) {
       var mysql = require('./hooks/fixtures/mysql2');
-      var pool = mysql.createPool({
-        host     : 'localhost',
-        user     : 'root',
-        password : 'Password12!',
-        database : 'test'
-      });
+      var pool = mysql.createPool(require('./mysql-config.js'));
       pool.getConnection(function(err, conn) {
         assert(!err, 'Skipping: Failed to connect to mysql.');
         conn.query('SHOW TABLES', function(err, result) {
