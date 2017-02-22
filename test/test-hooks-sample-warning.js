@@ -126,12 +126,7 @@ describe('express + dbs', function() {
 
     var app = express();
     app.get('/', function (req, res) {
-      var pool = mysql.createPool({
-        host     : 'localhost',
-        user     : 'root',
-        password : 'Password12!',
-        database : 'test'
-      });
+      var pool = mysql.createPool(require('./mysql-config.js'));
       http.get('http://www.google.com/', function() {
         pool.getConnection(function(err, conn) {
           conn.query('SHOW COLUMNS FROM t', function(err) {
