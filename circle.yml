@@ -5,6 +5,3 @@ machine:
     - redis
   environment:
     GCLOUD_PROJECT: 0
-    DB_USER: root
-    DB_NAME: test
-    DB_PASS: 'Password12!'
