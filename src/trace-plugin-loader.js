@@ -60,6 +60,7 @@ function activate(agent) {
   var pluginConfig = agent.config().plugins;
   for (var moduleName in pluginConfig) {
     plugins[moduleName] = {
+      name: moduleName,
       file: pluginConfig[moduleName],
       patches: {}
     };
@@ -96,7 +97,7 @@ function activate(agent) {
       // Create a new object exposing functions to create trace spans and
       // propagate context. This relies on functions currently exposed by the
       // agent.
-      var api = new PluginAPI(agent, moduleRoot);
+      var api = new PluginAPI(agent, instrumentation.name);
       for (var file in patchSet) {
         var patch = patchSet[file];
         if (!patch.module) {
