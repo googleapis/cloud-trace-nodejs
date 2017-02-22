@@ -22,14 +22,6 @@
 //   ex) docker run -p 27017:27017 -d mongo
 var common = require('./common.js');
 
-// TODO: Determine why this test succeeds but causes the
-//       test-trace-express.js test to fail if either of
-//       (1) or (2) are changed below.
-
-// (1) express needs to be required before the agent is
-//     started for this test and test-trace-express.js
-//     to both pass.
-var express = require('./fixtures/express4');
 var assert = require('assert');
 var http = require('http');
 
@@ -39,20 +31,15 @@ describe('mongodb + express', function() {
   var agent;
   var oldDebug;
   var mongoose;
+  var express;
   before(function() {
     agent = require('../..').start();
+    express = require('./fixtures/express4');
     mongoose = require('./fixtures/mongoose4');
     oldDebug = common.replaceDebugLogger(agent,
       function(error) {
         assert(error.indexOf('mongo') === -1, error);
     });
-  });
-
-  after(function() {
-    // (2) express needs to be deleted from the require cache
-    //     for this test and test-trace-express.js to both
-    //     pass.
-    delete require.cache[require.resolve('./fixtures/express4')];
   });
 
   it('should not lose context on startup', function(done) {
