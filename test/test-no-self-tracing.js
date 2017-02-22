@@ -24,7 +24,7 @@ var newDebug = function(error) {
   }
 };
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 nock.disableNetConnect();
 

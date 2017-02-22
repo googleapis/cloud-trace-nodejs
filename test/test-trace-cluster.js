@@ -16,7 +16,7 @@
 
 'use strict';
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 var cluster = require('cluster');
 
 describe('test-trace-cluster', function() {
@@ -24,7 +24,7 @@ describe('test-trace-cluster', function() {
   var express;
   before(function() {
     agent = require('..').start({samplingRate: 0});
-    express = require('./hooks/fixtures/express4');
+    express = require('./plugins/fixtures/express4');
   });
 
   it('should not interfere with express span', function(done) {

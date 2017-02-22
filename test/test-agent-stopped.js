@@ -18,12 +18,32 @@
 
 var assert = require('assert');
 var http = require('http');
+var nock = require('nock');
+var proxyquire  = require('proxyquire');
 
 describe('test-agent-stopped', function() {
   var agent;
-  before(function() {
+  before(function(done) {
+    // Setup: Monkeypatch gcp-metadata to not ask for retries at all.
+    var retryRequest = require('retry-request');
+    proxyquire('gcp-metadata', {
+      'retry-request': function(requestOps, callback) {
+        return retryRequest(requestOps, {
+          retries: 0
+        }, callback);
+      }
+    });
+    var scope = nock('http://metadata.google.internal')
+                .get('/computeMetadata/v1/project/project-id')
+                .reply(404);
     delete process.env.GCLOUD_PROJECT;
     agent = require('..').start();
+    // Wait 20ms for agent to fail getting remote project id.
+    setTimeout(function() {
+      assert.ok(!agent.isActive());
+      scope.done();
+      done();
+    }, 20);
   });
 
   after(function() {
@@ -33,7 +53,7 @@ describe('test-agent-stopped', function() {
   describe('express', function() {
     it('should not break if no project number is found', function(done) {
       assert.ok(!agent.isActive());
-      var app = require('./hooks/fixtures/express4')();
+      var app = require('./plugins/fixtures/express4')();
       app.get('/', function (req, res) {
         res.send('hi');
       });
@@ -54,7 +74,7 @@ describe('test-agent-stopped', function() {
   describe('hapi', function() {
     it('should not break if no project number is found', function(done) {
       assert.ok(!agent.isActive());
-      var hapi = require('./hooks/fixtures/hapi8');
+      var hapi = require('./plugins/fixtures/hapi8');
       var server = new hapi.Server();
       server.connection({ port: 8081 });
       server.route({
@@ -81,7 +101,7 @@ describe('test-agent-stopped', function() {
   describe('restify', function() {
     it('should not break if no project number is found', function(done) {
       assert.ok(!agent.isActive());
-      var restify = require('./hooks/fixtures/restify4');
+      var restify = require('./plugins/fixtures/restify4');
       var server = restify.createServer();
       server.get('/', function (req, res, next) {
         res.writeHead(200, {

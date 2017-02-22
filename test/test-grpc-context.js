@@ -15,13 +15,13 @@
  */
 'use strict';
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 var assert = require('assert');
 var http = require('http');
 
 var versions = {
-  grpc1: './hooks/fixtures/grpc1'
+  grpc1: './plugins/fixtures/grpc1'
 };
 
 var grpcPort = 50051;
@@ -55,7 +55,7 @@ Object.keys(versions).forEach(function(version) {
   describe('express + ' + version, function() {
     before(function(done) {
       agent = require('..').start({ samplingRate: 0 });
-      express = require('./hooks/fixtures/express4');
+      express = require('./plugins/fixtures/express4');
       grpc = require(versions[version]);
 
       common.replaceDebugLogger(agent, function(error, uri) {

@@ -17,7 +17,6 @@
 'use strict';
 
 var cls = require('./cls');
-var hooks = require('./hooks/index.js');
 var pluginLoader = require('./trace-plugin-loader.js');
 var Trace = require('./trace.js');
 var SpanData = require('./span-data.js');
@@ -37,7 +36,6 @@ function TraceAgent(config, logger) {
   this.config_ = config;
   this.logger = logger;
 
-  hooks.activate(this);
   pluginLoader.activate(this);
 
   this.namespace = cls.createNamespace();
@@ -66,7 +64,6 @@ function TraceAgent(config, logger) {
 TraceAgent.prototype.stop = function() {
   // Deactivate plugins. This calls unpatch() for all plugin patches that
   // support it.
-  hooks.deactivate();
   pluginLoader.deactivate();
   // Even though plugins should be unpatched, setting a new policy that
   // never generates traces allows persisting wrapped methods (either because

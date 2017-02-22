@@ -38,7 +38,7 @@ describe('agent interaction with metadata service', function() {
         }, callback);
       }
     });
-    common = require('./hooks/common.js');
+    common = require('./plugins/common.js');
     trace = require('..');
     delete process.env.GCLOUD_PROJECT;
   });

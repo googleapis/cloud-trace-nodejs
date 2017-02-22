@@ -20,7 +20,7 @@
 //   ex) docker -d
 // Run a mongo image binding the mongo port
 //   ex) docker run -p 27017:27017 -d mongo
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 var assert = require('assert');
 var http = require('http');
@@ -49,8 +49,8 @@ describe('express + dbs', function() {
   });
 
   it('mongo should not warn', function(done) {
-    var mongoose = require('./hooks/fixtures/mongoose4');
-    var express = require('./hooks/fixtures/express4');
+    var mongoose = require('./plugins/fixtures/mongoose4');
+    var express = require('./plugins/fixtures/express4');
 
     var app = express();
     app.get('/', function (req, res) {
@@ -75,8 +75,8 @@ describe('express + dbs', function() {
   });
 
   it('redis should not warn', function(done) {
-    var redis = require('./hooks/fixtures/redis2.3');
-    var express = require('./hooks/fixtures/express4');
+    var redis = require('./plugins/fixtures/redis2.3');
+    var express = require('./plugins/fixtures/express4');
 
     var app = express();
     app.get('/', function (req, res) {
@@ -98,7 +98,7 @@ describe('express + dbs', function() {
   });
 
   it('http should not warn', function(done) {
-    var express = require('./hooks/fixtures/express4');
+    var express = require('./plugins/fixtures/express4');
 
     var app = express();
     app.get('/', function (req, res) {
@@ -119,8 +119,8 @@ describe('express + dbs', function() {
   });
 
   it('mysql should not warn', function(done) {
-    var mysql = require('./hooks/fixtures/mysql2');
-    var express = require('./hooks/fixtures/express4');
+    var mysql = require('./plugins/fixtures/mysql2');
+    var express = require('./plugins/fixtures/express4');
 
     var app = express();
     app.get('/', function (req, res) {

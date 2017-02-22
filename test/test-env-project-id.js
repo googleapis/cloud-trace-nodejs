@@ -21,7 +21,7 @@ process.env.GCLOUD_PROJECT = 1729;
 var assert = require('assert');
 var trace = require('..');
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_PROJECT', function() {

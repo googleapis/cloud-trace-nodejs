@@ -20,7 +20,7 @@ install:
   - redis-64\tools\redis-server.exe --service-start
   # install modules
   - npm install
-  - ps: ForEach ($fix in Get-ChildItem -Directory test/hooks/fixtures/*) { cd $fix; npm install --silent }
+  - ps: ForEach ($fix in Get-ChildItem -Directory test/plugins/fixtures/*) { cd $fix; npm install --silent }
   - ps: cd ..\..\..\..
   # set GCLOUD_PROJECT
   - SET GCLOUD_PROJECT=0
@@ -33,7 +33,7 @@ before_test:
 test_script:
   # run tests
   - ps: ForEach ($test in Get-ChildItem test/*.js) { node_modules/.bin/mocha $test --timeout 4000 --R; if ($lastexitcode -ne 0) { exit 1 } }
-  - ps: ForEach ($test in Get-ChildItem test/hooks/*.js) { node_modules/.bin/mocha $test --timeout 4000 --R; if ($lastexitcode -ne 0) { exit 1 } }
+  - ps: ForEach ($test in Get-ChildItem test/plugins/*.js) { node_modules/.bin/mocha $test --timeout 4000 --R; if ($lastexitcode -ne 0) { exit 1 } }
 
 # Don't actually build using MSBuild
 build: off

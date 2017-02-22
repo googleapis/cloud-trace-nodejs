@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 var http = require('http');
 var assert = require('assert');
 var constants = require('../src/constants.js');
@@ -28,7 +28,7 @@ describe('test-trace-koa', function() {
   var koa;
   before(function() {
     agent = require('..').start();
-    koa = require('./hooks/fixtures/koa1');
+    koa = require('./plugins/fixtures/koa1');
   });
 
   afterEach(function() {

@@ -18,7 +18,7 @@
 var assert = require('assert');
 var http = require('http');
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 describe('test-ignore-urls', function() {
   var agent;
@@ -28,7 +28,7 @@ describe('test-ignore-urls', function() {
       ignoreUrls: ['/test'],
       samplingRate: 0
     });
-    express = require('./hooks/fixtures/express4');
+    express = require('./plugins/fixtures/express4');
   });
 
   it('should not trace ignored urls', function(done) {

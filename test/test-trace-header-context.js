@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 var http = require('http');
 var assert = require('assert');
 var constants = require('../src/constants.js');
@@ -25,7 +25,7 @@ describe('test-trace-header-context', function() {
   var express;
   before(function() {
     agent = require('..').start({ samplingRate: 0 });
-    express = require('./hooks/fixtures/express4');
+    express = require('./plugins/fixtures/express4');
   });
 
   afterEach(function() {
