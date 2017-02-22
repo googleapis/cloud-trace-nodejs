@@ -74,7 +74,7 @@ function wrapCallback(api, span, done) {
       }
       if (res) {
         var result = res.result ? res.result : res;
-        span.addLabel('results', result);
+        span.addLabel('result', api.summarizeDatabaseResults(result));
       }
     }
     span.endSpan();

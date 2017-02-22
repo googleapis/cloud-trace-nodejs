@@ -19,6 +19,8 @@ var common = require('./common.js');
 var traceLabels = require('../../src/trace-labels.js');
 var assert = require('assert');
 
+var RESULT_SIZE = 5;
+
 var connection;
 
 var obj = {
@@ -32,7 +34,8 @@ describe('test-trace-mysql', function() {
   var pool;
   before(function() {
     agent = require('../..').start({
-      enhancedDatabaseReporting: true
+      enhancedDatabaseReporting: true,
+      databaseResultReportingSize: RESULT_SIZE
     }).private_();
     mysql = require('./fixtures/mysql2');
     pool = mysql.createPool({
@@ -99,6 +102,22 @@ describe('test-trace-mysql', function() {
         // Ensure that our patch is on top of the stack
         assert(
           stackTrace.stack_frame[0].method_name.indexOf('createQuery_trace') !== -1);
+        done();
+      });
+    });
+  });
+
+  it('should limit result size', function(done) {
+    common.runInTransaction(agent, function(endRootSpan) {
+      connection.query('SELECT * FROM t', function(err, res) {
+        endRootSpan();
+        assert(!err);
+        var spans = common.getMatchingSpans(agent, function (span) {
+          return span.name === 'mysql-query';
+        });
+        var labels = spans[0].labels;
+        assert.equal(labels.result.length, RESULT_SIZE);
+        assert.equal(labels.result, '{0...');
         done();
       });
     });
