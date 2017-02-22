@@ -105,9 +105,10 @@ RootSpan.prototype.getTraceContext = function() {
  * plugin themselves
  * TODO(kjin): Should be called something else
  */
-function PluginAPI(agent) {
+function PluginAPI(agent, pluginName) {
   this.agent_ = agent;
   this.logger_ = agent.logger;
+  this.pluginName_ = pluginName;
 }
 
 /**
@@ -200,6 +201,10 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
  * function returns null.
  * @param {object} options An object that specifies options for how the child
  * span is created and propogated.
+ * @param {string} options.name The name to apply to the child span.
+ * @param {?number} options.skipFrames The number of stack frames to skip when
+ * collecting call stack information for the child span, starting from the top;
+ * this should be set to avoid including frames in the plugin. Defaults to 0.
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
 PluginAPI.prototype.createChildSpan = function(options) {
@@ -210,8 +215,8 @@ PluginAPI.prototype.createChildSpan = function(options) {
       options.skipFrames ? options.skipFrames + 1 : 1);
     return new ChildSpan(this.agent_, childContext);
   } else {
-    this.logger_.warn(options.name + ': Attempted to create child span ' +
-      'without root');
+    this.logger_.debug(this.pluginName_ +
+                       ': attempted to create child span without root');
     return null;
   }
 };
