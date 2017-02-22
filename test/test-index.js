@@ -84,7 +84,7 @@ describe('index.js', function() {
     });
   });
 
-  it('should produce real root spans runInRootSpan async', function(done) {
+  it('should produce real root spans runInRootSpan', function(done) {
     agent.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
       rootSpan.addLabel('key', 'val');
       var childSpan = agent.createChildSpan({name: 'sub'});
@@ -106,29 +106,17 @@ describe('index.js', function() {
 
   it('should not allow nested root spans', function(done) {
     agent.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1) {
-      var finished = false;
-      var finish = function () {
-        assert(!finished);
-        finished = true;
+      setTimeout(function() {
+        agent.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
+          assert.strictEqual(rootSpan2, null);
+        });
         rootSpan1.endSpan();
-        var spanPredicate = function(span) {
-          return span.name === 'root';
-        };
-        var matchingSpan = common.getMatchingSpan(agent, spanPredicate);
-        var duration = Date.parse(matchingSpan.endTime) - Date.parse(matchingSpan.startTime);
+        var span = common.getMatchingSpan(agent, function() { return true; });
+        assert.equal(span.name, 'root');
+        var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
         assert(duration > 190);
         assert(duration < 300);
         done();
-      };
-      setTimeout(function() {
-        agent.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
-          setTimeout(function() {
-            // We shouldn't reach this point
-            rootSpan2.endSpan();
-            finish();
-          }, 200);
-        });
-        finish();
       }, 200);
     });
   });
@@ -140,6 +128,19 @@ describe('index.js', function() {
       common.replaceTracingPolicy(agent, oldPolicy);
       done();
     });
+  });
+
+  it('should respect filter urls', function() {
+    var url = 'rootUrl';
+    var filterPolicy = new TracingPolicy.FilterPolicy(new TracingPolicy.TraceAllPolicy(), [url]);
+    var oldPolicy = common.replaceTracingPolicy(agent, filterPolicy);
+    agent.runInRootSpan({name: 'root1', url: url}, function(rootSpan) {
+      assert.strictEqual(rootSpan, null);
+    });
+    agent.runInRootSpan({name: 'root2', url: 'alternativeUrl'}, function(rootSpan) {
+      assert.strictEqual(rootSpan.span_.span.name, 'root2');
+    });
+    common.replaceTracingPolicy(agent, oldPolicy);
   });
 
   it('should set agent on global object', function() {
