@@ -16,7 +16,7 @@
 'use strict';
 
 var common = require('./hooks/common.js');
-//var cls = require('../src/cls.js');
+var cls = require('../src/cls.js');
 var http = require('http');
 var assert = require('assert');
 var constants = require('../src/constants.js');
@@ -27,6 +27,12 @@ describe('test-trace-header-context', function() {
   before(function() {
     agent = require('..').start({ samplingRate: 0 });
     express = require('./hooks/fixtures/express4');
+  });
+
+  afterEach(function() {
+    // TODO: Investigate why this is needed on Node v0.12
+    cls.destroyNamespace();
+    agent.private_().namespace = cls.createNamespace();
   });
 
   it('should work with string url', function(done) {
