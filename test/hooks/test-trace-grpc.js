@@ -200,8 +200,10 @@ Object.keys(versions).forEach(function(version) {
   describe(version, function() {
     before(function() {
       // It is necessary for the samplingRate to be 0 for the tests to succeed
-      agent = require('../..').start({ samplingRate: 0 }).private_();
-      agent.config_.enhancedDatabaseReporting = true;
+      agent = require('../..').start({
+        samplingRate: 0,
+        enhancedDatabaseReporting: true
+      });
 
       common = require('./common.js');
       common.init(agent);

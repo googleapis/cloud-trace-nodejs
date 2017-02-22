@@ -26,7 +26,7 @@ describe('test-trace-gcloud', function() {
   var agent;
   before(function() {
     agent = require('..').start({ samplingRate: 0,
-      enhancedDatabaseReporting: true }).private_();
+      enhancedDatabaseReporting: true });
   });
 
   // This does a gcloud.datastore.get() request that makes a gRPC 'lookup' call.

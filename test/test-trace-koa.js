@@ -27,7 +27,7 @@ describe('test-trace-koa', function() {
   var agent;
   var koa;
   before(function() {
-    agent = require('..').start().private_();
+    agent = require('..').start();
     koa = require('./hooks/fixtures/koa1');
   });
 

@@ -42,7 +42,7 @@ describe('redis', function() {
       samplingRate: 0,
       enhancedDatabaseReporting: true,
       databaseResultReportingSize: RESULT_SIZE
-    }).private_();
+    });
   });
 
   var client;

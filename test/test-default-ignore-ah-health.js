@@ -18,6 +18,8 @@
 var assert = require('assert');
 var http = require('http');
 
+var common = require('./hooks/common.js');
+
 describe('test-default-ignore-ah-health', function() {
   var agent;
   var express;
@@ -37,7 +39,7 @@ describe('test-default-ignore-ah-health', function() {
         res.on('data', function(data) { result += data; });
         res.on('end', function() {
           assert.equal(result, '🏥');
-          assert.equal(agent.private_().traceWriter.buffer_.length, 0);
+          assert.equal(common.getTraceWriter(agent).buffer_.length, 0);
           server.close();
           done();
         });

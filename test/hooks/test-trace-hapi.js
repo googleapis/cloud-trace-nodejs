@@ -41,7 +41,7 @@ describe('hapi', function() {
   var agent;
 
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 }).private_();
+    agent = require('../..').start({ samplingRate: 0 });
   });
 
   Object.keys(versions).forEach(function(version) {

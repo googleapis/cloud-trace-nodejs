@@ -21,14 +21,16 @@ process.env.GCLOUD_TRACE_LOGLEVEL = 4;
 var assert = require('assert');
 var trace = require('..');
 
+var common = require('./hooks/common.js');
+
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_TRACE_LOGLEVEL', function() {
     var agent = trace.start({forceNewAgent_: true});
-    assert.equal(agent.private_().config_.logLevel, 4);
+    assert.equal(common.getConfig(agent).logLevel, 4);
   });
 
   it('should prefer env to config', function() {
     var agent = trace.start({logLevel: 2, forceNewAgent_: true});
-    assert.equal(agent.private_().config_.logLevel, 4);
+    assert.equal(common.getConfig(agent).logLevel, 4);
   });
 });

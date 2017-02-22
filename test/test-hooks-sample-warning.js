@@ -31,22 +31,20 @@ describe('express + dbs', function() {
   var agent;
 
   before(function() {
-    agent = require('..').start({ samplingRate: 0 }).private_();
+    agent = require('..').start({ samplingRate: 0 });
   });
 
   beforeEach(function() {
-    oldDebug = agent.logger.debug;
-    var newDebug = function(error) {
+    oldDebug = common.replaceDebugLogger(agent, function(error) {
       if (error.indexOf('redis') !== -1 || error.indexOf('mongo') !== -1 ||
           error.indexOf('http') !== -1 || error.indexOf('mysql') !== -1) {
         debugCount++;
       }
-    };
-    agent.logger.debug = newDebug;
+    });
   });
 
   afterEach(function() {
-    agent.logger.newDebug = oldDebug;
+    common.replaceDebugLogger(agent, oldDebug);
     debugCount = 0;
   });
 

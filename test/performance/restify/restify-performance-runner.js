@@ -19,9 +19,10 @@
 if (process.argv[2] === '-i') {
   process.env.GCLOUD_TRACE_ENABLED = true;
   process.env.GCLOUD_TRACE_EXCLUDE_HTTP = true;
-  var traceAgent = require('../../..').start().private_();
+  var common = require('../../hooks/common.js');
+  var agent = require('../../..').start();
   // We want to drop all spans and avoid network ops
-  traceAgent.traceWriter.writeSpan = function() {};
+  common.getTraceWriter(agent).writeSpan = function() {};
 }
 
 var restify = require('restify');

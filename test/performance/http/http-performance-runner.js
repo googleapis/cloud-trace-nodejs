@@ -16,12 +16,14 @@
 
 'use strict';
 
-var traceAgent;
+var common;
+var agent;
 if (process.argv[2] === '-i') {
   process.env.GCLOUD_TRACE_ENABLED = true;
-  traceAgent = require('../../..').start().private_();
+  common = require('../../hooks/common.js');
+  agent = require('../../..').start();
   // We want to drop all spans and avoid network ops
-  traceAgent.traceWriter.writeSpan = function() {};
+  common.getTraceWriter(agent).writeSpan = function() {};
 }
 
 var http = require('http');
@@ -36,7 +38,7 @@ var smileyServer = http.createServer(function(req, res) {
 var runInTransaction = function(fn) {
   var cls = require('../../../src/cls.js');
   cls.getNamespace().run(function() {
-    var span = traceAgent.createRootSpanData('outer');
+    var span = common.createRootSpanData(agent, 'outer');
     fn(function() {
       span.close();
     });
@@ -65,7 +67,7 @@ var work = function(endTransaction) {
   }
 };
 
-if (traceAgent) {
+if (agent) {
   work = runInTransaction.bind(null, work);
 }
 
