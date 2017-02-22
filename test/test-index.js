@@ -23,15 +23,15 @@ if (!process.env.GCLOUD_PROJECT) {
 
 var assert = require('assert');
 var trace = require('..');
-var cls = require('../src/cls.js');
 var common = require('./hooks/common.js');
-var TraceLabels = require('../src/trace-labels.js');
+var TracingPolicy = require('../src/tracing-policy.js');
 
 describe('index.js', function() {
   var agent = trace.start();
 
   afterEach(function() {
-    common.getTraceWriter(agent).buffer_ = [];
+    common.cleanTraces(agent);
+    common.clearNamespace(agent);
   });
 
   it('should get the agent with `Trace.get`', function() {
@@ -51,170 +51,80 @@ describe('index.js', function() {
 
   describe('labels', function(){
     it('should add labels to spans', function() {
-      cls.getNamespace().run(function() {
-        common.createRootSpanData(agent, 'root', 1, 2);
-        var spanData = agent.startSpan('sub', {test1: 'value'});
-        agent.endSpan(spanData);
-        var traceSpan = spanData.span;
+      agent.runInRootSpan({name: 'root', url: 'root'}, function(root) {
+        var child = agent.createChildSpan({name: 'sub'});
+        child.addLabel('test1', 'value');
+        child.endSpan();
+        var traceSpan = child.span_.span;
         assert.equal(traceSpan.name, 'sub');
         assert.ok(traceSpan.labels);
         assert.equal(traceSpan.labels.test1, 'value');
-      });
-    });
-
-    it('should ignore non-object labels', function() {
-      cls.getNamespace().run(function() {
-        common.createRootSpanData(agent, 'root', 1, 2);
-
-        var testLabels = [
-          'foo',
-          5,
-          undefined,
-          null,
-          true,
-          false,
-          [4,5,6],
-          function () {}
-        ];
-
-        testLabels.forEach(function(labels) {
-          var spanData = agent.startSpan('sub', labels);
-          agent.endSpan(spanData);
-          var spanLabels = spanData.span.labels;
-          // Only the default labels should be there.
-          var keys = Object.keys(spanLabels);
-          assert.equal(keys.length, 1, 'should have only 1 key');
-          assert.equal(keys[0], TraceLabels.STACK_TRACE_DETAILS_KEY);
-        });
-      });
-    });
-
-  });
-
-
-  it('should produce real spans runInSpan sync', function() {
-    cls.getNamespace().run(function() {
-      var root = common.createRootSpanData(agent, 'root', 1, 0);
-      var testLabel = { key: 'val' };
-      agent.runInSpan('sub', testLabel, function() {});
-      root.close();
-      var spanPredicate = function(spanData) {
-        return spanData.spans[1].name === 'sub';
-      };
-      var matchingSpans = common.getTraceWriter(agent).buffer_
-                            .map(JSON.parse)
-                            .filter(spanPredicate);
-      assert.equal(matchingSpans.length, 1);
-      assert.equal(matchingSpans[0].spans[1].labels.key, 'val');
-    });
-  });
-
-  it('should produce real spans runInSpan async', function(done) {
-    cls.getNamespace().run(function() {
-      var root = common.createRootSpanData(agent, 'root', 1, 0);
-      var testLabel = { key: 'val' };
-      agent.runInSpan('sub', function(endSpan) {
-        setTimeout(function() {
-          endSpan(testLabel);
-          root.close();
-          var spanPredicate = function(spanData) {
-            return spanData.spans[1].name === 'sub';
-          };
-          var matchingSpans = common.getTraceWriter(agent).buffer_
-                                .map(JSON.parse)
-                                .filter(spanPredicate);
-          assert.equal(matchingSpans.length, 1);
-          var span = matchingSpans[0].spans[1];
-          var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
-          assert(duration > 190);
-          assert(duration < 300);
-          assert.equal(span.labels.key, 'val');
-          // mocha seems to schedule the next test in the same context in 0.12.
-          cls.setRootContext(null);
-          done();
-        }, 200);
+        root.endSpan();
       });
     });
   });
 
-  it('should produce real root spans runInRootSpan sync', function() {
-    cls.getNamespace().run(function() {
-      var testLabel = { key: 'val' };
-      agent.runInRootSpan('root', testLabel, function() {
-        var childSpan = agent.startSpan('sub');
-        agent.endSpan(childSpan);
-      });
-      var spanPredicate = function(spanData) {
-        return spanData.spans[0].name === 'root' && spanData.spans[1].name === 'sub';
-      };
-      var matchingSpans = common.getTraceWriter(agent).buffer_
-                            .map(JSON.parse)
-                            .filter(spanPredicate);
-      assert.equal(matchingSpans.length, 1);
-      assert.equal(matchingSpans[0].spans[0].labels.key, 'val');
+  it('should produce real child spans', function(done) {
+    agent.runInRootSpan({name: 'root'}, function(root) {
+      var child = agent.createChildSpan({name: 'sub'});
+      setTimeout(function() {
+        child.addLabel('key', 'val');
+        child.endSpan();
+        root.endSpan();
+        var spanPredicate = function(span) {
+          return span.name === 'sub';
+        };
+        var matchingSpan = common.getMatchingSpan(agent, spanPredicate);
+        var duration = Date.parse(matchingSpan.endTime) - Date.parse(matchingSpan.startTime);
+        assert(duration > 190);
+        assert(duration < 300);
+        assert.equal(matchingSpan.labels.key, 'val');
+        done();
+      }, 200);
     });
   });
 
   it('should produce real root spans runInRootSpan async', function(done) {
-    cls.getNamespace().run(function() {
-      var testLabel = { key: 'val' };
-      agent.runInRootSpan('root', testLabel, function(endSpan) {
-        var childSpan = agent.startSpan('sub');
-        setTimeout(function() {
-          agent.endSpan(childSpan);
-          endSpan(testLabel);
-          var spanPredicate = function(spanData) {
-            return spanData.spans[0].name === 'root' && spanData.spans[1].name === 'sub';
-          };
-          var matchingSpans = common.getTraceWriter(agent).buffer_
-                                .map(JSON.parse)
-                                .filter(spanPredicate);
-          assert.equal(matchingSpans.length, 1);
-          var span = matchingSpans[0].spans[0];
-          var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
-          assert(duration > 190);
-          assert(duration < 300);
-          assert.equal(span.labels.key, 'val');
-          // mocha seems to schedule the next test in the same context in 0.12.
-          cls.setRootContext(null);
-          done();
-        }, 200);
-      });
+    agent.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
+      rootSpan.addLabel('key', 'val');
+      var childSpan = agent.createChildSpan({name: 'sub'});
+      setTimeout(function() {
+        childSpan.endSpan();
+        rootSpan.endSpan();
+        var spanPredicate = function(span) {
+          return span.name === 'root';
+        };
+        var matchingSpan = common.getMatchingSpan(agent, spanPredicate);
+        var duration = Date.parse(matchingSpan.endTime) - Date.parse(matchingSpan.startTime);
+        assert(duration > 190);
+        assert(duration < 300);
+        assert.equal(matchingSpan.labels.key, 'val');
+        done();
+      }, 200);
     });
   });
 
-  it('should not break with no root span', function() {
-    var span = agent.startSpan();
-    agent.setTransactionName('noop');
-    agent.addTransactionLabel('noop', 'noop');
-    agent.endSpan(span);
-  });
-
   it('should not allow nested root spans', function(done) {
-    agent.runInRootSpan('root', function(cb1) {
+    agent.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1) {
       var finished = false;
       var finish = function () {
         assert(!finished);
         finished = true;
-        cb1();
-        var spanPredicate = function(spanData) {
-          return spanData.spans[0].name === 'root';
+        rootSpan1.endSpan();
+        var spanPredicate = function(span) {
+          return span.name === 'root';
         };
-        var matchingSpans = common.getTraceWriter(agent).buffer_
-          .map(JSON.parse)
-          .filter(spanPredicate);
-        assert.equal(matchingSpans.length, 1);
-        var span = matchingSpans[0].spans[0];
-        var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
+        var matchingSpan = common.getMatchingSpan(agent, spanPredicate);
+        var duration = Date.parse(matchingSpan.endTime) - Date.parse(matchingSpan.startTime);
         assert(duration > 190);
         assert(duration < 300);
         done();
       };
       setTimeout(function() {
-        agent.runInRootSpan('root2', function(cb2) {
+        agent.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
           setTimeout(function() {
             // We shouldn't reach this point
-            cb2();
+            rootSpan2.endSpan();
             finish();
           }, 200);
         });
@@ -223,13 +133,12 @@ describe('index.js', function() {
     });
   });
 
-  it('should set transaction name and labels', function() {
-    cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'root', 1, 2);
-      agent.setTransactionName('root2');
-      agent.addTransactionLabel('key', 'value');
-      assert.equal(spanData.span.name, 'root2');
-      assert.equal(spanData.span.labels.key, 'value');
+  it('should respect sampling policy', function(done) {
+    var oldPolicy = common.replaceTracingPolicy(agent, new TracingPolicy.TraceNonePolicy());
+    agent.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
+      assert.strictEqual(rootSpan, null);
+      common.replaceTracingPolicy(agent, oldPolicy);
+      done();
     });
   });
 
