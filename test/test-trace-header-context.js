@@ -16,7 +16,6 @@
 'use strict';
 
 var common = require('./hooks/common.js');
-var cls = require('../src/cls.js');
 var http = require('http');
 var assert = require('assert');
 var constants = require('../src/constants.js');
