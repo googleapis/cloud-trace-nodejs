@@ -230,6 +230,11 @@ function stopAgent(agent) {
   agent.private_().stop();
 }
 
+function clearNamespace(agent) {
+  cls.destroyNamespace();
+  agent.private_().namespace = cls.createNamespace();
+}
+
 module.exports = {
   init: init,
   assertSpanDurationCorrect: assertSpanDurationCorrect,
@@ -244,6 +249,7 @@ module.exports = {
   getShouldTraceArgs: getShouldTraceArgs,
   replaceDebugLogger: replaceDebugLogger,
   createRootSpanData: createRootSpanData,
+  clearNamespace: clearNamespace,
   getConfig: getConfig,
   getTraceWriter: getTraceWriter,
   namespaceRun: namespaceRun,

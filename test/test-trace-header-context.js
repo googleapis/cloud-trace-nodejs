@@ -30,9 +30,7 @@ describe('test-trace-header-context', function() {
   });
 
   afterEach(function() {
-    // TODO: Investigate why this is needed on Node v0.12
-    cls.destroyNamespace();
-    agent.private_().namespace = cls.createNamespace();
+    common.clearNamespace(agent);
   });
 
   it('should work with string url', function(done) {
