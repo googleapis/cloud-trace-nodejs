@@ -252,10 +252,6 @@ describe('Trace Plugin Loader', function() {
       'Files internal to a module are patched');
   });
 
-  // TODO(kjin): Add test to check that two modules with different versions
-  // can be loaded at the same time. Current test harness is insufficient for
-  // doing this.
-
   /**
    * Uses module interception to completely replace a module export
    */
