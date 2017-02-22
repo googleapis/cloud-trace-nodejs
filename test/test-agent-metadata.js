@@ -127,10 +127,10 @@ describe('agent interaction with metadata service', function() {
 
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.namespaceRun(agent, function() {
-        var spanData = common.createRootSpanData(agent, 'name', 5, 0);
-        spanData.close();
-        assert.equal(spanData.span.labels[traceLabels.GCE_HOSTNAME], 'host');
+      common.runInTransaction(agent, function(end) {
+        end();
+        var span = common.getMatchingSpan(agent, spanPredicate);
+        assert.equal(span.labels[traceLabels.GCE_HOSTNAME], 'host');
         scope.done();
         done();
       });
@@ -146,10 +146,10 @@ describe('agent interaction with metadata service', function() {
 
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.namespaceRun(agent, function() {
-        var spanData = common.createRootSpanData(agent, 'name', 5, 0);
-        spanData.close();
-        assert.equal(spanData.span.labels[traceLabels.GCE_INSTANCE_ID], 1729);
+      common.runInTransaction(agent, function(end) {
+        end();
+        var span = common.getMatchingSpan(agent, spanPredicate);
+        assert.equal(span.labels[traceLabels.GCE_INSTANCE_ID], 1729);
         scope.done();
         done();
       });
@@ -160,12 +160,12 @@ describe('agent interaction with metadata service', function() {
     nock.disableNetConnect();
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.namespaceRun(agent, function() {
-        var spanData = common.createRootSpanData(agent, 'name', 5, 0);
-        spanData.close();
-        assert(spanData.span.labels[traceLabels.GCE_HOSTNAME],
+      common.runInTransaction(agent, function(end) {
+        end();
+        var span = common.getMatchingSpan(agent, spanPredicate);
+        assert(span.labels[traceLabels.GCE_HOSTNAME],
             require('os').hostname());
-        assert(!spanData.span.labels[traceLabels.GCE_INSTANCE_ID]);
+        assert(!span.labels[traceLabels.GCE_INSTANCE_ID]);
         done();
       });
     }, 500);
@@ -177,13 +177,13 @@ describe('agent interaction with metadata service', function() {
     process.env.GAE_MINOR_VERSION = '91992';
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.namespaceRun(agent, function() {
-        var spanData = common.createRootSpanData(agent, 'name', 5, 0);
-        spanData.close();
-        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME], 'foo');
-        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_VERSION],
+      common.runInTransaction(agent, function(end) {
+        end();
+        var span = common.getMatchingSpan(agent, spanPredicate);
+        assert.equal(span.labels[traceLabels.GAE_MODULE_NAME], 'foo');
+        assert.equal(span.labels[traceLabels.GAE_MODULE_VERSION],
           '20151119t120000');
-        assert.equal(spanData.span.labels[traceLabels.GAE_VERSION],
+        assert.equal(span.labels[traceLabels.GAE_VERSION],
           'foo:20151119t120000.91992');
         done();
       });
@@ -196,14 +196,14 @@ describe('agent interaction with metadata service', function() {
     process.env.GAE_MINOR_VERSION = '81818';
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.namespaceRun(agent, function() {
-        var spanData = common.createRootSpanData(agent, 'name', 5, 0);
-        spanData.close();
-        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME],
+      common.runInTransaction(agent, function(end) {
+        end();
+        var span = common.getMatchingSpan(agent, spanPredicate);
+        assert.equal(span.labels[traceLabels.GAE_MODULE_NAME],
           'default');
-        assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_VERSION],
+        assert.equal(span.labels[traceLabels.GAE_MODULE_VERSION],
           '20151119t130000');
-        assert.equal(spanData.span.labels[traceLabels.GAE_VERSION],
+        assert.equal(span.labels[traceLabels.GAE_VERSION],
           '20151119t130000.81818');
         done();
       });
@@ -222,10 +222,10 @@ describe('agent interaction with metadata service', function() {
       delete process.env.GAE_MODULE_NAME;
       agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
       setTimeout(function() {
-        common.namespaceRun(agent, function() {
-          var spanData = common.createRootSpanData(agent, 'name', 5, 0);
-          spanData.close();
-          assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME],
+        common.runInTransaction(agent, function(end) {
+          end();
+          var span = common.getMatchingSpan(agent, spanPredicate);
+          assert.equal(span.labels[traceLabels.GAE_MODULE_NAME],
             'host');
           scope.done();
           done();
@@ -244,14 +244,18 @@ describe('agent interaction with metadata service', function() {
       delete process.env.GAE_MODULE_NAME;
       agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
       setTimeout(function() {
-        common.namespaceRun(agent, function() {
-          var spanData = common.createRootSpanData(agent, 'name', 5, 0);
-          spanData.close();
+        common.runInTransaction(agent, function(end) {
+          end();
+          var span = common.getMatchingSpan(agent, spanPredicate);
           scope.done();
-          assert.equal(spanData.span.labels[traceLabels.GAE_MODULE_NAME],
+          assert.equal(span.labels[traceLabels.GAE_MODULE_NAME],
             require('os').hostname());
           done();
         });
       }, 500);
     });
 });
+
+function spanPredicate(span) {
+  return span.name === 'outer';
+}

@@ -42,7 +42,7 @@ describe('test-ignore-urls', function() {
         res.on('data', function(data) { result += data; });
         res.on('end', function() {
           assert.equal(result, 'hi');
-          assert.equal(common.getTraceWriter(agent).buffer_.length, 0);
+          assert.equal(common.getTraces(agent).length, 0);
           server.close();
           done();
         });

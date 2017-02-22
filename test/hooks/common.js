@@ -29,6 +29,7 @@ var assert = require('assert');
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
+var request = require('request');
 
 var FORGIVENESS = 0.2;
 var SERVER_WAIT = 200;
@@ -221,16 +222,16 @@ function createRootSpanData(agent, name, traceId, parentId, skipFrames,
                                              skipFrames, spanKind);
 }
 
-function getTraceWriter(agent) {
-  return agent.private_().traceWriter;
-}
-
 function getConfig(agent) {
   return agent.private_().config();
 }
 
-function namespaceRun(agent, fn) {
-  return agent.private_().namespace.run(fn);
+function installNoopTraceWriter(agent) {
+  agent.private_().traceWriter.writeSpan = function() {};
+}
+
+function avoidTraceWriterAuth(agent) {
+  agent.private_().traceWriter.request_ = request;
 }
 
 function stopAgent(agent) {
@@ -259,8 +260,8 @@ module.exports = {
   createRootSpanData: createRootSpanData,
   clearNamespace: clearNamespace,
   getConfig: getConfig,
-  getTraceWriter: getTraceWriter,
-  namespaceRun: namespaceRun,
+  installNoopTraceWriter: installNoopTraceWriter,
+  avoidTraceWriterAuth: avoidTraceWriterAuth,
   stopAgent: stopAgent,
   serverWait: SERVER_WAIT,
   serverRes: SERVER_RES,
