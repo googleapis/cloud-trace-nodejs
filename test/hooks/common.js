@@ -21,7 +21,7 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 // We want to disable publishing to avoid conflicts with production.
-// require('../../src/trace-writer').publish_ = function() {};
+require('../../src/trace-writer').publish_ = function() {};
 
 var cls = require('../../src/cls.js');
 
