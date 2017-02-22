@@ -60,7 +60,6 @@ describe('agent interaction with metadata service', function() {
 
   it('should preserve public interface when stopped', function(done) {
       assert.equal(typeof agent, 'object');
-      assert.equal(typeof agent.isActive, 'function');
       assert.equal(typeof agent.enhancedDatabaseReportingEnabled, 'function');
       assert.equal(typeof agent.runInRootSpan, 'function');
       assert.equal(typeof agent.createChildSpan, 'function');
@@ -71,7 +70,6 @@ describe('agent interaction with metadata service', function() {
       agent = trace.start({logLevel: 0, enabled: false});
       setTimeout(function() {
         assert.equal(typeof agent, 'object');
-        assert.equal(agent.isActive(), false);
         assert.equal(agent.enhancedDatabaseReportingEnabled(), false);
         agent.runInRootSpan({}, function(root) {
           assert.equal(typeof root.addLabel, 'function');

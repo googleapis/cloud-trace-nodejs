@@ -40,7 +40,6 @@ describe('index.js', function() {
 
   it('should throw an error if `start` is called on an active agent',
     function() {
-      assert.throws(agent.start, Error);
       assert.throws(trace.start, Error);
   });
   

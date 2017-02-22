@@ -161,7 +161,7 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
     return fn(null);
   }
   return this.agent_.namespace.runAndReturn(function() {
-    var skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
+    var skipFrames = options.skipFrames ? options.skipFrames + 3 : 3;
     var rootSpan = createRootSpan_(that, options, skipFrames);
     return fn(rootSpan);
   });
@@ -179,7 +179,7 @@ PluginAPI.prototype.createChildSpan = function(options) {
   if (rootSpan) {
     options = options || {};
     var childContext = this.agent_.startSpan(options.name, {},
-      options.skipFrames ? options.skipFrames + 1 : 1);
+      options.skipFrames ? options.skipFrames + 2 : 2);
     return new ChildSpan(this.agent_, childContext);
   } else {
     this.logger_.warn(options.name + ': Attempted to create child span ' +
@@ -219,9 +219,76 @@ PluginAPI.prototype.constants = constants;
 
 PluginAPI.prototype.labels = TraceLabels;
 
-PluginAPI.nullSpan = nullSpan;
+PluginAPI.prototype.isActive = function() {
+  return true;
+};
 
-module.exports = PluginAPI;
+/**
+ * Phantom implementation of the trace api. This allows API users to decouple
+ * the enable/disable logic from the calls to the tracing API. The phantom API
+ * has a lower overhead than isEnabled checks inside the API functions.
+ * @private
+ */
+var phantomApi = {
+  enhancedDatabaseReportingEnabled: function() { return false; },
+  runInRootSpan: function(opts, fn) { return fn(nullSpan); },
+  createChildSpan: function(opts) { return nullSpan; },
+  wrap: function(fn) { return fn; },
+  wrapEmitter: function(ee) { return ee; },
+  constants: constants,
+  labels: TraceLabels,
+  isActive() { return false; }
+};
+
+module.exports = {
+  /**
+   * Creates an object that provides an interface to the trace agent
+   * implementation.
+   * Upon creation, the object is in an "uninitialized" state, corresponding
+   * to its intended (no-op) behavior before the trace agent is started.
+   * When the trace agent is started, the interface object becomes
+   * "initialized", and its underlying implementation is switched to that of
+   * the actual agent implementation.
+   * Finally, when the trace agent is stopped, this object enters the "disabled"
+   * state, and its underlying implementation is switched back to no-op.
+   * Currently, this only happens when the application's GCP project ID could
+   * not be determined from the GCP metadata service.
+   * This object's state changes strictly from uninitialized to initialized,
+   * and from initialized to disabled.
+   */
+  create: function(pluginName) {
+    var api = phantomApi;
+    return {
+      enhancedDatabaseReportingEnabled: function() {
+        return api.enhancedDatabaseReportingEnabled();
+      },
+      runInRootSpan: function(opts, fn) {
+        return api.runInRootSpan(opts, fn);
+      },
+      createChildSpan: function(opts) {
+        return api.createChildSpan(opts);
+      },
+      wrap: function(fn) {
+        return api.wrap(fn);
+      },
+      wrapEmitter: function(ee) {
+        return api.wrapEmitter(ee);
+      },
+      constants: api.constants,
+      labels: api.labels,
+      isActive: function() {
+        return api.isActive();
+      },
+      initialize_: function(agent) {
+        api = new PluginAPI(agent, pluginName);
+      },
+      disable_: function() {
+        api = phantomApi;
+      },
+      private_: function() { return api.agent_; }
+    };
+  }
+};
 
 // Module-private functions
 
