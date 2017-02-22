@@ -19,16 +19,14 @@
 var proxyquire  = require('proxyquire');
 var assert = require('assert');
 var nock = require('nock');
-var common = require('./hooks/common.js');
 var traceLabels = require('../src/trace-labels.js');
 
 nock.disableNetConnect();
 
-delete process.env.GCLOUD_PROJECT;
-
 describe('agent interaction with metadata service', function() {
   var agent;
   var trace;
+  var common;
 
   before(function() {
     // Setup: Monkeypatch gcp-metadata to not ask for retries at all.
@@ -40,7 +38,9 @@ describe('agent interaction with metadata service', function() {
         }, callback);
       }
     });
+    common = require('./hooks/common.js');
     trace = require('..');
+    delete process.env.GCLOUD_PROJECT;
   });
 
   it('should stop when the project number cannot be acquired', function(done) {
