@@ -19,7 +19,6 @@
 var assert = require('assert');
 var tk = require('timekeeper');
 var TraceSpan = require('../src/trace-span.js');
-var constants = require('../src/constants.js');
 
 
 describe('TraceSpan', function() {
@@ -38,51 +37,10 @@ describe('TraceSpan', function() {
     assert.equal(span.kind, 'RPC_CLIENT');
   });
 
-  it('converts label values to strings', function() {
+  it('adds labels', function() {
     var span = new TraceSpan('name', 1, 0);
     span.setLabel('a', 'b');
     assert.equal(span.labels.a, 'b');
-    span.setLabel('c', 5);
-    assert.equal(span.labels.c, '5');
-  });
-
-  it('serializes object labels correctly', function() {
-    var span = new TraceSpan('name', 1, 0);
-    span.setLabel('a', [{i: 5}, {j: 6}]);
-    assert.equal(span.labels.a, '[ { i: 5 }, { j: 6 } ]');
-  });
-
-  it('handles unicode characters correctly when truncating', function() {
-    var longName = Array(120).join('☃');
-    var span = new TraceSpan(longName, 1, 0);
-    assert.equal(
-      span.name,
-      Array(42).join('☃') + '...');
-  });
-
-  it('truncate large span names to limit', function() {
-    var longName = Array(200).join('a');
-    var span = new TraceSpan(longName, 1, 0);
-    assert.equal(
-      span.name,
-      Array(constants.TRACE_SERVICE_SPAN_NAME_LIMIT - 2).join('a') + '...');
-  });
-
-  it('truncate large label keys to limit', function() {
-    var span = new TraceSpan('name', 1, 0);
-    var longLabelKey = Array(200).join('a');
-    span.setLabel(longLabelKey, 5);
-    assert.equal(
-      span.labels[Array(constants.TRACE_SERVICE_LABEL_KEY_LIMIT - 2).join('a') + '...'],
-      5);
-  });
-
-  it('truncate large label values to limit', function() {
-    var span = new TraceSpan('name', 1, 0);
-    var longLabelVal = Array(16550).join('a');
-    span.setLabel('a', longLabelVal);
-    assert.equal(span.labels.a,
-      Array(constants.TRACE_SERVICE_LABEL_VALUE_LIMIT - 2).join('a') + '...');
   });
 
   it('closes', function() {

@@ -29,9 +29,9 @@ module.exports = {
     // attached to spans representating database operations.
     enhancedDatabaseReporting: false,
 
-    // The maximum result size in characters to report on database spans if
-    // `enhancedDatabaseReporting` is enabled.
-    databaseResultReportingSize: 127,
+    // The maximum number of characters reported on a label value. This
+    // cannot exceed 16383, the maximum value accepted by the service.
+    maximumLabelValueSize: 512,
 
     // An object describing which modules to trace. To enable tracing for a
     // module, add its name as a key under this object, as well as the

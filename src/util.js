@@ -21,50 +21,21 @@ var fs = require('fs');
 var path = require('path');
 
 /**
- * Produces an object summarization of limited size. This summarization
- * does not adhere to the JSON spec so it cannot be reparsed even if
- * the entire object fits inside the desired size.
- *
- * @param {Object} o The object to be summarized.
- * @param {number} n Max length of the summary.
+ * Truncates the provided `string` to be at most `length` bytes
+ * after utf8 encoding and the appending of '...'.
+ * We produce the result by iterating over input characters to
+ * avoid truncating the string potentially producing partial unicode
+ * characters at the end.
  */
-function stringifyPrefix(o, n) {
-  var buf = new Buffer(n);
-  var pos = 0;
-  var worklist = [];
-  function pushObject(o) {
-    var keys = Object.keys(o);
-    for (var i = Math.min(keys.length - 1, Math.floor(n/4)); i >= 0; i--) {
-      worklist.push((i === keys.length - 1) ? '}' : ',');
-      worklist.push(o[keys[i]]);
-      worklist.push(':');
-      worklist.push(keys[i]);
-    }
-    worklist.push('{');
+function truncate(string, length) {
+  if (Buffer.byteLength(string, 'utf8') <= length) {
+    return string;
   }
-  worklist.push(o);
-  while (worklist.length > 0) {
-    var elem = worklist.pop();
-    if (elem && typeof elem === 'object') {
-      pushObject(elem);
-    } else {
-      var val;
-      if (typeof elem === 'function') {
-        val = '[Function]';
-      } else if (typeof elem === 'string') {
-        val = elem;
-      } else {
-        // Undefined, Null, Boolean, Number, Symbol
-        val = String(elem);
-      }
-      pos += buf.write(val, pos);
-      if (buf.length === pos) {
-        buf.write('...', pos - 3);
-        break;
-      }
-    }
+  string = string.substr(0, length - 3);
+  while (Buffer.byteLength(string, 'utf8') > length - 3) {
+    string = string.substr(0, string.length - 1);
   }
-  return buf.toString('utf8', 0, pos);
+  return string + '...';
 }
 
 // Includes support for npm '@org/name' packages
@@ -128,7 +99,7 @@ function findModuleVersion(modulePath, load) {
 }
 
 module.exports = {
-  stringifyPrefix: stringifyPrefix,
+  truncate: truncate,
   packageNameFromPath: packageNameFromPath,
   findModulePath: findModulePath,
   findModuleVersion: findModuleVersion

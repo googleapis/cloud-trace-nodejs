@@ -102,22 +102,6 @@ describe('test-trace-mysql', function() {
     });
   });
 
-  it('should limit result size', function(done) {
-    common.runInTransaction(agent, function(endRootSpan) {
-      connection.query('SELECT * FROM t', function(err, res) {
-        endRootSpan();
-        assert(!err);
-        var spans = common.getMatchingSpans(agent, function (span) {
-          return span.name === 'mysql-query';
-        });
-        var labels = spans[0].labels;
-        assert.equal(labels.result.length, RESULT_SIZE);
-        assert.equal(labels.result, '{0...');
-        done();
-      });
-    });
-  });
-
   it('should work with events', function(done) {
     common.runInTransaction(agent, function(endRootSpan) {
       var query = connection.query('SELECT * FROM t');

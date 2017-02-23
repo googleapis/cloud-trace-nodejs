@@ -20,7 +20,6 @@ var constants = require('./constants.js');
 var extend = require('extend');
 var is = require('is');
 var TraceLabels = require('./trace-labels.js');
-var traceUtil = require('./util.js');
 
 /**
  * This file describes an interface for third-party plugins to enable tracing
@@ -127,16 +126,6 @@ TraceApiImplementation.prototype.enhancedDatabaseReportingEnabled = function() {
 };
 
 /**
- * Summarizes database results correctly applying the databaseResultReportingSize
- * configuration option.
- * @returns a summarization of `res`.
- */
-TraceApiImplementation.prototype.summarizeDatabaseResults = function(res) {
-  return traceUtil.stringifyPrefix(res,
-         this.agent_.config_.databaseResultReportingSize);
-};
-
-/**
  * Runs the given function in a root span corresponding to an incoming request,
  * possibly passing it an object that exposes an interface for adding labels
  * and closing the span.
@@ -232,7 +221,6 @@ TraceApiImplementation.prototype.labels = TraceLabels;
  */
 var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
-  summarizeDatabaseResults: function(results) { return results; },
   runInRootSpan: function(opts, fn) { return fn(nullSpan); },
   createChildSpan: function(opts) { return nullSpan; },
   wrap: function(fn) { return fn; },
@@ -261,9 +249,6 @@ module.exports = function TraceApi(pluginName) {
   extend(this, {
     enhancedDatabaseReportingEnabled: function() {
       return impl.enhancedDatabaseReportingEnabled();
-    },
-    summarizeDatabaseResults: function(results) {
-      return impl.summarizeDatabaseResults(results);
     },
     runInRootSpan: function(opts, fn) {
       return impl.runInRootSpan(opts, fn);

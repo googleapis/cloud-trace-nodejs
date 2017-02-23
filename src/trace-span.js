@@ -16,34 +16,12 @@
 
 'use strict';
 
-var util = require('util');
-var constants = require('./constants.js');
-
-/**
- * Truncates the provided `string` to be at most `length` bytes
- * after utf8 encoding and the appending of '...'.
- * We produce the result by iterating over input characters to
- * avoid truncating the string potentially producing partial unicode
- * characters at the end.
- */
-function truncate(string, length) {
-  string = string.substr(0, length - 3);
-  while (Buffer.byteLength(string, 'utf8') > length - 3) {
-    string = string.substr(0, string.length - 1);
-  }
-  return string + '...';
-}
-
 /**
  * Creates a trace span object.
  * @constructor
  */
 function TraceSpan(name, spanId, parentSpanId) {
-  if (Buffer.byteLength(name, 'utf8') > constants.TRACE_SERVICE_SPAN_NAME_LIMIT) {
-    this.name = truncate(name, constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
-  } else {
-    this.name = name;
-  }
+  this.name = name;
   this.parentSpanId = parentSpanId;
   this.spanId = spanId;
   this.kind = 'RPC_CLIENT';
@@ -59,14 +37,7 @@ function TraceSpan(name, spanId, parentSpanId) {
  * @param {string} value The new value of the label.
  */
 TraceSpan.prototype.setLabel = function(key, value) {
-  if (Buffer.byteLength(key, 'utf8') > constants.TRACE_SERVICE_LABEL_KEY_LIMIT) {
-    key = truncate(key, constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
-  }
-  var val = typeof value === 'object' ? util.inspect(value) : '' + value;
-  if (Buffer.byteLength(val, 'utf8') > constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
-    val = truncate(val, constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
-  }
-  this.labels[key] = val;
+  this.labels[key] = value;
 };
 
 

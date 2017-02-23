@@ -30,7 +30,6 @@ var agent = require('../src/trace-agent.js').get(config, logger);
 
 function assertAPISurface(traceAPI) {
   assert.strictEqual(typeof traceAPI.enhancedDatabaseReportingEnabled(), 'boolean');
-  assert.strictEqual(typeof traceAPI.summarizeDatabaseResults(''), 'string');
   traceAPI.runInRootSpan({ name: 'root' }, function(root) {
     // TODO: Once NullSpans are in the functional implementation,
     // remove the conditional check
