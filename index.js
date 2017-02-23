@@ -51,7 +51,7 @@ var initConfig = function(projectConfig) {
   return extend(true, {}, require('./config.js').trace, projectConfig, envConfig);
 };
 
-var agent = pluginInterface.create('custom');
+var agent = pluginInterface.create('Custom Span API');
 var privateAgent;
 
 /**

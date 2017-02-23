@@ -259,6 +259,10 @@ module.exports = {
    */
   create: function(pluginName) {
     var api = phantomApi;
+    var logger;
+    // uninitialized: api === phantomApi && !logger
+    // initialized: api !== phantomApi && logger
+    // disabled: api === phantomApi && logger
     return {
       enhancedDatabaseReportingEnabled: function() {
         return api.enhancedDatabaseReportingEnabled();
@@ -284,9 +288,20 @@ module.exports = {
         return api.isActive();
       },
       initialize_: function(agent) {
+        if (logger) {
+          logger.error('Trace interface for ' + pluginName +
+            ' has already been initialized.');
+          return;
+        }
         api = new PluginAPI(agent, pluginName);
+        logger = agent.logger_;
       },
       disable_: function() {
+        if (api === phantomApi && logger) {
+          logger.error('Trace interface for ' + pluginName +
+            ' has already been disabled.');
+          return;
+        }
         api = phantomApi;
       },
       private_: function() { return api.agent_; }
