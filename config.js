@@ -36,21 +36,20 @@ module.exports = {
     // An object describing which modules to trace. To enable tracing for a
     // module, add its name as a key under this object, as well as the
     // require-friendly module path of the plugin that implements tracing for
-    // that module as the corresponding value. Relative paths are not accepted.
-    // An empty object means that no modules will be automatically traced at
-    // all.
-    // This field is experimental.
+    // that module as the corresponding value. This module provides the
+    // builtin modules listed below which may be specified in your configuration.
+    // An empty object means that no plugins will be applied.
     plugins: {
-      'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
-      'express': path.join(__dirname, 'src/plugins/plugin-express.js'),
-      'grpc': path.join(__dirname, 'src/plugins/plugin-grpc.js'),
-      'hapi': path.join(__dirname, 'src/plugins/plugin-hapi.js'),
-      'http': path.join(__dirname, 'src/plugins/plugin-http.js'),
-      'koa': path.join(__dirname, 'src/plugins/plugin-koa.js'),
-      'mongodb-core': path.join(__dirname, 'src/plugins/plugin-mongodb-core.js'),
-      'mysql': path.join(__dirname, 'src/plugins/plugin-mysql.js'),
-      'redis': path.join(__dirname, 'src/plugins/plugin-redis.js'),
-      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
+      'connect': 'Builtin:connect',
+      'express': 'Builtin:express',
+      'grpc': 'Builtin:grpc',
+      'hapi': 'Builtin:hapi',
+      'http': 'Builtin:http',
+      'koa': 'Builtin:koa',
+      'mongodb-core': 'Builtin:mongodb-core',
+      'mysql': 'Builtin:mysql',
+      'redis': 'Builtin:redis',
+      'restify': 'Builtin:restify'
     },
 
     // @type {number} max number of frames to include on traces (0 disables)
