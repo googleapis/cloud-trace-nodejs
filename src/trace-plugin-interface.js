@@ -182,7 +182,7 @@ PluginAPI.prototype.createChildSpan = function(options) {
       options.skipFrames ? options.skipFrames + 2 : 2);
     return new ChildSpan(this.agent_, childContext);
   } else {
-    this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
+    this.logger_.debug(this.pluginName_ + ': Attempted to create child span ' +
       'without root');
     return null;
   }

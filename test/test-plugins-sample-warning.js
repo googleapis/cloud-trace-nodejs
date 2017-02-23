@@ -36,8 +36,7 @@ describe('express + dbs', function() {
 
   beforeEach(function() {
     oldDebug = common.replaceDebugLogger(agent, function(error) {
-      if (error.indexOf('redis') !== -1 || error.indexOf('mongo') !== -1 ||
-          error.indexOf('http') !== -1 || error.indexOf('mysql') !== -1) {
+      if (error.indexOf('Attempted to create child span without root') !== -1) {
         debugCount++;
       }
     });
@@ -67,7 +66,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort}, function(res) {
           server.close();
           common.cleanTraces(agent);
-          assert.equal(debugCount, 0);
+          assert.equal(debugCount, 2);
           done();
         });
       });
@@ -90,7 +89,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort + 1}, function(res) {
           server.close();
           common.cleanTraces(agent);
-          assert.equal(debugCount, 0);
+          assert.equal(debugCount, 2);
           done();
         });
       });
@@ -111,7 +110,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort + 2}, function(res) {
           server.close();
           common.cleanTraces(agent);
-          assert.equal(debugCount, 0);
+          assert.equal(debugCount, 2);
           done();
         });
       });
@@ -138,7 +137,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort + 3}, function(res) {
           server.close();
           common.cleanTraces(agent);
-          assert.equal(debugCount, 0);
+          assert.equal(debugCount, 2);
           done();
         });
       });
