@@ -152,12 +152,12 @@ PluginAPI.prototype.summarizeDatabaseResults = function(res) {
 PluginAPI.prototype.runInRootSpan = function(options, fn) {
   var that = this;
   if (!this.agent_.namespace) {
-    this.logger_.warn('Trace agent: CLS namespace not present; not running in' +
-      'root span.');
+    this.logger_.warn(this.pluginName_ + ': CLS namespace not present; not ' +
+      'running in root span.');
     return fn(null);
   }
   if (cls.getRootContext()) {
-    this.logger_.warn('Trace agent: Cannot create nested root spans.');
+    this.logger_.warn(this.pluginName_ + ': Cannot create nested root spans.');
     return fn(null);
   }
   return this.agent_.namespace.runAndReturn(function() {
@@ -182,7 +182,7 @@ PluginAPI.prototype.createChildSpan = function(options) {
       options.skipFrames ? options.skipFrames + 2 : 2);
     return new ChildSpan(this.agent_, childContext);
   } else {
-    this.logger_.warn(options.name + ': Attempted to create child span ' +
+    this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
       'without root');
     return null;
   }
@@ -196,7 +196,8 @@ PluginAPI.prototype.createChildSpan = function(options) {
  */
 PluginAPI.prototype.wrap = function(fn) {
   if (!this.agent_.namespace) {
-    this.logger_.warn('Trace agent: No CLS namespace to bind function to');
+    this.logger_.warn(this.pluginName_ + ': No CLS namespace to bind ' +
+      'function to');
     return fn;
   }
   return this.agent_.namespace.bind(fn);
@@ -210,7 +211,8 @@ PluginAPI.prototype.wrap = function(fn) {
  */
 PluginAPI.prototype.wrapEmitter = function(emitter) {
   if (!this.agent_.namespace) {
-    this.logger_.warn('Trace agent: No CLS namespace to bind emitter to');
+    this.logger_.warn(this.pluginName_ + ': No CLS namespace to bind ' +
+      'emitter to');
   }
   this.agent_.namespace.bindEmitter(emitter);
 };
