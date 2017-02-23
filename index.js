@@ -23,12 +23,12 @@ var filesLoadedBeforeTrace = Object.keys(require.cache);
 require('continuation-local-storage');
 
 var common = require('@google-cloud/common');
+var extend = require('extend');
 var constants = require('./src/constants.js');
 var TraceLabels = require('./src/trace-labels.js');
 var gcpMetadata = require('gcp-metadata');
 var semver = require('semver');
 var traceUtil = require('./src/util.js');
-var util = require('util');
 var PluginApi = require('./src/trace-plugin-interface.js');
 
 var modulesLoadedBeforeTrace = [];
@@ -64,23 +64,11 @@ var phantomTraceAgent = {
 var agent = phantomTraceAgent;
 
 var initConfig = function(projectConfig) {
-  var config = {};
-  util._extend(config, require('./config.js').trace);
-  util._extend(config, projectConfig);
-  if (process.env.hasOwnProperty('GCLOUD_TRACE_LOGLEVEL')) {
-    var envLogLevel = parseInt(process.env.GCLOUD_TRACE_LOGLEVEL, 10);
-    if (!isNaN(envLogLevel)) {
-      config.logLevel = envLogLevel;
-    } else {
-      console.error('Warning: Ignoring env var GCLOUD_TRACE_LOGLEVEL as it ' +
-        'contains an non-integer log level: ' +
-        process.env.GCLOUD_TRACE_LOGLEVEL);
-    }
-  }
-  if (process.env.hasOwnProperty('GCLOUD_PROJECT')) {
-    config.projectId = process.env.GCLOUD_PROJECT;
-  }
-  return config;
+  var envConfig = {
+    logLevel: process.env.GCLOUD_TRACE_LOGLEVEL,
+    projectId: process.env.GCLOUD_PROJECT
+  };
+  return extend(true, {}, require('./config.js').trace, projectConfig, envConfig);
 };
 
 /**
