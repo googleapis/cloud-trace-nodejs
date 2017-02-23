@@ -149,7 +149,7 @@ function start(projectConfig) {
   }
 
   privateAgent = require('./src/trace-agent.js').get(config, logger);
-  agent.initialize_(privateAgent);
+  agent.enable_(privateAgent);
   pluginLoader.activate(privateAgent);
 
   return agent;

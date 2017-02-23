@@ -56,26 +56,19 @@ describe('Trace Interface', function() {
   it('should correctly manage internal state', function() {
     var traceAPI = traceInterface.create('test');
     assert.ok(!traceAPI.isActive(),
-      'Being uninitalized internally sets no-op implementation');
-    assert.throws(traceAPI.disable_,
-      'Can\'t go from uninitialized to disabled');
-    traceAPI.initialize_(agent);
+      'Newly created instances have no-op implementation');
+    traceAPI.enable_(agent);
     assert.ok(traceAPI.isActive(),
-      'Being initialized internally sets operational implementation');
-    assert.throws(traceAPI.initialize_.bind(traceAPI, agent),
-      'Can\'t reinitialize');
+      'Being enabled sets operational implementation');
     traceAPI.disable_(agent);
     assert.ok(!traceAPI.isActive(),
-      'Being disabled internally sets no-op implementation');
-    assert.throws(traceAPI.initialize_.bind(traceAPI, agent),
-      'Can\'t reinitialize even when disabled');
-    assert.throws(traceAPI.disable_, 'Can\'t re-disable');
+      'Being disabled sets no-op implementation');
   });
 
   it('should expose the same interface regardless of state', function() {
     var traceAPI = traceInterface.create('test');
     assertAPISurface(traceAPI);
-    traceAPI.initialize_(agent);
+    traceAPI.enable_(agent);
     assertAPISurface(traceAPI);
     traceAPI.disable_(agent);
     assertAPISurface(traceAPI);
@@ -85,7 +78,7 @@ describe('Trace Interface', function() {
     var traceAPI = traceInterface.create('test');
     
     before(function() {
-      traceAPI.initialize_(agent);
+      traceAPI.enable_(agent);
       common.init(traceAPI);
       common.avoidTraceWriterAuth(traceAPI);
     });

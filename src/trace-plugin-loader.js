@@ -63,7 +63,7 @@ function activate(agent) {
     // propagate context. This relies on functions currently exposed by the
     // agent.
     var api = pluginInterface.create(moduleName);
-    api.initialize_(agent);
+    api.enable_(agent);
     plugins[moduleName] = {
       name: moduleName,
       file: pluginConfig[moduleName],
