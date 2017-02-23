@@ -52,7 +52,6 @@ Object.keys(versions).forEach(function(version) {
   var agent;
   var express;
   var grpc;
-  var httpDebugPrinted;
   describe('express + ' + version, function() {
     before(function(done) {
       agent = require('..').start({ samplingRate: 0 });
@@ -61,7 +60,7 @@ Object.keys(versions).forEach(function(version) {
 
       common.replaceDebugLogger(agent, function(error, uri) {
         if (error.indexOf('http') !== -1) {
-          httpDebugPrinted = true;
+          assert.notStrictEqual(uri.indexOf('localhost'), -1);
         }
       });
 
@@ -146,17 +145,12 @@ Object.keys(versions).forEach(function(version) {
       });
     });
 
-    beforeEach(function() {
-      httpDebugPrinted = false;
-    });
-
     after(function() {
       grpcServer.forceShutdown();
       server.close();
     });
 
     afterEach(function() {
-      assert.ok(httpDebugPrinted);
       common.cleanTraces(agent);
     });
 
