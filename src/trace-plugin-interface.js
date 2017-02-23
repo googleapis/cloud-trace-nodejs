@@ -238,7 +238,7 @@ var phantomApi = {
   wrapEmitter: function(ee) { return ee; },
   constants: constants,
   labels: TraceLabels,
-  isActive() { return false; }
+  isActive: function () { return false; }
 };
 
 module.exports = {
