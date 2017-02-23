@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 var nock = require('nock');
 var assert = require('assert');
 var path = require('path');
@@ -43,7 +43,7 @@ describe('test-trace-gcloud', function() {
     process.env.GOOGLE_APPLICATION_CREDENTIALS =
         path.join(__dirname, 'fixtures', 'gcloud-credentials.json');
     common.runInTransaction(agent, function(endTransaction) {
-      var gcloud = require('./hooks/fixtures/google-cloud0.44');
+      var gcloud = require('./plugins/fixtures/google-cloud0.44');
       var ds = gcloud.datastore();
       var key = ds.key(['bad', 'key']);
       ds.get(key, function(err, entity) {

@@ -23,7 +23,7 @@ if (!process.env.GCLOUD_PROJECT) {
 
 var assert = require('assert');
 var trace = require('..');
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 var TracingPolicy = require('../src/tracing-policy.js');
 
 describe('index.js', function() {

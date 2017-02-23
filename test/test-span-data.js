@@ -24,7 +24,7 @@ if (!process.env.GCLOUD_PROJECT) {
 var TraceLabels = require('../src/trace-labels.js');
 var assert = require('assert');
 var cls = require('../src/cls.js');
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 describe('SpanData', function() {
 

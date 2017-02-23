@@ -19,7 +19,7 @@ var path = require('path');
 var assert = require('assert');
 var nock = require('nock');
 var cls = require('../src/cls.js');
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {

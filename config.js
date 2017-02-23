@@ -53,10 +53,6 @@ module.exports = {
       'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
     },
 
-    // Valid entries are:
-    // 'express', 'hapi', 'http', 'restify'
-    excludedHooks: [],
-
     // @type {number} max number of frames to include on traces (0 disables)
     stackTraceLimit: 10,
 

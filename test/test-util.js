@@ -17,6 +17,8 @@
 'use strict';
 
 var assert = require('assert');
+var Module = require('module');
+var semver = require('semver');
 var util = require('../src/util.js');
 var path = require('path');
 
@@ -65,5 +67,26 @@ describe('util.packageNameFromPath', function() {
                'index.js');
     assert.equal(util.packageNameFromPath(p),
       path.join('@google','cloud-trace'));
+  });
+});
+
+describe('util.findModuleVersion', function() {
+  it('should correctly find package.json for userspace packages', function() {
+    var pjson = require('../package.json');
+    var modulePath = util.findModulePath('glob', module);
+    assert(semver.satisfies(util.findModuleVersion(modulePath, Module._load),
+        pjson.devDependencies.glob));
+  });
+
+  it('should not break for core packages', function() {
+    var modulePath = util.findModulePath('http', module);
+    assert.equal(util.findModuleVersion(modulePath, Module._load), process.version);
+  });
+
+  it('should work with namespaces', function() {
+    var modulePath = util.findModulePath('@google-cloud/common', module);
+    var truePackage =
+      require('../node_modules/@google-cloud/common/package.json');
+    assert.equal(util.findModuleVersion(modulePath, Module._load), truePackage.version);
   });
 });

@@ -21,7 +21,7 @@ process.env.GCLOUD_TRACE_LOGLEVEL = 4;
 var assert = require('assert');
 var trace = require('..');
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_TRACE_LOGLEVEL', function() {

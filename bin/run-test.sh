@@ -19,7 +19,7 @@ done
 jshint . || exit 1
 
 # Install framework deps
-for dir in test/hooks/fixtures/*/ ;
+for dir in test/plugins/fixtures/*/ ;
 do
   echo -en "travis_fold:start:npm_install_${dir}\\r" | tr / _
   echo "npm install in ${dir}"
@@ -39,7 +39,7 @@ function run {
 }
 
 # Run test/coverage
-for test in test/*.js test/hooks/*.js ;
+for test in test/*.js test/plugins/*.js ;
 do
   if [[ ! $(node --version) =~ v0\.12\..* || ! "${test}" =~ .*trace\-koa\.js ]]
   then

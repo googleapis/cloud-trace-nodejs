@@ -15,7 +15,7 @@
  */
 'use strict';
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 var assert = require('assert');
 var http = require('http');
 var semver = require('semver');
@@ -28,14 +28,14 @@ if (semver.satisfies(process.version, '>=4')) {
     before(function() {
       agent = require('..').start({ samplingRate: 0,
                                        enhancedDatabaseReporting: true });
-      Hapi = require('./hooks/fixtures/hapi13');
+      Hapi = require('./plugins/fixtures/hapi13');
     });
 
     it('should work with connection pool access', function(done) {
       var server = new Hapi.Server();
       server.connection({ port: common.serverPort });
       server.register({
-        register: require('./hooks/fixtures/hapi-plugin-mysql3'),
+        register: require('./plugins/fixtures/hapi-plugin-mysql3'),
         options: require('./mysql-config.js')
       }, function (err) {
         assert(!err);

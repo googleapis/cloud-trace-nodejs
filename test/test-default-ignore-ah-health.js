@@ -18,14 +18,14 @@
 var assert = require('assert');
 var http = require('http');
 
-var common = require('./hooks/common.js');
+var common = require('./plugins/common.js');
 
 describe('test-default-ignore-ah-health', function() {
   var agent;
   var express;
   before(function() {
     agent = require('..').start({samplingRate: 0});
-    express = require('./hooks/fixtures/express4');
+    express = require('./plugins/fixtures/express4');
   });
 
   it('should ignore /_ah/health traces by default', function(done) {
