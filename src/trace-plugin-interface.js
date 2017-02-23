@@ -231,6 +231,7 @@ PluginAPI.prototype.isActive = function() {
  */
 var phantomApi = {
   enhancedDatabaseReportingEnabled: function() { return false; },
+  summarizeDatabaseResults: function(results) { return results; },
   runInRootSpan: function(opts, fn) { return fn(nullSpan); },
   createChildSpan: function(opts) { return nullSpan; },
   wrap: function(fn) { return fn; },
@@ -261,6 +262,9 @@ module.exports = {
     return {
       enhancedDatabaseReportingEnabled: function() {
         return api.enhancedDatabaseReportingEnabled();
+      },
+      summarizeDatabaseResults: function(results) {
+        return api.summarizeDatabaseResults(results);
       },
       runInRootSpan: function(opts, fn) {
         return api.runInRootSpan(opts, fn);
