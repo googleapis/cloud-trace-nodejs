@@ -237,7 +237,7 @@ var phantomApi = {
   runInRootSpan: function(opts, fn) { return fn(nullSpan); },
   createChildSpan: function(opts) { return nullSpan; },
   wrap: function(fn) { return fn; },
-  wrapEmitter: function(ee) { return ee; },
+  wrapEmitter: function(ee) {},
   constants: constants,
   labels: TraceLabels,
   isActive: function () { return false; }
@@ -261,10 +261,7 @@ module.exports = {
    */
   create: function(pluginName) {
     var api = phantomApi;
-    var logger;
-    // uninitialized: api === phantomApi && !logger
-    // initialized: api !== phantomApi && logger
-    // disabled: api === phantomApi && logger
+    var state = 'uninitialized';
     return {
       enhancedDatabaseReportingEnabled: function() {
         return api.enhancedDatabaseReportingEnabled();
@@ -290,21 +287,20 @@ module.exports = {
         return api.isActive();
       },
       initialize_: function(agent) {
-        if (logger) {
-          logger.error('Trace interface for ' + pluginName +
+        if (state !== 'uninitialized') {
+          throw new Error('Trace interface for ' + pluginName +
             ' has already been initialized.');
-          return;
         }
         api = new PluginAPI(agent, pluginName);
-        logger = agent.logger_;
+        state = 'initialized';
       },
       disable_: function() {
-        if (api === phantomApi && logger) {
-          logger.error('Trace interface for ' + pluginName +
-            ' has already been disabled.');
-          return;
+        if (state !== 'initialized') {
+          throw new Error('Trace interface for ' + pluginName +
+            ' is already disabled.'); // or uninitialized
         }
         api = phantomApi;
+        state = 'disabled';
       },
       private_: function() { return api.agent_; }
     };

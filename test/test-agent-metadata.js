@@ -58,36 +58,6 @@ describe('agent interaction with metadata service', function() {
     }, 500);
   });
 
-  it('should preserve public interface when stopped', function(done) {
-      assert.equal(typeof agent, 'object');
-      assert.equal(typeof agent.enhancedDatabaseReportingEnabled, 'function');
-      assert.equal(typeof agent.runInRootSpan, 'function');
-      assert.equal(typeof agent.createChildSpan, 'function');
-      assert.equal(typeof agent.wrap, 'function');
-      assert.equal(typeof agent.wrapEmitter, 'function');
-      assert.equal(typeof agent.constants, 'object');
-      assert.equal(typeof agent.labels, 'object');
-      agent = trace.start({logLevel: 0, enabled: false});
-      setTimeout(function() {
-        assert.equal(typeof agent, 'object');
-        assert.equal(agent.enhancedDatabaseReportingEnabled(), false);
-        agent.runInRootSpan({}, function(root) {
-          assert.equal(typeof root.addLabel, 'function');
-          assert.equal(typeof root.endSpan, 'function');
-          assert.equal(root.getTraceContext(), '');
-        });
-        var child = agent.createChildSpan({});
-        assert.equal(typeof child.addLabel, 'function');
-        assert.equal(typeof child.endSpan, 'function');
-        assert.equal(child.getTraceContext(), '');
-        assert.strictEqual(agent.wrap(agent), agent);
-        assert.strictEqual(agent.wrapEmitter(agent), agent);
-        assert.equal(typeof agent.constants, 'object');
-        assert.equal(typeof agent.labels, 'object');
-        done();
-      }, 500);
-  });
-
   it('should activate with projectId from metadata service', function(done) {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
