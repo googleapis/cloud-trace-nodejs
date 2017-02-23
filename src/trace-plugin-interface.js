@@ -110,9 +110,10 @@ var nullSpan = {
  * PluginAPI constructor. Don't call directly - a plugin object will be passed to
  * plugin themselves
  */
-function PluginAPI(agent) {
+function PluginAPI(agent, pluginName) {
   this.agent_ = agent;
   this.logger_ = agent.logger;
+  this.pluginName_ = pluginName;
 }
 
 /**
