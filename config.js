@@ -43,7 +43,6 @@ module.exports = {
     // To disable a plugin in this list, you may override its path with a falsey
     // value. Disabling any of the default plugins may cause unwanted behavior,
     // so use caution.
-    // This field is experimental.
     plugins: {
       'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
       'express': path.join(__dirname, 'src/plugins/plugin-express.js'),
