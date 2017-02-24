@@ -249,6 +249,8 @@ TraceWriter.prototype.flushBuffer_ = function(projectId) {
  * @param {string} json The stringified json representation of the queued traces.
  */
 TraceWriter.prototype.publish_ = function(projectId, json) {
+  // TODO(ofrobots): assert.ok(this.config_.project), and stop accepting
+  // projectId as an argument.
   var that = this;
   var uri = 'https://cloudtrace.googleapis.com/v1/projects/' +
     projectId + '/traces';

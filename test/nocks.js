@@ -41,7 +41,20 @@ function nockProjectId(reply) {
     .reply(reply);
 }
 
+function nockPatchTraces(project, validator, reply, withError) {
+  validator = validator || accept;
+  var scope = nock('https://cloudtrace.googleapis.com')
+      .intercept('/v1/projects/' + project + '/traces', 'PATCH', validator);
+  if (withError) {
+    scope = scope.replyWithError(reply);
+  } else {
+    scope = scope.reply(reply || 200);
+  }
+  return scope;
+}
+
 module.exports = {
   oauth2: nockOAuth2,
-  projectId: nockProjectId
+  patchTraces: nockPatchTraces,
+  projectId: nockProjectId,
 };

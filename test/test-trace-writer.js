@@ -19,31 +19,38 @@
 var assert = require('assert');
 var nock = require('nock');
 var nocks = require('./nocks.js');
-var cls = require('../src/cls.js');
-var common = require('./plugins/common.js');
 var Service = require('@google-cloud/common').Service;
-var trace = require('..');
+var traceLabels = require('../src/trace-labels.js');
 
 nock.disableNetConnect();
 
-var uri = 'https://cloudtrace.googleapis.com';
-var path = '/v1/projects/0/traces';
+var PROJECT = 'fake-project';
 
-process.env.GCLOUD_PROJECT = 0;
 
 var fakeLogger = {
   warn: function() {},
   info: function() {},
-  error: function() {}
+  error: function() {},
+  debug: function() {}
 };
 
-var queueSpans = function(n, agent) {
-  for (var i = 0; i < n; i++) {
-    common.runInTransaction(agent, function(end) {
-      end();
-    });
-  }
-};
+function createFakeSpan(name) {
+  // creates a fake span.
+  return {
+    trace: {
+      spans: [{
+        name: name,
+        startTime: 'fake startTime',
+        endTime: '',
+        closed_: false,
+        labels_: {},
+        close: function() { this.closed_ = true; },
+      }]
+    },
+    labels_: {},
+    addLabel: function(k,v) { this.labels_[k] = v; },
+  };
+}
 
 describe('TraceWriter', function() {
   var TraceWriter = require('../src/trace-writer.js');
@@ -58,85 +65,85 @@ describe('TraceWriter', function() {
        function(done) {
          var scope = nocks.projectId('from metadata');
          // the constructor should fetch the projectId.
-         var writer = new TraceWriter(fakeLogger);
+         new TraceWriter(fakeLogger);
          setTimeout(function() {
            assert.ok(scope.isDone());
            done();
-         }, 100);
+         }, 20);
        });
   });
 
-});
+  describe('writeSpan', function(done) {
 
-describe('tracewriter publishing', function() {
-
-  it('should publish when queue fills', function(done) {
-    var buf;
-    var scope = nock(uri)
-        .intercept(path, 'PATCH', function(body) {
-          assert.equal(JSON.stringify(body.traces), JSON.stringify(buf));
-          return true;
-        }).reply(200);
-    var agent = trace.start({
-      bufferSize: 2,
-      samplingRate: 0,
-      forceNewAgent_: true
-    });
-    common.avoidTraceWriterAuth(agent);
-    cls.getNamespace().run(function() {
-      queueSpans(2, agent);
-      buf = common.getTraces(agent);
-      setTimeout(function() {
-        scope.done();
+    it('should close spans, add defaultLabels and queue', function(done) {
+      var writer =
+        new TraceWriter(fakeLogger, {projectId: PROJECT, bufferSize: 4});
+      var spanData = createFakeSpan('fake span');
+      writer.queueTrace_ = function(trace) {
+        assert.ok(trace && trace.spans && trace.spans[0]);
+        var span = trace.spans[0];
+        assert.strictEqual(span.name, 'fake span');
+        assert.ok(span.closed_);
+        assert.ok(spanData.labels_[traceLabels.AGENT_DATA]);
+        // TODO(ofrobots): check serviceContext labels as well.
         done();
-      }, 80);
+      };
+
+      // TODO(ofrobots): the delay is needed to allow async initialization of
+      // labels.
+      setTimeout(function() {
+        writer.writeSpan(spanData);
+      }, 20);
     });
   });
 
-  it('should publish after timeout', function(done) {
-    var buf;
-    var scope = nock(uri)
-        .intercept(path, 'PATCH', function(body) {
-          assert.equal(JSON.stringify(body.traces), JSON.stringify(buf));
-          return true;
-        }).reply(200);
-    var agent = trace.start({
-      flushDelaySeconds: 0.01,
-      samplingRate: -1,
-      forceNewAgent_: true
-    });
-    common.avoidTraceWriterAuth(agent);
-    cls.getNamespace().run(function() {
-      queueSpans(1, agent);
-      buf = common.getTraces(agent);
+  describe('publish', function() {
+    it('should submit a PATCH request to the API', function(done) {
+      nocks.oauth2();
+      var scope = nocks.patchTraces(PROJECT);
+
+      var writer = new TraceWriter(fakeLogger, {projectId: PROJECT});
+      writer.publish_(PROJECT, '{"valid": "json"}');
       setTimeout(function() {
-        scope.done();
+        assert.ok(scope.isDone());
+        done();
+      }, 20);
+    });
+
+    it('should drop on server error', function(done) {
+      var MESSAGE = { valid: 'json' };
+      nocks.oauth2();
+      var scope = nocks.patchTraces(PROJECT, null, 'Simulated Network Error', true /* withError */);
+
+      var writer = new TraceWriter(fakeLogger, {projectId: PROJECT});
+      writer.publish_(PROJECT, JSON.stringify(MESSAGE));
+      setTimeout(function() {
+        assert.ok(scope.isDone());
+        assert.equal(writer.buffer_.length, 0);
         done();
       }, 20);
     });
   });
 
-  it('should drop on server error', function(done) {
-    var buf;
-    var scope = nock(uri)
-        .intercept(path, 'PATCH', function(body) {
-          assert.equal(JSON.stringify(body.traces), JSON.stringify(buf));
-          return true;
-        }).replyWithError('Simulated Network Error');
-    var agent = trace.start({
-      bufferSize: 2,
-      samplingRate: -1,
-      forceNewAgent_: true
+  describe('publishing', function() {
+    it('should publish when the queue fills', function(done) {
+      var writer =
+          new TraceWriter(fakeLogger, {projectId: PROJECT, bufferSize: 4, flushDelaySeconds: 3600});
+      writer.publish_ = function() { done(); };
+      for (var i = 0; i < 4; i++) {
+        writer.writeSpan(createFakeSpan(i));
+      }
     });
-    common.avoidTraceWriterAuth(agent);
-    cls.getNamespace().run(function() {
-      queueSpans(2, agent);
-      buf = common.getTraces(agent);
+
+    it('should publish after timeout', function(done) {
+      var published = false;
+      var writer = new TraceWriter(fakeLogger, {projectId: PROJECT, flushDelaySeconds: 0.01});
+      writer.publish_ = function() { published = true; };
+      writer.writeSpan(createFakeSpan('fake span'));
       setTimeout(function() {
-        scope.done();
+        assert.ok(published);
         done();
       }, 20);
     });
   });
-
 });
