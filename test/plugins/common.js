@@ -24,6 +24,7 @@ if (!process.env.GCLOUD_PROJECT) {
 require('../../src/trace-writer').publish_ = function() {};
 
 var cls = require('../../src/cls.js');
+var pluginLoader = require('../../src/trace-plugin-loader.js');
 
 var assert = require('assert');
 var http = require('http');
@@ -235,7 +236,11 @@ function avoidTraceWriterAuth(agent) {
 }
 
 function stopAgent(agent) {
-  agent.private_().stop();
+  if (agent.isActive()) {
+    agent.private_().stop();
+    agent.disable_();
+    pluginLoader.deactivate();
+  }
 }
 
 function clearNamespace(agent) {

@@ -32,7 +32,7 @@ describe('multiple instrumentations of the same module', function() {
     agent = require('../..').start({
       enhancedDatabaseReporting: true,
       samplingRate: 0
-    }).get();
+    });
     clientv0 = require('./fixtures/redis0.12').createClient();
     clientv0.on('error', function(err) {
       assert(false, 'redisv0 error ' + err);

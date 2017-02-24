@@ -15,10 +15,11 @@
  */
 
 'use strict';
-var TraceLabels = require('./trace-labels.js');
 var cls = require('./cls.js');
 var constants = require('./constants.js');
+var extend = require('extend');
 var is = require('is');
+var TraceLabels = require('./trace-labels.js');
 var traceUtil = require('./util.js');
 
 /**
@@ -107,12 +108,12 @@ var nullSpan = {
 };
 
 /**
- * PluginAPI constructor. Don't call directly - a plugin object will be passed to
- * plugin themselves
+ * The functional implementation of the Trace API
  */
-function PluginAPI(agent) {
+function TraceApiImplementation(agent, pluginName) {
   this.agent_ = agent;
   this.logger_ = agent.logger;
+  this.pluginName_ = pluginName;
 }
 
 /**
@@ -121,7 +122,7 @@ function PluginAPI(agent) {
  * @returns A boolean value indicating whether the trace agent was configured
  * to have an enhanced level of reporting enabled.
  */
-PluginAPI.prototype.enhancedDatabaseReportingEnabled = function() {
+TraceApiImplementation.prototype.enhancedDatabaseReportingEnabled = function() {
   return this.agent_.config_.enhancedDatabaseReporting;
 };
 
@@ -130,7 +131,7 @@ PluginAPI.prototype.enhancedDatabaseReportingEnabled = function() {
  * configuration option.
  * @returns a summarization of `res`.
  */
-PluginAPI.prototype.summarizeDatabaseResults = function(res) {
+TraceApiImplementation.prototype.summarizeDatabaseResults = function(res) {
   return traceUtil.stringifyPrefix(res,
          this.agent_.config_.databaseResultReportingSize);
 };
@@ -140,7 +141,7 @@ PluginAPI.prototype.summarizeDatabaseResults = function(res) {
  * possibly passing it an object that exposes an interface for adding labels
  * and closing the span.
  * @param {object} options An object that specifies options for how the root
- * span is created and propogated. @see PluginAPI.prototype.createRootSpan
+ * span is created and propogated. @see TraceApiImplementation.prototype.createRootSpan
  * @param {function(?RootSpan)} fn A function that will be called exactly
  * once. If the incoming request should be traced, a root span will be created,
  * and this function will be called with a RootSpan object exposing functions
@@ -148,19 +149,19 @@ PluginAPI.prototype.summarizeDatabaseResults = function(res) {
  * argument.
  * @returns The return value of calling fn.
  */
-PluginAPI.prototype.runInRootSpan = function(options, fn) {
+TraceApiImplementation.prototype.runInRootSpan = function(options, fn) {
   var that = this;
   if (!this.agent_.namespace) {
-    this.logger_.warn('Trace agent: CLS namespace not present; not running in' +
-      'root span.');
+    this.logger_.warn(this.pluginName_ + ': CLS namespace not present; not ' +
+      'running in root span.');
     return fn(null);
   }
   if (cls.getRootContext()) {
-    this.logger_.warn('Trace agent: Cannot create nested root spans.');
+    this.logger_.warn(this.pluginName_ + ': Cannot create nested root spans.');
     return fn(null);
   }
   return this.agent_.namespace.runAndReturn(function() {
-    var skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
+    var skipFrames = options.skipFrames ? options.skipFrames + 3 : 3;
     var rootSpan = createRootSpan_(that, options, skipFrames);
     return fn(rootSpan);
   });
@@ -173,15 +174,18 @@ PluginAPI.prototype.runInRootSpan = function(options, fn) {
  * span is created and propogated.
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
-PluginAPI.prototype.createChildSpan = function(options) {
+TraceApiImplementation.prototype.createChildSpan = function(options) {
   var rootSpan = getRootSpan_(this);
   if (rootSpan) {
     options = options || {};
     var childContext = this.agent_.startSpan(options.name, {},
-      options.skipFrames ? options.skipFrames + 1 : 1);
+      options.skipFrames ? options.skipFrames + 2 : 2);
     return new ChildSpan(this.agent_, childContext);
   } else {
-    this.logger_.warn(options.name + ': Attempted to create child span ' +
+    // TODO: Elevate to warn if this results from a loss of context.
+    // We can't do this now because we don't have enough data here to tell the
+    // difference.
+    this.logger_.debug(this.pluginName_ + ': Attempted to create child span ' +
       'without root');
     return null;
   }
@@ -193,9 +197,10 @@ PluginAPI.prototype.createChildSpan = function(options) {
  * that are called asynchronously (for example, in a network response handler).
  * @param {function} fn A function to which to bind the trace context.
  */
-PluginAPI.prototype.wrap = function(fn) {
+TraceApiImplementation.prototype.wrap = function(fn) {
   if (!this.agent_.namespace) {
-    this.logger_.warn('Trace agent: No CLS namespace to bind function to');
+    this.logger_.warn(this.pluginName_ + ': No CLS namespace to bind ' +
+      'function');
     return fn;
   }
   return this.agent_.namespace.bind(fn);
@@ -207,20 +212,86 @@ PluginAPI.prototype.wrap = function(fn) {
  * @param {EventEmitter} emitter An event emitter whose handlers should have
  * the trace context binded to them.
  */
-PluginAPI.prototype.wrapEmitter = function(emitter) {
+TraceApiImplementation.prototype.wrapEmitter = function(emitter) {
   if (!this.agent_.namespace) {
-    this.logger_.warn('Trace agent: No CLS namespace to bind emitter to');
+    this.logger_.warn(this.pluginName_ + ': No CLS namespace to bind ' +
+      'emitter to');
   }
   this.agent_.namespace.bindEmitter(emitter);
 };
 
-PluginAPI.prototype.constants = constants;
+TraceApiImplementation.prototype.constants = constants;
 
-PluginAPI.prototype.labels = TraceLabels;
+TraceApiImplementation.prototype.labels = TraceLabels;
 
-PluginAPI.nullSpan = nullSpan;
+/**
+ * Phantom implementation of the trace api. This allows API users to decouple
+ * the enable/disable logic from the calls to the tracing API. The phantom API
+ * has a lower overhead than isEnabled checks inside the API functions.
+ * @private
+ */
+var phantomApiImpl = {
+  enhancedDatabaseReportingEnabled: function() { return false; },
+  summarizeDatabaseResults: function(results) { return results; },
+  runInRootSpan: function(opts, fn) { return fn(nullSpan); },
+  createChildSpan: function(opts) { return nullSpan; },
+  wrap: function(fn) { return fn; },
+  wrapEmitter: function(ee) {},
+  constants: constants,
+  labels: TraceLabels
+};
 
-module.exports = PluginAPI;
+/**
+ * Creates an object that provides an interface to the trace agent
+ * implementation.
+ * Upon creation, the object is in an "uninitialized" state, corresponding
+ * to its intended (no-op) behavior before the trace agent is started.
+ * When the trace agent is started, the interface object becomes
+ * "initialized", and its underlying implementation is switched to that of
+ * the actual agent implementation.
+ * Finally, when the trace agent is stopped, this object enters the "disabled"
+ * state, and its underlying implementation is switched back to no-op.
+ * Currently, this only happens when the application's GCP project ID could
+ * not be determined from the GCP metadata service.
+ * This object's state changes strictly from uninitialized to initialized,
+ * and from initialized to disabled.
+ */
+module.exports = function TraceApi(pluginName) {
+  var impl = phantomApiImpl;
+  extend(this, {
+    enhancedDatabaseReportingEnabled: function() {
+      return impl.enhancedDatabaseReportingEnabled();
+    },
+    summarizeDatabaseResults: function(results) {
+      return impl.summarizeDatabaseResults(results);
+    },
+    runInRootSpan: function(opts, fn) {
+      return impl.runInRootSpan(opts, fn);
+    },
+    createChildSpan: function(opts) {
+      return impl.createChildSpan(opts);
+    },
+    wrap: function(fn) {
+      return impl.wrap(fn);
+    },
+    wrapEmitter: function(ee) {
+      return impl.wrapEmitter(ee);
+    },
+    constants: impl.constants,
+    labels: impl.labels,
+    isActive: function() {
+      return impl !== phantomApiImpl;
+    },
+    enable_: function(agent) {
+      impl = new TraceApiImplementation(agent, pluginName);
+    },
+    disable_: function() {
+      impl = phantomApiImpl;
+    },
+    private_: function() { return impl.agent_; }
+  });
+  return this;
+};
 
 // Module-private functions
 

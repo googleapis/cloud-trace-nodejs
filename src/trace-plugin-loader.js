@@ -20,7 +20,7 @@ var shimmer = require('shimmer');
 var path = require('path');
 var semver = require('semver');
 var util = require('./util.js');
-var PluginAPI = require('./trace-plugin-interface.js');
+var TraceApi = require('./trace-api.js');
 
 var plugins = Object.create(null);
 var activated = false;
@@ -57,14 +57,17 @@ function activate(agent) {
   activated = true;
   logger = agent.logger;
 
-  // Create a new object exposing functions to create trace spans and propagate
-  // context. This relies on functions currently exposed by the agent.
-  var api = new PluginAPI(agent);
   var pluginConfig = agent.config().plugins;
   for (var moduleName in pluginConfig) {
+    // Create a new object exposing functions to create trace spans and
+    // propagate context. This relies on functions currently exposed by the
+    // agent.
+    var api = new TraceApi(moduleName);
+    api.enable_(agent);
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
-      patches: {}
+      patches: {},
+      api: api
     };
   }
 
@@ -95,6 +98,7 @@ function activate(agent) {
         }
         instrumentation.patches[moduleRoot] = patchSet;
       }
+
       for (var file in patchSet) {
         var patch = patchSet[file];
         if (!patch.module) {
@@ -102,10 +106,10 @@ function activate(agent) {
           patch.module = originalModuleLoad(loadPath, module, false);
         }
         if (patch.patch) {
-          patch.patch(patch.module, api);
+          patch.patch(patch.module, instrumentation.api);
         }
         if (patch.intercept) {
-          patch.module = patch.intercept(patch.module, api);
+          patch.module = patch.intercept(patch.module, instrumentation.api);
         }
       }
       var rootPatch = patchSet[''];
@@ -146,6 +150,7 @@ function deactivate() {
     activated = false;
     for (var moduleName in plugins) {
       var instrumentation = plugins[moduleName];
+      instrumentation.api.disable_();
       for (var moduleRoot in instrumentation.patches) {
         var patchSet = instrumentation.patches[moduleRoot];
         for (var file in patchSet) {

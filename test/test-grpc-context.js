@@ -52,15 +52,16 @@ Object.keys(versions).forEach(function(version) {
   var agent;
   var express;
   var grpc;
+  var httpDebugPrinted;
   describe('express + ' + version, function() {
     before(function(done) {
       agent = require('..').start({ samplingRate: 0 });
       express = require('./plugins/fixtures/express4');
       grpc = require(versions[version]);
 
-      common.replaceDebugLogger(agent, function(error, uri) {
-        if (error.indexOf('http') !== -1) {
-          assert.notStrictEqual(uri.indexOf('localhost'), -1);
+      common.replaceDebugLogger(agent, function(msg) {
+        if (msg.indexOf('http') !== -1) {
+          httpDebugPrinted = true;
         }
       });
 
@@ -145,12 +146,17 @@ Object.keys(versions).forEach(function(version) {
       });
     });
 
+    beforeEach(function() {
+      httpDebugPrinted = false;
+    });
+
     after(function() {
       grpcServer.forceShutdown();
       server.close();
     });
 
     afterEach(function() {
+      assert.ok(httpDebugPrinted);
       common.cleanTraces(agent);
     });
 
