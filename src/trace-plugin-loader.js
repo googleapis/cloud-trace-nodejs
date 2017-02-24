@@ -59,6 +59,9 @@ function activate(agent) {
 
   var pluginConfig = agent.config().plugins;
   for (var moduleName in pluginConfig) {
+    if (!pluginConfig[moduleName]) {
+      continue;
+    }
     // Create a new object exposing functions to create trace spans and
     // propagate context. This relies on functions currently exposed by the
     // agent.
