@@ -22,31 +22,6 @@ var semver = require('semver');
 var util = require('../src/util.js');
 var path = require('path');
 
-var o = {
-  a: 5,
-  b: 'hi',
-  c: function() {},
-  d: {
-    e: {
-      f: null,
-      g: undefined,
-      h: [1, 2]
-    }
-  }
-};
-
-describe('util.stringifyPrefix', function() {
-  it('should truncate objects larger than size', function() {
-    assert.equal(util.stringifyPrefix(o, 15),
-      '{a:5,b:hi,c:...');
-  });
-
-  it('should not truncate objects smaller than size', function() {
-    assert.equal(util.stringifyPrefix(o, 150),
-      '{a:5,b:hi,c:[Function],d:{e:{f:null,g:undefined,h:{0:1,1:2}}}}');
-  });
-});
-
 describe('util.packageNameFromPath', function() {
   it('should work for standard packages', function() {
     var p = path.join('.',
