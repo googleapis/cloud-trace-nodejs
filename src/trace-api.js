@@ -224,10 +224,6 @@ TraceApiImplementation.prototype.constants = constants;
 
 TraceApiImplementation.prototype.labels = TraceLabels;
 
-TraceApiImplementation.prototype.isActive = function() {
-  return true;
-};
-
 /**
  * Phantom implementation of the trace api. This allows API users to decouple
  * the enable/disable logic from the calls to the tracing API. The phantom API
@@ -242,8 +238,7 @@ var phantomApiImpl = {
   wrap: function(fn) { return fn; },
   wrapEmitter: function(ee) {},
   constants: constants,
-  labels: TraceLabels,
-  isActive: function () { return false; }
+  labels: TraceLabels
 };
 
 /**
@@ -285,7 +280,7 @@ module.exports = function TraceApi(pluginName) {
     constants: impl.constants,
     labels: impl.labels,
     isActive: function() {
-      return impl.isActive();
+      return impl !== phantomApiImpl;
     },
     enable_: function(agent) {
       impl = new TraceApiImplementation(agent, pluginName);

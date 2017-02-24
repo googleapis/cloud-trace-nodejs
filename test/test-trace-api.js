@@ -17,12 +17,13 @@
 'use strict';
 
 var assert = require('assert');
-var EventEmitter = require('events');
-var TraceAPI = require('../src/trace-api.js');
 var common = require('./plugins/common.js');
+var EventEmitter = require('events');
+var extend = require('extend');
+var TraceAPI = require('../src/trace-api.js');
 var TracingPolicy = require('../src/tracing-policy.js');
 
-var config = Object.assign({}, require('../config.js').trace,
+var config = extend({}, require('../config.js').trace,
   { samplingRate: 0, projectId: '0' });
 var logger = require('@google-cloud/common').logger();
 var agent = require('../src/trace-agent.js').get(config, logger);
