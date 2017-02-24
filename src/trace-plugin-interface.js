@@ -109,7 +109,6 @@ var nullSpan = {
 /**
  * PluginAPI constructor. Don't call directly - a plugin object will be passed to
  * plugin themselves
- * TODO(kjin): Should be called something else
  */
 function PluginAPI(agent) {
   this.agent_ = agent;
