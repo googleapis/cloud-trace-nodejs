@@ -232,7 +232,7 @@ function installNoopTraceWriter(agent) {
 }
 
 function avoidTraceWriterAuth(agent) {
-  agent.private_().traceWriter.request_ = request;
+  agent.private_().traceWriter.request = request;
 }
 
 function stopAgent(agent) {

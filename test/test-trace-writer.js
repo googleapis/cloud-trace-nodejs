@@ -18,8 +18,10 @@
 
 var assert = require('assert');
 var nock = require('nock');
+var nocks = require('./nocks.js');
 var cls = require('../src/cls.js');
 var common = require('./plugins/common.js');
+var Service = require('@google-cloud/common').Service;
 var trace = require('..');
 
 nock.disableNetConnect();
@@ -29,6 +31,12 @@ var path = '/v1/projects/0/traces';
 
 process.env.GCLOUD_PROJECT = 0;
 
+var fakeLogger = {
+  warn: function() {},
+  info: function() {},
+  error: function() {}
+};
+
 var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {
     common.runInTransaction(agent, function(end) {
@@ -36,6 +44,29 @@ var queueSpans = function(n, agent) {
     });
   }
 };
+
+describe('TraceWriter', function() {
+  var TraceWriter = require('../src/trace-writer.js');
+
+  it('should be a Service instance', function() {
+    var writer = new TraceWriter(fakeLogger, { projectId: 'fake project'});
+    assert.ok(writer instanceof Service);
+  });
+
+  describe('projectId', function() {
+    it('should request project from metadata if not locally available',
+       function(done) {
+         var scope = nocks.projectId('from metadata');
+         // the constructor should fetch the projectId.
+         var writer = new TraceWriter(fakeLogger);
+         setTimeout(function() {
+           assert.ok(scope.isDone());
+           done();
+         }, 100);
+       });
+  });
+
+});
 
 describe('tracewriter publishing', function() {
 

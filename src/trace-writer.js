@@ -17,7 +17,8 @@
 'use strict';
 
 var gcpMetadata = require('gcp-metadata');
-var util = require('@google-cloud/common').util;
+var common = require('@google-cloud/common');
+var util = require('util');
 var traceLabels = require('./trace-labels.js');
 var pjson = require('../package.json');
 var constants = require('./constants.js');
@@ -35,19 +36,22 @@ headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
  *   authorization credentials.
  * @constructor
  */
-function TraceWriter(logger, config) {
- /** @private */
+function TraceWriter(logger, options) {
+  options = options || {};
+
+  var serviceOptions = {
+    packageJson: pjson,
+    projectIdRequired: false,
+    baseUrl: 'https://cloudtrace.googleapis.com/v1',
+    scopes: SCOPES
+  };
+  common.Service.call(this, serviceOptions, options);
+
+  /** @private */
   this.logger_ = logger;
 
   /** @private */
-  this.config_ = config;
-
-  /** @private {function} authenticated request function */
-  this.request_ = util.makeAuthenticatedRequestFactory({
-    scopes: SCOPES,
-    credentials: config.credentials,
-    keyFile: config.keyFilename
-  });
+  this.config_ = options;
 
   /** @private {Array<string>} stringified traces to be published */
   this.buffer_ = [];
@@ -95,6 +99,7 @@ function TraceWriter(logger, config) {
     });
   });
 }
+util.inherits(TraceWriter, common.Service);
 
 TraceWriter.prototype.stop = function() {
   this.isActive = false;
@@ -248,12 +253,13 @@ TraceWriter.prototype.publish_ = function(projectId, json) {
   var uri = 'https://cloudtrace.googleapis.com/v1/projects/' +
     projectId + '/traces';
 
-  this.request_({
+  var options = {
     method: 'PATCH',
     uri: uri,
     body: json,
     headers: headers
-  }, function(err, response, body) {
+  };
+  that.request(options, function(err, body, response) {
     if (err) {
       that.logger_.error('TraceWriter: error: ',
         ((response && response.statusCode) || '') + '\n' + err.stack);
