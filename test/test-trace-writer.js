@@ -17,6 +17,7 @@
 'use strict';
 
 var assert = require('assert');
+var fakeCredentials = require('./fixtures/gcloud-credentials.json');
 var nock = require('nock');
 var nocks = require('./nocks.js');
 var Service = require('@google-cloud/common').Service;
@@ -39,17 +40,19 @@ function createFakeSpan(name) {
   // creates a fake span.
   return {
     trace: {
-      spans: [{
-        name: name,
-        startTime: 'fake startTime',
-        endTime: '',
-        closed_: false,
-        labels_: {},
-        close: function() { this.closed_ = true; },
-      }]
+      spans: [
+        {
+          name: name,
+          startTime: 'fake startTime',
+          endTime: '',
+          closed_: false,
+          labels_: {},
+          close: function() { this.closed_ = true; },
+        }
+      ]
     },
     labels_: {},
-    addLabel: function(k,v) { this.labels_[k] = v; },
+    addLabel: function(k, v) { this.labels_[k] = v; },
   };
 }
 
@@ -57,7 +60,7 @@ describe('TraceWriter', function() {
   var TraceWriter = require('../src/trace-writer.js');
 
   it('should be a Service instance', function() {
-    var writer = new TraceWriter(fakeLogger, { projectId: 'fake project'});
+    var writer = new TraceWriter(fakeLogger, {projectId: 'fake project'});
     assert.ok(writer instanceof Service);
   });
 
@@ -78,7 +81,7 @@ describe('TraceWriter', function() {
 
     it('should close spans, add defaultLabels and queue', function(done) {
       var writer =
-        new TraceWriter(fakeLogger, {projectId: PROJECT, bufferSize: 4});
+          new TraceWriter(fakeLogger, {projectId: PROJECT, bufferSize: 4});
       var spanData = createFakeSpan('fake span');
       writer.queueTrace_ = function(trace) {
         assert.ok(trace && trace.spans && trace.spans[0]);
@@ -92,9 +95,7 @@ describe('TraceWriter', function() {
 
       // TODO(ofrobots): the delay is needed to allow async initialization of
       // labels.
-      setTimeout(function() {
-        writer.writeSpan(spanData);
-      }, DEFAULT_DELAY);
+      setTimeout(function() { writer.writeSpan(spanData); }, DEFAULT_DELAY);
     });
   });
 
@@ -103,7 +104,8 @@ describe('TraceWriter', function() {
       nocks.oauth2();
       var scope = nocks.patchTraces(PROJECT);
 
-      var writer = new TraceWriter(fakeLogger, {projectId: PROJECT});
+      var writer = new TraceWriter(
+          fakeLogger, {projectId: PROJECT, credentials: fakeCredentials});
       writer.publish_(PROJECT, '{"valid": "json"}');
       setTimeout(function() {
         assert.ok(scope.isDone());
@@ -112,11 +114,13 @@ describe('TraceWriter', function() {
     });
 
     it('should drop on server error', function(done) {
-      var MESSAGE = { valid: 'json' };
+      var MESSAGE = {valid: 'json'};
       nocks.oauth2();
-      var scope = nocks.patchTraces(PROJECT, null, 'Simulated Network Error', true /* withError */);
+      var scope = nocks.patchTraces(PROJECT, null, 'Simulated Network Error',
+                                    true /* withError */);
 
-      var writer = new TraceWriter(fakeLogger, {projectId: PROJECT});
+      var writer = new TraceWriter(
+          fakeLogger, {projectId: PROJECT, credentials: fakeCredentials});
       writer.publish_(PROJECT, JSON.stringify(MESSAGE));
       setTimeout(function() {
         assert.ok(scope.isDone());
@@ -128,8 +132,9 @@ describe('TraceWriter', function() {
 
   describe('publishing', function() {
     it('should publish when the queue fills', function(done) {
-      var writer =
-          new TraceWriter(fakeLogger, {projectId: PROJECT, bufferSize: 4, flushDelaySeconds: 3600});
+      var writer = new TraceWriter(
+          fakeLogger,
+          {projectId: PROJECT, bufferSize: 4, flushDelaySeconds: 3600});
       writer.publish_ = function() { done(); };
       for (var i = 0; i < 4; i++) {
         writer.writeSpan(createFakeSpan(i));
@@ -138,7 +143,8 @@ describe('TraceWriter', function() {
 
     it('should publish after timeout', function(done) {
       var published = false;
-      var writer = new TraceWriter(fakeLogger, {projectId: PROJECT, flushDelaySeconds: 0.01});
+      var writer = new TraceWriter(
+          fakeLogger, {projectId: PROJECT, flushDelaySeconds: 0.01});
       writer.publish_ = function() { published = true; };
       writer.writeSpan(createFakeSpan('fake span'));
       setTimeout(function() {
