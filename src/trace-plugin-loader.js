@@ -22,6 +22,19 @@ var semver = require('semver');
 var util = require('./util.js');
 var PluginAPI = require('./trace-plugin-interface.js');
 
+var BUILTIN_PLUGINS = {
+  'Builtin:connect': path.join(__dirname, 'plugins/plugin-connect.js'),
+  'Builtin:express': path.join(__dirname, 'plugins/plugin-express.js'),
+  'Builtin:grpc': path.join(__dirname, 'plugins/plugin-grpc.js'),
+  'Builtin:hapi': path.join(__dirname, 'plugins/plugin-hapi.js'),
+  'Builtin:http': path.join(__dirname, 'plugins/plugin-http.js'),
+  'Builtin:koa': path.join(__dirname, 'plugins/plugin-koa.js'),
+  'Builtin:mongodb-core': path.join(__dirname, 'plugins/plugin-mongodb-core.js'),
+  'Builtin:mysql': path.join(__dirname, 'plugins/plugin-mysql.js'),
+  'Builtin:redis': path.join(__dirname, 'plugins/plugin-redis.js'),
+  'Builtin:restify': path.join(__dirname, 'plugins/plugin-restify.js')
+};
+
 var plugins = Object.create(null);
 var activated = false;
 
@@ -62,8 +75,9 @@ function activate(agent) {
   var api = new PluginAPI(agent);
   var pluginConfig = agent.config().plugins;
   for (var moduleName in pluginConfig) {
+    var file = pluginConfig[moduleName];
     plugins[moduleName] = {
-      file: pluginConfig[moduleName],
+      file: file.indexOf('Builtin:') === 0 ? BUILTIN_PLUGINS[file] : file,
       patches: {}
     };
   }
