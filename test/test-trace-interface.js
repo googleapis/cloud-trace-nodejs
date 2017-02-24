@@ -18,7 +18,7 @@
 
 var assert = require('assert');
 var EventEmitter = require('events');
-var traceInterface = require('../src/trace-plugin-interface.js');
+var TraceAPI = require('../src/trace-api.js');
 var common = require('./plugins/common.js');
 var TracingPolicy = require('../src/tracing-policy.js');
 
@@ -54,7 +54,7 @@ function assertAPISurface(traceAPI) {
 
 describe('Trace Interface', function() {
   it('should correctly manage internal state', function() {
-    var traceAPI = traceInterface.create('test');
+    var traceAPI = new TraceAPI('test');
     assert.ok(!traceAPI.isActive(),
       'Newly created instances have no-op implementation');
     traceAPI.enable_(agent);
@@ -66,7 +66,7 @@ describe('Trace Interface', function() {
   });
 
   it('should expose the same interface regardless of state', function() {
-    var traceAPI = traceInterface.create('test');
+    var traceAPI = new TraceAPI('test');
     assertAPISurface(traceAPI);
     traceAPI.enable_(agent);
     assertAPISurface(traceAPI);
@@ -75,7 +75,7 @@ describe('Trace Interface', function() {
   });
 
   describe('behavior when initialized', function() {
-    var traceAPI = traceInterface.create('test');
+    var traceAPI = new TraceAPI('test');
     
     before(function() {
       traceAPI.enable_(agent);

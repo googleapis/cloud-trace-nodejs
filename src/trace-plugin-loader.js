@@ -20,7 +20,7 @@ var shimmer = require('shimmer');
 var path = require('path');
 var semver = require('semver');
 var util = require('./util.js');
-var pluginInterface = require('./trace-plugin-interface.js');
+var TraceApi = require('./trace-api.js');
 
 var plugins = Object.create(null);
 var activated = false;
@@ -62,7 +62,7 @@ function activate(agent) {
     // Create a new object exposing functions to create trace spans and
     // propagate context. This relies on functions currently exposed by the
     // agent.
-    var api = pluginInterface.create(moduleName);
+    var api = new TraceApi(moduleName);
     api.enable_(agent);
     plugins[moduleName] = {
       name: moduleName,

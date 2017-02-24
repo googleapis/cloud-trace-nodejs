@@ -28,7 +28,7 @@ var constants = require('./src/constants.js');
 var gcpMetadata = require('gcp-metadata');
 var semver = require('semver');
 var traceUtil = require('./src/util.js');
-var pluginInterface = require('./src/trace-plugin-interface.js');
+var TraceApi = require('./src/trace-api.js');
 var pluginLoader = require('./src/trace-plugin-loader.js');
 
 var modulesLoadedBeforeTrace = [];
@@ -51,8 +51,8 @@ var initConfig = function(projectConfig) {
   return extend(true, {}, require('./config.js').trace, projectConfig, envConfig);
 };
 
-var agent = pluginInterface.create('Custom Span API');
-var privateAgent;
+var traceApi = new TraceApi('Custom Span API');
+var agent;
 
 /**
  * Start the Trace agent that will make your application available for
@@ -69,12 +69,12 @@ var privateAgent;
 function start(projectConfig) {
   var config = initConfig(projectConfig);
 
-  if (agent.isActive() && !config.forceNewAgent_) { // already started.
+  if (traceApi.isActive() && !config.forceNewAgent_) { // already started.
     throw new Error('Cannot call start on an already started agent.');
   }
 
   if (!config.enabled) {
-    return agent;
+    return traceApi;
   }
 
   var logLevel = config.logLevel;
@@ -90,7 +90,7 @@ function start(projectConfig) {
 
   if (!semver.satisfies(process.versions.node, '>=0.12')) {
     logger.error('Tracing is only supported on Node versions >=0.12');
-    return agent;
+    return traceApi;
   }
 
   if (config.projectId) {
@@ -133,9 +133,9 @@ function start(projectConfig) {
         logger.error('Unable to acquire the project number from metadata ' +
           'service. Please provide a valid project number as an env. ' +
           'variable, or through config.projectId passed to start(). ' + err);
-        if (agent.isActive()) {
-          privateAgent.stop();
-          agent.disable_();
+        if (traceApi.isActive()) {
+          agent.stop();
+          traceApi.disable_();
           pluginLoader.deactivate();
         }
         return;
@@ -145,21 +145,21 @@ function start(projectConfig) {
   } else if (typeof config.projectId !== 'string') {
     logger.error('config.projectId, if provided, must be a string. ' +
       'Disabling trace agent.');
-    return agent;
+    return traceApi;
   }
 
-  privateAgent = require('./src/trace-agent.js').get(config, logger);
-  agent.enable_(privateAgent);
-  pluginLoader.activate(privateAgent);
+  agent = require('./src/trace-agent.js').get(config, logger);
+  traceApi.enable_(agent);
+  pluginLoader.activate(agent);
 
-  return agent;
+  return traceApi;
 }
 
 function get() {
-  return agent;
+  return traceApi;
 }
 
-global._google_trace_agent = agent;
+global._google_trace_agent = traceApi;
 module.exports = {
   start: start,
   get: get
