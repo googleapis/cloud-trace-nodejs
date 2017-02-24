@@ -25,6 +25,7 @@ var traceLabels = require('../src/trace-labels.js');
 nock.disableNetConnect();
 
 var PROJECT = 'fake-project';
+var DEFAULT_DELAY = 200;
 
 
 var fakeLogger = {
@@ -69,7 +70,7 @@ describe('TraceWriter', function() {
          setTimeout(function() {
            assert.ok(scope.isDone());
            done();
-         }, 20);
+         }, DEFAULT_DELAY);
        });
   });
 
@@ -93,7 +94,7 @@ describe('TraceWriter', function() {
       // labels.
       setTimeout(function() {
         writer.writeSpan(spanData);
-      }, 20);
+      }, DEFAULT_DELAY);
     });
   });
 
@@ -107,7 +108,7 @@ describe('TraceWriter', function() {
       setTimeout(function() {
         assert.ok(scope.isDone());
         done();
-      }, 20);
+      }, DEFAULT_DELAY);
     });
 
     it('should drop on server error', function(done) {
@@ -121,7 +122,7 @@ describe('TraceWriter', function() {
         assert.ok(scope.isDone());
         assert.equal(writer.buffer_.length, 0);
         done();
-      }, 20);
+      }, DEFAULT_DELAY);
     });
   });
 
@@ -143,7 +144,7 @@ describe('TraceWriter', function() {
       setTimeout(function() {
         assert.ok(published);
         done();
-      }, 20);
+      }, DEFAULT_DELAY);
     });
   });
 });
