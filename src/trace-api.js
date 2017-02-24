@@ -15,10 +15,11 @@
  */
 
 'use strict';
-var TraceLabels = require('./trace-labels.js');
 var cls = require('./cls.js');
 var constants = require('./constants.js');
+var extend = require('extend');
 var is = require('is');
+var TraceLabels = require('./trace-labels.js');
 var traceUtil = require('./util.js');
 
 /**
@@ -181,6 +182,9 @@ TraceApiImplementation.prototype.createChildSpan = function(options) {
       options.skipFrames ? options.skipFrames + 2 : 2);
     return new ChildSpan(this.agent_, childContext);
   } else {
+    // TODO: Elevate to warn if this results from a loss of context.
+    // We can't do this now because we don't have enough data here to tell the
+    // difference.
     this.logger_.debug(this.pluginName_ + ': Attempted to create child span ' +
       'without root');
     return null;
@@ -196,7 +200,7 @@ TraceApiImplementation.prototype.createChildSpan = function(options) {
 TraceApiImplementation.prototype.wrap = function(fn) {
   if (!this.agent_.namespace) {
     this.logger_.warn(this.pluginName_ + ': No CLS namespace to bind ' +
-      'function to');
+      'function');
     return fn;
   }
   return this.agent_.namespace.bind(fn);
@@ -259,7 +263,7 @@ var phantomApiImpl = {
  */
 module.exports = function TraceApi(pluginName) {
   var impl = phantomApiImpl;
-  Object.assign(this, {
+  extend(this, {
     enhancedDatabaseReportingEnabled: function() {
       return impl.enhancedDatabaseReportingEnabled();
     },

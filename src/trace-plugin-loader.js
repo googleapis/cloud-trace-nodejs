@@ -65,7 +65,6 @@ function activate(agent) {
     var api = new TraceApi(moduleName);
     api.enable_(agent);
     plugins[moduleName] = {
-      name: moduleName,
       file: pluginConfig[moduleName],
       patches: {},
       api: api

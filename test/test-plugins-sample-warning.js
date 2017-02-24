@@ -35,8 +35,8 @@ describe('express + dbs', function() {
   });
 
   beforeEach(function() {
-    oldDebug = common.replaceDebugLogger(agent, function(error) {
-      if (error.indexOf('Attempted to create child span without root') !== -1) {
+    oldDebug = common.replaceDebugLogger(agent, function(msg) {
+      if (msg.indexOf('Attempted to create child span without root') !== -1) {
         debugCount++;
       }
     });

@@ -59,8 +59,8 @@ Object.keys(versions).forEach(function(version) {
       express = require('./plugins/fixtures/express4');
       grpc = require(versions[version]);
 
-      common.replaceDebugLogger(agent, function(error, uri) {
-        if (error.indexOf('http') !== -1) {
+      common.replaceDebugLogger(agent, function(msg) {
+        if (msg.indexOf('http') !== -1) {
           httpDebugPrinted = true;
         }
       });
