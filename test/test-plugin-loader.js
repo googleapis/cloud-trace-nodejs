@@ -276,7 +276,6 @@ describe('Trace Plugin Loader', function() {
    * show that patching isn't irreversible (and neither is unpatching)
    */
   it('can unpatch', function() {
-    // Unfortunately, intercepted modules cannot be patched.
     addModuleMock('module-j', '1.0.0', {
       getPatchMode: function() { return 'none'; }
     });
@@ -303,5 +302,14 @@ describe('Trace Plugin Loader', function() {
     }));
     assert.strictEqual(require('module-j').getPatchMode(), 'patch',
       'Patches still work after unpatching');
+  });
+
+  it('doesn\'t load plugins with falsey paths', function() {
+    var moduleExports = {};
+    addModuleMock('module-k', '1.0.0', moduleExports);
+    assert(require('module-k') === moduleExports);
+    pluginLoader.activate(createFakeAgent({ 'module-k': '' }));
+    assert(require('module-k') === moduleExports,
+      'Module exports the same thing as before');
   });
 });
