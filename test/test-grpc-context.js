@@ -52,16 +52,16 @@ Object.keys(versions).forEach(function(version) {
   var agent;
   var express;
   var grpc;
-  var httpDebugPrinted;
+  var httpLogCount;
   describe('express + ' + version, function() {
     before(function(done) {
       agent = require('..').start({ samplingRate: 0 });
       express = require('./plugins/fixtures/express4');
       grpc = require(versions[version]);
 
-      common.replaceDebugLogger(agent, function(msg) {
+      common.replaceWarnLogger(agent, function(msg) {
         if (msg.indexOf('http') !== -1) {
-          httpDebugPrinted = true;
+          httpLogCount++;
         }
       });
 
@@ -147,7 +147,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     beforeEach(function() {
-      httpDebugPrinted = false;
+      httpLogCount = 0;
     });
 
     after(function() {
@@ -156,7 +156,9 @@ Object.keys(versions).forEach(function(version) {
     });
 
     afterEach(function() {
-      assert.ok(httpDebugPrinted);
+      // We expect a single untraced http request for each test cooresponding to the
+      // top level request used to start the desired test.
+      assert.equal(httpLogCount, 1);
       common.cleanTraces(agent);
     });
 

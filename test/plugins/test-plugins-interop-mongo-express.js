@@ -29,14 +29,14 @@ var server;
 
 describe('mongodb + express', function() {
   var agent;
-  var oldDebug;
+  var oldWarn;
   var mongoose;
   var express;
   before(function() {
     agent = require('../..').start();
     express = require('./fixtures/express4');
     mongoose = require('./fixtures/mongoose4');
-    oldDebug = common.replaceDebugLogger(agent,
+    oldWarn = common.replaceWarnLogger(agent,
       function(error) {
         assert(error.indexOf('mongo') === -1, error);
     });
@@ -57,7 +57,7 @@ describe('mongodb + express', function() {
       http.get({port: common.serverPort}, function(res) {
         server.close();
         common.cleanTraces(agent);
-        common.replaceDebugLogger(agent, oldDebug);
+        common.replaceWarnLogger(agent, oldWarn);
         done();
       });
     });
