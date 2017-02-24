@@ -33,12 +33,16 @@ module.exports = {
     // `enhancedDatabaseReporting` is enabled.
     databaseResultReportingSize: 127,
 
-    // An object describing which modules to trace. To enable tracing for a
-    // module, add its name as a key under this object, as well as the
-    // require-friendly module path of the plugin that implements tracing for
-    // that module as the corresponding value. Relative paths are not accepted.
-    // An empty object means that no modules will be automatically traced at
-    // all.
+    // A list of trace plugins to load. Each field's key in this object is the
+    // name of the module to trace, and its value is the require-friendly path
+    // to the plugin.
+    // By default, all of the following plugins are loaded.
+    // Specifying a different object for this field in the configuration passed
+    // to the method that starts the trace agent will cause that object to be
+    // merged with this one.
+    // To disable a plugin in this list, you may override its path with a falsey
+    // value. Disabling any of the default plugins may cause unwanted behavior,
+    // so use caution.
     // This field is experimental.
     plugins: {
       'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
