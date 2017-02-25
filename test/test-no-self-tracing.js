@@ -18,7 +18,7 @@
 
 var assert = require('assert');
 var nock = require('nock');
-var newDebug = function(error) {
+var newWarn = function(error) {
   if (error.indexOf('http') !== -1) {
     assert(false, error);
   }
@@ -37,9 +37,9 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/project/project-id').reply(200);
     var agent = require('..').start({forceNewAgent_: true});
     require('http'); // Must require http to force patching of the module
-    var oldDebug = common.replaceDebugLogger(agent, newDebug);
+    var oldWarn = common.replaceWarnLogger(agent, newWarn);
     setTimeout(function() {
-      common.replaceDebugLogger(agent, oldDebug);
+      common.replaceWarnLogger(agent, oldWarn);
       scope.done();
       done();
     }, 200); // Need to wait for metadata access attempt
@@ -59,12 +59,12 @@ describe('test-no-self-tracing', function() {
     });
     common.avoidTraceWriterAuth(agent);
     require('http'); // Must require http to force patching of the module
-    var oldDebug = common.replaceDebugLogger(agent, newDebug);
+    var oldWarn = common.replaceWarnLogger(agent, newWarn);
     common.runInTransaction(agent, function(end) {
       end();
       setTimeout(function() {
         assert.equal(common.getTraces(agent).length, 0);
-        common.replaceDebugLogger(agent, oldDebug);
+        common.replaceWarnLogger(agent, oldWarn);
         metadataScope.done();
         apiScope.done();
         done();

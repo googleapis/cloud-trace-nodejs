@@ -26,8 +26,8 @@ var assert = require('assert');
 var http = require('http');
 
 describe('express + dbs', function() {
-  var debugCount = 0;
-  var oldDebug;
+  var untracedHttpSpanCount = 0;
+  var oldWarn;
   var agent;
 
   before(function() {
@@ -35,16 +35,16 @@ describe('express + dbs', function() {
   });
 
   beforeEach(function() {
-    oldDebug = common.replaceDebugLogger(agent, function(msg) {
-      if (msg.indexOf('Attempted to create child span without root') !== -1) {
-        debugCount++;
+    oldWarn = common.replaceWarnLogger(agent, function(msg) {
+      if (msg.indexOf('http') !== -1) {
+        untracedHttpSpanCount++;
       }
     });
   });
 
   afterEach(function() {
-    common.replaceDebugLogger(agent, oldDebug);
-    debugCount = 0;
+    common.replaceWarnLogger(agent, oldWarn);
+    untracedHttpSpanCount = 0;
   });
 
   it('mongo should not warn', function(done) {
@@ -66,7 +66,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort}, function(res) {
           server.close();
           common.cleanTraces(agent);
-          assert.equal(debugCount, 2);
+          assert.equal(untracedHttpSpanCount, 2);
           done();
         });
       });
@@ -89,7 +89,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort + 1}, function(res) {
           server.close();
           common.cleanTraces(agent);
-          assert.equal(debugCount, 2);
+          assert.equal(untracedHttpSpanCount, 2);
           done();
         });
       });
@@ -110,7 +110,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort + 2}, function(res) {
           server.close();
           common.cleanTraces(agent);
-          assert.equal(debugCount, 2);
+          assert.equal(untracedHttpSpanCount, 2);
           done();
         });
       });
@@ -137,7 +137,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort + 3}, function(res) {
           server.close();
           common.cleanTraces(agent);
-          assert.equal(debugCount, 2);
+          assert.equal(untracedHttpSpanCount, 2);
           done();
         });
       });

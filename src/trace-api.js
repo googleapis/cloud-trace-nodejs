@@ -100,11 +100,8 @@ RootSpan.prototype.getTraceContext = function() {
   return this.serializedTraceContext_;
 };
 
-var nullSpan = {
-  addLabel: function(k, v) {},
-  endSpan: function() {},
-  getTraceContext: function() { return ''; }
-};
+// A sentinal stored in CLS to indicate that the current request was not sampled.
+var nullSpan = {};
 
 /**
  * The functional implementation of the Trace API
@@ -164,19 +161,20 @@ TraceApiImplementation.prototype.runInRootSpan = function(options, fn) {
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
 TraceApiImplementation.prototype.createChildSpan = function(options) {
-  var rootSpan = getRootSpan_(this);
-  if (rootSpan) {
+  var rootSpan = cls.getRootContext();
+  if (!rootSpan) {
+    // Lost context
+    this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
+      'without root');
+    return null;
+  } else if (rootSpan === nullSpan) {
+    // Chose not to sample
+    return null;
+  } else {
     options = options || {};
     var childContext = this.agent_.startSpan(options.name, {},
       options.skipFrames ? options.skipFrames + 2 : 2);
     return new ChildSpan(this.agent_, childContext);
-  } else {
-    // TODO: Elevate to warn if this results from a loss of context.
-    // We can't do this now because we don't have enough data here to tell the
-    // difference.
-    this.logger_.debug(this.pluginName_ + ': Attempted to create child span ' +
-      'without root');
-    return null;
   }
 };
 
@@ -221,8 +219,8 @@ TraceApiImplementation.prototype.labels = TraceLabels;
  */
 var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
-  runInRootSpan: function(opts, fn) { return fn(nullSpan); },
-  createChildSpan: function(opts) { return nullSpan; },
+  runInRootSpan: function(opts, fn) { return fn(null); },
+  createChildSpan: function(opts) { return null; },
   wrap: function(fn) { return fn; },
   wrapEmitter: function(ee) {},
   constants: constants,
@@ -291,6 +289,7 @@ function createRootSpan_(api, options, skipFrames) {
   incomingTraceContext = incomingTraceContext || {};
   if (!api.agent_.shouldTrace(options.url || '',
         incomingTraceContext.options)) {
+    cls.setRootContext(nullSpan);
     return null;
   }
   var rootContext = api.agent_.createRootSpanData(options.name,
@@ -298,14 +297,4 @@ function createRootSpan_(api, options, skipFrames) {
     incomingTraceContext.spanId,
     skipFrames + 1);
   return new RootSpan(api.agent_, rootContext);
-}
-
-function getRootSpan_(api) {
-  if (cls.getRootContext()) {
-    return new RootSpan(api.agent_, cls.getRootContext());
-  } else {
-    api.logger_.warn('Attempted to get root span when it doesn\'t' +
-      ' exist');
-    return null;
-  }
 }

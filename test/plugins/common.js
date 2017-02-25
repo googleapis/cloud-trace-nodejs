@@ -55,8 +55,8 @@ function replaceFunction(target, prop, fn) {
   return old;
 }
 
-function replaceDebugLogger(agent, fn) {
-  return replaceFunction(agent.private_().logger, 'debug', fn);
+function replaceWarnLogger(agent, fn) {
+  return replaceFunction(agent.private_().logger, 'warn', fn);
 }
 
 function replaceTracingPolicy(agent, fn) {
@@ -260,7 +260,7 @@ module.exports = {
   getTraces: getTraces,
   runInTransaction: runInTransaction,
   getShouldTraceArgs: getShouldTraceArgs,
-  replaceDebugLogger: replaceDebugLogger,
+  replaceWarnLogger: replaceWarnLogger,
   replaceTracingPolicy: replaceTracingPolicy,
   createRootSpanData: createRootSpanData,
   clearNamespace: clearNamespace,
