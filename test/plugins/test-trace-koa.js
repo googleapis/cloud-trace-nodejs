@@ -15,11 +15,11 @@
  */
 'use strict';
 
-var common = require('./plugins/common.js');
+var common = require('./common.js');
 var http = require('http');
 var assert = require('assert');
-var constants = require('../src/constants.js');
-var TraceLabels = require('../src/trace-labels.js');
+var constants = require('../../src/constants.js');
+var TraceLabels = require('../../src/trace-labels.js');
 
 var server;
 
@@ -27,8 +27,8 @@ describe('test-trace-koa', function() {
   var agent;
   var koa;
   before(function() {
-    agent = require('..').start();
-    koa = require('./plugins/fixtures/koa1');
+    agent = require('../..').start();
+    koa = require('./fixtures/koa1');
   });
 
   afterEach(function() {

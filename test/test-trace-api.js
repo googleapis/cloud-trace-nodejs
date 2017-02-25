@@ -60,7 +60,7 @@ describe('Trace Interface', function() {
     traceAPI.enable_(agent);
     assert.ok(traceAPI.isActive(),
       'Being enabled sets operational implementation');
-    traceAPI.disable_(agent);
+    traceAPI.disable_();
     assert.ok(!traceAPI.isActive(),
       'Being disabled sets no-op implementation');
   });
@@ -70,8 +70,23 @@ describe('Trace Interface', function() {
     assertAPISurface(traceAPI);
     traceAPI.enable_(agent);
     assertAPISurface(traceAPI);
-    traceAPI.disable_(agent);
+    traceAPI.disable_();
     assertAPISurface(traceAPI);
+  });
+
+  describe('constants', function() {
+    it('have correct values', function() {
+      var traceAPI = new TraceAPI('test');
+      assert.equal(traceAPI.constants.TRACE_CONTEXT_HEADER_NAME,
+        'x-cloud-trace-context');
+      assert.equal(traceAPI.constants.TRACE_AGENT_REQUEST_HEADER,
+        'x-cloud-trace-agent-request');
+      traceAPI.enable_(agent);
+      assert.equal(traceAPI.constants.TRACE_CONTEXT_HEADER_NAME,
+        'x-cloud-trace-context');
+      assert.equal(traceAPI.constants.TRACE_AGENT_REQUEST_HEADER,
+        'x-cloud-trace-agent-request');
+    });
   });
 
   describe('behavior when initialized', function() {
