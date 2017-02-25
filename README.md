@@ -183,9 +183,8 @@ These functions provide the capability to create trace spans, add labels to them
   * Returns `?Span`
   * Attempts to create a child span, and returns a `Span` object if this is successful. Otherwise, it returns `null`. This may be for one of several reasons:
     * A root span wasn't created beforehand because an earlier call to `runInRootSpan` didn't generate one.
-    * A root span wasn't created beforehand because `runInRootSpan` was not called at all.
-    * A root span was created beforehand, but context was lost between then and now.
-  * **Note:** Child spans are always associated with a parent root span, and must always be created within the context of its parent. See [`Context Propagation`](#context-propagation) for details on properly propagating root span context.
+    * A root span wasn't created beforehand because `runInRootSpan` was not called at all. This likely indicates a programmer error, because child spans should always be nested within a root span.
+    * A root span was created beforehand, but context was lost between then and now. This may also be a programmer error, because child spans should always be created within the context of a root span. See [`Context Propagation`](#context-propagation) for details on properly propagating root span context.
 * `Span#addLabel(key, value)`
   * `key`: `string`
   * `value`: `any`
