@@ -24,6 +24,7 @@ if (!process.env.GCLOUD_PROJECT) {
 var TraceLabels = require('../src/trace-labels.js');
 var assert = require('assert');
 var cls = require('../src/cls.js');
+var constants = require('../src/constants.js');
 var common = require('./plugins/common.js');
 
 describe('SpanData', function() {
@@ -37,9 +38,65 @@ describe('SpanData', function() {
     cls.getNamespace().run(function() {
       var spanData = common.createRootSpanData(agent, 'name', 1, 2);
       assert.ok(spanData.trace);
-      assert.equal(spanData.trace.traceId, 1);
+      assert.strictEqual(spanData.trace.traceId, 1);
       assert.ok(spanData.span.spanId);
-      assert.equal(spanData.span.name, 'name');
+      assert.strictEqual(spanData.span.name, 'name');
+    });
+  });
+
+  it('converts label values to strings', function() {
+    cls.getNamespace().run(function() {
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      spanData.addLabel('a', 'b');
+      assert.strictEqual(spanData.span.labels.a, 'b');
+      spanData.addLabel('c', 5);
+      assert.strictEqual(spanData.span.labels.c, '5');
+    });
+  });
+
+  it('serializes object labels correctly', function() {
+    cls.getNamespace().run(function() {
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      spanData.addLabel('a', [{i: 5}, {j: 6}]);
+      assert.strictEqual(spanData.span.labels.a, '[ { i: 5 }, { j: 6 } ]');
+    });
+  });
+
+  it('serializes symbol labels correctly', function() {
+    cls.getNamespace().run(function() {
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      spanData.addLabel('a', Symbol('b'));
+      assert.strictEqual(spanData.span.labels.a, 'Symbol(b)');
+    });
+  });
+
+  it('truncate large span names to limit', function() {
+    cls.getNamespace().run(function() {
+      var spanData = common.createRootSpanData(agent, Array(200).join('a'), 1, 2);
+      assert.strictEqual(
+        spanData.span.name,
+        Array(constants.TRACE_SERVICE_SPAN_NAME_LIMIT - 2).join('a') + '...');
+    });
+  });
+
+  it('truncate large label keys to limit', function() {
+    cls.getNamespace().run(function() {
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var longLabelKey = Array(200).join('a');
+      spanData.addLabel(longLabelKey, 5);
+      assert.strictEqual(
+        spanData.span.labels[Array(constants.TRACE_SERVICE_LABEL_KEY_LIMIT - 2).join('a') + '...'],
+        '5');
+    });
+  });
+
+  it('truncate large label values to limit', function() {
+    cls.getNamespace().run(function() {
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var longLabelVal = Array(16550).join('a');
+      spanData.addLabel('a', longLabelVal);
+      assert.strictEqual(spanData.span.labels.a,
+        Array(common.getConfig(agent).maximumLabelValueSize - 2).join('a') + '...');
     });
   });
 
@@ -47,10 +104,10 @@ describe('SpanData', function() {
     cls.getNamespace().run(function() {
       var spanData = common.createRootSpanData(agent, 'name', 1, 2);
       var child = spanData.createChildSpanData('name2');
-      assert.equal(child.span.name, 'name2');
-      assert.equal(child.span.parentSpanId, spanData.span.spanId);
+      assert.strictEqual(child.span.name, 'name2');
+      assert.strictEqual(child.span.parentSpanId, spanData.span.spanId);
       assert.ok(child.trace);
-      assert.equal(child.trace.traceId, 1);
+      assert.strictEqual(child.trace.traceId, 1);
     });
   });
 
@@ -75,7 +132,19 @@ describe('SpanData', function() {
       var frames = JSON.parse(stack);
       assert.ok(frames && frames.stack_frame);
       assert.ok(Array.isArray(frames.stack_frame));
-      assert.equal(frames.stack_frame[1].method_name, 'Namespace.run [as run]');
+      assert.strictEqual(frames.stack_frame[1].method_name, 'Namespace.run [as run]');
+    });
+  });
+
+  it('does not limit stack trace', function() {
+    common.getConfig(agent).maximumLabelValueSize = 10;
+    cls.getNamespace().run(function() {
+      var spanData = common.createRootSpanData(agent, 'name', 1, 2, 1);
+      spanData.close();
+      var stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
+      assert.ok(stack.length > 10);
+      var frames = JSON.parse(stack);
+      assert.strictEqual(frames.stack_frame[1].method_name, 'Namespace.run [as run]');
     });
   });
 

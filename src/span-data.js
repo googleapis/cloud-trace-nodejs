@@ -16,9 +16,12 @@
 
 'use strict';
 
+var constants = require('./constants.js');
 var is = require('is');
 var TraceSpan = require('./trace-span.js');
 var TraceLabels = require('./trace-labels.js');
+var traceUtil = require('./util.js');
+var util = require('util');
 
 // Auto-incrementing integer
 var uid = 1;
@@ -35,7 +38,8 @@ var uid = 1;
 function SpanData(agent, trace, name, parentSpanId, isRoot, skipFrames) {
   var spanId = uid++;
   this.agent = agent;
-  this.span = new TraceSpan(name, spanId, parentSpanId);
+  var spanName = traceUtil.truncate(name, constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
+  this.span = new TraceSpan(spanName, spanId, parentSpanId);
   this.trace = trace;
   this.isRoot = isRoot;
   trace.spans.push(this.span);
@@ -71,8 +75,11 @@ function SpanData(agent, trace, name, parentSpanId, isRoot, skipFrames) {
         callSite.getFileName(), callSite.getLineNumber(),
         callSite.getColumnNumber()));
     });
+    // Set the label on the trace span directly to bypass truncation to
+    // config.maxLabelValueSize.
     this.span.setLabel(TraceLabels.STACK_TRACE_DETAILS_KEY,
-      JSON.stringify({stack_frame: stackFrames}));
+      traceUtil.truncate(JSON.stringify({stack_frame: stackFrames}),
+        constants.TRACE_SERVICE_LABEL_VALUE_LIMIT));
 
     Error.stackTraceLimit = origLimit;
     Error.prepareStackTrace = origPrepare;
@@ -92,7 +99,10 @@ SpanData.prototype.createChildSpanData = function(name, skipFrames) {
 };
 
 SpanData.prototype.addLabel = function(key, value) {
-  this.span.setLabel(key, value);
+  var k = traceUtil.truncate(key, constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
+  var string_val = typeof value === 'string' ? value : util.inspect(value);
+  var v = traceUtil.truncate(string_val, this.agent.config().maximumLabelValueSize);
+  this.span.setLabel(k, v);
 };
 
 /**

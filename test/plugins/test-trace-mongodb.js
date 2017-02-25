@@ -201,25 +201,6 @@ describe('mongodb', function() {
           });
         });
       });
-
-      it('should limit result size', function(done) {
-        common.runInTransaction(agent, function(endTransaction) {
-          server.cursor('testdb.simples', {
-            find: 'testdb.simples',
-            query: {f1: 'sim'}
-          }).next(function(err, doc) {
-            endTransaction();
-            assert.ifError(err);
-            var trace = common.getMatchingSpan(
-                agent,
-                mongoPredicate.bind(null, 'mongo-cursor'));
-            var labels = trace.labels;
-            assert.equal(labels.result.length, RESULT_SIZE);
-            assert.equal(labels.result, '{_...');
-            done();
-          });
-        });
-      });
     });
   });
 });

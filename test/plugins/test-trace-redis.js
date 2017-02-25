@@ -121,19 +121,6 @@ describe('redis', function() {
           });
         });
       });
-
-      it('should limit result size', function(done) {
-        common.runInTransaction(agent, function(endTransaction) {
-          client.get('key', function(err, res) {
-            endTransaction();
-            var trace = common.getMatchingSpan(agent, redisPredicate.bind(null, 'redis-get'));
-            var labels = trace.labels;
-            assert.equal(labels.result.length, RESULT_SIZE);
-            assert.equal(labels.result, 're...');
-            done();
-          });
-        });
-      });
     });
   });
 });
