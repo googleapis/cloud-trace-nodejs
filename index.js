@@ -48,7 +48,7 @@ var initConfig = function(projectConfig) {
     logLevel: process.env.GCLOUD_TRACE_LOGLEVEL,
     projectId: process.env.GCLOUD_PROJECT
   };
-  var config = extend(true, {}, require('./config.js').trace, projectConfig, envConfig);
+  var config = extend(true, {}, require('./config.js'), projectConfig, envConfig);
   if (config.maximumLabelValueSize > constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
     config.maximumLabelValueSize = constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
   }

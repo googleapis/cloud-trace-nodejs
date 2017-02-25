@@ -16,10 +16,8 @@
 'use strict';
 
 module.exports = {
-  trace: {
-    logLevel: 4,
-    stackTraceLimit: 1,
-    flushDelaySeconds: 31
-  }
+  logLevel: 4,
+  stackTraceLimit: 1,
+  flushDelaySeconds: 31
 };
 

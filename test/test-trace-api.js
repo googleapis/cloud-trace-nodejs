@@ -23,7 +23,7 @@ var extend = require('extend');
 var TraceAPI = require('../src/trace-api.js');
 var TracingPolicy = require('../src/tracing-policy.js');
 
-var config = extend({}, require('../config.js').trace,
+var config = extend({}, require('../config.js'),
   { samplingRate: 0, projectId: '0' });
 var logger = require('@google-cloud/common').logger();
 var agent = require('../src/trace-agent.js').get(config, logger);
