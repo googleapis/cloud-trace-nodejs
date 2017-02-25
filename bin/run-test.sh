@@ -39,7 +39,7 @@ function run {
 }
 
 # Run test/coverage
-for test in test/*.js test/plugins/*.js ;
+for test in test/test-*.js test/plugins/*.js ;
 do
   if [[ ! $(node --version) =~ v0\.12\..* || ! "${test}" =~ .*trace\-koa\.js ]]
   then
