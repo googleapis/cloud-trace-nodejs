@@ -75,9 +75,24 @@ describe('index.js', function() {
     wrapTest(mongo.Cursor.prototype, 'next');
   });
 
-  it('should wrap/unwrap redis on start/stop', function() {
+  it('should wrap/unwrap redis0.12 on start/stop', function() {
     var redis = require('./plugins/fixtures/redis0.12');
     wrapTest(redis.RedisClient.prototype, 'send_command');
+    wrapTest(redis.RedisClient.prototype, 'install_stream_listeners');
+    wrapTest(redis, 'createClient');
+  });
+
+  it('should wrap/unwrap redis2.4 on start/stop', function() {
+    var redis = require('./plugins/fixtures/redis2.4');
+    wrapTest(redis.RedisClient.prototype, 'send_command');
+    wrapTest(redis.RedisClient.prototype, 'create_stream');
+    wrapTest(redis, 'createClient');
+  });
+
+  it('should wrap/unwrap redis2.x on start/stop', function() {
+    var redis = require('./plugins/fixtures/redis2.x');
+    wrapTest(redis.RedisClient.prototype, 'create_stream');
+    wrapTest(redis.RedisClient.prototype, 'internal_send_command');
     wrapTest(redis, 'createClient');
   });
 
