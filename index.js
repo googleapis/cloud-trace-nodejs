@@ -26,7 +26,6 @@ var common = require('@google-cloud/common');
 var extend = require('extend');
 var constants = require('./src/constants.js');
 var gcpMetadata = require('gcp-metadata');
-var semver = require('semver');
 var traceUtil = require('./src/util.js');
 var TraceApi = require('./src/trace-api.js');
 var pluginLoader = require('./src/trace-plugin-loader.js');
@@ -91,11 +90,6 @@ function start(projectConfig) {
     level: common.logger.LEVELS[logLevel],
     tag: '@google/cloud-trace'
   });
-
-  if (!semver.satisfies(process.versions.node, '>=0.12')) {
-    logger.error('Tracing is only supported on Node versions >=0.12');
-    return traceApi;
-  }
 
   if (config.projectId) {
     logger.info('Locally provided ProjectId: ' + config.projectId);
