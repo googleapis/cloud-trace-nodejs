@@ -72,4 +72,11 @@ describe('tracewriter publishing', function() {
     });
   });
 
+  it('should error on invalid config values', function() {
+    assert.throws(function() {
+      trace.start({
+        onUncaughtException: 'invalidValue'
+      });
+    });
+  });
 });
