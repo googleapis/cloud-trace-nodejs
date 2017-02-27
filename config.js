@@ -19,7 +19,6 @@ var path = require('path');
 
 // Default configuration
 module.exports = {
-  trace: {
     // Log levels: 0-disabled,1-error,2-warn,3-info,4-debug
     logLevel: 1,
 
@@ -124,5 +123,4 @@ module.exports = {
     // For testing purposes only.
     // Used by unit tests to force loading of a new agent if one exists already.
     forceNewAgent_: false
-  }
 };
