@@ -161,7 +161,7 @@ The object returned by both of these calls is guaranteed to have the surface des
 
 ### The `TraceApi` Object
 
-A `TraceApi` instance, in short, provides functions that facilitate the following:
+A `TraceApi` instance provides functions that facilitate the following:
 
 - Creating trace spans and add labels to them.
 - Getting information about how the trace agent was configured in the current application.
@@ -172,15 +172,15 @@ In addition to the above, `TraceApi` also provides a number of well-known label 
 
 #### Trace Spans
 
-These functions provide the capability to create trace spans, add labels to them, and close them. `transaction` and `childSpan` are instances of `Transaction` and `ChildSpan`, respectively.
+These functions provide the capability to create trace spans, add labels to them, and close them.
 
 * `TraceApi#api.runInRootSpan(options, fn)`
   * `options`: [`TraceOptions`](#trace-span-options)
   * `fn`: `function(?Span): any`
-  * Returns `any`
-  * Attempts to create a root span, run the given callback, and pass it a `Span` object if the root span was successfuly created. Otherwise, the given function is run with `null` as an argument. This may be for one of two reasons:
+  * Returns `any` (return value of `fn`)
+  * Attempts to create a root span and runs the given callback, passing it a `Span` object if the root span was successfuly created. Otherwise, the given function is run with `null` as an argument. This may be for one of two reasons:
     * The trace policy, as specified by the user-given configuration, disallows a root span from being created under the current circumstances.
-    * The trace agent is disabled, either because it wasn't started at all, started in disabled mode, or started in an environment where the GCP project ID could not be obtained.
+    * The trace agent is disabled, either because it wasn't started at all, started in disabled mode, or encountered an initialization error.
 * `TraceApi#createChildSpan(options)`
   * `options`: [`TraceOptions`](#trace-span-options)
   * Returns `?Span`
@@ -205,30 +205,13 @@ Some functions above accept a `TraceOptions` object, which has the following fie
   * The name that should be given to the newly created span.
 * `traceContext`: `string`
   * Optional for root spans, ignored for child spans
-  * A serialized trace context. If the module being traced is a web framework,
-    the plugin that patches this module should attempt to extract this from an
-    incoming request header and set this field; omitting this field may cause
-    trace spans that correspond to a single request across several services in a
-    distributed environment (e.g. microservices) to appear disassociated with
-    one another.
-    See also [Cross-Service Trace Contexts](#cross-service-trace-contexts).
+  * A serialized trace context. If the module being traced is a web framework, the plugin that patches this module should attempt to extract this from an incoming request header and set this field; omitting this field may cause trace spans that correspond to a single request across several services in a distributed environment (e.g. microservices) to appear disassociated with one another. See also [Cross-Service Trace Contexts](#cross-service-trace-contexts).
 * `url`: `string`
   * Optional for root spans, ignored for child spans
-  * The URL of the incoming request. This only applies if the module being
-    traced is a web framework. If given, a label will automatically be created
-    for the new span for the url (under the key `url`). This field will also be
-    compared against the trace agent's URL filtering policy to check whether a
-    span should be created.
-  * Plugin developers should favor populating this field over using
-    `Span#addLabel` to add the `url`, as adding the url here bypasses user-set
-    label limits.
+  * The URL of the incoming request. This only applies if the module being traced is a web framework. This field will also be compared against the trace agent's URL filtering policy to check whether a span should be created.
 * `skipFrames`: `number`
   * Optional; defaults to `0`
-  * Trace spans include the call stack at the moment of creation as part of the
-    information gathered. The call stack may include undesirable frames such as
-    frames within the plugin itself. This field specifies the number of stack
-    frames to skip when writing the call stack to the trace span. Frames within
-    the trace agent implementation are automatically skipped.
+  * Trace spans include the call stack at the moment of creation as part of the information gathered. The call stack may include undesirable frames such as frames within the plugin itself. This field specifies the number of stack frames to skip when writing the call stack to the trace span. Frames within the trace agent implementation are automatically skipped.
 
 #### Trace Agent Configuration
 
@@ -238,11 +221,19 @@ Some functions above accept a `TraceOptions` object, which has the following fie
 
 #### Cross-Service Trace Contexts
 
-The Trace Agent supports distributed tracing, so that in supported web frameworks, incoming requests that are known to come from other services that are also integrated with Stackdriver Trace (through the ['x-cloud-trace-context'][stackdriver-trace-faq] field in request headers) should build spans that are aware of the information serialized in this field, known as the trace context. (For more information, see the [Dapper][dapper-paper] paper describing the distributed tracing system.)
+The Trace Agent can propagate trace context across multiple services. This associates multiple spans that correspond to a single incoming request with each other, and is particularly useful in tracing requests in a microservices-based web application. (For more information, see the [Dapper][dapper-paper] paper describing the distributed tracing system.)
 
-It is up to plugin developers to extract serialized trace context from incoming requests and propagate it in outgoing requests. The Plugin API accepts the serialized trace context as an [option](#trace-span-options) when creating new trace spans.
+Trace context is sent and received using the [`'x-cloud-trace-context'`][stackdriver-trace-faq] field in HTTP request headers. Built-in plugins automatically read from and write to this field, so for application developers, no additional work is necessary.
 
-The string `'x-cloud-trace-context'` is provided as `api.constants.TRACE_CONTEXT_HEADER_NAME`.
+##### Obtaining Trace Context in Incoming Requests
+
+Plugins that trace incoming HTTP requests (in other words, web frameworks) should support cross-service tracing by reading serialized trace context from the `'x-cloud-trace-context'` header, and supplying it as the [`traceContext` option](#trace-span-options) when creating a new root span. The trace agent will automatically deserialize the trace context and associate any new spans with it.
+
+The string `'x-cloud-trace-context'` is provided as `TraceApi#constants.TRACE_CONTEXT_HEADER_NAME`.
+
+##### Sending Trace Context in Outgoing Requests
+
+Use the following function to obtain the current serialized trace context. The built-in plugin for `http` and `https` does this automatically.
 
 * `Span#getTraceContext()`
   * Returns `string`
