@@ -101,13 +101,16 @@ This is the trace list that shows a sampling of the incoming requests your appli
 
 ## What gets traced
 
-The trace agent can do automatic tracing of HTTP requests when using these frameworks:
+The trace agent can do automatic tracing of the following web frameworks:
 * [express](https://www.npmjs.com/package/express) version 4
+* [gRPC](https://www.npmjs.com/package/grpc) version 1
 * [hapi](https://www.npmjs.com/package/hapi) versions 8 - 16
-* [restify](https://www.npmjs.com/package/restify) versions 3 - 4 (experimental)
+* [koa](https://www.npmjs.com/package/koa) version 1
+* [restify](https://www.npmjs.com/package/restify) versions 3 - 4
 
 The agent will also automatic trace of the following kinds of RPCs:
-* Outbound HTTP requests
+* Outbound HTTP requests through the `http` and `https` core modules
+* [gRPC](https://www.npmjs.com/package/grpc) version 1
 * [MongoDB-core](https://www.npmjs.com/package/mongodb-core) version 1
 * [Mongoose](https://www.npmjs.com/package/mongoose) version 4
 * [Redis](https://www.npmjs.com/package/redis) versions 0.12 - 2
@@ -260,7 +263,7 @@ These functions help provide context propagation for root spans. Context should 
 
 ## Plugin Developer Guide
 
-The trace agent is driven by a set of plugins that describe how to patch a module to generate trace spans when that module is used. We provide plugins for some well-known modules such as `express`, `mongodb`, and `http`, and provide a means for developers to create their own.
+The trace agent is driven by a set of plugins that describe how to patch a module to generate trace spans when that module is used. We provide plugins for some well-known modules (see [What gets traced](#what-gets-traced)), and provide a means for developers to create their own.
 
 A plugin consists of a set of *patch objects*. A patch object gives information about how a file in a module should be patched in order to create trace spans.
 
