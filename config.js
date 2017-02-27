@@ -20,7 +20,7 @@ var path = require('path');
 // Default configuration
 module.exports = {
     // Log levels: 0-disabled,1-error,2-warn,3-info,4-debug
-    logLevel: 1,
+    logLevel: 2,
 
     enabled: true,
 
