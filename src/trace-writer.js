@@ -78,10 +78,10 @@ function TraceWriter(logger, options) {
       if (instanceId) {
         labels[traceLabels.GCE_INSTANCE_ID] = instanceId;
       }
-      var moduleName = process.env.GAE_MODULE_NAME || hostname;
+      var moduleName = process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME || hostname;
       labels[traceLabels.GAE_MODULE_NAME] = moduleName;
 
-      var moduleVersion = process.env.GAE_MODULE_VERSION;
+      var moduleVersion = process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION;
       if (moduleVersion) {
         labels[traceLabels.GAE_MODULE_VERSION] = moduleVersion;
         var minorVersion = process.env.GAE_MINOR_VERSION;

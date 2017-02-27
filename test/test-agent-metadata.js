@@ -188,6 +188,7 @@ describe('agent interaction with metadata service', function() {
                   .reply(200, 'host');
 
       delete process.env.GAE_MODULE_NAME;
+      delete process.env.GAE_SERVICE;
       agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
       setTimeout(function() {
         common.runInTransaction(agent, function(end) {
@@ -210,6 +211,7 @@ describe('agent interaction with metadata service', function() {
                   .reply(404);
 
       delete process.env.GAE_MODULE_NAME;
+      delete process.env.GAE_SERVICE;
       agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
       setTimeout(function() {
         common.runInTransaction(agent, function(end) {
