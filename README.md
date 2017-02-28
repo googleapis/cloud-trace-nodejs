@@ -126,15 +126,44 @@ The trace agent can be configured by passing a configurations object to the agen
 
 One configuration option of note is `enhancedDatabaseReporting`. Setting this option to `true` will cause database operations for redis and MongoDB to record query summaries and results as labels on reported trace spans.
 
-## Disabling the trace agent
+### Disabling the trace agent
 
 The trace agent can be turned off by either setting the `GCLOUD_TRACE_DISABLE` environment variable or specifying `enabled: false` in your configuration file.
 
-## Trace batching and sampling
+### Trace batching and sampling
 
 The aggregation of trace spans before publishing can be configured using the `flushDelaySeconds` and `bufferSize` [options](config.js). The spans recorded for each incoming requests are placed in a buffer after the request has completed. Spans will be published to the UI in batch when the spans from `bufferSize` requests have been queued in the buffer or after `flushDelaySeconds` have passed since the last publish, whichever comes first.
 
 The trace configuration additionally exposes the `samplingRate` option which sets an upper bound on the number of traced requests captured per second. Some Google Cloud environments may override this sampling policy.
+
+### Additional Plugins
+
+TODO
+
+## Custom Tracing API
+
+The custom tracing API can be used to add custom spans to trace. A *span* is a particular unit of work within a trace, such as an RPC request. Spans may be nested; the outermost span is called a *root span*, even if there are no nested child spans. Root spans typically correspond to incoming requests, while *child spans* typically correspond to outgoing requests, or other work that is triggered in response to incoming requests.
+
+For any of the web frameworks for which we provide [built-in plugins](#what-gets-traced), a root span is automatically started whenever an incoming request is received (in other words, all middleware already runs within a root span). If you wish to record a span outside of any of these frameworks, any traced code must run within a root span that you create yourself.
+
+### Accessing the API
+
+Calling the `start` function returns an instance of `TraceApi`, which provides an interface for tracing:
+
+```javascript
+  var traceApi = require('@google/cloud-trace').start();
+```
+
+It can also be retrieved by subsequent calls to `get` elsewhere:
+
+```javascript
+  // after start() is called
+  var traceApi = require('@google/cloud-trace').get();
+```
+
+The object returned by both of these calls is guaranteed to have the surface described below, even if the agent is disabled.
+
+A fully detailed overview of the `TraceApi` object is available [here](./trace-api.md).
 
 ## Contributing changes
 

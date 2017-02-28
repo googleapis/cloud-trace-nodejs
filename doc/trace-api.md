@@ -1,27 +1,4 @@
-# Custom Tracing API
-
-The custom tracing API can be used to add custom spans to trace. A *span* is a particular unit of work within a trace, such as an RPC request. Spans may be nested; the outermost span is called a *root span*, even if there are no nested child spans. Root spans typically correspond to incoming requests, while *child spans* typically correspond to outgoing requests, or other work that is triggered in response to incoming requests.
-
-For any of the web frameworks for which we provide [built-in plugins](../README.md#what-gets-traced), a root span is automatically started whenever an incoming request is received (in other words, all middleware already runs within a root span). If you wish to record a span outside of any of these frameworks, any traced code must run within a root span that you create yourself.
-
-## Accessing the API
-
-Calling the `start` function returns an instance of `TraceApi`, which provides an interface for tracing:
-
-```javascript
-  var traceApi = require('@google/cloud-trace').start();
-```
-
-It can also be retrieved by subsequent calls to `get` elsewhere:
-
-```javascript
-  // after start() is called
-  var traceApi = require('@google/cloud-trace').get();
-```
-
-The object returned by both of these calls is guaranteed to have the surface described below, even if the agent is disabled.
-
-## The `TraceApi` Object
+# The `TraceApi` Object
 
 A `TraceApi` instance provides functions that facilitate the following:
 
@@ -32,11 +9,11 @@ A `TraceApi` instance provides functions that facilitate the following:
 
 In addition to the above, `TraceApi` also provides a number of well-known label keys and constants through its `labels` and `constants` fields respectively.
 
-### Trace Spans
+## Trace Spans
 
 These functions provide the capability to create trace spans, add labels to them, and close them.
 
-* `TraceApi#api.runInRootSpan(options, fn)`
+* `TraceApi#runInRootSpan(options, fn)`
   * `options`: [`TraceOptions`](#trace-span-options)
   * `fn`: `function(?Span): any`
   * Returns `any` (return value of `fn`)
@@ -58,7 +35,7 @@ These functions provide the capability to create trace spans, add labels to them
 * `Span#endSpan()`
   * Ends the span associated with the calling object. This function should only be called once.
 
-#### Trace Span Options
+### Trace Span Options
 
 Some functions above accept a `TraceOptions` object, which has the following fields:
 
@@ -75,25 +52,25 @@ Some functions above accept a `TraceOptions` object, which has the following fie
   * Optional; defaults to `0`
   * Trace spans include the call stack at the moment of creation as part of the information gathered. The call stack may include undesirable frames such as frames within the plugin itself. This field specifies the number of stack frames to skip when writing the call stack to the trace span. Frames within the trace agent implementation are automatically skipped.
 
-### Trace Agent Configuration
+## Trace Agent Configuration
 
 * `TraceApi#enhancedDatabaseReportingEnabled()`
   * Returns `boolean`
   * Returns whether the trace agent was started with an enhanced level of reporting. See the [configuration][config-js] object definition for more details.
 
-### Cross-Service Trace Contexts
+## Cross-Service Trace Contexts
 
 The Trace Agent can propagate trace context across multiple services. This associates multiple spans that correspond to a single incoming request with each other, and is particularly useful in tracing requests in a microservices-based web application. (For more information, see the [Dapper][dapper-paper] paper describing the distributed tracing system.)
 
 Trace context is sent and received using the [`'x-cloud-trace-context'`][stackdriver-trace-faq] field in HTTP request headers. Built-in plugins automatically read from and write to this field, so for application developers, no additional work is necessary.
 
-#### Obtaining Trace Context in Incoming Requests
+### Obtaining Trace Context in Incoming Requests
 
 Plugins that trace incoming HTTP requests (in other words, web frameworks) should support cross-service tracing by reading serialized trace context from the `'x-cloud-trace-context'` header, and supplying it as the [`traceContext` option](#trace-span-options) when creating a new root span. The trace agent will automatically deserialize the trace context and associate any new spans with it.
 
 The string `'x-cloud-trace-context'` is provided as `TraceApi#constants.TRACE_CONTEXT_HEADER_NAME`.
 
-#### Sending Trace Context in Outgoing Requests
+### Sending Trace Context in Outgoing Requests
 
 Use the following function to obtain the current serialized trace context. The built-in plugin for `http` and `https` does this automatically.
 
@@ -101,7 +78,7 @@ Use the following function to obtain the current serialized trace context. The b
   * Returns `string`
   * Gets the trace context serialized as a string.
 
-### Context Propagation
+## Context Propagation
 
 These functions help provide context propagation for root spans. Context should be propagated anywhere control is yielded to the user; this is either through a callback or an emitter. This will enable child spans to be associated with the correct root span.
 
