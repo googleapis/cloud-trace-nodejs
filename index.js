@@ -80,14 +80,13 @@ function start(projectConfig) {
     return traceApi;
   }
 
-  var logLevel = config.logLevel;
-  if (logLevel < 0) {
-    logLevel = 0;
-  } else if (logLevel >= common.logger.LEVELS.length) {
-    logLevel = common.logger.LEVELS.length - 1;
+  if (config.logLevel < 0) {
+    config.logLevel = 0;
+  } else if (config.logLevel >= common.logger.LEVELS.length) {
+    config.logLevel = common.logger.LEVELS.length - 1;
   }
   var logger = common.logger({
-    level: common.logger.LEVELS[logLevel],
+    level: common.logger.LEVELS[config.logLevel],
     tag: '@google/cloud-trace'
   });
 

@@ -33,4 +33,13 @@ describe('should respect environment variables', function() {
     var agent = trace.start({logLevel: 2, forceNewAgent_: true});
     assert.equal(common.getConfig(agent).logLevel, 4);
   });
+
+  it('should fix out of bounds log level', function() {
+    process.env.GCLOUD_TRACE_LOGLEVEL = -5;
+    var agent = trace.start({forceNewAgent_: true});
+    assert.equal(common.getConfig(agent).logLevel, 0);
+    process.env.GCLOUD_TRACE_LOGLEVEL = 300;
+    agent = trace.start({forceNewAgent_: true});
+    assert.equal(common.getConfig(agent).logLevel, 5);
+  });
 });
