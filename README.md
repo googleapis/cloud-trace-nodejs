@@ -102,19 +102,19 @@ This is the trace list that shows a sampling of the incoming requests your appli
 ## What gets traced
 
 The trace agent can do automatic tracing of the following web frameworks:
-* [express](https://www.npmjs.com/package/express) version 4
-* [gRPC](https://www.npmjs.com/package/grpc) version 1
-* [hapi](https://www.npmjs.com/package/hapi) versions 8 - 16
-* [koa](https://www.npmjs.com/package/koa) version 1
-* [restify](https://www.npmjs.com/package/restify) versions 3 - 4
+* [express](https://www.npmjs.com/package/express) (version 4)
+* [gRPC](https://www.npmjs.com/package/grpc) server (version 1)
+* [hapi](https://www.npmjs.com/package/hapi) (versions 8 - 16)
+* [koa](https://www.npmjs.com/package/koa) (version 1)
+* [restify](https://www.npmjs.com/package/restify) (versions 3 - 4)
 
 The agent will also automatic trace of the following kinds of RPCs:
 * Outbound HTTP requests through the `http` and `https` core modules
-* [gRPC](https://www.npmjs.com/package/grpc) version 1
-* [MongoDB-core](https://www.npmjs.com/package/mongodb-core) version 1
-* [Mongoose](https://www.npmjs.com/package/mongoose) version 4
-* [Redis](https://www.npmjs.com/package/redis) versions 0.12 - 2
-* [MySQL](https://www.npmjs.com/package/mysql) version ^2.9
+* [gRPC](https://www.npmjs.com/package/grpc) client (version 1)
+* [MongoDB-core](https://www.npmjs.com/package/mongodb-core) (version 1)
+* [Mongoose](https://www.npmjs.com/package/mongoose) (version 4)
+* [Redis](https://www.npmjs.com/package/redis) (versions 0.12 - 2)
+* [MySQL](https://www.npmjs.com/package/mysql) (version ^2.9)
 
 You can use the [Custom Tracing API](#custom-tracing-api) to trace other processes in your application.
 
@@ -126,15 +126,54 @@ The trace agent can be configured by passing a configurations object to the agen
 
 One configuration option of note is `enhancedDatabaseReporting`. Setting this option to `true` will cause database operations for redis and MongoDB to record query summaries and results as labels on reported trace spans.
 
-## Disabling the trace agent
-
-The trace agent can be turned off by either setting the `GCLOUD_TRACE_DISABLE` environment variable or specifying `enabled: false` in your configuration file.
-
-## Trace batching and sampling
+### Trace batching and sampling
 
 The aggregation of trace spans before publishing can be configured using the `flushDelaySeconds` and `bufferSize` [options](config.js). The spans recorded for each incoming requests are placed in a buffer after the request has completed. Spans will be published to the UI in batch when the spans from `bufferSize` requests have been queued in the buffer or after `flushDelaySeconds` have passed since the last publish, whichever comes first.
 
 The trace configuration additionally exposes the `samplingRate` option which sets an upper bound on the number of traced requests captured per second. Some Google Cloud environments may override this sampling policy.
+
+### Tracing Additional Modules
+
+In addition to the modules listed [above](#what-gets-traced), the trace agent can be configured to trace additional modules through the use of *plugins*. To load an additional plugin, specify it in the agent's configuration:
+
+```javascript
+  require('@google/cloud-trace').start({
+    plugins: {
+      // You may use a package name or absolute path to the file.
+      'my-module': '@google/cloud-trace-plugin-my-module',
+      'another-module': path.join(__dirname, 'path/to/my-custom-plugins/plugin-another-module.js')
+    }
+  });
+```
+
+This list of plugins will be merged with the list of built-in plugins, which will be loaded by the plugin loader. Each plugin is only loaded when the module that it patches is loaded; in other words, there is no computational overhead for listing plugins for unused modules.
+
+To create a plugin for a module, please see the [Plugin Developer Guide](./plugin-guide.md).
+
+## Custom Tracing API
+
+The custom tracing API can be used to add custom spans to trace. A *span* is a particular unit of work within a trace, such as an RPC request. Spans may be nested; the outermost span is called a *root span*, even if there are no nested child spans. Root spans typically correspond to incoming requests, while *child spans* typically correspond to outgoing requests, or other work that is triggered in response to incoming requests.
+
+For any of the web frameworks for which we provide [built-in plugins](#what-gets-traced), a root span is automatically started whenever an incoming request is received (in other words, all middleware already runs within a root span). If you wish to record a span outside of any of these frameworks, any traced code must run within a root span that you create yourself.
+
+### Accessing the API
+
+Calling the `start` function returns an instance of `TraceApi`, which provides an interface for tracing:
+
+```javascript
+  var traceApi = require('@google/cloud-trace').start();
+```
+
+It can also be retrieved by subsequent calls to `get` elsewhere:
+
+```javascript
+  // after start() is called
+  var traceApi = require('@google/cloud-trace').get();
+```
+
+A `TraceApi` object is guaranteed to be returned by both of these calls, even if the agent is disabled.
+
+A fully detailed overview of the `TraceApi` object is available [here](./trace-api.md).
 
 ## Contributing changes
 
