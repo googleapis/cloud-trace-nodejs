@@ -51,14 +51,17 @@ function checkLoadedModules() {
 
 function checkPatch(patch) {
   if (!patch.patch && !patch.intercept) {
-    throw new Error('Plugin patch for ' + patch + ' doesn\'t patch ' +
+    throw new Error('Plugin for ' + patch.file + ' doesn\'t patch ' +
       'anything.');
   } else if (patch.patch && patch.intercept) {
-    throw new Error('Plugin patch for ' + patch.file + ' has ' +
+    throw new Error('Plugin for ' + patch.file + ' has ' +
       'both intercept and patch functions.');
   } else if (patch.unpatch && patch.intercept) {
-    logger.warn('Plugin patch for ' + patch.file + ': unpatch is not ' +
-      'compatible with intercept.');
+    logger.warn('Plugin for ' + patch.file + ': unpatch is not compatible ' +
+      'with intercept.');
+  } else if (patch.patch && !patch.unpatch) {
+    logger.warn('Plugin for ' + patch.file + ': patch method given without ' +
+      'accompanying unpatch.');
   }
 }
 
