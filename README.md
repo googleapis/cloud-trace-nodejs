@@ -136,9 +136,23 @@ The aggregation of trace spans before publishing can be configured using the `fl
 
 The trace configuration additionally exposes the `samplingRate` option which sets an upper bound on the number of traced requests captured per second. Some Google Cloud environments may override this sampling policy.
 
-### Additional Plugins
+### Tracing Additional Modules
 
-TODO
+In addition to the modules listed [above](#what-gets-traced), the trace agent can be configured to trace additional modules through the use of *plugins*. To load an additional plugin, specify it in the agent's configuration:
+
+```javascript
+  require('@google/cloud-trace').start({
+    plugins: {
+      // You may use a package name or absolute path to the file.
+      'my-module': '@google/cloud-trace-plugin-my-module',
+      'another-module': path.join(__dirname, 'path/to/another/module/plugin.js')
+    }
+  });
+```
+
+This list of plugins will be merged with the list of built-in plugins, which will be loaded by the plugin loader. Each plugin is only loaded when the module that it patches is loaded; in other words, there is no computational overhead for loading plugins for unused modules.
+
+To create a plugin for a module, please see the [Plugin Developer Guide](./plugin-guide.md).
 
 ## Custom Tracing API
 

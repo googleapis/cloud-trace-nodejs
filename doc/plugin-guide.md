@@ -8,7 +8,7 @@ Each patch object can contain the following fields:
 
 * `file`: The path to the file whose exports should be patched, relative to the root of the module. You can specify an empty string, or omit this field entirely, to specify the export of the module itself.
 * `versions`: A `semver` expression which will be used to control whether the specified file will be patched based on the module version; the patch will only be applied if the loaded module version satisfies this expression. This might be useful if your plugin only works on some versions of a module, or if you are patching internal mechanisms that are specific to a certain range of versions. If omitted, all versions of the module will be patched.
-* `patch`: A function describing how the module exports for a given file should be patched. It will be passed two arguments: the object exported from the file, and an instance of `TraceApi`.
+* `patch`: A function describing how the module exports for a given file should be patched. It will be passed two arguments: the object exported from the file, and an instance of [`TraceApi`](./trace-api.md).
 * `intercept`: A function describing how the module exports for a file should be replaced with a new object. It accepts the same arguments as `patch`, but unlike `patch`, it should return the object that will be treated as the replacement value for `module.exports` (hence the name `intercept`).
 * `unpatch`: A function describing how the module exports for a given file should be unpatched. This should generally mirror the logic in `patch`; for example, if `patch` wraps a method, `unpatch` should unwrap it.
 
@@ -30,9 +30,8 @@ For example, here's what a plugin for `express` might export:
 function patchModuleRoot4x(expressModule, traceApi) {
   // Patch expressModule using the traceApi object here.
   // expressModule is the object retrieved with require('express').
-  // traceApi exposes methods to facilitate tracing, and is documented in detail
-  // in the "Custom Tracing API" section above.
-  // 
+  // traceApi exposes methods to facilitate tracing, and is the same as the
+  // object returned by a call to require('@google/cloud-trace').start().
 }
 
 function patchModuleRoot3x(expressModule, traceApi) {
