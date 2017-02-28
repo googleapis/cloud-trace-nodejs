@@ -49,6 +49,19 @@ function checkLoadedModules() {
   }
 }
 
+function checkPatch(patch) {
+  if (!patch.patch && !patch.intercept) {
+    throw new Error('Plugin patch for ' + patch + ' doesn\'t patch ' +
+      'anything.');
+  } else if (patch.patch && patch.intercept) {
+    throw new Error('Plugin patch for ' + patch.file + ' has ' +
+      'both intercept and patch functions.');
+  } else if (patch.unpatch && patch.intercept) {
+    logger.warn('Plugin patch for ' + patch.file + ': unpatch is not ' +
+      'compatible with intercept.');
+  }
+}
+
 function activate(agent) {
   if (activated) {
     logger.error('Plugins activated more than once.');
@@ -93,6 +106,7 @@ function activate(agent) {
               unpatch: patch.unpatch,
               intercept: patch.intercept
             };
+            checkPatch(patchSet[file]);
           }
         });
         if (Object.keys(patchSet).length === 0) {
