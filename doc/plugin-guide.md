@@ -8,15 +8,16 @@ Each patch object can contain the following fields:
 
 * `file`: The path to the file whose exports should be patched, relative to the root of the module. You can specify an empty string, or omit this field entirely, to specify the export of the module itself.
 * `versions`: A `semver` expression which will be used to control whether the specified file will be patched based on the module version; the patch will only be applied if the loaded module version satisfies this expression. This might be useful if your plugin only works on some versions of a module, or if you are patching internal mechanisms that are specific to a certain range of versions. If omitted, all versions of the module will be patched.
-* `patch`: A function describing how the module exports for a given file should be patched. It will be passed two arguments: the object exported from the file, and an instance of [`TraceApi`](./trace-api.md).
+* `patch`: A function describing how the module exports for a given file should be modified. It will be passed two arguments: the object exported from the file, and an instance of [`TraceApi`](./trace-api.md).
 * `intercept`: A function describing how the module exports for a file should be replaced with a new object. It accepts the same arguments as `patch`, but unlike `patch`, it should return the object that will be treated as the replacement value for `module.exports` (hence the name `intercept`).
 * `unpatch`: A function describing how the module exports for a given file should be unpatched. This should generally mirror the logic in `patch`; for example, if `patch` wraps a method, `unpatch` should unwrap it.
 
-If `patch` is supplied, then `unpatch` will be called if the agent must be disabled for any reason. This does not hold true for `intercept`: instead, the module exports for the original file will automatically be set to its original, unintercepted value.
+Your module should either implement `patch` (strongly encouraged) or `intercept`, but not both. `patch` and `intercept` have overlapping functionality, so the plugin loader will throw an error if it encounters a plugin where both are implemented.
 
-In addition, `patch` and `intercept` have overlapping functionality.
+If the agent must be disabled for any reason, it will attempt to undo any patches or intercepts, as follows:
+  * If a module is patched, then `unpatch` will be called if it exists in that module's plugin. We strongly recommend implementing `unpatch`.
+  * If a module is intercepted, then all future `require`s of that module will automatically yield the original version of that module.
 
-For these reasons, plugins should not implement `patch` and/or `unpatch` alongside `intercept`. We strongly encourage plugin developers to implement patching and unpatching methods, using `intercept` only when needed.
 
 A plugin simply exports a list of patch objects.
 

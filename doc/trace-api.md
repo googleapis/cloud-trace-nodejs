@@ -20,6 +20,7 @@ These functions provide the capability to create trace spans, add labels to them
   * Attempts to create a root span and runs the given callback, passing it a `Span` object if the root span was successfuly created. Otherwise, the given function is run with `null` as an argument. This may be for one of two reasons:
     * The trace policy, as specified by the user-given configuration, disallows a root span from being created under the current circumstances.
     * The trace agent is disabled, either because it wasn't started at all, started in disabled mode, or encountered an initialization error.
+  * **Note:** You must call `endSpan` on the span object provided as an argument for the span to be recorded.
 * `TraceApi#createChildSpan(options)`
   * `options`: [`TraceOptions`](#trace-span-options)
   * Returns `?Span`
@@ -27,6 +28,7 @@ These functions provide the capability to create trace spans, add labels to them
     * A root span wasn't created beforehand because an earlier call to `runInRootSpan` didn't generate one.
     * A root span wasn't created beforehand because `runInRootSpan` was not called at all. This likely indicates a programmer error, because child spans should always be nested within a root span.
     * A root span was created beforehand, but context was lost between then and now. This may also be a programmer error, because child spans should always be created within the context of a root span. See [`Context Propagation`](#context-propagation) for details on properly propagating root span context.
+  * **Note:** You must call `endSpan` on the returned span object for the span to be recorded.
 * `Span#addLabel(key, value)`
   * `key`: `string`
   * `value`: `any`

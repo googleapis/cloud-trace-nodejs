@@ -126,10 +126,6 @@ The trace agent can be configured by passing a configurations object to the agen
 
 One configuration option of note is `enhancedDatabaseReporting`. Setting this option to `true` will cause database operations for redis and MongoDB to record query summaries and results as labels on reported trace spans.
 
-### Disabling the trace agent
-
-The trace agent can be turned off by either setting the `GCLOUD_TRACE_DISABLE` environment variable or specifying `enabled: false` in your configuration file.
-
 ### Trace batching and sampling
 
 The aggregation of trace spans before publishing can be configured using the `flushDelaySeconds` and `bufferSize` [options](config.js). The spans recorded for each incoming requests are placed in a buffer after the request has completed. Spans will be published to the UI in batch when the spans from `bufferSize` requests have been queued in the buffer or after `flushDelaySeconds` have passed since the last publish, whichever comes first.
@@ -145,12 +141,12 @@ In addition to the modules listed [above](#what-gets-traced), the trace agent ca
     plugins: {
       // You may use a package name or absolute path to the file.
       'my-module': '@google/cloud-trace-plugin-my-module',
-      'another-module': path.join(__dirname, 'path/to/another/module/plugin.js')
+      'another-module': path.join(__dirname, 'path/to/my-custom-plugins/plugin-another-module.js')
     }
   });
 ```
 
-This list of plugins will be merged with the list of built-in plugins, which will be loaded by the plugin loader. Each plugin is only loaded when the module that it patches is loaded; in other words, there is no computational overhead for loading plugins for unused modules.
+This list of plugins will be merged with the list of built-in plugins, which will be loaded by the plugin loader. Each plugin is only loaded when the module that it patches is loaded; in other words, there is no computational overhead for listing plugins for unused modules.
 
 To create a plugin for a module, please see the [Plugin Developer Guide](./plugin-guide.md).
 
@@ -175,7 +171,7 @@ It can also be retrieved by subsequent calls to `get` elsewhere:
   var traceApi = require('@google/cloud-trace').get();
 ```
 
-The object returned by both of these calls is guaranteed to have the surface described below, even if the agent is disabled.
+A `TraceApi` object is guaranteed to be returned by both of these calls, even if the agent is disabled.
 
 A fully detailed overview of the `TraceApi` object is available [here](./trace-api.md).
 
