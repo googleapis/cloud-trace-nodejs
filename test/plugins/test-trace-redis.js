@@ -28,7 +28,9 @@ var RESULT_SIZE = 5;
 var assert = require('assert');
 var versions = {
   redis0: './fixtures/redis0.12',
+  // Our patches are different on redis <2.3, 2.3 - 2.6, and >2.6
   redis2dot3: './fixtures/redis2.3',
+  redis2dot4: './fixtures/redis2.4',
   redis2dotx: './fixtures/redis2.x',
   redisHiredis04: './fixtures/redis2.3-hiredis0.4',
   redisHiredis05: './fixtures/redis2.3-hiredis0.5'
