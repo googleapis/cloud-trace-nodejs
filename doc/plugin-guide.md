@@ -32,7 +32,7 @@ function patchModuleRoot4x(expressModule, traceApi) {
   // Patch expressModule using the traceApi object here.
   // expressModule is the object retrieved with require('express').
   // traceApi exposes methods to facilitate tracing, and is the same as the
-  // object returned by a call to require('@google/cloud-trace').start().
+  // object returned by a call to require('@google-cloud/trace-agent').start().
 }
 
 function patchModuleRoot3x(expressModule, traceApi) {
