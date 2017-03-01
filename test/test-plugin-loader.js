@@ -312,4 +312,52 @@ describe('Trace Plugin Loader', function() {
     assert(require('module-k') === moduleExports,
       'Module exports the same thing as before');
   });
+
+  /**
+   * Loads plugins with bad patches and ensures that they throw/log
+   */
+  it('throws and warns for serious problems', function() {
+    addModuleMock('module-k', '1.0.0', {});
+    addModuleMock('module-k-plugin-noop', '', [{}]);
+    addModuleMock('module-k-plugin-pi', '', [{
+      patch: function() {},
+      intercept: function() { return 'intercepted'; }
+    }]);
+    addModuleMock('module-k-plugin-upi', '', [{
+      unpatch: function() {},
+      intercept: function() { return 'intercepted'; }
+    }]);
+    addModuleMock('module-k-plugin-noup', '', [{
+      patch: function(m) { m.patched = true; }
+    }]);
+    
+    pluginLoader.activate(createFakeAgent({
+      'module-k': 'module-k-plugin-noop'
+    }));
+    assert.throws(function() { require('module-k'); },
+      'Loading patch object with no patch/intercept function throws');
+    pluginLoader.deactivate();
+
+    pluginLoader.activate(createFakeAgent({
+      'module-k': 'module-k-plugin-pi'
+    }));
+    assert.throws(function() { require('module-k'); },
+      'Loading patch object with both patch/intercept functions throws');
+    pluginLoader.deactivate();
+
+    pluginLoader.activate(createFakeAgent({
+      'module-k': 'module-k-plugin-upi'
+    }));
+    assert.strictEqual(require('module-k'), 'intercepted');
+    assert(logs.warn.indexOf('unpatch is not compatible with intercept') !== -1,
+      'Warn when plugin has both unpatch and intercept');
+    pluginLoader.deactivate();
+
+    pluginLoader.activate(createFakeAgent({
+      'module-k': 'module-k-plugin-noup'
+    }));
+    assert.ok(require('module-k').patched);
+    assert(logs.warn.indexOf('without accompanying unpatch') !== -1,
+      'Warn when plugin has both patch and no unpatch');
+  });
 });
