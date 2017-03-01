@@ -23,7 +23,7 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 
 1. Install with [`npm`](https://www.npmjs.com) or add to your [`package.json`](https://docs.npmjs.com/files/package.json#dependencies).
 
-        npm install --save @google/cloud-trace
+        npm install --save @google-cloud/trace-agent
 
 2. Set the GCLOUD_PROJECT environment variable. You can find your Project ID in the [Google Cloud Developers Console][cloud-console], or by running the command `gcloud projects list`. You can ensure this environment variable is set at startup time by placing it in your startup script in `package.json`:
 
@@ -33,7 +33,7 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 
 3. Include and start the library *as the very first action in your application*:
 
-        var agent = require('@google/cloud-trace').start();
+        var agent = require('@google-cloud/trace-agent').start();
 
   If you use `--require` in your start up command, make sure that the trace agent is --required first.
 
@@ -47,7 +47,7 @@ If you are running somewhere other than the Google Cloud Platform, see [running 
 
 See [the default configuration](config.js) for a list of possible configuration options. These options can be passed to the agent through the object argument to the start command shown above:
 
-        require('@google/cloud-trace').start({samplingRate: 500});
+        require('@google-cloud/trace-agent').start({samplingRate: 500});
 
 Alternatively, you can provide configuration through a config file. This can be useful if you want to load our module using `--require` on the command line instead of editing your main script. You can start by copying the default config file and modifying it to suit your needs. The `GCLOUD_DIAGNOSTICS_CONFIG` environment variable should point to your configuration file.
 
@@ -137,10 +137,10 @@ The trace configuration additionally exposes the `samplingRate` option which set
 In addition to the modules listed [above](#what-gets-traced), the trace agent can be configured to trace additional modules through the use of *plugins*. To load an additional plugin, specify it in the agent's configuration:
 
 ```javascript
-  require('@google/cloud-trace').start({
+  require('@google-cloud/trace-agent').start({
     plugins: {
       // You may use a package name or absolute path to the file.
-      'my-module': '@google/cloud-trace-plugin-my-module',
+      'my-module': '@google-cloud/trace-agent-plugin-my-module',
       'another-module': path.join(__dirname, 'path/to/my-custom-plugins/plugin-another-module.js')
     }
   });
@@ -161,14 +161,14 @@ For any of the web frameworks for which we provide [built-in plugins](#what-gets
 Calling the `start` function returns an instance of `TraceApi`, which provides an interface for tracing:
 
 ```javascript
-  var traceApi = require('@google/cloud-trace').start();
+  var traceApi = require('@google-cloud/trace-agent').start();
 ```
 
 It can also be retrieved by subsequent calls to `get` elsewhere:
 
 ```javascript
   // after start() is called
-  var traceApi = require('@google/cloud-trace').get();
+  var traceApi = require('@google-cloud/trace-agent').get();
 ```
 
 A `TraceApi` object is guaranteed to be returned by both of these calls, even if the agent is disabled.
@@ -187,8 +187,8 @@ A fully detailed overview of the `TraceApi` object is available [here](doc/trace
 [gcloud-sdk]: https://cloud.google.com/sdk/gcloud/
 [app-default-credentials]: https://developers.google.com/identity/protocols/application-default-credentials
 [service-account]: https://console.developers.google.com/apis/credentials/serviceaccountkey
-[npm-image]: https://badge.fury.io/js/%40google%2Fcloud-trace.svg
-[npm-url]: https://npmjs.org/package/@google/cloud-trace
+[npm-image]: https://badge.fury.io/js/%40google-cloud%2Ftrace-agent.svg
+[npm-url]: https://npmjs.org/package/@google-cloud/trace-agent
 [travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
 [travis-url]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs
 [coveralls-image]: https://coveralls.io/repos/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg?branch=master&service=github

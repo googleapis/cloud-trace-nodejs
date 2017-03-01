@@ -9,7 +9,7 @@ COPY google-cloud-trace-*.tgz /trace/
 
 # Setup mongodb-core repository
 RUN git clone --branch 1.2 https://github.com/christkv/mongodb-core.git --depth 1 /mongo
-RUN sed -i 's#"use strict"\;#"use strict"\;require\("@google/cloud-trace"\).start\(\)\;#g' /mongo/test/runner.js
+RUN sed -i 's#"use strict"\;#"use strict"\;require\("@google-cloud/trace-agent"\).start\(\)\;#g' /mongo/test/runner.js
 
 # Run tests
 RUN cd /mongo && npm install && npm install /trace/google-cloud-trace-*.tgz

@@ -34,7 +34,7 @@ var modulesLoadedBeforeTrace = [];
 
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
-  if (moduleName && moduleName !== '@google/cloud-trace' &&
+  if (moduleName && moduleName !== '@google-cloud/trace-agent' &&
       modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
     modulesLoadedBeforeTrace.push(moduleName);
   }
@@ -87,7 +87,7 @@ function start(projectConfig) {
   }
   var logger = common.logger({
     level: common.logger.LEVELS[config.logLevel],
-    tag: '@google/cloud-trace'
+    tag: '@google-cloud/trace-agent'
   });
 
   if (config.projectId) {
