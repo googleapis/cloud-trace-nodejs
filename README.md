@@ -148,7 +148,7 @@ In addition to the modules listed [above](#what-gets-traced), the trace agent ca
 
 This list of plugins will be merged with the list of built-in plugins, which will be loaded by the plugin loader. Each plugin is only loaded when the module that it patches is loaded; in other words, there is no computational overhead for listing plugins for unused modules.
 
-To create a plugin for a module, please see the [Plugin Developer Guide](./plugin-guide.md).
+To create a plugin for a module, please see the [Plugin Developer Guide](doc/plugin-guide.md).
 
 ## Custom Tracing API
 
@@ -173,7 +173,7 @@ It can also be retrieved by subsequent calls to `get` elsewhere:
 
 A `TraceApi` object is guaranteed to be returned by both of these calls, even if the agent is disabled.
 
-A fully detailed overview of the `TraceApi` object is available [here](./trace-api.md).
+A fully detailed overview of the `TraceApi` object is available [here](doc/trace-api.md).
 
 ## Contributing changes
 
