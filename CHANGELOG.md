@@ -1,5 +1,9 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-03-01, Version 1.0.0 (Experimental), @matthewloring
+
+This version does not include any changes since 1.0.0-rc1. It is the first publish to the new module name: @google-cloud/trace-agent.
+
 ## 2017-02-28, Version 1.0.0-rc1 (Experimental), @matthewloring
 
 ### Notable changes
