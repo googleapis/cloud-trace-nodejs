@@ -1,5 +1,77 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-02-28, Version 1.0.0-rc1 (Experimental), @matthewloring
+
+### Notable changes
+
+This version introduces a full redesigned API for creating [custom trace spans](doc/trace-api.md) as well as an API
+for writing [custom plugins](doc/plugin-guide.md) to instrument modules so tracing information can be reported. Please
+check out our docs section for a full description of the changes. While this is a semver major change, we expect
+it will only affect users of the custom span api.
+
+In addition to API changes, this release includes the following semver major behavior changes:
+
+ - The `databaseResultReportingSize` configuration option has been replaced by the `maximumLabelValueSize` configuration option which applies to all label values (instead of just database results).
+ - This module now uses the same authentication code as [google-cloud-node](https://github.com/GoogleCloudPlatform/google-cloud-node) API libraries. This changes the precedence of accepting auth credentials via config.credentials vs. config.keyFileName vs. the environment variable GOOGLE_APPLICATION_CREDENTIALS.
+
+### Commits
+
+* [[`a7ff674833`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a7ff674833)] - fix doc links (#430) (Kelvin Jin) [#430](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/430)
+* [[`c1773f4d4f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c1773f4d4f)] - Plugin loader throws for plugins with glaring issues (#428) (Kelvin Jin) [#428](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/428)
+* [[`d030be1f16`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d030be1f16)] - Trace API and Plugin Developer Docs (#427) (Kelvin Jin) [#427](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/427)
+* [[`2a374fdbc1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/2a374fdbc1)] - Added Plugin API docs (#362) (Kelvin Jin) [#362](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/362)
+* [[`c68c22f8fe`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c68c22f8fe)] - Test log level correction (#424) (Matthew Loring) [#424](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/424)
+* [[`e74b60afda`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e74b60afda)] - Remove version lower bound check (#423) (Matthew Loring) [#423](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/423)
+* [[`f17bd67e37`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f17bd67e37)] - Improve redis code coverage (#422) (Matthew Loring) [#422](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/422)
+* [[`1ea81a5032`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1ea81a5032)] - Test for throw on invalid value for onUncaughtException (#425) (Matthew Loring) [#425](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/425)
+* [[`c3435fff3c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c3435fff3c)] - Look for new app engine env vars during configuration (#421) (Matthew Loring) [#421](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/421)
+* [[`2617526bd2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/2617526bd2)] - Remove trace property from config (#420) (Matthew Loring) [#420](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/420)
+* [[`bfa1d4e28f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/bfa1d4e28f)] - Disambiguate context loss from sampling when creating child spans (#416) (Matthew Loring) [#416](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/416)
+* [[`97f87908b9`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/97f87908b9)] - Make TraceWriter a Service object (#417) (Ali Ijaz Sheikh) [#417](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/417)
+* [[`39331429e4`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/39331429e4)] - Small test changes (#419) (Kelvin Jin) [#419](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/419)
+* [[`eacfa15317`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/eacfa15317)] - New configuration for globally controlled label value sizes (#415) (Matthew Loring) [#415](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/415)
+* [[`9032aeaaba`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9032aeaaba)] - Plugins with falsey paths don't get loaded (#418) (Kelvin Jin) [#418](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/418)
+* [[`035d1cc9e9`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/035d1cc9e9)] - Make trace interface uniform between module exports and plugins (#411) (Kelvin Jin) [#411](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/411)
+* [[`0772ee0508`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0772ee0508)] - Fix merging of nest configuration objects (#414) (Matthew Loring) [#414](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/414)
+* [[`f5662e0372`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f5662e0372)] - cleanup todos (#395) (Matthew Loring) [#395](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/395)
+* [[`a8a6e58ce3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a8a6e58ce3)] - Remove old hooks mechanism (#410) (Matthew Loring) [#410](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/410)
+* [[`aebb3a5601`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/aebb3a5601)] - Expand test-index.js (#409) (Matthew Loring) [#409](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/409)
+* [[`08095ae687`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/08095ae687)] - Clean up trace writer error messages (#412) (Matthew Loring) [#412](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/412)
+* [[`2cca378d3e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/2cca378d3e)] - simplify interop-mongo-express (#401) (Matthew Loring) [#401](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/401)
+* [[`f9a4b7ba50`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f9a4b7ba50)] - Simplifications in test/common (#408) (Matthew Loring) [#408](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/408)
+* [[`33f90fc53c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/33f90fc53c)] - Starting testing on Circle-CI (#407) (Ali Ijaz Sheikh) 
+* [[`f641802cf2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f641802cf2)] - Refactor public api to match plugin api (#393) (Matthew Loring) [#393](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/393)
+* [[`58b3dd4a4c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/58b3dd4a4c)] - Instrument multiple versions of the same module (#397) (Matthew Loring) [#397](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/397)
+* [[`6f05b156d3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6f05b156d3)] - Consolidate usage of `agent.private_()` (#406) (Dominic Kramer) [#406](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/406)
+* [[`60ef26a698`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/60ef26a698)] - Correct broken test (#396) (Matthew Loring) [#396](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/396)
+* [[`ecb3ccb218`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ecb3ccb218)] - Reduce dependence on setTimeout timing in testing (#405) (Matthew Loring) 
+* [[`8553d02a3d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8553d02a3d)] - Add docker start/stop script for DB unit tests (#385) (Kelvin Jin) 
+* [[`749821958c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/749821958c)] - Add database result summarization to plugins (#400) (Matthew Loring) [#400](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/400)
+* [[`6a307d143d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6a307d143d)] - Add stack trace to service network errors (#394) (Matthew Loring) [#394](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/394)
+* [[`91e1ccef72`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/91e1ccef72)] - Fix restify non-interference tests (#403) (Matthew Loring) [#403](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/403)
+* [[`da804af08d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/da804af08d)] - Add Express Trace Plugin (#363) (Kelvin Jin) [#363](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/363)
+* [[`ff67bef00e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ff67bef00e)] - Fix for external unit test failures (#388) (Kelvin Jin) [#388](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/388)
+* [[`f30bd330ba`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f30bd330ba)] - Add gRPC Plugin (#390) (Kelvin Jin) [#390](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/390)
+* [[`533d28af5a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/533d28af5a)] - Use closures instead of bind in plugins (#391) (Dominic Kramer) [#391](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/391)
+* [[`0874b1a23b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0874b1a23b)] - Add http plugin (#370) (Cristian Cavalli) 
+* [[`8e30d88abe`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8e30d88abe)] - Bugfix for creating root spans through plugin API (#389) (Kelvin Jin) [#389](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/389)
+* [[`4c2f330e8d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4c2f330e8d)] - Support hapi tracing through the plugin API (#379) (Dominic Kramer) [#379](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/379)
+* [[`4dc20bf5f3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4dc20bf5f3)] - Support mysql tracing through the plugin API (#376) (Dominic Kramer) [#376](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/376)
+* [[`bb926acf1c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/bb926acf1c)] - Support redis tracing through the plugin API (#377) (Dominic Kramer) [#377](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/377)
+* [[`4e20f685d3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4e20f685d3)] - Support Connect tracing through the plugin API (#381) (Dominic Kramer) [#381](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/381)
+* [[`5c5e3e2e70`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5c5e3e2e70)] - Support mongodb-core tracing through the plugin API (#384) (Dominic Kramer) [#384](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/384)
+* [[`0eb389668b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0eb389668b)] - Support Koa tracing through the plugin API (#380) (Dominic Kramer) [#380](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/380)
+* [[`837b892471`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/837b892471)] - Support restify tracing through the plugin API (#374) (Ali Ijaz Sheikh) 
+* [[`1cc616b37e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1cc616b37e)] - Remove agent.stop() (#378) (Kelvin Jin) [#378](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/378)
+* [[`1e109d2c90`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1e109d2c90)] - Plugin API: Interface change (#386) (Kelvin Jin) [#386](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/386)
+* [[`9743556fed`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9743556fed)] - Plugin API: Added module unpatching and updated tests correspondingly (#383) (Kelvin Jin) [#383](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/383)
+* [[`9011c8aca3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9011c8aca3)] - Plugin API: Loading Improvements (#372) (Kelvin Jin) [#372](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/372)
+* [[`b41e921f18`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b41e921f18)] - Remove agent isRunning/trace isActive (#368) (Matthew Loring) [#368](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/368)
+* [[`ad18074227`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ad18074227)] - Run all tests stand alone (#369) (Matthew Loring) [#369](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/369)
+* [[`8d34ed46f6`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8d34ed46f6)] - Plugin API: Add createChildSpan (#373) (Kelvin Jin) [#373](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/373)
+* [[`b17394d5f1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b17394d5f1)] - Plugin API: Additional comments, logging, handling no namespace (#366) (Kelvin Jin) 
+* [[`c999103951`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c999103951)] - Remove the trace constructor and rename startAgent (#367) (Dominic Kramer) [#367](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/367)
+
 ## 2017-01-19, Version 0.6.1 (Experimental), @matthewloring
 
 ### Commits
