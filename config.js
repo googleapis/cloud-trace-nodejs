@@ -53,7 +53,8 @@ module.exports = {
       'mysql': path.join(__dirname, 'src/plugins/plugin-mysql.js'),
       'pg': path.join(__dirname, 'src/plugins/plugin-pg.js'),
       'redis': path.join(__dirname, 'src/plugins/plugin-redis.js'),
-      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
+      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js'),
+      'generic-pool': path.join(__dirname, 'src/plugins/plugin-generic-pool.js')
     },
 
     // @type {number} max number of frames to include on traces (0 disables)
