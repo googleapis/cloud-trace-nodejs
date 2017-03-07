@@ -9,6 +9,7 @@ environment:
 services:
   - mongodb
   - mysql
+  - postgresql
 
 # Install scripts. (runs after repo cloning)
 install:
@@ -28,6 +29,10 @@ install:
 before_test:
   - SET PATH=C:\Program Files\MySql\MySQL Server 5.7\bin;%PATH%
   - mysqladmin --host=localhost --user=root --password=Password12! create test
+  - SET PGUSER=postgres
+  - SET PGPASSWORD=Password12!
+  - PATH=C:\Program Files\PostgreSQL\9.4\bin\;%PATH%
+  - createdb test
 
 # Post-install test scripts.
 test_script:
