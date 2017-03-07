@@ -21,6 +21,7 @@ if (!process.env.GCLOUD_PROJECT) {
 }
 
 var assert = require('assert');
+var common = require('./common');
 
 describe('generic-pool', function() {
   var agent;
@@ -28,6 +29,10 @@ describe('generic-pool', function() {
   before(function() {
     agent = require('../..').start({ samplingRate: 0, stackTraceLimit: 0 });
     genericPool = require('../hooks/fixtures/generic-pool-3');
+  });
+
+  after(function() {
+    common.stopAgent(agent);
   });
 
   it ('preserves context', function() {
@@ -66,8 +71,7 @@ describe('generic-pool', function() {
         fn('SomeInput');
         span.endSpan();
       }).then(function() {
-        var trace = agent.private_().traceWriter.buffer_[0];
-        var spans = JSON.parse(trace).spans;
+        var spans = common.getTraces(agent)[0].spans;
         assert.ok(spans);
         assert.strictEqual(spans.length, 2);
         assert.strictEqual(spans[0].name, rootSpanName);

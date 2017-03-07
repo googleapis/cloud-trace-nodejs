@@ -40,22 +40,3 @@ module.exports = [
     patch: patchModuleRoot
   },
 ];
-
-/*
-
-var util = require('util');
-var cls = require('../cls.js');
-
-      var transaction = api.getTransaction();
-      console.log('NAMESPACE=' + util.inspect( transaction ));
-
-      //var rootContext = cls.getRootContext();
-      //var ns = rootContext.agent.namespace;
-
-      var ns = cls.getNamespace().active.root.agent.namespace;
-
-
-
-
-
-*/
