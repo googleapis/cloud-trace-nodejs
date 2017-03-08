@@ -96,6 +96,15 @@ function patchClient(client, api) {
         var metadata = new Metadata();
         if (!method.requestStream) {
           // unary or server stream
+          if (args.length === 0) {
+            // No argument (for the gRPC call) was provided, so we will have to
+            // provide one, since metadata cannot be the first argument.
+            // The internal representation of argument defaults to undefined
+            // in its non-presence.
+            // Note that we can't pass null instead of undefined because the
+            // serializer within gRPC doesn't accept it.
+            args.push(undefined);
+          }
           metaIndex = 1;
         } else {
           // client stream or bidi
