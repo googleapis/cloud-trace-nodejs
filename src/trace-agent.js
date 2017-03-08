@@ -24,6 +24,7 @@ var uuid = require('uuid');
 var constants = require('./constants.js');
 var tracingPolicy = require('./tracing-policy.js');
 var isEqual = require('lodash.isequal');
+var util = require('./util.js');
 
 /** @type {TraceAgent} */
 var traceAgent;
@@ -164,11 +165,9 @@ TraceAgent.prototype.isTraceAgentRequest = function(options) {
 };
 
 /**
- * Parse a cookie-style header string to extract traceId, spandId and options
- * ex: '123456/667;o=3'
- * -> {traceId: '123456', spanId: '667', options: '3'}
- * note that we ignore trailing garbage if there is more than one '='
- * Returns null if traceId or spanId could not be found.
+ * Parse a cookie-style header string to extract traceId, spandId and options,
+ * or returns null if the agent has been configured to ignore it.
+ * @see util.parseContextFromHeader
  *
  * @param {string} str string representation of the trace headers
  * @return {?{traceId: string, spanId: string, options: number}}
@@ -178,19 +177,7 @@ TraceAgent.prototype.parseContextFromHeader = function(str) {
   if (this.config_.ignoreContextHeader) {
     return null;
   }
-  if (!str) {
-    return null;
-  }
-  var matches = str.match(/^([0-9a-fA-F]+)(?:\/([0-9a-fA-F]+))?(?:;o=(.*))?/);
-  if (!matches || matches.length !== 4 || matches[0] !== str ||
-      (matches[2] && isNaN(matches[2]))) {
-    return null;
-  }
-  return {
-    traceId: matches[1],
-    spanId: matches[2],
-    options: Number(matches[3])
-  };
+  return util.parseContextFromHeader(str);
 };
 
 /**

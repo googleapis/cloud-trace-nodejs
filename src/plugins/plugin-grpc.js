@@ -21,6 +21,17 @@ var findIndex = require('lodash.findindex');
 
 var SKIP_FRAMES = 3;
 
+// Required for adding distributed tracing metadata to outgoing gRPC requests.
+// This value is assigned in patchMetadata, and used in patchClient.
+// patchMetadata is guaranteed to be called before patchClient because Client
+// depends on Metadata.
+var Metadata;
+
+function patchMetadata(metadata, api) {
+  // metadata is the value of module.exports of src/node/src/metadata.js
+  Metadata = metadata;
+}
+
 function patchClient(client, api) {
   /**
    * Wraps a callback so that the current span for this trace is also ended when
@@ -59,37 +70,48 @@ function patchClient(client, api) {
         // doesn't exist.
         return method.apply(this, arguments);
       }
+      var args = Array.prototype.slice.call(arguments);
       // Check if the response is through a stream or a callback.
       if (!method.responseStream) {
         // We need to wrap the callback with the context, to propagate it.
         // The callback is always required. It should be the only function in
         // the arguments, since we cannot send a function as an argument through
         // gRPC.
-        var cbIndex = findIndex(arguments, function(arg) {
+        var cbIndex = findIndex(args, function(arg) {
           return typeof arg === 'function';
         });
         if (cbIndex !== -1) {
-          arguments[cbIndex] = wrapCallback(span, arguments[cbIndex]);
+          args[cbIndex] = wrapCallback(span, args[cbIndex]);
         }
       }
-      var call = method.apply(this, arguments);
+      // This finds an instance of Metadata among the arguments.
+      // A possible issue that could occur is if the 'options' parameter from
+      // the user contains an '_internal_repr' as well as a 'getMap' function,
+      // but this is an extremely rare case.
+      var metaIndex = findIndex(args, function(arg) {
+        return arg && typeof arg === 'object' && arg._internal_repr &&
+            typeof arg.getMap === 'function';
+      });
+      if (metaIndex === -1) {
+        var metadata = new Metadata();
+        if (!method.requestStream) {
+          // unary or server stream
+          metaIndex = 1;
+        } else {
+          // client stream or bidi
+          metaIndex = 0;
+        }
+        args.splice(metaIndex, 0, metadata);
+      }
+      args[metaIndex].set(api.constants.TRACE_CONTEXT_HEADER_NAME,
+        span.getTraceContext());
+      var call = method.apply(this, args);
       // Add extra data only when call successfully goes through. At this point
       // we know that the arguments are correct.
       if (api.enhancedDatabaseReportingEnabled()) {
-        // This finds an instance of Metadata among the arguments.
-        // A possible issue that could occur is if the 'options' parameter from
-        // the user contains an '_internal_repr' as well as a 'getMap' function,
-        // but this is an extremely rare case.
-        var metaIndex = findIndex(arguments, function(arg) {
-          return arg && typeof arg === 'object' && arg._internal_repr &&
-              typeof arg.getMap === 'function';
-        });
-        if (metaIndex !== -1) {
-          var metadata = arguments[metaIndex];
-          span.addLabel('metadata', JSON.stringify(metadata.getMap()));
-        }
+        span.addLabel('metadata', JSON.stringify(args[metaIndex].getMap()));
         if (!method.requestStream) {
-          span.addLabel('argument', JSON.stringify(arguments[0]));
+          span.addLabel('argument', JSON.stringify(args[0]));
         }
       }
       // The user might need the current context in listeners to this stream.
@@ -142,6 +164,8 @@ function unpatchClient(client) {
 }
 
 function patchServer(server, api) {
+  var traceContextHeaderName = api.constants.TRACE_CONTEXT_HEADER_NAME;
+
   /**
    * A helper function to record metadata in a trace span. The return value of
    * this function can be used as the 'wrapper' argument to wrap sendMetadata.
@@ -171,13 +195,14 @@ function patchServer(server, api) {
     // We wrap it so that a span is started immediately beforehand, and ended
     // when the callback provided to it as an argument is invoked.
     shimmer.wrap(handlerSet, 'func', function (serverMethod) {
-      var rootSpanOptions = {
-        name: requestName,
-        url: requestName,
-        skipFrames: SKIP_FRAMES
-      };
       return function serverMethodTrace(call, callback) {
         var that = this;
+        var rootSpanOptions = {
+          name: requestName,
+          url: requestName,
+          traceContext: call.metadata.getMap()[traceContextHeaderName],
+          skipFrames: SKIP_FRAMES
+        };
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
           if (!rootSpan) {
             return serverMethod.call(that, call, callback);
@@ -221,13 +246,14 @@ function patchServer(server, api) {
     // We wrap it so that a span is started immediately beforehand, and ended
     // when there is no data to be sent from the server.
     shimmer.wrap(handlerSet, 'func', function (serverMethod) {
-      var rootSpanOptions = {
-        name: requestName,
-        url: requestName,
-        skipFrames: SKIP_FRAMES
-      };
       return function serverMethodTrace(stream) {
         var that = this;
+        var rootSpanOptions = {
+          name: requestName,
+          url: requestName,
+          traceContext: stream.metadata.getMap()[traceContextHeaderName],
+          skipFrames: SKIP_FRAMES
+        };
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
           if (!rootSpan) {
             return serverMethod.call(that, stream);
@@ -280,13 +306,14 @@ function patchServer(server, api) {
     // We wrap it so that a span is started immediately beforehand, and ended
     // when the callback provided to it as an argument is invoked.
     shimmer.wrap(handlerSet, 'func', function (serverMethod) {
-      var rootSpanOptions = {
-        name: requestName,
-        url: requestName,
-        skipFrames: SKIP_FRAMES
-      };
       return function serverMethodTrace(stream, callback) {
         var that = this;
+        var rootSpanOptions = {
+          name: requestName,
+          url: requestName,
+          traceContext: stream.metadata.getMap()[traceContextHeaderName],
+          skipFrames: SKIP_FRAMES
+        };
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
           if (!rootSpan) {
             return serverMethod.call(that, stream, callback);
@@ -336,13 +363,14 @@ function patchServer(server, api) {
     // We wrap it so that a span is started immediately beforehand, and ended
     // when there is no data to be sent from the server.
     shimmer.wrap(handlerSet, 'func', function (serverMethod) {
-      var rootSpanOptions = {
-        name: requestName,
-        url: requestName,
-        skipFrames: SKIP_FRAMES
-      };
       return function serverMethodTrace(stream) {
         var that = this;
+        var rootSpanOptions = {
+          name: requestName,
+          url: requestName,
+          traceContext: stream.metadata.getMap()[traceContextHeaderName],
+          skipFrames: SKIP_FRAMES
+        };
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
           if (!rootSpan) {
             return serverMethod.call(that, stream);
@@ -440,6 +468,12 @@ module.exports = [
     versions: SUPPORTED_VERSIONS,
     patch: patchClient,
     unpatch: unpatchClient
+  },
+  {
+    file: 'src/node/src/metadata.js',
+    versions: SUPPORTED_VERSIONS,
+    patch: patchMetadata,
+    unpatch: function unpatchMetadata() {} // no-op
   },
   {
     file: 'src/node/src/server.js',

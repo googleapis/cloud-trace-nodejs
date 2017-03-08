@@ -51,6 +51,33 @@ var moduleRegex = new RegExp(
 );
 
 /**
+ * Parse a cookie-style header string to extract traceId, spandId and options
+ * ex: '123456/667;o=3'
+ * -> {traceId: '123456', spanId: '667', options: '3'}
+ * note that we ignore trailing garbage if there is more than one '='
+ * Returns null if traceId or spanId could not be found.
+ *
+ * @param {string} str string representation of the trace headers
+ * @return {?{traceId: string, spanId: string, options: number}}
+ *         object with keys. null if there is a problem.
+ */
+function parseContextFromHeader(str) {
+  if (!str) {
+    return null;
+  }
+  var matches = str.match(/^([0-9a-fA-F]+)(?:\/([0-9a-fA-F]+))?(?:;o=(.*))?/);
+  if (!matches || matches.length !== 4 || matches[0] !== str ||
+      (matches[2] && isNaN(matches[2]))) {
+    return null;
+  }
+  return {
+    traceId: matches[1],
+    spanId: matches[2],
+    options: Number(matches[3])
+  };
+}
+
+/**
  * Retrieves a package name from the full import path.
  * For example:
  *   './node_modules/bar/index/foo.js' => 'bar'
@@ -100,6 +127,7 @@ function findModuleVersion(modulePath, load) {
 
 module.exports = {
   truncate: truncate,
+  parseContextFromHeader: parseContextFromHeader,
   packageNameFromPath: packageNameFromPath,
   findModulePath: findModulePath,
   findModuleVersion: findModuleVersion
