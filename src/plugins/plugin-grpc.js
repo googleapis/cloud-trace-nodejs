@@ -482,7 +482,9 @@ module.exports = [
     file: 'src/node/src/metadata.js',
     versions: SUPPORTED_VERSIONS,
     patch: patchMetadata,
-    unpatch: function unpatchMetadata() {} // no-op
+    // patchMetadata doesn't modify the module exports of metadata.js.
+    // So it's safe to have provide a no-op unpatch function.
+    unpatch: function unpatchMetadata() {}
   },
   {
     file: 'src/node/src/server.js',
