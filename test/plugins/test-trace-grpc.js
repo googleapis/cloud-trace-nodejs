@@ -289,6 +289,7 @@ Object.keys(versions).forEach(function(version) {
 
     afterEach(function() {
       common.cleanTraces(agent);
+      common.clearNamespace(agent);
       checkMetadata = false;
     });
 
