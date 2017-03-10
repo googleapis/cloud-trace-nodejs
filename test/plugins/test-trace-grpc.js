@@ -16,6 +16,9 @@
 'use strict';
 
 var assert = require('assert');
+var cls = require('../../src/cls.js');
+var util = require('../../src/util.js');
+var constants = require('../../src/constants.js');
 var traceLabels = require('../../src/trace-labels.js');
 
 var versions = {
@@ -30,10 +33,29 @@ var grpcPort = 50051;
 var SEND_METADATA = 131;
 var EMIT_ERROR = 13412;
 
+// Regular expression matching client-side metadata labels
+var metadataRegExp =
+  /^{"a":"b","x-cloud-trace-context":"[a-f0-9]{32}\/[0-9]+;o=1"}$/;
+
+// Whether asserts in checkServerMetadata should be run
+// Turned on only for the test that checks propagated tract context
+var checkMetadata;
+
+function checkServerMetadata(metadata) {
+  if (checkMetadata) {
+    var traceContext = metadata.getMap()[constants.TRACE_CONTEXT_HEADER_NAME];
+    assert.ok(/[a-f0-9]{32}\/[0-9]+;o=1/.test(traceContext));
+    var parsedContext = util.parseContextFromHeader(traceContext);
+    var root = cls.getNamespace().get('root');
+    assert.strictEqual(root.span.parentSpanId, parsedContext.spanId);
+  }
+}
+
 function startServer(proto, grpc, common, agent, metadata, trailing_metadata) {
   var _server = new grpc.Server();
   _server.addProtoService(proto.Tester.service, {
     testUnary: function(call, cb) {
+      checkServerMetadata(call.metadata);
       if (call.request.n === EMIT_ERROR) {
         common.createChildSpan(agent, function () {
           cb(new Error('test'));
@@ -50,6 +72,7 @@ function startServer(proto, grpc, common, agent, metadata, trailing_metadata) {
       }
     },
     testClientStream: function(call, cb) {
+      checkServerMetadata(call.metadata);
       var sum = 0;
       var triggerCb = function () {
         cb(null, {n: sum});
@@ -82,6 +105,7 @@ function startServer(proto, grpc, common, agent, metadata, trailing_metadata) {
       });
     },
     testServerStream: function(stream) {
+      checkServerMetadata(stream.metadata);
       if (stream.request.n === EMIT_ERROR) {
         common.createChildSpan(agent, function () {
           stream.emit('error', new Error('test'));
@@ -99,6 +123,7 @@ function startServer(proto, grpc, common, agent, metadata, trailing_metadata) {
       }
     },
     testBidiStream: function(stream) {
+      checkServerMetadata(stream.metadata);
       var sum = 0;
       var stopChildSpan;
       var t = setTimeout(function() {
@@ -140,28 +165,55 @@ function createClient(proto, grpc) {
       grpc.credentials.createInsecure());
 }
 
-function callUnary(client, cb) {
-  client.testUnary({n: 42}, function(err, result) {
-    assert.ifError(err);
-    assert.strictEqual(result.n, 42);
-    cb();
-  });
+function callUnary(client, grpc, metadata, cb) {
+  var args = [
+    {n: 42},
+    function(err, result) {
+      assert.ifError(err);
+      assert.strictEqual(result.n, 42);
+      cb();
+    }
+  ];
+  if (Object.keys(metadata).length > 0) {
+    var m = new grpc.Metadata();
+    for (var key in metadata) {
+      m.add(key, metadata[key]);
+    }
+    args.splice(1, 0, m);
+  }
+  client.testUnary.apply(client, args);
 }
 
-function callClientStream(client, cb) {
-  var stream = client.testClientStream(function(err, result) {
+function callClientStream(client, grpc, metadata, cb) {
+  var args = [function(err, result) {
     assert.ifError(err);
     assert.strictEqual(result.n, 45);
     cb();
-  });
+  }];
+  if (Object.keys(metadata).length > 0) {
+    var m = new grpc.Metadata();
+    for (var key in metadata) {
+      m.set(key, metadata[key]);
+    }
+    args.unshift(m);
+  }
+  var stream = client.testClientStream.apply(client, args);
   for (var i = 0; i < 10; ++i) {
     stream.write({n: i});
   }
   stream.end();
 }
 
-function callServerStream(client, grpc, cb) {
-  var stream = client.testServerStream({n: 42});
+function callServerStream(client, grpc, metadata, cb) {
+  var args = [ {n: 42} ];
+  if (Object.keys(metadata).length > 0) {
+    var m = new grpc.Metadata();
+    for (var key in metadata) {
+      m.add(key, metadata[key]);
+    }
+    args.push(m);
+  }
+  var stream = client.testServerStream.apply(client, args);
   var sum = 0;
   stream.on('data', function(data) {
     sum += data.n;
@@ -173,8 +225,16 @@ function callServerStream(client, grpc, cb) {
   });
 }
 
-function callBidi(client, grpc, cb) {
-  var stream = client.testBidiStream();
+function callBidi(client, grpc, metadata, cb) {
+  var args = [];
+  if (Object.keys(metadata).length > 0) {
+    var m = new grpc.Metadata();
+    for (var key in metadata) {
+      m.add(key, metadata[key]);
+    }
+    args.push(m);
+  }
+  var stream = client.testBidiStream.apply(client, args);
   var sum = 0;
   stream.on('data', function(data) {
     sum += data.n;
@@ -229,12 +289,14 @@ Object.keys(versions).forEach(function(version) {
 
     afterEach(function() {
       common.cleanTraces(agent);
+      common.clearNamespace(agent);
+      checkMetadata = false;
     });
 
     it('should accurately measure time for unary requests', function(done) {
       var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
-        callUnary(client, function() {
+        callUnary(client, grpc, {}, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
@@ -256,7 +318,7 @@ Object.keys(versions).forEach(function(version) {
     it('should accurately measure time for client streaming requests', function(done) {
       var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
-        callClientStream(client, function() {
+        callClientStream(client, grpc, {}, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
@@ -276,7 +338,7 @@ Object.keys(versions).forEach(function(version) {
     it('should accurately measure time for server streaming requests', function(done) {
       var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
-        callServerStream(client, grpc, function() {
+        callServerStream(client, grpc, {}, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
@@ -299,7 +361,7 @@ Object.keys(versions).forEach(function(version) {
     it('should accurately measure time for bidi streaming requests', function(done) {
       var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {
-        callBidi(client, grpc, function() {
+        callBidi(client, grpc, {}, function() {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(agent, predicate);
@@ -319,7 +381,7 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should not break if no parent transaction', function(done) {
-      callUnary(client, function() {
+      callUnary(client, grpc, {}, function() {
         assert.strictEqual(common.getMatchingSpans(agent, grpcClientPredicate).length, 0);
         done();
       });
@@ -340,11 +402,39 @@ Object.keys(versions).forEach(function(version) {
         assert.deepEqual(args[0], [prefix + 'BidiStream', undefined]);
         done();
       };
-      next = callUnary.bind(null, client, next);
-      next = callClientStream.bind(null, client, next);
-      next = callServerStream.bind(null, client, grpc, next);
-      next = callBidi.bind(null, client, grpc, next);
+      next = callUnary.bind(null, client, grpc, {}, next);
+      next = callClientStream.bind(null, client, grpc, {}, next);
+      next = callServerStream.bind(null, client, grpc, {}, next);
+      next = callBidi.bind(null, client, grpc, {}, next);
       next();
+    });
+
+    it('should support distributed trace context', function(done) {
+      // Enable asserting properties of the metdata on the grpc server.
+      checkMetadata = true;
+      common.runInTransaction(agent, function (endTransaction) {
+        var metadata = { a: 'b' };
+        var next = function() {
+          endTransaction();
+          checkMetadata = false;
+          done();
+        };
+        // Try without supplying metadata (call* will not supply metadata to
+        // the grpc client methods at all if no fields are present).
+        // The plugin should automatically create a new Metadata object and
+        // populate it with trace context data accordingly.
+        next = callUnary.bind(null, client, grpc, {}, next);
+        next = callClientStream.bind(null, client, grpc, {}, next);
+        next = callServerStream.bind(null, client, grpc, {}, next);
+        next = callBidi.bind(null, client, grpc, {}, next);
+        // Try with metadata. The plugin should simply add trace context data
+        // to it.
+        next = callUnary.bind(null, client, grpc, metadata, next);
+        next = callClientStream.bind(null, client, grpc, metadata, next);
+        next = callServerStream.bind(null, client, grpc, metadata, next);
+        next = callBidi.bind(null, client, grpc, metadata, next);
+        next();
+      });
     });
 
     it('should not let root spans interfere with one another', function(done) {
@@ -387,10 +477,10 @@ Object.keys(versions).forEach(function(version) {
       };
 
       // Call queueCallTogether with every possible pair of gRPC calls.
-      var methods = [ callUnary.bind(null, client),
-                      callClientStream.bind(null, client),
-                      callServerStream.bind(null, client, grpc),
-                      callBidi.bind(null, client, grpc) ];
+      var methods = [ callUnary.bind(null, client, grpc, {}),
+                      callClientStream.bind(null, client, grpc, {}),
+                      callServerStream.bind(null, client, grpc, {}),
+                      callBidi.bind(null, client, grpc, {}) ];
       for (var m of methods) {
         for (var n of methods) {
           queueCallTogether(m, n);
@@ -517,7 +607,7 @@ Object.keys(versions).forEach(function(version) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
             common.assertDurationCorrect(agent, Date.now() - start, predicate);
-            assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+            assert.ok(metadataRegExp.test(trace.labels.metadata));
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
@@ -540,7 +630,7 @@ Object.keys(versions).forEach(function(version) {
             var trace = common.getMatchingSpan(agent, predicate);
             assert(trace);
             common.assertDurationCorrect(agent, Date.now() - start, predicate);
-            assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+            assert.ok(metadataRegExp.test(trace.labels.metadata));
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
@@ -560,7 +650,7 @@ Object.keys(versions).forEach(function(version) {
               var trace = common.getMatchingSpan(agent, predicate);
               assert(trace);
               common.assertDurationCorrect(agent, Date.now() - start, predicate);
-              assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+              assert.ok(metadataRegExp.test(trace.labels.metadata));
               return trace;
             };
             assertTraceProperties(grpcClientPredicate);
@@ -582,7 +672,7 @@ Object.keys(versions).forEach(function(version) {
               var trace = common.getMatchingSpan(agent, predicate);
               assert(trace);
               common.assertDurationCorrect(agent, Date.now() - start, predicate);
-              assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+              assert.ok(metadataRegExp.test(trace.labels.metadata));
               return trace;
             };
             assertTraceProperties(grpcClientPredicate);
@@ -607,7 +697,7 @@ Object.keys(versions).forEach(function(version) {
                   var trace = common.getMatchingSpan(agent, predicate);
                   assert(trace);
                   common.assertDurationCorrect(agent, Date.now() - start, predicate);
-                  assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+                  assert.ok(metadataRegExp.test(trace.labels.metadata));
                   return trace;
                 };
                 assertTraceProperties(grpcClientPredicate);
@@ -630,7 +720,7 @@ Object.keys(versions).forEach(function(version) {
                   var trace = common.getMatchingSpan(agent, predicate);
                   assert(trace);
                   common.assertDurationCorrect(agent, Date.now() - start, predicate);
-                  assert.strictEqual(trace.labels.metadata, '{"a":"b"}');
+                  assert.ok(metadataRegExp.test(trace.labels.metadata));
                   return trace;
                 };
                 assertTraceProperties(grpcClientPredicate);
