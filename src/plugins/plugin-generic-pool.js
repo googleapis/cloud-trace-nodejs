@@ -31,6 +31,18 @@ function patchModuleRoot(genericPool, api) {
       return result;
     };
   });
+
+  shimmer.wrap(genericPool, 'Pool', function(OriginalPool) {
+    return function(Evictor, Deque, PriorityQueue, factory, options) {
+      var pool = new OriginalPool(Evictor, Deque, PriorityQueue, factory, options);
+      pool._factory = {
+        create: api.wrap(pool._factory.create),
+        destroy: api.wrap(pool._factory.destory),
+        validate: api.wrap(pool._factory.validate)
+      };
+      return pool;
+    };
+  });
 }
 
 module.exports = [
@@ -38,5 +50,5 @@ module.exports = [
     file: '',
     versions: '3.x.x',
     patch: patchModuleRoot
-  },
+  }
 ];
