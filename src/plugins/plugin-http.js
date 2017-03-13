@@ -76,8 +76,24 @@ function patchRequest (http, api) {
       var req = request.call(this, options, function(res) {
         api.wrapEmitter(res);
         var numBytes = 0;
-        res.on('data', function (chunk) {
-          numBytes += chunk.length;
+        var listenerAttached = false;
+        // Responses returned by http#request are yielded in paused mode. Attaching
+        // a 'data' listener to the request will switch the stream to flowing mode
+        // which could cause the request to drain before the calling framework has
+        // a chance to attach their own listeners. To avoid this, we attach our listener
+        // lazily.
+        // This approach to tracking data size will not observe data read by
+        // explicitly calling `read` on the request. We expect this to be very
+        // uncommon as it is not mentioned in any of the official documentation.
+        shimmer.wrap(res, 'on', function onWrap(on) {
+          return function on_trace(eventName, cb) {
+            if (eventName === 'data' && !listenerAttached) {
+              on.call(this, 'data', function(chunk) {
+                numBytes += chunk.length;
+              });
+            }
+            on.apply(this, arguments);
+          };
         });
         res.on('end', function () {
           requestLifecycleSpan

@@ -17,6 +17,7 @@
 
 var common = require('./common.js');
 var constants = require('../../src/constants.js');
+var stream = require('stream');
 var TraceLabels = require('../../src/trace-labels.js');
 
 var agent = require('../..').start({ samplingRate: 0 });
@@ -60,19 +61,6 @@ describe('test-trace-http', function() {
     );
   });
 
-  it('should accurately measure get time, no callback', function(done) {
-    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
-      function(endTransaction) {
-        http.get({port: common.serverPort, headers: {}});
-        setTimeout(function() {
-          endTransaction();
-          common.assertDurationCorrect(agent, common.serverWait);
-          done();
-        }, common.serverWait * 1.5);
-      })
-    );
-  });
-
   it('should not trace api requests', function(done) {
     server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {
@@ -97,6 +85,31 @@ describe('test-trace-http', function() {
         http.get().on('error', function(err) {
           endTransaction();
           done();
+        });
+      })
+    );
+  });
+
+  it('should leave request streams in paused mode', function(done) {
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
+      function(endTransaction) {
+        var start = Date.now();
+        http.get({port: common.serverPort}, function(res) {
+          var result = '';
+          var writable = new stream.Writable();
+          writable._write = function(chunk, encoding, next) {
+              result += chunk;
+              next();
+          };
+          writable.on('finish', function() {
+            endTransaction();
+            assert.equal(common.serverRes, result);
+            common.assertDurationCorrect(agent, Date.now() - start);
+            done();
+          });
+          setImmediate(function() {
+            res.pipe(writable);
+          });
         });
       })
     );
