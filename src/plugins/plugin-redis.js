@@ -183,7 +183,7 @@ function unwrapInstallStreamListeners(redis) {
 module.exports = [
   {
     file: '',
-    versions: '2.6',
+    versions: '>=2.6',
     patch: function(redis, api) {
       wrapCreateStream(redis, api);
       wrapInternalSendCommand(redis, api);
@@ -197,7 +197,7 @@ module.exports = [
   },
   {
     file: '',
-    versions: '>2.3.x <2.6',
+    versions: '>2.3 <2.6',
     patch: function(redis, api) {
       wrapSendCommand(redis, api);
       wrapCreateStream(redis, api);
@@ -211,7 +211,7 @@ module.exports = [
   },
   {
     file: '',
-    versions: '<=2.3.x',
+    versions: '<=2.3',
     patch: function(redis, api) {
       wrapSendCommand(redis, api);
       wrapInstallStreamListeners(redis, api);
