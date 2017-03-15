@@ -1,5 +1,34 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-03-15, Version 1.0.1 (Experimental), @kjin
+
+### Notable changes
+
+**bug fixes**
+
+  * [[`ca4b67bd44`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ca4b67bd44)] - Ensure http response streams are paused (#438) (Matthew Loring) [#438](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/438)
+
+**new plugins**
+
+  * [[`1ab25b2804`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1ab25b2804)] - Experimental postgres plugin (#402) (Matthew Loring) [#402](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/402)
+  * [[`dc41a8b3ab`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/dc41a8b3ab)] - Context propagation for google-gax (#404) (Matthew Loring) [#404](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/404)
+
+**redis**
+
+  * [[`72ab6775ce`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/72ab6775ce)] - Support redis 2.7 (#439) (Kelvin Jin) [#439](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/439)
+
+**grpc**
+
+  * [[`71cd5c3178`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/71cd5c3178)] - Distributed tracing support in gRPC (#436) (Kelvin Jin) [#436](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/436)
+
+### Commits
+
+* [[`ca4b67bd44`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ca4b67bd44)] - Ensure http response streams are paused (#438) (Matthew Loring) [#438](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/438)
+* [[`72ab6775ce`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/72ab6775ce)] - Support redis 2.7 (#439) (Kelvin Jin) [#439](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/439)
+* [[`71cd5c3178`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/71cd5c3178)] - Distributed tracing support in gRPC (#436) (Kelvin Jin) [#436](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/436)
+* [[`1ab25b2804`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1ab25b2804)] - Experimental postgres plugin (#402) (Matthew Loring) [#402](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/402)
+* [[`dc41a8b3ab`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/dc41a8b3ab)] - Context propagation for google-gax (#404) (Matthew Loring) [#404](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/404)
+
 ## 2017-03-01, Version 1.0.0 (Experimental), @matthewloring
 
 This version does not include any changes since 1.0.0-rc1. It is the first publish to the new module name: @google-cloud/trace-agent.
