@@ -1,5 +1,12 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-03-20, Version 0.6.3 (Deprecated), @kjin
+
+This module has been renamed to [@google-cloud/trace-agent](https://www.npmjs.com/package/@google-cloud/trace-agent). No more releases will be made with the old
+module name.
+
+The renamed module contains a number of semver-major changes, specifically in the custom span API. Please refer to the [changelog](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/blob/master/CHANGELOG.md) for the renamed module for a full summary of changes.
+
 ## 2017-02-07, Version 0.6.2 (Experimental), @kjin
 
 ### Notable changes
