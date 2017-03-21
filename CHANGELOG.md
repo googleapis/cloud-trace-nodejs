@@ -5,7 +5,7 @@
 This module has been renamed to [@google-cloud/trace-agent](https://www.npmjs.com/package/@google-cloud/trace-agent). No more releases will be made with the old
 module name.
 
-The renamed module contains a number of semver-major changes, specifically in the custom span API. Please refer to the [changelog](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/blob/master/CHANGELOG.md) for the renamed module for a full summary of changes.
+The renamed module contains a number of semver-major changes, specifically in the custom span API. Please refer to the [changelog](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/blob/545c9ae118269b8bf95b1f97270cd0a308f376a1/CHANGELOG.md#2017-02-28-version-100-rc1-experimental-matthewloring) for the renamed module for a full summary of changes.
 
 ## 2017-02-07, Version 0.6.2 (Experimental), @kjin
 
