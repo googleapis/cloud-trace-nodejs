@@ -37,6 +37,7 @@ function createMiddleware(api) {
     var originalEnd = res.end;
     var options = {
       name: urlParse(req.url).pathname,
+      url: urlParse(req.url).pathname,
       traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME],
       skipFrames: 3
     };
