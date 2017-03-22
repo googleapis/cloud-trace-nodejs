@@ -23,6 +23,7 @@ function createMiddleware(api) {
   return function middleware(req, res, next) {
     var options = {
       name: urlParse(req.originalUrl).pathname,
+      url: req.originalUrl,
       traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME.toLowerCase()],
       skipFrames: 3
     };

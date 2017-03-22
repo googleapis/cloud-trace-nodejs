@@ -27,7 +27,10 @@ describe('test-trace-koa', function() {
   var agent;
   var koa;
   before(function() {
-    agent = require('../..').start();
+    agent = require('../..').start({
+      ignoreUrls: ['/ignore'],
+      samplingRate: 0
+    });
     koa = require('./fixtures/koa1');
   });
 
@@ -132,6 +135,23 @@ describe('test-trace-koa', function() {
       http.get({port: common.serverPort}, function(res) {
         assert(
           res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+        done();
+      });
+    });
+  });
+
+  it('should not trace ignored urls', function(done) {
+    var app = koa();
+    app.use(function* () {
+      this.body = yield function(cb) {
+        setTimeout(function() {
+          cb(null, common.serverRes);
+        }, common.serverWait);
+      };
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
+        assert.equal(common.getTraces(agent).length, 0);
         done();
       });
     });

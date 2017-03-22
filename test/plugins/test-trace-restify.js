@@ -32,7 +32,10 @@ describe('restify', function() {
   var agent;
 
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 });
+    agent = require('../..').start({
+      ignoreUrls: ['/ignore'],
+      samplingRate: 0
+    });
   });
 
   var server;
@@ -231,6 +234,24 @@ describe('restify', function() {
           http.get({port: common.serverPort}, function(res) {
             assert(
               res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+            done();
+          });
+        });
+      });
+
+      it('should not trace ignored urls', function(done) {
+        server = restify.createServer();
+        server.get('/ignore/me', function (req, res, next) {
+          res.writeHead(200, {
+            'Content-Type': 'text/plain'
+          });
+          res.write(common.serverRes);
+          res.end();
+          return next();
+        });
+        server.listen(common.serverPort, function() {
+          http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
+            assert.equal(common.getTraces(agent).length, 0);
             done();
           });
         });
