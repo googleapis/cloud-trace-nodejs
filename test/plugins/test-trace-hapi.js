@@ -41,7 +41,10 @@ describe('hapi', function() {
   var agent;
 
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 });
+    agent = require('../..').start({
+      ignoreUrls: ['/ignore'],
+      samplingRate: 0
+    });
   });
 
   Object.keys(versions).forEach(function(version) {
@@ -276,6 +279,24 @@ describe('hapi', function() {
           http.get({port: common.serverPort}, function(res) {
             assert(
               res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+            done();
+          });
+        });
+      });
+
+      it('should not trace ignored urls', function(done) {
+        server = new hapi.Server();
+        server.connection({ port: common.serverPort });
+        server.route({
+          method: 'GET',
+          path: '/ignore/me',
+          handler: function (req, reply) {
+            reply(common.serverRes);
+          }
+        });
+        server.start(function() {
+          http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
+            assert.equal(common.getTraces(agent).length, 0);
             done();
           });
         });

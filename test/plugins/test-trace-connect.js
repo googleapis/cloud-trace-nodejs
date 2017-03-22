@@ -28,7 +28,10 @@ describe('test-trace-connect', function() {
   var agent;
   var connect;
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 });
+    agent = require('../..').start({
+      ignoreUrls: ['/ignore'],
+      samplingRate: 0
+    });
     connect = require('./fixtures/connect3');
     // Mute stderr to satiate appveyor
     write = process.stderr.write;
@@ -161,6 +164,19 @@ describe('test-trace-connect', function() {
       http.get({port: common.serverPort}, function(res) {
         assert(
           res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+        done();
+      });
+    });
+  });
+
+  it('should not trace ignored urls', function(done) {
+    var app = connect();
+    app.use('/ignore/me', function (req, res) {
+      res.end(common.serverRes);
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
+        assert.equal(common.getTraces(agent).length, 0);
         done();
       });
     });

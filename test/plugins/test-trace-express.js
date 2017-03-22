@@ -28,7 +28,10 @@ describe('test-trace-express', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 });
+    agent = require('../..').start({
+      ignoreUrls: ['/ignore'],
+      samplingRate: 0
+    });
     express = require('./fixtures/express4');
 
     // Mute stderr to satiate appveyor
@@ -230,6 +233,19 @@ describe('test-trace-express', function() {
       http.get({port: common.serverPort}, function(res) {
         assert(
           res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+        done();
+      });
+    });
+  });
+
+  it('should not trace ignored urls', function(done) {
+    var app = express();
+    app.get('/ignore/me', function (req, res) {
+      res.send(common.serverRes);
+    });
+    server = app.listen(common.serverPort, function() {
+      http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
+        assert.equal(common.getTraces(agent).length, 0);
         done();
       });
     });
