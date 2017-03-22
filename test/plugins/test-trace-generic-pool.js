@@ -23,7 +23,7 @@ if (!process.env.GCLOUD_PROJECT) {
 var assert = require('assert');
 var common = require('./common');
 
-describe('generic-pool', function() {
+describe('generic-pool-3', function() {
   var agent;
   var genericPool;
   before(function() {
