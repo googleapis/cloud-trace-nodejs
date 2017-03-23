@@ -41,7 +41,8 @@ function run {
 # Run test/coverage
 for test in test/test-*.js test/plugins/*.js ;
 do
-  if [[ ! $(node --version) =~ v0\.12\..* || ! "${test}" =~ .*trace\-koa\.js ]]
+# not v0.12 or not koa = not (v0.12 and koa)
+  if [[ ! $(node --version) =~ v0\.12\..* || ! "${test}" =~ .*trace\-(koa|google\-gax)\.js ]]
   then
     run "${test}"
   fi
