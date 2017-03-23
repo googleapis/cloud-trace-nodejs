@@ -116,7 +116,7 @@ The agent will also automatic trace of the following kinds of RPCs:
 * [Redis](https://www.npmjs.com/package/redis) (versions 0.12 - 2)
 * [MySQL](https://www.npmjs.com/package/mysql) (version ^2.9)
 
-*Note: The latest versions of gRPC (versions 1.1 and up) have dropped support for Node.js <4.0. We do not officially support tracing gRPC on unsupported versions of Node.js.
+*Note: The latest versions of gRPC (versions 1.1 and up) have dropped support for Node.js <4.0. We do not support tracing gRPC on unsupported versions of Node.js.
 
 You can use the [Custom Tracing API](#custom-tracing-api) to trace other processes in your application.
 
