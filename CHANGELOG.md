@@ -1,5 +1,14 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-03-24, Version 1.0.2 (Experimental), @kjin
+
+### Commits
+
+* [[`39e1c517e4`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/39e1c517e4)] - Track download counts with non-namespaced dependency (#449) (Kelvin Jin) [#449](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/449)
+* [[`c200674954`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c200674954)] - Stop running google-gax unit test on v0.12 (#450) (Kelvin Jin) [#450](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/450)
+* [[`733f33c3c2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/733f33c3c2)] - Assign url field in Connect and Koa (#448) (Kelvin Jin) [#448](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/448)
+* [[`c108b35d49`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c108b35d49)] - Add url field to hapi middleware options (#447) (Ethan Rubio) [#447](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/447)
+
 ## 2017-03-15, Version 1.0.1 (Experimental), @kjin
 
 ### Notable changes
