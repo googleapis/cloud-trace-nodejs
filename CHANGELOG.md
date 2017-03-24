@@ -1,5 +1,11 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-03-24, Version 1.0.3 (Experimental), @kjin
+
+### Commits
+
+* [[`0e71269b5b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0e71269b5b)] - Include the correct dummy package (#452) (Kelvin Jin) [#452](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/452)
+
 ## 2017-03-24, Version 1.0.2 (Experimental), @kjin
 
 ### Commits
