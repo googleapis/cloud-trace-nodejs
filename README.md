@@ -103,18 +103,20 @@ This is the trace list that shows a sampling of the incoming requests your appli
 
 The trace agent can do automatic tracing of the following web frameworks:
 * [express](https://www.npmjs.com/package/express) (version 4)
-* [gRPC](https://www.npmjs.com/package/grpc) server (version 1)
+* [gRPC](https://www.npmjs.com/package/grpc)* server (version 1)
 * [hapi](https://www.npmjs.com/package/hapi) (versions 8 - 16)
 * [koa](https://www.npmjs.com/package/koa) (version 1)
 * [restify](https://www.npmjs.com/package/restify) (versions 3 - 4)
 
 The agent will also automatic trace of the following kinds of RPCs:
 * Outbound HTTP requests through the `http` and `https` core modules
-* [gRPC](https://www.npmjs.com/package/grpc) client (version 1)
+* [gRPC](https://www.npmjs.com/package/grpc)* client (version 1)
 * [MongoDB-core](https://www.npmjs.com/package/mongodb-core) (version 1)
 * [Mongoose](https://www.npmjs.com/package/mongoose) (version 4)
 * [Redis](https://www.npmjs.com/package/redis) (versions 0.12 - 2)
 * [MySQL](https://www.npmjs.com/package/mysql) (version ^2.9)
+
+*Note: The latest versions of gRPC (versions 1.1 and up) have dropped support for Node.js <4.0. We do not support tracing gRPC on unsupported versions of Node.js.
 
 You can use the [Custom Tracing API](#custom-tracing-api) to trace other processes in your application.
 

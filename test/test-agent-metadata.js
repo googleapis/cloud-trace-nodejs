@@ -19,27 +19,27 @@
 var proxyquire  = require('proxyquire');
 var assert = require('assert');
 var nock = require('nock');
+var retryRequest = require('retry-request');
 var traceLabels = require('../src/trace-labels.js');
+
+// Monkeypatch gcp-metadata to not ask for retries at all.
+proxyquire('gcp-metadata', {
+  'retry-request': function(requestOps, callback) {
+    return retryRequest(requestOps, {
+      retries: 0
+    }, callback);
+  }
+});
+
+var common = require('./plugins/common.js');
+var trace = require('..');
 
 nock.disableNetConnect();
 
 describe('agent interaction with metadata service', function() {
   var agent;
-  var trace;
-  var common;
 
   before(function() {
-    // Setup: Monkeypatch gcp-metadata to not ask for retries at all.
-    var retryRequest = require('retry-request');
-    proxyquire('gcp-metadata', {
-      'retry-request': function(requestOps, callback) {
-        return retryRequest(requestOps, {
-          retries: 0
-        }, callback);
-      }
-    });
-    common = require('./plugins/common.js');
-    trace = require('..');
     delete process.env.GCLOUD_PROJECT;
   });
 
