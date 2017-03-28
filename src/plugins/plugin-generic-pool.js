@@ -16,8 +16,9 @@
 'use strict';
 
 var shimmer = require('shimmer');
+var isFunction = require('lodash.isfunction');
 
-function patchModuleRoot(genericPool, api) {
+function patchModuleRoot3(genericPool, api) {
   shimmer.wrap(genericPool.Pool.prototype, 'acquire', function(original) {
     return function() {
       var result = original.apply(this, arguments);
@@ -45,10 +46,31 @@ function patchModuleRoot(genericPool, api) {
   });
 }
 
+function wrapModuleRoot2(Pool, api) {
+  shimmer.wrap(Pool, 'Pool', function(OriginalPool) {
+    return function(factory) {
+      if (isFunction(factory.create)) {
+        factory.create = api.wrap(factory.create);
+      }
+
+      if (isFunction(factory.destroy)) {
+        factory.destroy = api.wrap(factory.destroy);
+      }
+
+      return new OriginalPool(factory);
+    };
+  });
+}
+
 module.exports = [
   {
     file: '',
     versions: '3.x.x',
-    patch: patchModuleRoot
+    patch: patchModuleRoot3
+  },
+  {
+    file: '',
+    versions: '2.x.x',
+    patch: wrapModuleRoot2
   }
 ];

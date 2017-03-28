@@ -23,12 +23,66 @@ if (!process.env.GCLOUD_PROJECT) {
 var assert = require('assert');
 var common = require('./common');
 
+describe('generic-pool-2', function() {
+  var ROOT_SPAN = 'root-span';
+  var CHILD_SPAN_1 = 'child-span-1';
+  var CHILD_SPAN_2 = 'child-span-2';
+
+  var api;
+  var genericPool;
+  before(function() {
+    api = require('../..').start({ samplingRate: 0, stackTraceLimit: 0 });
+    genericPool = require('./fixtures/generic-pool-2');
+  });
+
+  after(function() {
+    common.stopAgent(api);
+  });
+
+  it('perserves context', function(done) {
+    var config = {
+      name: 'generic-pool-2 test',
+      create: function(callback) {
+        callback(function() {
+          var childSpan = api.createChildSpan({ name: CHILD_SPAN_2 });
+          assert.ok(childSpan);
+          childSpan.endSpan();
+        });
+      },
+      destroy: function(fn) {
+      }
+    };
+
+    var pool;
+    api.runInRootSpan({ name: ROOT_SPAN }, function(span) {
+      pool = new genericPool.Pool(config);
+      span.endSpan();
+    });
+
+    pool.acquire(function(err, fn) {
+      assert.ifError(err);
+      var childSpan = api.createChildSpan({ name: CHILD_SPAN_1 });
+      assert.ok(childSpan);
+      fn();
+      childSpan.endSpan();
+      done();
+
+      var spans = common.getTraces(agent)[0].spans;
+      assert.ok(spans);
+      assert.strictEqual(spans.length, 3);
+      assert.strictEqual(spans[0].name, ROOT_SPAN);
+      assert.strictEqual(spans[1].name, CHILD_SPAN_1);
+      assert.strictEqual(spans[2].name, CHILD_SPAN_2);
+    });
+  });
+});
+
 describe('generic-pool-3', function() {
   var agent;
   var genericPool;
   before(function() {
     agent = require('../..').start({ samplingRate: 0, stackTraceLimit: 0 });
-    genericPool = require('../hooks/fixtures/generic-pool-3');
+    genericPool = require('./fixtures/generic-pool-3');
   });
 
   after(function() {
@@ -36,17 +90,17 @@ describe('generic-pool-3', function() {
   });
 
   it ('preserves context', function() {
-    var childSpanName1 = 'custom-child-span-1';
-    var childSpanName2 = 'custom-child-span-2';
-    var childSpanName3 = 'custom-child-span-3';
-    var rootSpanName = 'custom-root-span';
+    var ROOT_SPAN = 'root-span';
+    var CHILD_SPAN_1 = 'child-span-1';
+    var CHILD_SPAN_2 = 'child-span-2';
+    //var CHILD_SPAN_3 = 'child-span-3';
 
     var factory = {
       create: function() {
         return new Promise(function(resolve, reject) {
           resolve(function(input) {
             assert.strictEqual(input, 'SomeInput');
-            var childSpan = agent.createChildSpan({ name: childSpanName2 });
+            var childSpan = agent.createChildSpan({ name: CHILD_SPAN_2 });
             assert.ok(childSpan);
             childSpan.endSpan();
           });
@@ -68,9 +122,9 @@ describe('generic-pool-3', function() {
     var pool = genericPool.createPool(factory, opts);
 
     var promise;
-    agent.runInRootSpan({ name: rootSpanName }, function(span) {
+    agent.runInRootSpan({ name: ROOT_SPAN }, function(span) {
       promise = pool.acquire().then(function(fn) {
-        var childSpan = agent.createChildSpan({ name: childSpanName1 });
+        var childSpan = agent.createChildSpan({ name: CHILD_SPAN_1 });
         assert.ok(childSpan);
         fn('SomeInput');
         childSpan.endSpan();
@@ -89,9 +143,9 @@ describe('generic-pool-3', function() {
         var spans = common.getTraces(agent)[0].spans;
         assert.ok(spans);
         assert.strictEqual(spans.length, 3);
-        assert.strictEqual(spans[0].name, rootSpanName);
-        assert.strictEqual(spans[1].name, childSpanName1);
-        assert.strictEqual(spans[2].name, childSpanName2);
+        assert.strictEqual(spans[0].name, ROOT_SPAN);
+        assert.strictEqual(spans[1].name, CHILD_SPAN_1);
+        assert.strictEqual(spans[2].name, CHILD_SPAN_2);
       });
     });
 
