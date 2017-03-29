@@ -67,7 +67,7 @@ describe('generic-pool-2', function() {
       childSpan.endSpan();
       done();
 
-      var spans = common.getTraces(agent)[0].spans;
+      var spans = common.getTraces(api)[0].spans;
       assert.ok(spans);
       assert.strictEqual(spans.length, 3);
       assert.strictEqual(spans[0].name, ROOT_SPAN);
