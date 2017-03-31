@@ -39,8 +39,11 @@ nock.disableNetConnect();
 describe('agent interaction with metadata service', function() {
   var agent;
 
-  before(function() {
+  beforeEach(function() {
     delete process.env.GCLOUD_PROJECT;
+    delete process.env.GAE_MODULE_NAME;
+    delete process.env.GAE_MODULE_VERSION;
+    delete process.env.GAE_MINOR_VERSION;
   });
 
   it('should stop when the project number cannot be acquired', function(done) {
@@ -139,11 +142,45 @@ describe('agent interaction with metadata service', function() {
     }, 500);
   });
 
+  it('should read gae_module label values from config', function(done) {
+    nock.disableNetConnect();
+    agent = trace.start({
+      projectId: '0',
+      logLevel: 0,
+      forceNewAgent_: true,
+      serviceContext: {
+        service: 'config',
+        version: 'configVer',
+        minorVersion: '0'
+      }
+    });
+    setTimeout(function() {
+      common.runInTransaction(agent, function(end) {
+        end();
+        var span = common.getMatchingSpan(agent, spanPredicate);
+        assert(span.labels[traceLabels.GAE_MODULE_NAME], 'config');
+        assert(span.labels[traceLabels.GAE_MODULE_VERSION], 'configVer');
+        assert.equal(span.labels[traceLabels.GAE_VERSION],
+          'config:configVer.0');
+        done();
+      });
+    }, 500);
+  });
+
   it('should attach gae_module labels when available', function(done) {
     process.env.GAE_MODULE_NAME = 'foo';
     process.env.GAE_MODULE_VERSION = '20151119t120000';
     process.env.GAE_MINOR_VERSION = '91992';
-    agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
+    agent = trace.start({
+      projectId: '0',
+      logLevel: 0,
+      forceNewAgent_: true,
+      serviceContext: {
+        service: 'config',
+        version: 'configVer',
+        minorVersion: '0'
+      }
+    });
     setTimeout(function() {
       common.runInTransaction(agent, function(end) {
         end();

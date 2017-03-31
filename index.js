@@ -45,7 +45,12 @@ var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
 var initConfig = function(projectConfig) {
   var envConfig = {
     logLevel: process.env.GCLOUD_TRACE_LOGLEVEL,
-    projectId: process.env.GCLOUD_PROJECT
+    projectId: process.env.GCLOUD_PROJECT,
+    serviceContext: {
+      service: process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME,
+      version: process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION,
+      minorVersion: process.env.GAE_MINOR_VERSION
+    }
   };
   var config = extend(true, {}, require('./config.js'), projectConfig, envConfig);
   if (config.maximumLabelValueSize > constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {

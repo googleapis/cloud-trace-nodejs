@@ -124,5 +124,13 @@ module.exports = {
 
     // For testing purposes only.
     // Used by unit tests to force loading of a new agent if one exists already.
-    forceNewAgent_: false
+    forceNewAgent_: false,
+
+    // Specifies the current service context. These fields may be overridden by
+    // environmental variables set from within GAE or GCE.
+    serviceContext: {
+      service: null,
+      version: null,
+      minorVersion: null
+    }
 };
