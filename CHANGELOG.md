@@ -1,5 +1,11 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-03-31, Version 1.0.4 (Experimental), @kjin
+
+### Commits
+
+* [[`43ede69323`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/43ede69323)] - Add serviceContext option (#457) (Kelvin Jin) [#457](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/457)
+
 ## 2017-03-24, Version 1.0.3 (Experimental), @kjin
 
 ### Commits
