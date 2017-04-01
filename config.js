@@ -124,5 +124,15 @@ module.exports = {
 
     // For testing purposes only.
     // Used by unit tests to force loading of a new agent if one exists already.
-    forceNewAgent_: false
+    forceNewAgent_: false,
+
+    // Specifies the service context with which traces from this application
+    // will be associated. This may be useful in filtering traces originating
+    // from a specific service within a project. These fields will automatically
+    // be set through environment variables on Google App Engine.
+    serviceContext: {
+      service: null,
+      version: null,
+      minorVersion: null
+    }
 };
