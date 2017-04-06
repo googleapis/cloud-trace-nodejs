@@ -18,14 +18,7 @@ done
 # Lint
 jshint . || exit 1
 
-# Install framework deps
-for dir in test/plugins/fixtures/*/ ;
-do
-  echo -en "travis_fold:start:npm_install_${dir}\\r" | tr / _
-  echo "npm install in ${dir}"
-  (cd "${dir}"; npm install) || exit 1
-  echo -en "travis_fold:end:npm_install_${dir}\\r" | tr / _
-done
+./bin/install-test-fixtures.sh
 
 # Get test/coverage command
 counter=0
