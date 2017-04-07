@@ -53,26 +53,25 @@ describe('generic-pool-2', function() {
       }
     };
 
-    var pool;
+    var pool = new genericPool.Pool(config);
     api.runInRootSpan({ name: ROOT_SPAN }, function(span) {
-      pool = new genericPool.Pool(config);
-      span.endSpan();
-    });
+      pool.acquire(function(err, fn) {
+        assert.ifError(err);
+        var childSpan = api.createChildSpan({ name: CHILD_SPAN_1 });
+        assert.ok(childSpan);
+        fn();
+        childSpan.endSpan();
+        span.endSpan();
 
-    pool.acquire(function(err, fn) {
-      assert.ifError(err);
-      var childSpan = api.createChildSpan({ name: CHILD_SPAN_1 });
-      assert.ok(childSpan);
-      fn();
-      childSpan.endSpan();
-      done();
+        var spans = common.getTraces(api)[0].spans;
+        assert.ok(spans);
+        assert.strictEqual(spans.length, 3);
+        assert.strictEqual(spans[0].name, ROOT_SPAN);
+        assert.strictEqual(spans[1].name, CHILD_SPAN_1);
+        assert.strictEqual(spans[2].name, CHILD_SPAN_2);
 
-      var spans = common.getTraces(api)[0].spans;
-      assert.ok(spans);
-      assert.strictEqual(spans.length, 3);
-      assert.strictEqual(spans[0].name, ROOT_SPAN);
-      assert.strictEqual(spans[1].name, CHILD_SPAN_1);
-      assert.strictEqual(spans[2].name, CHILD_SPAN_2);
+        done();
+      });
     });
   });
 });

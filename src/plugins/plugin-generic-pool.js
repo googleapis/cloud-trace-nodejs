@@ -16,7 +16,7 @@
 'use strict';
 
 var shimmer = require('shimmer');
-var isFunction = require('lodash.isfunction');
+var is = require('is');
 
 function patchModuleRoot3(genericPool, api) {
   shimmer.wrap(genericPool.Pool.prototype, 'acquire', function(original) {
@@ -47,13 +47,20 @@ function patchModuleRoot3(genericPool, api) {
 }
 
 function wrapModuleRoot2(Pool, api) {
+  shimmer.wrap(Pool.Pool.prototype, 'acquire', function(original) {
+    return function(callback, priority) {
+      return original.call(this, callback ? api.wrap(callback) : callback,
+                                 priority);
+    };
+  });
+
   shimmer.wrap(Pool, 'Pool', function(OriginalPool) {
     return function(factory) {
-      if (isFunction(factory.create)) {
+      if (is.fn(factory.create)) {
         factory.create = api.wrap(factory.create);
       }
 
-      if (isFunction(factory.destroy)) {
+      if (is.fn(factory.destroy)) {
         factory.destroy = api.wrap(factory.destroy);
       }
 
