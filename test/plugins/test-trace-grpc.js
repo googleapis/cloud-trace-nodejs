@@ -45,7 +45,7 @@ function checkServerMetadata(metadata) {
   if (checkMetadata) {
     var traceContext = metadata.getMap()[constants.TRACE_CONTEXT_HEADER_NAME];
     assert.ok(/[a-f0-9]{32}\/[0-9]+;o=1/.test(traceContext));
-    var parsedContext = util.parseContextFromHeader(traceContext);
+    var parsedContext = util.parseTraceContext(traceContext);
     var root = cls.getNamespace().get('root');
     assert.strictEqual(root.span.parentSpanId, parsedContext.spanId);
   }

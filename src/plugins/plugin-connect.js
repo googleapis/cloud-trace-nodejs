@@ -28,6 +28,13 @@ function createMiddleware(api) {
       skipFrames: 3
     };
     api.runInRootSpan(options, function(root) {
+      // Set response trace context.
+      var outgoingTraceContext =
+        api.getOutgoingTraceContext(!!root, options.traceContext);
+      if (outgoingTraceContext) {
+        res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, outgoingTraceContext);
+      }
+
       if (!root) {
         return next();
       }
@@ -43,11 +50,6 @@ function createMiddleware(api) {
       root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
       root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
       root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
-
-      var context = root.getTraceContext();
-      if (context) {
-        res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, context);
-      }
 
       // wrap end
       var originalEnd = res.end;

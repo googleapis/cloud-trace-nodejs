@@ -20,6 +20,8 @@ var http = require('http');
 var assert = require('assert');
 var constants = require('../src/constants.js');
 
+var fakeTraceId = 'ffeeddccbbaa99887766554433221100';
+
 describe('test-trace-header-context', function() {
   var agent;
   var express;
@@ -32,6 +34,18 @@ describe('test-trace-header-context', function() {
     // On node 0.12, mocha may run multiple tests in the same
     // cls context, we need to manually clean out the context.
     common.clearNamespace(agent);
+  });
+
+  it('should give correct context', function() {
+    var tracedContext = fakeTraceId + '/0;o=1';
+    var untracedContext = fakeTraceId + '/0;o=0';
+    var unspecifiedContext = fakeTraceId + '/0';
+    assert.strictEqual(agent.getOutgoingTraceContext(true, tracedContext), tracedContext);
+    assert.strictEqual(agent.getOutgoingTraceContext(false, tracedContext), untracedContext);
+    assert.strictEqual(agent.getOutgoingTraceContext(true, untracedContext), untracedContext);
+    assert.strictEqual(agent.getOutgoingTraceContext(false, untracedContext), untracedContext);
+    assert.strictEqual(agent.getOutgoingTraceContext(true, unspecifiedContext), tracedContext);
+    assert.strictEqual(agent.getOutgoingTraceContext(false, unspecifiedContext), untracedContext);
   });
 
   it('should work with string url', function(done) {

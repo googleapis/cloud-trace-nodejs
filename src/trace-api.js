@@ -178,6 +178,17 @@ TraceApiImplementation.prototype.createChildSpan = function(options) {
   }
 };
 
+TraceApiImplementation.prototype.getOutgoingTraceContext = function(isTraced,
+    incomingTraceContext) {
+  var traceContext = this.agent_.parseContextFromHeader(incomingTraceContext);
+  if (!traceContext) {
+    return '';
+  }
+  traceContext.options = traceContext.options && isTraced ? 1 : 0;
+  return traceContext.traceId + '/' + traceContext.spanId + ';o=' +
+    traceContext.options;
+};
+
 /**
  * Binds the trace context to the given function.
  * This is necessary in order to create child spans correctly in functions
@@ -221,6 +232,7 @@ var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
   runInRootSpan: function(opts, fn) { return fn(null); },
   createChildSpan: function(opts) { return null; },
+  getOutgoingTraceContext: function(traced, context) { return null; },
   wrap: function(fn) { return fn; },
   wrapEmitter: function(ee) {},
   constants: constants,
@@ -253,6 +265,9 @@ module.exports = function TraceApi(pluginName) {
     },
     createChildSpan: function(opts) {
       return impl.createChildSpan(opts);
+    },
+    getOutgoingTraceContext: function(isTraced, incomingTraceContext) {
+      return impl.getOutgoingTraceContext(isTraced, incomingTraceContext);
     },
     wrap: function(fn) {
       return impl.wrap(fn);
