@@ -127,7 +127,15 @@ TraceApiImplementation.prototype.enhancedDatabaseReportingEnabled = function() {
  * possibly passing it an object that exposes an interface for adding labels
  * and closing the span.
  * @param {object} options An object that specifies options for how the root
- * span is created and propogated. @see TraceApiImplementation.prototype.createRootSpan
+ * span is created and propogated.
+ * @param {string} options.name The name to apply to the root span.
+ * @param {?string} options.url A URL associated with the root span, if
+ * applicable.
+ * @param {?string} options.traceContext The serialized form of an object that
+ * contains information about an existing trace context.
+ * @param {?number} options.skipFrames The number of stack frames to skip when
+ * collecting call stack information for the root span, starting from the top;
+ * this should be set to avoid including frames in the plugin. Defaults to 0.
  * @param {function(?RootSpan)} fn A function that will be called exactly
  * once. If the incoming request should be traced, a root span will be created,
  * and this function will be called with a RootSpan object exposing functions
@@ -158,6 +166,10 @@ TraceApiImplementation.prototype.runInRootSpan = function(options, fn) {
  * there is no current RootSpan object, this function returns null.
  * @param {object} options An object that specifies options for how the child
  * span is created and propogated.
+ * @param {string} options.name The name to apply to the child span.
+ * @param {?number} options.skipFrames The number of stack frames to skip when
+ * collecting call stack information for the root span, starting from the top;
+ * this should be set to avoid including frames in the plugin. Defaults to 0.
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
 TraceApiImplementation.prototype.createChildSpan = function(options) {
@@ -178,8 +190,22 @@ TraceApiImplementation.prototype.createChildSpan = function(options) {
   }
 };
 
-TraceApiImplementation.prototype.getOutgoingTraceContext = function(isTraced,
-    incomingTraceContext) {
+/**
+ * Generates a stringified trace context that should be set as the trace context
+ * header in a response to an incoming web request. This value is based on
+ * the trace context header value in the corresponding incoming request, as well
+ * as the result from the local trace policy on whether this request will be
+ * traced or not.
+ * @param {string} incomingTraceContext The trace context that was attached to
+ * the incoming web request, or null if the incoming request didn't have one.
+ * @param {boolean} isTraced Whether the incoming was traced. This is determined
+ * by the local tracing policy.
+ * @returns {string} If the response should contain the trace context within its
+ * header, the string to be set as this header's value. Otherwise, an empty
+ * string.
+ */
+TraceApiImplementation.prototype.getResponseTraceContext = function(
+    incomingTraceContext, isTraced) {
   var traceContext = this.agent_.parseContextFromHeader(incomingTraceContext);
   if (!traceContext) {
     return '';
@@ -232,7 +258,7 @@ var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
   runInRootSpan: function(opts, fn) { return fn(null); },
   createChildSpan: function(opts) { return null; },
-  getOutgoingTraceContext: function(traced, context) { return null; },
+  getResponseTraceContext: function(context, traced) { return null; },
   wrap: function(fn) { return fn; },
   wrapEmitter: function(ee) {},
   constants: constants,
@@ -266,8 +292,8 @@ module.exports = function TraceApi(pluginName) {
     createChildSpan: function(opts) {
       return impl.createChildSpan(opts);
     },
-    getOutgoingTraceContext: function(isTraced, incomingTraceContext) {
-      return impl.getOutgoingTraceContext(isTraced, incomingTraceContext);
+    getResponseTraceContext: function(incomingTraceContext, isTraced) {
+      return impl.getResponseTraceContext(incomingTraceContext, isTraced);
     },
     wrap: function(fn) {
       return impl.wrap(fn);

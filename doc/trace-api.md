@@ -66,13 +66,23 @@ The Trace Agent can propagate trace context across multiple services. This assoc
 
 Trace context is sent and received using the [`'x-cloud-trace-context'`][stackdriver-trace-faq] field in HTTP request headers. Built-in plugins automatically read from and write to this field, so for application developers, no additional work is necessary.
 
-### Obtaining Trace Context in Incoming Requests
+### For Incoming Requests
 
 Plugins that trace incoming HTTP requests (in other words, web frameworks) should support cross-service tracing by reading serialized trace context from the `'x-cloud-trace-context'` header, and supplying it as the [`traceContext` option](#trace-span-options) when creating a new root span. The trace agent will automatically deserialize the trace context and associate any new spans with it.
 
 The string `'x-cloud-trace-context'` is provided as `TraceApi#constants.TRACE_CONTEXT_HEADER_NAME`.
 
-### Sending Trace Context in Outgoing Requests
+It is highly recommended for plugins to set this header field in responses, _if_ the incoming request has this header. The trace context that should be written can be obtained with the following function:
+
+* `TraceApi#getResponseTraceContext(incomingTraceContext, isTraced)`
+  * `incomingTraceContext`: `string`
+  * `isTraced`: `boolean`
+  * Returns `string`
+  * Returns a string that should be set in the response headers in a traced request. If incomingTraceContext is falsey (indicating that the incoming request didn't have a trace context), this function returns an empty string.
+
+This function is usually called from within the function passed to `runInRootSpan`. See any of the built-in plugins ([express](src/plugins/plugin-express.js#L35)) for an example. Note that the value for `isTraced` is based on the value of the root span - if a root span was created, that means that this request is being traced.
+
+### For Outgoing Requests
 
 Use the following function to obtain the current serialized trace context. The built-in plugin for `http` and `https` does this automatically.
 

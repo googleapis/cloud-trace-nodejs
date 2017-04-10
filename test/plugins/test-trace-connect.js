@@ -157,14 +157,23 @@ describe('test-trace-connect', function() {
 
   it('should set trace context on response', function(done) {
     var app = connect();
+    var headers = {};
+    headers[constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
     app.use(function (req, res) {
       res.end(common.serverRes);
     });
     server = app.listen(common.serverPort, function() {
-      http.get({port: common.serverPort}, function(res) {
-        assert(
-          res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
-        done();
+      http.get({
+        port: common.serverPort
+      }, function(res) {
+        assert(!res.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+        http.get({
+          port: common.serverPort,
+          headers: headers
+        }, function(res) {
+          assert(res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+          done();
+        });
       });
     });
   });

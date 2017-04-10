@@ -40,12 +40,12 @@ describe('test-trace-header-context', function() {
     var tracedContext = fakeTraceId + '/0;o=1';
     var untracedContext = fakeTraceId + '/0;o=0';
     var unspecifiedContext = fakeTraceId + '/0';
-    assert.strictEqual(agent.getOutgoingTraceContext(true, tracedContext), tracedContext);
-    assert.strictEqual(agent.getOutgoingTraceContext(false, tracedContext), untracedContext);
-    assert.strictEqual(agent.getOutgoingTraceContext(true, untracedContext), untracedContext);
-    assert.strictEqual(agent.getOutgoingTraceContext(false, untracedContext), untracedContext);
-    assert.strictEqual(agent.getOutgoingTraceContext(true, unspecifiedContext), tracedContext);
-    assert.strictEqual(agent.getOutgoingTraceContext(false, unspecifiedContext), untracedContext);
+    assert.strictEqual(agent.getResponseTraceContext(tracedContext, true), tracedContext);
+    assert.strictEqual(agent.getResponseTraceContext(tracedContext, false), untracedContext);
+    assert.strictEqual(agent.getResponseTraceContext(untracedContext, true), untracedContext);
+    assert.strictEqual(agent.getResponseTraceContext(untracedContext, false), untracedContext);
+    assert.strictEqual(agent.getResponseTraceContext(unspecifiedContext, true), tracedContext);
+    assert.strictEqual(agent.getResponseTraceContext(unspecifiedContext, false), untracedContext);
   });
 
   it('should work with string url', function(done) {

@@ -29,7 +29,7 @@ function startSpanForRequest(api, req, res, next) {
   api.runInRootSpan(options, function(root) {
     // Set response trace context.
     var outgoingTraceContext =
-      api.getOutgoingTraceContext(!!root, options.traceContext);
+      api.getResponseTraceContext(options.traceContext, !!root);
     if (outgoingTraceContext) {
       res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, outgoingTraceContext);
     }
