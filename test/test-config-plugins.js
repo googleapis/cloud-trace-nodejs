@@ -21,7 +21,7 @@ var trace = require('..');
 
 var common = require('./plugins/common.js');
 
-var instrumentedModules = ['connect', 'express', 'google-gax', 'grpc', 'hapi', 'http', 'koa',
+var instrumentedModules = ['connect', 'express', 'grpc', 'hapi', 'http', 'koa',
   'mongodb-core', 'mysql', 'pg', 'redis', 'restify'];
 
 describe('plugin configuration', function() {
