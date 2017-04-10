@@ -129,7 +129,7 @@ describe('Trace Agent', function() {
         assert(result);
         assert.equal(result.traceId, '123456');
         assert.equal(result.spanId, 667);
-        assert.equal(result.options, '1');
+        assert(!result.options);
       });
 
       it('should return expected values: 123456;o=1', function() {
@@ -147,7 +147,7 @@ describe('Trace Agent', function() {
         assert(result);
         assert.equal(result.traceId, '123456');
         assert(!result.spanId);
-        assert.equal(result.options, '1');
+        assert(!result.options);
       });
     });
 

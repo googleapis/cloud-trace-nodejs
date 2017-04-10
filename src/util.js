@@ -70,12 +70,10 @@ function parseContextFromHeader(str) {
       (matches[2] && isNaN(matches[2]))) {
     return null;
   }
-  // We assume that if no value is set for options, we treat the incoming
-  // context as if it had options set to 1.
   return {
     traceId: matches[1],
     spanId: matches[2],
-    options: typeof(matches[3]) === 'undefined' ? 1 : Number(matches[3])
+    options: typeof(matches[3]) === 'undefined' ? 0 : Number(matches[3])
   };
 }
 

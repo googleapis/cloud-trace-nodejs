@@ -44,7 +44,7 @@ describe('test-trace-header-context', function() {
     assert.strictEqual(agent.getResponseTraceContext(tracedContext, false), untracedContext);
     assert.strictEqual(agent.getResponseTraceContext(untracedContext, true), untracedContext);
     assert.strictEqual(agent.getResponseTraceContext(untracedContext, false), untracedContext);
-    assert.strictEqual(agent.getResponseTraceContext(unspecifiedContext, true), tracedContext);
+    assert.strictEqual(agent.getResponseTraceContext(unspecifiedContext, true), untracedContext);
     assert.strictEqual(agent.getResponseTraceContext(unspecifiedContext, false), untracedContext);
   });
 
@@ -103,7 +103,7 @@ describe('test-trace-header-context', function() {
   it('should parse incoming header', function(done) {
     var app = express();
     var server;
-    var context = '123456/2';
+    var context = '123456/2;o=1';
     app.get('/', function (req, res) {
       http.get({ port: common.serverPort, path: '/self'});
       res.send(common.serverRes);

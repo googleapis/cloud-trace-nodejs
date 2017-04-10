@@ -43,10 +43,10 @@ function createMiddleware(api) {
     };
     api.runInRootSpan(options, function(root) {
       // Set response trace context.
-      var outgoingTraceContext =
+      var responseTraceContext =
         api.getResponseTraceContext(options.traceContext, !!root);
-      if (outgoingTraceContext) {
-        res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, outgoingTraceContext);
+      if (responseTraceContext) {
+        res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
 
       if (!root) {

@@ -47,10 +47,10 @@ function patchRestify(restify, api) {
 
     api.runInRootSpan(options, function(rootSpan) {
       // Set response trace context.
-      var outgoingTraceContext =
+      var responseTraceContext =
         api.getResponseTraceContext(options.traceContext, !!rootSpan);
-      if (outgoingTraceContext) {
-        res.header(api.constants.TRACE_CONTEXT_HEADER_NAME, outgoingTraceContext);
+      if (responseTraceContext) {
+        res.header(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
 
       if (!rootSpan) {

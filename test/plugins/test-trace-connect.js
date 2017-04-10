@@ -157,12 +157,12 @@ describe('test-trace-connect', function() {
 
   it('should set trace context on response', function(done) {
     var app = connect();
-    var headers = {};
-    headers[constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
     app.use(function (req, res) {
       res.end(common.serverRes);
     });
     server = app.listen(common.serverPort, function() {
+      var headers = {};
+      headers[constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
       http.get({
         port: common.serverPort
       }, function(res) {
