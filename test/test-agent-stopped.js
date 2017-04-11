@@ -38,12 +38,12 @@ describe('test-agent-stopped', function() {
                 .reply(404);
     delete process.env.GCLOUD_PROJECT;
     agent = require('..').start();
-    // Wait 20ms for agent to fail getting remote project id.
+    // Wait 200ms for agent to fail getting remote project id.
     setTimeout(function() {
       assert.ok(!agent.isActive());
       scope.done();
       done();
-    }, 20);
+    }, 200);
   });
 
   after(function() {
