@@ -210,7 +210,7 @@ TraceApiImplementation.prototype.getResponseTraceContext = function(
   if (!traceContext) {
     return '';
   }
-  traceContext.options = traceContext.options && isTraced ? 1 : 0;
+  traceContext.options = traceContext.options & isTraced;
   return traceContext.traceId + '/' + traceContext.spanId + ';o=' +
     traceContext.options;
 };
@@ -258,7 +258,7 @@ var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
   runInRootSpan: function(opts, fn) { return fn(null); },
   createChildSpan: function(opts) { return null; },
-  getResponseTraceContext: function(context, traced) { return null; },
+  getResponseTraceContext: function(context, traced) { return ''; },
   wrap: function(fn) { return fn; },
   wrapEmitter: function(ee) {},
   constants: constants,
@@ -329,7 +329,7 @@ function createRootSpan_(api, options, skipFrames) {
   }
   incomingTraceContext = incomingTraceContext || {};
   if (!api.agent_.shouldTrace(options.url || '',
-        incomingTraceContext.options)) {
+      incomingTraceContext.options)) {
     cls.setRootContext(nullSpan);
     return null;
   }
