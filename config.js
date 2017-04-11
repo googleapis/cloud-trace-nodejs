@@ -45,6 +45,7 @@ module.exports = {
     plugins: {
       'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
       'express': path.join(__dirname, 'src/plugins/plugin-express.js'),
+      'generic-pool': path.join(__dirname, 'src/plugins/plugin-generic-pool.js'),
       'grpc': path.join(__dirname, 'src/plugins/plugin-grpc.js'),
       'hapi': path.join(__dirname, 'src/plugins/plugin-hapi.js'),
       'http': path.join(__dirname, 'src/plugins/plugin-http.js'),
@@ -53,8 +54,7 @@ module.exports = {
       'mysql': path.join(__dirname, 'src/plugins/plugin-mysql.js'),
       'pg': path.join(__dirname, 'src/plugins/plugin-pg.js'),
       'redis': path.join(__dirname, 'src/plugins/plugin-redis.js'),
-      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js'),
-      'generic-pool': path.join(__dirname, 'src/plugins/plugin-generic-pool.js')
+      'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
     },
 
     // @type {number} max number of frames to include on traces (0 disables)

@@ -24,9 +24,8 @@ function patchModuleRoot3(genericPool, api) {
       var result = original.apply(this, arguments);
       shimmer.wrap(result, 'then', function(original) {
         return function(onFulfilled, onRejected) {
-          return original.apply(this,
-                                [ api.wrap(onFulfilled),
-                                  api.wrap(onRejected) ]);
+          return original.call(this, api.wrap(onFulfilled),
+                                     api.wrap(onRejected));
         };
       });
       return result;
