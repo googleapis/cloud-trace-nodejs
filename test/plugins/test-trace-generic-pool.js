@@ -41,7 +41,7 @@ describe('generic-pool2', function() {
 
   it('perserves context', function(done) {
     var config = {
-      name: 'generic-pool-2 test',
+      name: 'generic-pool2 test',
       create: function(callback) {
         callback(function() {
           var childSpan = api.createChildSpan({ name: CHILD_SPAN_2 });
@@ -92,7 +92,7 @@ describe('generic-pool3', function() {
     var ROOT_SPAN = 'root-span';
     var CHILD_SPAN_1 = 'child-span-1';
     var CHILD_SPAN_2 = 'child-span-2';
-    //var CHILD_SPAN_3 = 'child-span-3';
+    var CHILD_SPAN_3 = 'child-span-3';
 
     var factory = {
       create: function() {
@@ -129,15 +129,9 @@ describe('generic-pool3', function() {
         childSpan.endSpan();
         span.endSpan();
       }).then(function() {
-        // With the current implementation, context propogation is lost
-        // at this point and the commented out assert that verifies
-        // that the child span is not null will fail.
-        // It looks like a generalized Promise context propogation solution
-        // is needed to support this invocation of then().
-
-        //var childSpan = agent.createChildSpan({ name: childSpanName3 });
-        //assert.ok(childSpan);
-        //childSpan.endSpan();
+        var childSpan = agent.createChildSpan({ name: CHILD_SPAN_3 });
+        assert.ok(childSpan);
+        childSpan.endSpan();
 
         var spans = common.getTraces(agent)[0].spans;
         assert.ok(spans);
