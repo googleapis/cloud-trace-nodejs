@@ -315,6 +315,16 @@ Object.keys(versions).forEach(function(version) {
       });
     });
 
+    it('should propagate context', function(done) {
+      common.runInTransaction(agent, function(endTransaction) {
+        callUnary(client, grpc, {}, function() {
+          assert.ok(common.hasContext());
+          endTransaction();
+          done();
+        });
+      });
+    });
+
     it('should accurately measure time for client streaming requests', function(done) {
       var start = Date.now();
       common.runInTransaction(agent, function(endTransaction) {

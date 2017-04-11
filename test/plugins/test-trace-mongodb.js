@@ -119,6 +119,19 @@ describe('mongodb', function() {
         });
       });
 
+      it('should propagate context', function(done) {
+        common.runInTransaction(agent, function(endTransaction) {
+          server.update('testdb.simples', [{
+            q: {f1: 'sim'},
+            u: {'$set': {f2: false}}
+          }], function(err, res) {
+            assert.ok(common.hasContext());
+            endTransaction();
+            done();
+          });
+        });
+      });
+
       it('should trace a query', function(done) {
         common.runInTransaction(agent, function(endTransaction) {
           server.cursor('testdb.simples', {

@@ -76,6 +76,17 @@ describe('test-trace-pg', function() {
     });
   });
 
+  it('should propagate context', function(done) {
+    common.runInTransaction(traceApi, function(endRootSpan) {
+      client.query('INSERT INTO t (name, id) VALUES($1, $2)',
+          ['test_name', 'test_id'], function(err, res) {
+        assert.ok(common.hasContext());
+        endRootSpan();
+        done();
+      });
+    });
+  });
+
   it('should remove trace frames from stack', function(done) {
     common.runInTransaction(traceApi, function(endRootSpan) {
       client.query('SELECT $1::int AS number', [1], function(err, res) {
