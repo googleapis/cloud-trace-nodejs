@@ -23,7 +23,7 @@ if (!process.env.GCLOUD_PROJECT) {
 var assert = require('assert');
 var common = require('./common');
 
-describe('generic-pool-2', function() {
+describe('generic-pool2', function() {
   var ROOT_SPAN = 'root-span';
   var CHILD_SPAN_1 = 'child-span-1';
   var CHILD_SPAN_2 = 'child-span-2';
@@ -32,7 +32,7 @@ describe('generic-pool-2', function() {
   var genericPool;
   before(function() {
     api = require('../..').start({ samplingRate: 0, stackTraceLimit: 0 });
-    genericPool = require('./fixtures/generic-pool-2');
+    genericPool = require('./fixtures/generic-pool2');
   });
 
   after(function() {
@@ -76,12 +76,12 @@ describe('generic-pool-2', function() {
   });
 });
 
-describe('generic-pool-3', function() {
+describe('generic-pool3', function() {
   var agent;
   var genericPool;
   before(function() {
     agent = require('../..').start({ samplingRate: 0, stackTraceLimit: 0 });
-    genericPool = require('./fixtures/generic-pool-3');
+    genericPool = require('./fixtures/generic-pool3');
   });
 
   after(function() {
