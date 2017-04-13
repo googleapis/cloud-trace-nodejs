@@ -31,7 +31,7 @@ describe('generic-pool2', function() {
   var api;
   var genericPool;
   before(function() {
-    api = require('../..').start({ samplingRate: 0, stackTraceLimit: 0 });
+    api = require('../..').start({ samplingRate: 0 });
     genericPool = require('./fixtures/generic-pool2');
   });
 
@@ -80,7 +80,7 @@ describe('generic-pool3', function() {
   var agent;
   var genericPool;
   before(function() {
-    agent = require('../..').start({ samplingRate: 0, stackTraceLimit: 0 });
+    agent = require('../..').start({ samplingRate: 0 });
     genericPool = require('./fixtures/generic-pool3');
   });
 
@@ -121,24 +121,25 @@ describe('generic-pool3', function() {
     var pool = genericPool.createPool(factory, opts);
 
     var promise;
-    agent.runInRootSpan({ name: ROOT_SPAN }, function(span) {
+    agent.runInRootSpan({ name: ROOT_SPAN }, function(rootSpan) {
       promise = pool.acquire().then(function(fn) {
         var childSpan = agent.createChildSpan({ name: CHILD_SPAN_1 });
         assert.ok(childSpan);
         fn('SomeInput');
         childSpan.endSpan();
-        span.endSpan();
       }).then(function() {
         var childSpan = agent.createChildSpan({ name: CHILD_SPAN_3 });
         assert.ok(childSpan);
         childSpan.endSpan();
+        rootSpan.endSpan();
 
         var spans = common.getTraces(agent)[0].spans;
         assert.ok(spans);
-        assert.strictEqual(spans.length, 3);
+        assert.strictEqual(spans.length, 4);
         assert.strictEqual(spans[0].name, ROOT_SPAN);
         assert.strictEqual(spans[1].name, CHILD_SPAN_1);
         assert.strictEqual(spans[2].name, CHILD_SPAN_2);
+        assert.strictEqual(spans[3].name, CHILD_SPAN_3);
       });
     });
 

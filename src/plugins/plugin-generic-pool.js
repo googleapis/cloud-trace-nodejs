@@ -20,8 +20,7 @@ var shimmer = require('shimmer');
 function wrapModuleRoot2(Pool, api) {
   shimmer.wrap(Pool.Pool.prototype, 'acquire', function(original) {
     return function(callback, priority) {
-      return original.call(this, callback ? api.wrap(callback) : callback,
-                                 priority);
+      return original.call(this, api.wrap(callback), priority);
     };
   });
 }
@@ -29,7 +28,7 @@ function wrapModuleRoot2(Pool, api) {
 module.exports = [
   {
     file: '',
-    versions: '2.x.x',
+    versions: '2',
     patch: wrapModuleRoot2
   }
 ];
