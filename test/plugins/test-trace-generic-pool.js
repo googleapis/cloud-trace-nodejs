@@ -22,6 +22,7 @@ if (!process.env.GCLOUD_PROJECT) {
 
 var assert = require('assert');
 var common = require('./common');
+var semver = require('semver');
 
 describe('generic-pool2', function() {
   var ROOT_SPAN = 'root-span';
@@ -79,6 +80,12 @@ describe('generic-pool2', function() {
 describe('generic-pool3', function() {
   var agent;
   var genericPool;
+  if (semver.satisfies(process.version, '<4')) {
+    console.log('Skipping testing generic-pool@3 on Node.js version ' +
+                process.version + ' that predates version 4.');
+    return;
+  }
+
   before(function() {
     agent = require('../..').start({ samplingRate: 0 });
     genericPool = require('./fixtures/generic-pool3');
