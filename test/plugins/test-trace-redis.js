@@ -85,6 +85,16 @@ describe('redis', function() {
         });
       });
 
+      it('should propagate context', function(done) {
+        common.runInTransaction(agent, function(endTransaction) {
+          client.get('beforeEach', function(err, n) {
+            assert.ok(common.hasContext());
+            endTransaction();
+            done();
+          });
+        });
+      });
+
       it('should accurately measure set time', function(done) {
         common.runInTransaction(agent, function(endTransaction) {
           client.set('key', 'redis_value', function(err) {

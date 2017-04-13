@@ -61,6 +61,22 @@ describe('test-trace-http', function() {
     );
   });
 
+  it('should propagate context', function(done) {
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
+      function(endTransaction) {
+        http.get({port: common.serverPort}, function(res) {
+          assert.ok(common.hasContext());
+          res.on('data', function(data) { assert.ok(common.hasContext()); });
+          res.on('end', function() {
+            assert.ok(common.hasContext());
+            endTransaction();
+            done();
+          });
+        });
+      })
+    );
+  });
+
   it('should not trace api requests', function(done) {
     server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
       function(endTransaction) {

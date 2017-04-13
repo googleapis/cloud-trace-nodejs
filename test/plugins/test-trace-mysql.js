@@ -84,6 +84,16 @@ describe('test-trace-mysql', function() {
     });
   });
 
+  it('should propagate context', function(done) {
+    common.runInTransaction(agent, function(endRootSpan) {
+      connection.query('SELECT * FROM t', function(err, res) {
+        assert.ok(common.hasContext());
+        endRootSpan();
+        done();
+      });
+    });
+  });
+
   it('should remove trace frames from stack', function(done) {
     common.runInTransaction(agent, function(endRootSpan) {
       connection.query('SELECT * FROM t', function(err, res) {
