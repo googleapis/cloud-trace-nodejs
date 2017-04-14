@@ -43,6 +43,7 @@ module.exports = {
     // value. Disabling any of the default plugins may cause unwanted behavior,
     // so use caution.
     plugins: {
+      'bluebird': path.join(__dirname, 'src/plugins/plugin-bluebird.js'),
       'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
       'express': path.join(__dirname, 'src/plugins/plugin-express.js'),
       'generic-pool': path.join(__dirname, 'src/plugins/plugin-generic-pool.js'),
