@@ -127,10 +127,10 @@ TraceAgent.prototype.endSpan = function(spanData, labels) {
  */
 TraceAgent.prototype.shouldTrace = function(name, options) {
   var locallyAllowed = this.policy.shouldTrace(Date.now(), name);
-  // Note: remotelyDisallowed is false if no trace options are present.
-  var remotelyDisallowed = !(isNaN(options) ||
-    (options & constants.TRACE_OPTIONS_TRACE_ENABLED));
-  return locallyAllowed && !remotelyDisallowed;
+  // Note: remotelyAllowed is true if no trace options are present.
+  var remotelyAllowed = isNaN(options) ||
+    (options & constants.TRACE_OPTIONS_TRACE_ENABLED);
+  return locallyAllowed && remotelyAllowed;
 };
 
 /**

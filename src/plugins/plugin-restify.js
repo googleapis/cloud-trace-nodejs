@@ -46,16 +46,19 @@ function patchRestify(restify, api) {
     };
 
     api.runInRootSpan(options, function(rootSpan) {
+      // Set response trace context.
+      var responseTraceContext =
+        api.getResponseTraceContext(options.traceContext, !!rootSpan);
+      if (responseTraceContext) {
+        res.header(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+      }
+
       if (!rootSpan) {
         return next();
       }
 
       api.wrapEmitter(req);
       api.wrapEmitter(res);
-
-      // Propagate the trace context to the response.
-      res.header(api.constants.TRACE_CONTEXT_HEADER_NAME,
-                 rootSpan.getTraceContext());
 
       var fullUrl = req.header('X-Forwarded-Proto', 'http') + '://' +
                     req.header('host') + req.url;

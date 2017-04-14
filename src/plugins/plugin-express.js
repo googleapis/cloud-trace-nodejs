@@ -40,14 +40,17 @@ function patchModuleRoot(express, api) {
       skipFrames: 3
     };
     api.runInRootSpan(options, function(rootSpan) {
+      // Set response trace context.
+      var responseTraceContext =
+        api.getResponseTraceContext(options.traceContext, !!rootSpan);
+      if (responseTraceContext) {
+        res.set(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+      }
+
       if (!rootSpan) {
         next();
         return;
       }
-
-      // Set outgoing trace context.
-      res.set(api.constants.TRACE_CONTEXT_HEADER_NAME,
-        rootSpan.getTraceContext());
 
       api.wrapEmitter(req);
       api.wrapEmitter(res);

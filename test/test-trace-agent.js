@@ -108,9 +108,9 @@ describe('Trace Agent', function() {
         var result = agent.parseContextFromHeader(
           '123456/667;o=1');
         assert(result);
-        assert.equal(result.traceId, '123456');
-        assert.equal(result.spanId, 667);
-        assert.equal(result.options, '1');
+        assert.strictEqual(result.traceId, '123456');
+        assert.strictEqual(result.spanId, '667');
+        assert.strictEqual(result.options, 1);
       });
 
       it('should return expected values:' +
@@ -118,36 +118,18 @@ describe('Trace Agent', function() {
         var result = agent.parseContextFromHeader(
           '123456/123456123456123456123456123456123456;o=1');
         assert(result);
-        assert.equal(result.traceId, '123456');
-        assert.equal(result.spanId, '123456123456123456123456123456123456');
-        assert.equal(result.options, '1');
+        assert.strictEqual(result.traceId, '123456');
+        assert.strictEqual(result.spanId, '123456123456123456123456123456123456');
+        assert.strictEqual(result.options, 1);
       });
 
       it('should return expected values: 123456/667', function() {
         var result = agent.parseContextFromHeader(
           '123456/667');
         assert(result);
-        assert.equal(result.traceId, '123456');
-        assert.equal(result.spanId, 667);
-        assert(!result.options);
-      });
-
-      it('should return expected values: 123456;o=1', function() {
-        var result = agent.parseContextFromHeader(
-          '123456;o=1');
-        assert(result);
-        assert.equal(result.traceId, '123456');
-        assert(!result.spanId);
-        assert.equal(result.options, '1');
-      });
-
-      it('should return expected values: 123456', function() {
-        var result = agent.parseContextFromHeader(
-          '123456');
-        assert(result);
-        assert.equal(result.traceId, '123456');
-        assert(!result.spanId);
-        assert(!result.options);
+        assert.strictEqual(result.traceId, '123456');
+        assert.strictEqual(result.spanId, '667');
+        assert.strictEqual(result.options, undefined);
       });
     });
 
@@ -156,6 +138,8 @@ describe('Trace Agent', function() {
         '',
         null,
         undefined,
+        '123456',
+        '123456;o=1',
         'o=1;123456',
         '123;456;o=1',
         '123/o=1;456',
@@ -179,5 +163,4 @@ describe('Trace Agent', function() {
       });
     });
   });
-
 });

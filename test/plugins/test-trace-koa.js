@@ -106,10 +106,17 @@ describe('koa', function() {
       it('should set trace context on response', function(done) {
         var app = buildKoaApp();
         server = app.listen(common.serverPort, function() {
+          var headers = {};
+          headers[constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
           http.get({port: common.serverPort}, function(res) {
-            assert(
-              res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
-            done();
+            assert(!res.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+            http.get({
+              port: common.serverPort,
+              headers: headers
+            }, function(res) {
+              assert(res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+              done();
+            });
           });
         });
       });
