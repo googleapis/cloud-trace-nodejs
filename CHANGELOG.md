@@ -1,5 +1,26 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-04-18, Version 1.1.0 (Experimental), @matthewloring
+
+### Notable changes
+
+**new plugins**
+
+  * [[`9af1726ed1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9af1726ed1)] - Support for generic-pool 2 and 3 (#435) (Dominic Kramer) [#435](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/435)
+  * [[`9dfde43b6b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9dfde43b6b)] - Koa 2.x support (#464) (Matthew Loring) [#464](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/464)
+
+## Commits
+
+* [[`42de95aaa2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/42de95aaa2)] - Set response trace context based on that of incoming requests (#463) (Kelvin Jin) [#463](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/463)
+* [[`9af1726ed1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9af1726ed1)] - Support for generic-pool 2 and 3 (#435) (Dominic Kramer) [#435](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/435)
+* [[`5c55835eb9`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5c55835eb9)] - Add tests that context is propagated by child frameworks (#466) (Matthew Loring) [#466](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/466)
+* [[`9dfde43b6b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9dfde43b6b)] - Koa 2.x support (#464) (Matthew Loring) [#464](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/464)
+* [[`54e077990d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/54e077990d)] - Increase timeout to reduce flakiness (#465) (Matthew Loring) [#465](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/465)
+* [[`1d22c9d764`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1d22c9d764)] - Remove gax patching (#462) (Matthew Loring) [#462](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/462)
+* [[`8cffd41396`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8cffd41396)] - Now `.DS_Store` files are ignored (#460) (Dominic Kramer) [#460](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/460)
+* [[`b60d142fb9`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b60d142fb9)] - Clean noisy output of `install-test-fixtures.sh` (#461) (Dominic Kramer) [#461](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/461)
+* [[`1391192472`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1391192472)] - Allow Manual Test Fixture Management (#459) (Dominic Kramer) [#459](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/459)
+
 ## 2017-03-31, Version 1.0.4 (Experimental), @kjin
 
 ### Commits
