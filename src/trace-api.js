@@ -190,6 +190,21 @@ TraceApiImplementation.prototype.createChildSpan = function(options) {
   }
 };
 
+TraceApiImplementation.prototype.runPromiseInSpan = function(options, promise) {
+  var span = this.createChildSpan(options);
+  if (!span) {
+    return promise;
+  }
+
+  return promise.then(function(result) {
+    span.endSpan();
+    return result;
+  }).catch(function(err) {
+    span.endSpan();
+    throw err;
+  });
+};
+
 /**
  * Generates a stringified trace context that should be set as the trace context
  * header in a response to an incoming web request. This value is based on
@@ -258,6 +273,7 @@ var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
   runInRootSpan: function(opts, fn) { return fn(null); },
   createChildSpan: function(opts) { return null; },
+  runPromiseInSpan: function(opts, promise) {},
   getResponseTraceContext: function(context, traced) { return ''; },
   wrap: function(fn) { return fn; },
   wrapEmitter: function(ee) {},
@@ -291,6 +307,9 @@ module.exports = function TraceApi(pluginName) {
     },
     createChildSpan: function(opts) {
       return impl.createChildSpan(opts);
+    },
+    runPromiseInSpan: function(opts, promise) {
+      return impl.runPromiseInSpan(opts, promise);
     },
     getResponseTraceContext: function(incomingTraceContext, isTraced) {
       return impl.getResponseTraceContext(incomingTraceContext, isTraced);

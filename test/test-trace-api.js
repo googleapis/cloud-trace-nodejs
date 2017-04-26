@@ -91,7 +91,7 @@ describe('Trace Interface', function() {
 
   describe('behavior when initialized', function() {
     var traceAPI = new TraceAPI('test');
-    
+
     before(function() {
       traceAPI.enable_(agent);
       common.init(traceAPI);
@@ -120,6 +120,88 @@ describe('Trace Interface', function() {
           assert.equal(matchingSpan.labels.key, 'val');
           done();
         }, 200);
+      });
+    });
+
+    it('should propagate rejections from a promise within a root span', function() {
+      return traceAPI.runInRootSpan({name: 'root'}, function(root) {
+        var e = new Error('Custom Message');
+        return traceAPI.runPromiseInSpan({name: 'sub'}, Promise.reject(e))
+          .then(function() {
+            assert.fail('then', 'catch', 'Should enter catch() instead of then()');
+          })
+          .catch(function(err) {
+            assert.ok(err);
+            assert.equal(err, e);
+          });
+      });
+    });
+
+    it('should propagate resolutions from a promise within a root span', function() {
+      return traceAPI.runInRootSpan({name: 'root'}, function(root) {
+        var val = 'Some custom value';
+        return traceAPI.runPromiseInSpan({name: 'sub'}, Promise.resolve(val))
+          .then(function(result) {
+            assert.strictEqual(result, val);
+          })
+          .catch(function() {
+            assert.fail('catch', 'then', 'Should enter then() instead of catch()');
+          });
+      });
+    });
+
+    it('should propagate rejections from a promise not within a root span', function() {
+      var e = new Error('Custom Message');
+      return traceAPI.runPromiseInSpan({name: 'sub'}, Promise.reject(e))
+        .then(function() {
+          assert.fail('then', 'catch', 'Should enter catch() instead of then()');
+        })
+        .catch(function(err) {
+          assert.ok(err);
+          assert.equal(err, e);
+        });
+    });
+
+    it('should propagate resolutions from a promise not within root span', function() {
+      var val = 'Some custom value';
+      return traceAPI.runPromiseInSpan({name: 'rootless'}, Promise.resolve(val))
+        .then(function(result) {
+          assert.strictEqual(result, val);
+        })
+        .catch(function() {
+          assert.fail('catch', 'then', 'Should enter then() instead of catch()');
+        });
+    });
+
+    it('should end spans from a promise that resolves', function() {
+      return traceAPI.runInRootSpan({name: 'root'}, function(root) {
+        return traceAPI.runPromiseInSpan({name: 'sub'}, Promise.resolve(0))
+          .then(function() {
+            root.endSpan();
+            var traces = common.getTraces(traceAPI);
+            assert.strictEqual(traces.length, 1);
+            var spans = traces[0].spans;
+            assert.ok(spans);
+            assert.strictEqual(spans.length, 2);
+            assert.strictEqual(spans[0].name, 'root');
+            assert.strictEqual(spans[1].name, 'sub');
+          });
+      });
+    });
+
+    it('should end spans from a promise that rejects', function() {
+      return traceAPI.runInRootSpan({name: 'root'}, function(root) {
+        return traceAPI.runPromiseInSpan({name: 'sub'}, Promise.reject(0))
+          .catch(function() {
+            root.endSpan();
+            var traces = common.getTraces(traceAPI);
+            assert.strictEqual(traces.length, 1);
+            var spans = traces[0].spans;
+            assert.ok(spans);
+            assert.strictEqual(spans.length, 2);
+            assert.strictEqual(spans[0].name, 'root');
+            assert.strictEqual(spans[1].name, 'sub');
+          });
       });
     });
 
