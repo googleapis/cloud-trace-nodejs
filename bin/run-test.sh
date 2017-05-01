@@ -50,3 +50,16 @@ fi
 
 # Run non-interference tests
 node test/non-interference/http-e2e.js || exit 1
+
+if [ -z "${TRAVIS_PULL_REQUEST}" ] || [ "${TRAVIS_PULL_REQUEST}" = "false" ]
+then
+  if [ -z "${GCLOUD_PROJECT}" ]; then
+    echo "============================================================"
+    echo "Unable to run system  tests. Provide valid project id"
+    echo "via GCLOUD_PROJECT and ensure auth credentials are available"
+    echo "============================================================"
+    exit 1
+  else
+    npm run system-test
+  fi
+fi
