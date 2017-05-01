@@ -24,15 +24,12 @@ if (!process.env.GCLOUD_PROJECT ||
 }
 
 // trace-agent must be loaded before everything else.
-const trace = require('../').start({
-  flushDelaySeconds: 1
-});
+require('../').start({ flushDelaySeconds: 1 });
 
 const assert = require('assert');
 const googleAuth = require('google-auto-auth');
 const got = require('got');
 const queryString = require('querystring');
-const util = require('util');
 const uuid = require('uuid');
 
 const WRITE_CONSISTENCY_DELAY_MS = 20 * 1000;
@@ -59,6 +56,7 @@ function makeAuthorizedGot(auth) {
 }
 
 function listTraces(testPath) {
+  const BASE_URI = `https://cloudtrace.googleapis.com/v1/projects/${projectId}`;
   const auth = googleAuth({
     scopes: ['https://www.googleapis.com/auth/trace.readonly']
   });
@@ -67,12 +65,12 @@ function listTraces(testPath) {
   const query = queryString.stringify({
     filter: `span:${testPath}`
   });
-  const uri = `https://cloudtrace.googleapis.com/v1/projects/${projectId}/traces?${query}`;
+  const uri = `${BASE_URI}/traces?${query}`;
 
   return agot(uri, { json: true }).then((response) => {
     const body = response.body;
     const promises = body.traces.map((trace) => {
-      const uri = `https://cloudtrace.googleapis.com/v1/projects/${projectId}/traces/${trace.traceId}`;
+      const uri = `${BASE_URI}/traces/${trace.traceId}`;
       return agot(uri, {
         json: true
       });
@@ -85,7 +83,6 @@ function listTraces(testPath) {
 }
 
 describe('express + datastore', () => {
-  
   it('should be able to trace datastore (grpc) calls', (done) => {
     // Build a unique path so that we get unique trace span names.
     const testPath = `/test-${uuid.v4()}`;
