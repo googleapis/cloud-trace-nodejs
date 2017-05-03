@@ -84,7 +84,7 @@ Object.keys(versions).forEach(function(version) {
 
       app.get('/server', function(req, res) {
         var httpRequester = requestAndSendHTTPStatus(res, 11);
-        var stream = client.testServerStream();
+        var stream = client.testServerStream({n: 3});
         stream.on('data', httpRequester);
         stream.on('status', httpRequester);
       });
