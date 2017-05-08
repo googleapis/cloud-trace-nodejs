@@ -50,5 +50,3 @@ fi
 
 # Run non-interference tests
 node test/non-interference/http-e2e.js || exit 1
-node test/non-interference/express-e2e.js || exit 1
-node test/non-interference/restify-e2e.js || exit 1

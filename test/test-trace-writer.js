@@ -16,6 +16,7 @@
 
 'use strict';
 
+require('./plugins/common.js');
 var assert = require('assert');
 var fakeCredentials = require('./fixtures/gcloud-credentials.json');
 var nock = require('nock');
