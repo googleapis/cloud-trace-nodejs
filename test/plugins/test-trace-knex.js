@@ -187,7 +187,7 @@ describe('test-trace-knex with mysql', function() {
                         var spans = common.getMatchingSpans(agent, function (span) {
                           return span.name === 'mysql-query';
                         });
-                        var expectedCmds = ['BEGIN;', 'insert into `t` (`k`, `v`) values (?, ?)',
+                        var expectedCmds = ['insert into `t` (`k`, `v`) values (?, ?)',
                           'select * from `t`', 'ROLLBACK;', 'select * from `t`'];
                         assert.equal(expectedCmds.length, spans.length);
                         for (var i = 0; i < spans.length; i++) {

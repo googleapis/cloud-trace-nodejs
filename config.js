@@ -43,13 +43,13 @@ module.exports = {
     // value. Disabling any of the default plugins may cause unwanted behavior,
     // so use caution.
     plugins: {
-      'bluebird': path.join(__dirname, 'src/plugins/plugin-bluebird.js'),
       'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
       'express': path.join(__dirname, 'src/plugins/plugin-express.js'),
       'generic-pool': path.join(__dirname, 'src/plugins/plugin-generic-pool.js'),
       'grpc': path.join(__dirname, 'src/plugins/plugin-grpc.js'),
       'hapi': path.join(__dirname, 'src/plugins/plugin-hapi.js'),
       'http': path.join(__dirname, 'src/plugins/plugin-http.js'),
+      'knex': path.join(__dirname, 'src/plugins/plugin-knex.js'),
       'koa': path.join(__dirname, 'src/plugins/plugin-koa.js'),
       'mongodb-core': path.join(__dirname, 'src/plugins/plugin-mongodb-core.js'),
       'mysql': path.join(__dirname, 'src/plugins/plugin-mysql.js'),

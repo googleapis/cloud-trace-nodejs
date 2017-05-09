@@ -21,8 +21,8 @@ var trace = require('..');
 
 var common = require('./plugins/common.js');
 
-var instrumentedModules = ['bluebird', 'connect', 'express', 'grpc', 'hapi',
-  'http', 'koa', 'mongodb-core', 'mysql', 'pg', 'redis', 'restify'];
+var instrumentedModules = ['connect', 'express', 'grpc', 'hapi',
+  'http', 'knex', 'koa', 'mongodb-core', 'mysql', 'pg', 'redis', 'restify'];
 
 describe('plugin configuration', function() {
   it('should have correct defaults', function() {
