@@ -253,6 +253,60 @@ describe('Trace Plugin Loader', function() {
   });
 
   /**
+   * Loads a module with internal exports and patches them, and then makes sure
+   * that they are actually patched.
+   */
+  it('intercepts internal files in modules', function() {
+    addModuleMock('module-h', '1.0.0', {
+      createSentence: function() {
+        return require('module-h/subject').get() + ' ' +
+          require('module-h/predicate').get() + '.';
+      }
+    });
+    addModuleMock('module-h/subject', '', {
+      get: function() {
+        return 'bad tests';
+      }
+    });
+    addModuleMock('module-h/predicate', '', {
+      get: function() {
+        return 'don\'t make sense';
+      }
+    });
+    addModuleMock('module-h-plugin', '', [
+      {
+        file: 'subject',
+        intercept: function(originalModule, api) {
+          return {
+            get: function() {
+              return 'good tests';
+            }
+          };
+        }
+      },
+      {
+        file: 'predicate',
+        intercept: function(originalModule, api) {
+          return {
+            get: function() {
+              return 'make sense';
+            }
+          };
+        }
+      }
+    ]);
+    assert.strictEqual(require('module-h').createSentence(),
+      'bad tests don\'t make sense.');
+    // Activate plugin loader
+    pluginLoader.activate(createFakeAgent({
+      'module-h': 'module-h-plugin'
+    }));
+    assert.strictEqual(require('module-h').createSentence(),
+      'good tests make sense.',
+      'Files internal to a module are patched');
+  });
+
+  /**
    * Uses module interception to completely replace a module export
    */
   it('can intercept modules', function() {
