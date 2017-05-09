@@ -82,6 +82,13 @@ function createMiddleware(api) {
         return returned;
       };
 
+      // if the event is aborted, end the span (as res.end will not be called)
+      req.once('aborted', function() {
+        root.addLabel(api.labels.ERROR_DETAILS_NAME, 'aborted');
+        root.addLabel(api.labels.ERROR_DETAILS_MESSAGE, 'client aborted the request');
+        root.endSpan();
+      });
+
       return reply.continue();
     });
   };
