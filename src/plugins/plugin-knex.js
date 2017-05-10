@@ -30,36 +30,36 @@ function patchClient(Client, api) {
   });
 }
 
+function interceptKnex(Knex, api) {
+  return function() {
+    var result = Knex.apply(this, arguments);
+    var proto = Object.getPrototypeOf(result.client);
+    shimmer.wrap(proto, 'transaction', function(original) {
+      return function() {
+        var args = Array.prototype.slice.call(arguments).map(function(item) {
+          return item && is.fn(item) ? api.wrap(item) : item;
+        });
+        return original.apply(this, args);
+      };
+    });
+    return result;
+  };
+}
+
 function unpatchClient(Client) {
   shimmer.unwrap(Client.prototype, 'runner');
 }
 
-function patchMysqlIndex(Mysql, api) {
-  shimmer.wrap(Mysql.prototype, 'transaction', function(original) {
-    return function() {
-      var args = Array.prototype.slice.call(arguments).map(function(item) {
-        return item && is.fn(item) ? api.wrap(item) : item;
-      });
-      return original.apply(this, args);
-    };
-  });
-}
-
-function unpatchMysqlIndex(Mysql) {
-  shimmer.unwrap(Mysql.prototype, 'transaction');
-}
-
 module.exports = [
+  {
+    file: '',
+    versions: VERSIONS,
+    intercept: interceptKnex
+  },
   {
     file: 'lib/client.js',
     versions: VERSIONS,
     patch: patchClient,
     unpatch: unpatchClient
-  },
-  {
-    file: 'lib/dialects/mysql/index.js',
-    version: VERSIONS,
-    patch: patchMysqlIndex,
-    unpatch: unpatchMysqlIndex
   }
 ];
