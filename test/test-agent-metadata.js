@@ -16,20 +16,9 @@
 
 'use strict';
 
-var proxyquire  = require('proxyquire');
 var assert = require('assert');
 var nock = require('nock');
-var retryRequest = require('retry-request');
 var traceLabels = require('../src/trace-labels.js');
-
-// Monkeypatch gcp-metadata to not ask for retries at all.
-proxyquire('gcp-metadata', {
-  'retry-request': function(requestOps, callback) {
-    return retryRequest(requestOps, {
-      retries: 0
-    }, callback);
-  }
-});
 
 var common = require('./plugins/common.js');
 var trace = require('..');

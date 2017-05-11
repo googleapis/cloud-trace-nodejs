@@ -20,6 +20,12 @@ if (!process.env.GCLOUD_PROJECT) {
   process.exit(1);
 }
 
+var proxyquire  = require('proxyquire');
+// Monkeypatch gcp-metadata to not ask for retries at all.
+proxyquire('gcp-metadata', {
+  'retry-request': require('request')
+});
+
 // We want to disable publishing to avoid conflicts with production.
 require('../../src/trace-writer').publish_ = function() {};
 

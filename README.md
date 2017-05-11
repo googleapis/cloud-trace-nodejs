@@ -15,7 +15,7 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 
 ## Prerequisites
 
-1. Your application will need to be using Node.js version 0.12 or greater.
+1. Your application will need to be using Node.js version 4.0 or greater.
 1. You will need a project in the [Google Developers Console][cloud-console]. Your application can run anywhere, but the trace data is associated with a particular project.
 1. [Enable the Trace API](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) for your project.
 

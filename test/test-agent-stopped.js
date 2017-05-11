@@ -16,23 +16,14 @@
 
 'use strict';
 
+require('./plugins/common.js');
 var assert = require('assert');
 var http = require('http');
 var nock = require('nock');
-var proxyquire  = require('proxyquire');
 
 describe('test-agent-stopped', function() {
   var agent;
   before(function(done) {
-    // Setup: Monkeypatch gcp-metadata to not ask for retries at all.
-    var retryRequest = require('retry-request');
-    proxyquire('gcp-metadata', {
-      'retry-request': function(requestOps, callback) {
-        return retryRequest(requestOps, {
-          retries: 0
-        }, callback);
-      }
-    });
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/project-id')
                 .reply(404);

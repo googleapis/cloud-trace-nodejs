@@ -21,3 +21,6 @@ var agent = require('../../');
 assert(agent.get().isActive());
 
 console.log('Preload test passed.');
+// Exit explicitly since the process is being held open by retries to the
+// metadata service.
+process.exit(0);
