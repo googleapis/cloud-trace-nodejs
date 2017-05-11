@@ -164,7 +164,7 @@ function activate(agent) {
           return patchedRoot;
         }
       } else {
-        var modulePath = Module._resolveFilename(request, parent);
+        var modulePath = Module._resolveFilename(request, parent).replace('/', path.sep);
         if (intercepts[modulePath]) {
           return intercepts[modulePath].interceptedValue;
         }
