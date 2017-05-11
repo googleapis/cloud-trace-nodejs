@@ -75,6 +75,16 @@ describe('Trace Plugin Loader', function() {
       };
     });
 
+    // Prevent filename resolution from happening to fake modules
+    shimmer.wrap(Module, '_resolveFilename', function(originalResolve) {
+      return function wrappedResolveFilename(request) {
+        if (fakeModules[request.replace('/', path.sep)]) {
+          return request;
+        }
+        return originalResolve.apply(this, arguments);
+      };
+    });
+
     // proxyquire the plugin loader with stubbed module utility methods
     pluginLoader = proxyquire('../src/trace-plugin-loader.js', {
       './util.js': {
@@ -248,6 +258,60 @@ describe('Trace Plugin Loader', function() {
       'module-g': 'module-g-plugin'
     }));
     assert.strictEqual(require('module-g').createSentence(),
+      'good tests make sense.',
+      'Files internal to a module are patched');
+  });
+
+  /**
+   * Loads a module with internal exports and patches them, and then makes sure
+   * that they are actually patched.
+   */
+  it('intercepts internal files in modules', function() {
+    addModuleMock('module-h', '1.0.0', {
+      createSentence: function() {
+        return require('module-h/subject').get() + ' ' +
+          require('module-h/predicate').get() + '.';
+      }
+    });
+    addModuleMock('module-h/subject', '', {
+      get: function() {
+        return 'bad tests';
+      }
+    });
+    addModuleMock('module-h/predicate', '', {
+      get: function() {
+        return 'don\'t make sense';
+      }
+    });
+    addModuleMock('module-h-plugin', '', [
+      {
+        file: 'subject',
+        intercept: function(originalModule, api) {
+          return {
+            get: function() {
+              return 'good tests';
+            }
+          };
+        }
+      },
+      {
+        file: 'predicate',
+        intercept: function(originalModule, api) {
+          return {
+            get: function() {
+              return 'make sense';
+            }
+          };
+        }
+      }
+    ]);
+    assert.strictEqual(require('module-h').createSentence(),
+      'bad tests don\'t make sense.');
+    // Activate plugin loader
+    pluginLoader.activate(createFakeAgent({
+      'module-h': 'module-h-plugin'
+    }));
+    assert.strictEqual(require('module-h').createSentence(),
       'good tests make sense.',
       'Files internal to a module are patched');
   });

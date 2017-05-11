@@ -23,6 +23,7 @@ var util = require('./util.js');
 var TraceApi = require('./trace-api.js');
 
 var plugins = Object.create(null);
+var intercepts = Object.create(null);
 var activated = false;
 
 var logger;
@@ -121,8 +122,8 @@ function activate(agent) {
 
       for (var file in patchSet) {
         var patch = patchSet[file];
+        var loadPath = moduleRoot ? path.join(moduleRoot, patch.file) : patch.file;
         if (!patch.module) {
-          var loadPath = moduleRoot ? path.join(moduleRoot, patch.file) : patch.file;
           patch.module = originalModuleLoad(loadPath, module, false);
         }
         if (patch.patch) {
@@ -130,6 +131,9 @@ function activate(agent) {
         }
         if (patch.intercept) {
           patch.module = patch.intercept(patch.module, instrumentation.api);
+          intercepts[loadPath] = {
+            interceptedValue: patch.module
+          };
         }
       }
       var rootPatch = patchSet[''];
@@ -159,6 +163,11 @@ function activate(agent) {
         if (patchedRoot !== null) {
           return patchedRoot;
         }
+      } else {
+        var modulePath = Module._resolveFilename(request, parent).replace('/', path.sep);
+        if (intercepts[modulePath]) {
+          return intercepts[modulePath].interceptedValue;
+        }
       }
       return originalModuleLoad.apply(this, arguments);
     };
@@ -183,6 +192,7 @@ function deactivate() {
       }
     }
     plugins = Object.create(null);
+    intercepts = Object.create(null);
 
     // unhook module.load
     shimmer.unwrap(Module, '_load');
