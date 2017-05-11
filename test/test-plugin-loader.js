@@ -75,6 +75,16 @@ describe('Trace Plugin Loader', function() {
       };
     });
 
+    // Prevent filename resolution from happening to fake modules
+    shimmer.wrap(Module, '_resolveFilename', function(originalResolve) {
+      return function wrappedResolveFilename(request) {
+        if (fakeModules[request.replace('/', path.sep)]) {
+          return request;
+        }
+        return originalResolve.apply(this, arguments);
+      };
+    });
+
     // proxyquire the plugin loader with stubbed module utility methods
     pluginLoader = proxyquire('../src/trace-plugin-loader.js', {
       './util.js': {

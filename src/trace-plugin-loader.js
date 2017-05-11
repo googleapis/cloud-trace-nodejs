@@ -151,8 +151,8 @@ function activate(agent) {
     // Future requires get patched as they get loaded.
     return function Module_load(request, parent, isMain) {
       var instrumentation = plugins[request];
-      var moduleRoot = util.findModulePath(request, parent);
       if (instrumentation) {
+        var moduleRoot = util.findModulePath(request, parent);
         var moduleVersion = util.findModuleVersion(moduleRoot, originalModuleLoad);
         if (moduleAlreadyPatched(instrumentation, moduleRoot, moduleVersion)) {
           return originalModuleLoad.apply(this, arguments);
@@ -163,8 +163,11 @@ function activate(agent) {
         if (patchedRoot !== null) {
           return patchedRoot;
         }
-      } else if (intercepts[moduleRoot]) {
-        return intercepts[moduleRoot].interceptedValue;
+      } else {
+        var modulePath = Module._resolveFilename(request, parent);
+        if (intercepts[modulePath]) {
+          return intercepts[modulePath].interceptedValue;
+        }
       }
       return originalModuleLoad.apply(this, arguments);
     };
