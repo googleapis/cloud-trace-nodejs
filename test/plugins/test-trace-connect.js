@@ -190,6 +190,35 @@ describe('test-trace-connect', function() {
       });
     });
   });
+
+  it('should end spans even if client aborts', function(done) {
+    var app = connect();
+    app.use('/', function (req, res) {
+      setTimeout(function() {
+        res.end(common.serverRes);
+        setImmediate(function() {
+          var traces = common.getTraces(agent);
+          assert.strictEqual(traces.length, 1);
+          assert.strictEqual(traces[0].spans.length, 1);
+          var span = traces[0].spans[0];
+          common.assertSpanDurationCorrect(span, common.serverWait);
+          done();
+        });
+      }, common.serverWait);
+    });
+    server = app.listen(common.serverPort, function() {
+      var req = http.get({port: common.serverPort, path: '/'},
+        function(res) {
+          assert.fail();
+        });
+      // Need error handler to catch socket hangup error
+      req.on('error', function() {});
+      // Give enough time for server to receive request
+      setTimeout(function() {
+        req.abort();
+      }, common.serverWait / 2);
+    });
+  });
 });
 
 function connectPredicate(span) {
