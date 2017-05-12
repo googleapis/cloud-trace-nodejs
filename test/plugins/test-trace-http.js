@@ -277,6 +277,22 @@ describe('test-trace-http', function() {
       })
     );
   });
+
+  it('should not interfere with response event emitter api', function(done) {
+    server.listen(common.serverPort, common.runInTransaction.bind(null, agent,
+      function(endTransaction) {
+        http.get({port: common.serverPort}, function(res) {
+          var result = '';
+          res
+          .on('data', function(data) { result += data; })
+          .on('end', function() {
+            endTransaction();
+            done();
+          });
+        });
+      })
+    );
+  });
 });
 
 describe('https', function() {
