@@ -130,6 +130,34 @@ describe('koa', function() {
           });
         });
       });
+
+      it('should end spans when client aborts request', function(done) {
+        var app = buildKoaApp();
+        server = app.listen(common.serverPort, function() {
+          var req = http.get({port: common.serverPort, path: '/'},
+            function(res) {
+              assert.fail();
+            });
+          // Need error handler to catch socket hangup error
+          req.on('error', function() {});
+          // Give enough time for server to receive request
+          setTimeout(function() {
+            req.abort();
+          }, common.serverWait / 2);
+        });
+        setTimeout(function() {
+          var traces = common.getTraces(agent);
+          assert.strictEqual(traces.length, 1);
+          assert.strictEqual(traces[0].spans.length, 1);
+          var span = traces[0].spans[0];
+          assert.strictEqual(span.labels[TraceLabels.ERROR_DETAILS_NAME],
+            'aborted');
+          assert.strictEqual(span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
+            'client aborted the request');
+          common.assertSpanDurationCorrect(span, common.serverWait / 2);
+          done();
+        }, common.serverWait);
+      });
     });
   });
 });
