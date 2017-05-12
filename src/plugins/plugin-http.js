@@ -92,7 +92,7 @@ function patchRequest (http, api) {
                 numBytes += chunk.length;
               });
             }
-            on.apply(this, arguments);
+            return on.apply(this, arguments);
           };
         });
         res.on('end', function () {
