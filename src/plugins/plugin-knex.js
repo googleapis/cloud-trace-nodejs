@@ -16,6 +16,7 @@
 'use strict';
 
 var shimmer = require('shimmer');
+var util = require('util');
 var is = require('is');
 
 var VERSIONS = '0.12.x';
@@ -30,20 +31,16 @@ function patchClient(Client, api) {
   });
 }
 
-function interceptKnex(Knex, api) {
-  return function() {
-    var result = Knex.apply(this, arguments);
-    var proto = Object.getPrototypeOf(result.client);
-    shimmer.wrap(proto, 'transaction', function(original) {
-      return function() {
-        var args = Array.prototype.slice.call(arguments).map(function(item) {
-          return item && is.fn(item) ? api.wrap(item) : item;
-        });
-        return original.apply(this, args);
-      };
-    });
-    return result;
-  };
+function wrapIfFn(fn, api) {
+  return fn && is.fn(fn) ? api.wrap(fn) : fn;
+}
+
+function interceptTransaction(Transaction, api) {
+  function WrappedTransaction(client, container, config, outerTx) {
+    Transaction.call(this, client, wrapIfFn(container, api), config, outerTx);
+  }
+  util.inherits(WrappedTransaction, Transaction);
+  return WrappedTransaction;
 }
 
 function unpatchClient(Client) {
@@ -52,9 +49,9 @@ function unpatchClient(Client) {
 
 module.exports = [
   {
-    file: '',
+    file: 'lib/transaction.js',
     versions: VERSIONS,
-    intercept: interceptKnex
+    intercept: interceptTransaction
   },
   {
     file: 'lib/client.js',
