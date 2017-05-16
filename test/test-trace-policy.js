@@ -32,7 +32,7 @@ describe('FilterPolicy', function() {
   it('should allow non-filtered urls', function() {
     var policy = tracingPolicy.createTracePolicy({
       samplingRate: 0,
-      ignoreUrls: ['/_ah/health']
+      ignoreUrls: ['/_ah/health', '/']
     });
     assert(policy.shouldTrace(null, '/_ah/background'));
   });
