@@ -1,5 +1,30 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-05-15, Version 2.0.0 (Experimental), @matthewloring
+
+### Notable changes
+
+This release drops support for versions of Node.js <4.
+
+**Semver Major**
+
+  * [[`b533f671f0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b533f671f0)] - Update deps, drop support for 0.12 (#478) (Matthew Loring) [#478](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/478)
+
+**UI**
+
+  * [[`8812b7a96e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8812b7a96e)] - Update trace label names (#467) (Matthew Loring) [#467](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/467)
+
+## Commits
+
+* [[`3a0fb1c133`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/3a0fb1c133)] - Regression test for #481 (#483) (Matthew Loring) [#483](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/483)
+* [[`3f90b20e0d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/3f90b20e0d)] - **http**: return response object for chaining #481 (#482) (vmarchaud) [#482](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/482)
+* [[`1495eae896`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1495eae896)] - Fix module-internal requires not being intercepted (#480) (Kelvin Jin) [#480](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/480)
+* [[`b533f671f0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b533f671f0)] - Update deps, drop support for 0.12 (#478) (Matthew Loring) [#478](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/478)
+* [[`5080bfc306`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5080bfc306)] - Add yarn.lock file (#476) (Matthew Loring) [#476](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/476)
+* [[`2500aba504`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/2500aba504)] - pass valid TestRequest message in grpc test (#474) (Ali Ijaz Sheikh) 
+* [[`89d87797ff`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/89d87797ff)] - drop dependency on dummy counter module (#472) (Ali Ijaz Sheikh) 
+* [[`8812b7a96e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8812b7a96e)] - Update trace label names (#467) (Matthew Loring) [#467](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/467)
+
 ## 2017-04-18, Version 1.1.0 (Experimental), @matthewloring
 
 ### Notable changes
