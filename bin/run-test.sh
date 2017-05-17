@@ -55,10 +55,10 @@ if [ -z "${TRAVIS_PULL_REQUEST}" ] || [ "${TRAVIS_PULL_REQUEST}" = "false" ]
 then
   # TODO(ofrobots): This actually doesn't work yet
   if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
-    openssl aes-256-cbc -K $encrypted_e9782ba88cb0_key \
-      -iv $encrypted_e9782ba88cb0_iv \
-      -in node-team-debug-test-dfc747dacb5b.json.enc \
-      -out node-team-debug-test-dfc747dacb5b.json -d
+    openssl aes-256-cbc -K $encrypted_18363a01ae87_key
+      -iv $encrypted_18363a01ae87_iv
+      -in node-team-test-d0b0be11c23d.json.enc
+      -out node-team-test-d0b0be11c23d.json -d
   fi
 
   npm run system-test

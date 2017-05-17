@@ -35,6 +35,8 @@ const uuid = require('uuid');
 const WRITE_CONSISTENCY_DELAY_MS = 20 * 1000;
 const projectId = process.env.GCLOUD_PROJECT;
 
+// TODO(ofrobots): this code should be moved to a better location. Perhaps
+// google-auto-auth or google-auth-library.
 function makeAuthorizedGot(auth) {
   function authorize(options) {
     return new Promise((resolve, reject) => {
@@ -71,9 +73,7 @@ function listTraces(testPath) {
     const body = response.body;
     const promises = body.traces.map((trace) => {
       const uri = `${BASE_URI}/traces/${trace.traceId}`;
-      return agot(uri, {
-        json: true
-      });
+      return agot(uri, { json: true });
     });
 
     return Promise.all(promises).then((responses) => {
