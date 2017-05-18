@@ -161,48 +161,50 @@ describe('test-trace-knex with mysql', function() {
     };
     common.runInTransaction(agent, function(endRootSpan) {
       knex.transaction(function(trx) {
-        trx.insert(obj2)
-           .into(TABLE_NAME)
-           .transacting(trx)
-           .then(function() {
-             trx.select()
-                .from(TABLE_NAME)
-                .transacting(trx)
-                .then(function(res) {
-                  assert.equal(res.length, 2);
-                  assert.equal(res[0].k, 1);
-                  assert.equal(res[0].v, 'obj');
-                  assert.equal(res[1].k, 2);
-                  assert.equal(res[1].v, 'obj2');
-                })
-                .then(trx.rollback)
-                .then(function() {
-                  knex.select()
-                      .from(TABLE_NAME)
-                      .then(function(res) {
-                        endRootSpan();
-                        assert.equal(res.length, 1);
-                        assert.equal(res[0].k, 1);
-                        assert.equal(res[0].v, 'obj');
-                        var spans = common.getMatchingSpans(agent, function (span) {
-                          return span.name === 'mysql-query';
-                        });
-                        var expectedCmds = ['insert into `t` (`k`, `v`) values (?, ?)',
-                          'select * from `t`', 'ROLLBACK;', 'select * from `t`'];
-                        assert.equal(expectedCmds.length, spans.length);
-                        for (var i = 0; i < spans.length; i++) {
-                          assert.equal(spans[i].labels.sql, expectedCmds[i]);
-                        }
-                        done();
-                      });
-                }).catch(function(err) {
-                  assert.ifError(err);
-                });
+        knex.insert(obj2)
+            .into(TABLE_NAME)
+            .transacting(trx)
+            .then(function(res) {
+              return trx.select()
+                 .from(TABLE_NAME)
+                 .then(function(res) {
+                   assert.equal(res.length, 2);
+                   assert.equal(res[0].k, 1);
+                   assert.equal(res[0].v, 'obj');
+                   assert.equal(res[1].k, 2);
+                   assert.equal(res[1].v, 'obj2');
+                 }).catch(function(err) {
+                   assert.ifError(err);
+                 });
+            })
+            .then(function() {
+              trx.rollback(new Error('Rolling back'));
+            }).catch(function(err) {
+              assert.ifError(err);
+            });
+      }).catch(function(err) {
+        assert.ok(err);
+        assert.strictEqual(err.message, 'Rolling back');
+        knex.select()
+          .from(TABLE_NAME)
+          .then(function(res) {
+            endRootSpan();
+            assert.equal(res.length, 1);
+            assert.equal(res[0].k, 1);
+            assert.equal(res[0].v, 'obj');
+            var spans = common.getMatchingSpans(agent, function (span) {
+              return span.name === 'mysql-query';
+            });
+            var expectedCmds = ['insert into `t` (`k`, `v`) values (?, ?)',
+              'select * from `t`', 'ROLLBACK;', 'select * from `t`'];
+            assert.equal(expectedCmds.length, spans.length);
+            for (var i = 0; i < spans.length; i++) {
+              assert.equal(spans[i].labels.sql, expectedCmds[i]);
+            }
+            done();
           }).catch(function(err) {
             assert.ifError(err);
           });
-      }).catch(function(err) {
-        assert.ifError(err);
       });
     });
   });
