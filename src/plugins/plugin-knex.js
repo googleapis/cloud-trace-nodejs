@@ -19,6 +19,7 @@ var shimmer = require('shimmer');
 var util = require('util');
 var is = require('is');
 
+// knex 0.11.x does not need patching
 var VERSIONS = '>=0.12 <=0.13';
 
 function patchClient(Client, api) {

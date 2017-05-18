@@ -27,6 +27,7 @@ var obj = {
 };
 
 var versions = {
+  knex11: './fixtures/knex0.11',
   knex12: './fixtures/knex0.12',
   knex13: './fixtures/knex0.13'
 };
@@ -87,8 +88,15 @@ describe('test-trace-knex', function() {
             var spans = common.getMatchingSpans(agent, function (span) {
               return span.name === 'mysql-query';
             });
-            assert.equal(spans.length, 1);
-            assert.equal(spans[0].labels.sql, 'select * from `t`');
+            if (version === 'knex11') {
+              assert.equal(spans.length, 2);
+              assert.equal(spans[0].labels.sql, 'SELECT 1');
+              assert.equal(spans[1].labels.sql, 'select * from `t`');
+            }
+            else {
+              assert.equal(spans.length, 1);
+              assert.equal(spans[0].labels.sql, 'select * from `t`');
+            }
             done();
           });
         });
@@ -139,8 +147,15 @@ describe('test-trace-knex', function() {
             var spans = common.getMatchingSpans(agent, function (span) {
               return span.name === 'mysql-query';
             });
-            assert.equal(spans.length, 1);
-            assert.equal(spans[0  ].labels.sql, 'select * from `t`');
+            if (version === 'knex11') {
+              assert.equal(spans.length, 2);
+              assert.equal(spans[0].labels.sql, 'SELECT 1');
+              assert.equal(spans[1].labels.sql, 'select * from `t`');
+            }
+            else {
+              assert.equal(spans.length, 1);
+              assert.equal(spans[0].labels.sql, 'select * from `t`');
+            }
             done();
           }).catch(function(e) {
             assert.ifError(e);
@@ -156,8 +171,15 @@ describe('test-trace-knex', function() {
               var spans = common.getMatchingSpans(agent, function (span) {
                 return span.name === 'mysql-query';
               });
-              assert.equal(spans.length, 1);
-              assert.equal(spans[0].labels.sql, 'select * from `t`');
+              if (version === 'knex11') {
+                assert.equal(spans.length, 2);
+                assert.equal(spans[0].labels.sql, 'SELECT 1');
+                assert.equal(spans[1].labels.sql, 'select * from `t`');
+              }
+              else {
+                assert.equal(spans.length, 1);
+                assert.equal(spans[0].labels.sql, 'select * from `t`');
+              }
               done();
             }, 50);
           });
@@ -205,8 +227,22 @@ describe('test-trace-knex', function() {
                 var spans = common.getMatchingSpans(agent, function (span) {
                   return span.name === 'mysql-query';
                 });
-                var expectedCmds = ['insert into `t` (`k`, `v`) values (?, ?)',
-                  'select * from `t`', 'ROLLBACK;', 'select * from `t`'];
+                var expectedCmds;
+                if (version === 'knex11') {
+                  expectedCmds = ['SELECT 1',
+                                  'BEGIN;',
+                                  'insert into `t` (`k`, `v`) values (?, ?)',
+                                  'select * from `t`',
+                                  'ROLLBACK;',
+                                  'SELECT 1',
+                                  'select * from `t`'];
+                }
+                else {
+                  expectedCmds = ['insert into `t` (`k`, `v`) values (?, ?)',
+                                  'select * from `t`',
+                                  'ROLLBACK;',
+                                  'select * from `t`'];
+                }
                 assert.equal(expectedCmds.length, spans.length);
                 for (var i = 0; i < spans.length; i++) {
                   assert.equal(spans[i].labels.sql, expectedCmds[i]);
