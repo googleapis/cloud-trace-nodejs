@@ -32,13 +32,9 @@ function patchClient(Client, api) {
   });
 }
 
-function wrapIfFn(fn, api) {
-  return fn && is.fn(fn) ? api.wrap(fn) : fn;
-}
-
 function interceptTransaction(Transaction, api) {
   function WrappedTransaction(client, container, config, outerTx) {
-    Transaction.call(this, client, wrapIfFn(container, api), config, outerTx);
+    Transaction.call(this, client, api.wrap(container), config, outerTx);
   }
   util.inherits(WrappedTransaction, Transaction);
   return WrappedTransaction;
