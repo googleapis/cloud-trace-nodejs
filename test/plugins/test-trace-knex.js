@@ -27,6 +27,7 @@ var obj = {
 };
 
 var versions = {
+  knex10: './fixtures/knex0.10',
   knex11: './fixtures/knex0.11',
   knex12: './fixtures/knex0.12',
   knex13: './fixtures/knex0.13'
@@ -228,7 +229,14 @@ describe('test-trace-knex', function() {
                   return span.name === 'mysql-query';
                 });
                 var expectedCmds;
-                if (version === 'knex11') {
+                if (version === 'knex10') {
+                  expectedCmds = ['BEGIN;',
+                                  'insert into `t` (`k`, `v`) values (?, ?)',
+                                  'select * from `t`',
+                                  'ROLLBACK;',
+                                  'select * from `t`'];
+                }
+                else if (version === 'knex11') {
                   expectedCmds = ['SELECT 1',
                                   'BEGIN;',
                                   'insert into `t` (`k`, `v`) values (?, ?)',
