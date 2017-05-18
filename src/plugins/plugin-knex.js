@@ -19,7 +19,7 @@ var shimmer = require('shimmer');
 var util = require('util');
 var is = require('is');
 
-var VERSIONS = '0.12.x';
+var VERSIONS = '>=0.12 <=0.13';
 
 function patchClient(Client, api) {
   shimmer.wrap(Client.prototype, 'runner', function(original) {
