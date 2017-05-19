@@ -19,7 +19,7 @@ var common = require('./common.js');
 var http = require('http');
 var assert = require('assert');
 var constants = require('../../src/constants.js');
-var TraceLabels = require('../../src/trace-labels.js');
+var traceLabels = require('../../src/trace-labels.js');
 var semver = require('semver');
 var appBuilders = {
   koa1: buildKoa1App
@@ -64,10 +64,10 @@ describe('koa', function() {
             res.on('end', function() {
               assert.equal(common.serverRes, result);
               var expectedKeys = [
-                TraceLabels.HTTP_METHOD_LABEL_KEY,
-                TraceLabels.HTTP_URL_LABEL_KEY,
-                TraceLabels.HTTP_SOURCE_IP,
-                TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY
+                traceLabels.HTTP_METHOD_LABEL_KEY,
+                traceLabels.HTTP_URL_LABEL_KEY,
+                traceLabels.HTTP_SOURCE_IP,
+                traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY
               ];
               var span = common.getMatchingSpan(agent, koaPredicate);
               expectedKeys.forEach(function(key) {
@@ -84,7 +84,7 @@ describe('koa', function() {
         server = app.listen(common.serverPort, function() {
           http.get({port: common.serverPort}, function(res) {
             var labels = common.getMatchingSpan(agent, koaPredicate).labels;
-            var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
+            var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
             // Ensure that our middleware is on top of the stack
             assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
             done();
@@ -129,6 +129,38 @@ describe('koa', function() {
             done();
           });
         });
+      });
+
+      it('should end spans when client aborts request', function(done) {
+        var app = buildKoaApp();
+        server = app.listen(common.serverPort, function() {
+          var req = http.get({port: common.serverPort, path: '/'},
+            function(res) {
+              assert.fail();
+            });
+          // Need error handler to catch socket hangup error
+          req.on('error', function() {});
+          // Give enough time for server to receive request
+          setTimeout(function() {
+            req.abort();
+          }, common.serverWait / 2);
+        });
+        setTimeout(function() {
+          // Unlike with express and other frameworks, koa doesn't call
+          // res.end if the request was aborted. As a call to res.end is
+          // conditional on this client-side behavior, we also end a span in
+          // koa if the 'aborted' event is emitted.
+          var traces = common.getTraces(agent);
+          assert.strictEqual(traces.length, 1);
+          assert.strictEqual(traces[0].spans.length, 1);
+          var span = traces[0].spans[0];
+          assert.strictEqual(span.labels[traceLabels.ERROR_DETAILS_NAME],
+            'aborted');
+          assert.strictEqual(span.labels[traceLabels.ERROR_DETAILS_MESSAGE],
+            'client aborted the request');
+          common.assertSpanDurationCorrect(span, common.serverWait / 2);
+          done();
+        }, common.serverWait);
       });
     });
   });

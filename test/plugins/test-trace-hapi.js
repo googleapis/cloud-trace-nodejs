@@ -308,6 +308,45 @@ describe('hapi', function() {
           });
         });
       });
+
+      it('should end spans when client aborts request', function(done) {
+        server = new hapi.Server();
+        server.connection({ port: common.serverPort });
+        server.route({
+          method: 'GET',
+          path: '/',
+          handler: function (req, reply) {
+            // Unlike with express and other frameworks, hapi doesn't call
+            // res.end if the request was aborted. As a call to res.end is
+            // conditional on this client-side behavior, we also listen for the
+            // 'aborted' event, and end the span there.
+            req.raw.req.on('aborted', function() {
+              var traces = common.getTraces(agent);
+              assert.strictEqual(traces.length, 1);
+              assert.strictEqual(traces[0].spans.length, 1);
+              var span = traces[0].spans[0];
+              assert.strictEqual(span.labels[traceLabels.ERROR_DETAILS_NAME],
+                'aborted');
+              assert.strictEqual(span.labels[traceLabels.ERROR_DETAILS_MESSAGE],
+                'client aborted the request');
+              common.assertSpanDurationCorrect(span, common.serverWait);
+              done();
+            });
+          }
+        });
+        server.start(function() {
+          var req = http.get({port: common.serverPort, path: '/'},
+            function(res) {
+              assert.fail();
+            });
+          // Need error handler to catch socket hangup error
+          req.on('error', function() {});
+          // Give enough time for server to receive request
+          setTimeout(function() {
+            req.abort();
+          }, common.serverWait);
+        });
+      });
     });
   });
 });
