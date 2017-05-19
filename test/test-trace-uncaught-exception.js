@@ -27,8 +27,6 @@ nock.disableNetConnect();
 var uri = 'https://cloudtrace.googleapis.com';
 var path = '/v1/projects/0/traces';
 
-process.env.GCLOUD_PROJECT = 0;
-
 var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {
     common.runInTransaction(agent, function(end) {
@@ -38,6 +36,16 @@ var queueSpans = function(n, agent) {
 };
 
 describe('tracewriter publishing', function() {
+  var savedProject;
+
+  before(function() {
+    savedProject = process.env.GCLOUD_PROJECT;
+    process.env.GCLOUD_PROJECT = '0';
+  });
+
+  after(function() {
+    process.env.GCLOUD_PROJECT = savedProject;
+  });
 
   it('should publish on unhandled exception', function(done) {
     var agent;

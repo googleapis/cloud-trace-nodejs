@@ -29,9 +29,18 @@ var queueSpans = function(n, agent) {
   }
 };
 
-process.env.GCLOUD_PROJECT = 0;
-
 describe('test-config-credentials', function() {
+  var savedProject;
+
+  before(function() {
+    savedProject = process.env.GCLOUD_PROJECT;
+    process.env.GCLOUD_PROJECT = '0';
+  });
+
+  after(function() {
+    process.env.GCLOUD_PROJECT = savedProject;
+  });
+
   it('should use the keyFilename field of the config object', function(done) {
     var credentials = require('./fixtures/gcloud-credentials.json');
     var config = {

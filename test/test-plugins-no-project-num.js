@@ -15,15 +15,21 @@
  */
 'use strict';
 
-delete process.env.GCLOUD_PROJECT;
-
 var assert = require('assert');
 var write;
 
 describe('test-plugins-no-project-num', function(){
   var agent;
+  var savedProject;
+
   before(function() {
+    savedProject = process.env.GCLOUD_PROJECT;
+    delete process.env.GCLOUD_PROJECT;
     agent = require('..').start();
+  });
+
+  after(function() {
+    process.env.GCLOUD_PROJECT = savedProject;
   });
 
   describe('should not break without project num', function() {

@@ -50,3 +50,15 @@ fi
 
 # Run non-interference tests
 node test/non-interference/http-e2e.js || exit 1
+
+
+# If on travis, and this is not a pull request build, run the system-tests
+# as well.
+if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
+  openssl aes-256-cbc -K $encrypted_18363a01ae87_key \
+    -iv $encrypted_18363a01ae87_iv \
+    -in node-team-test-d0b0be11c23d.json.enc \
+    -out node-team-test-d0b0be11c23d.json -d
+
+  npm run system-test
+fi

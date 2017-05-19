@@ -23,7 +23,11 @@ var nock = require('nock');
 
 describe('test-agent-stopped', function() {
   var agent;
+  var savedProject;
+
   before(function(done) {
+    savedProject = process.env.GCLOUD_PROJECT;
+
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/project-id')
                 .reply(404);
@@ -38,7 +42,7 @@ describe('test-agent-stopped', function() {
   });
 
   after(function() {
-    process.env.GCLOUD_PROJECT = 0;
+    process.env.GCLOUD_PROJECT = savedProject;
   });
 
   describe('express', function() {
