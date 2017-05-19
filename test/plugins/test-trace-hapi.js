@@ -316,6 +316,10 @@ describe('hapi', function() {
           method: 'GET',
           path: '/',
           handler: function (req, reply) {
+            // Unlike with express and other frameworks, hapi doesn't call
+            // res.end if the request was aborted. As a call to res.end is
+            // conditional on this client-side behavior, we also listen for the
+            // 'aborted' event, and end the span there.
             req.raw.req.on('aborted', function() {
               var traces = common.getTraces(agent);
               assert.strictEqual(traces.length, 1);

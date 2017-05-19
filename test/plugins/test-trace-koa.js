@@ -146,6 +146,10 @@ describe('koa', function() {
           }, common.serverWait / 2);
         });
         setTimeout(function() {
+          // Unlike with express and other frameworks, koa doesn't call
+          // res.end if the request was aborted. As a call to res.end is
+          // conditional on this client-side behavior, we also end a span in
+          // koa if the 'aborted' event is emitted.
           var traces = common.getTraces(agent);
           assert.strictEqual(traces.length, 1);
           assert.strictEqual(traces[0].spans.length, 1);
