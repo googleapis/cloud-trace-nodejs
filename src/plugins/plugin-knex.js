@@ -31,16 +31,16 @@ function patchClient(Client, api) {
   });
 }
 
+function unpatchClient(Client) {
+  shimmer.unwrap(Client.prototype, 'runner');
+}
+
 function interceptTransaction(Transaction, api) {
   function WrappedTransaction(client, container, config, outerTx) {
     Transaction.call(this, client, api.wrap(container), config, outerTx);
   }
   util.inherits(WrappedTransaction, Transaction);
   return WrappedTransaction;
-}
-
-function unpatchClient(Client) {
-  shimmer.unwrap(Client.prototype, 'runner');
 }
 
 module.exports = [
