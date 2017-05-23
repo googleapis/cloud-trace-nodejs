@@ -15,6 +15,8 @@
  */
 'use strict';
 
+var assert = require('assert');
+
 var common = require('./common.js');
 var traceLabels = require('../../src/trace-labels.js');
 
@@ -35,7 +37,6 @@ var versions = {
 
 describe('test-trace-knex', function() {
   var agent;
-  var assert;
   before(function() {
     agent = require('../..').start({
       logLevel: 2,
@@ -43,7 +44,6 @@ describe('test-trace-knex', function() {
       enhancedDatabaseReporting: true,
       databaseResultReportingSize: RESULT_SIZE
     });
-    assert = require('assert');
   });
 
   Object.keys(versions).forEach(function(version) {
