@@ -25,7 +25,7 @@ module.exports = {
     enabled: true,
 
     // If true, information about query parameters and results will be
-    // attached to spans representating database operations.
+    // attached to spans representing database operations.
     enhancedDatabaseReporting: false,
 
     // The maximum number of characters reported on a label value. This
@@ -39,7 +39,7 @@ module.exports = {
     // Specifying a different object for this field in the configuration passed
     // to the method that starts the trace agent will cause that object to be
     // merged with this one.
-    // To disable a plugin in this list, you may override its path with a falsey
+    // To disable a plugin in this list, you may override its path with a falsy
     // value. Disabling any of the default plugins may cause unwanted behavior,
     // so use caution.
     plugins: {
@@ -86,7 +86,7 @@ module.exports = {
 
     // Specifies the behavior of the trace agent in the case of an uncaught exception.
     // Possible values are:
-    //   `ignore`: Take no action. Note that the process may termiante before all the
+    //   `ignore`: Take no action. Note that the process may terminate before all the
     //            traces currently buffered have been flushed to the network.
     //   `flush`: Handle the uncaught exception and attempt to publish the traces to
     //            the API. Note that if you have other uncaught exception handlers in your
