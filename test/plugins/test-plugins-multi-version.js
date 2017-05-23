@@ -30,6 +30,7 @@ describe('multiple instrumentations of the same module', function() {
 
   before(function() {
     agent = require('../..').start({
+      projectId: '0',
       enhancedDatabaseReporting: true,
       samplingRate: 0
     });

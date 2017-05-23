@@ -25,8 +25,11 @@ nock.disableNetConnect();
 describe('test-trace-gcloud', function() {
   var agent;
   before(function() {
-    agent = require('..').start({ samplingRate: 0,
-      enhancedDatabaseReporting: true });
+    agent = require('..').start({
+      projectId: '0',
+      samplingRate: 0,
+      enhancedDatabaseReporting: true
+    });
   });
 
   // This does a gcloud.datastore.get() request that makes a gRPC 'lookup' call.

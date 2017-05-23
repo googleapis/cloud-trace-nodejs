@@ -31,7 +31,10 @@ describe('express + dbs', function() {
   var agent;
 
   before(function() {
-    agent = require('..').start({ samplingRate: 0 });
+    agent = require('..').start({
+      projectId: '0',
+      samplingRate: 0
+    });
   });
 
   beforeEach(function() {

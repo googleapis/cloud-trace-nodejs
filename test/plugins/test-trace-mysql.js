@@ -34,6 +34,7 @@ describe('test-trace-mysql', function() {
   var pool;
   before(function() {
     agent = require('../..').start({
+      projectId: '0',
       enhancedDatabaseReporting: true,
       databaseResultReportingSize: RESULT_SIZE
     });

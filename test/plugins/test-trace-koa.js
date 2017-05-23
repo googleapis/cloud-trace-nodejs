@@ -34,6 +34,7 @@ describe('koa', function() {
 
   before(function() {
     agent = require('../..').start({
+      projectId: '0',
       ignoreUrls: ['/ignore'],
       samplingRate: 0
     });

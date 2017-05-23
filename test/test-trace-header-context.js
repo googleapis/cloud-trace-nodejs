@@ -26,7 +26,10 @@ describe('test-trace-header-context', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('..').start({ samplingRate: 0 });
+    agent = require('..').start({
+      projectId: '0',
+      samplingRate: 0
+    });
     express = require('./plugins/fixtures/express4');
   });
 

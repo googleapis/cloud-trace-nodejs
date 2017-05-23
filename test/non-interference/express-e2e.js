@@ -25,14 +25,6 @@ var semver = require('semver');
 
 var SUPPORTED_VERSIONS = '<4.x';
 
-if (process.argv.length === 4 && process.argv[2] === '-p') {
-  process.env.GCLOUD_PROJECT = process.argv[3];
-}
-if (!process.env.GCLOUD_PROJECT) {
-  console.log('Project number must be provided with the -p flag or' +
-      ' the GCLOUD_PROJECT environment variable must be set.');
-  process.exit(1);
-}
 if (!semver.satisfies(process.version, SUPPORTED_VERSIONS)) {
   console.log('Express tests do not pass on Node.js 4.0 yet');
   process.exit(0);

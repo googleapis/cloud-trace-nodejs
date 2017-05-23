@@ -18,11 +18,6 @@
 
  var constants = require('../src/constants.js');
 
-if (!process.env.GCLOUD_PROJECT) {
-  console.log('The GCLOUD_PROJECT environment variable must be set.');
-  process.exit(1);
-}
-
 var emptyLogger = {
   warn: console.warn,
   info: console.info,
@@ -31,12 +26,15 @@ var emptyLogger = {
 };
 
 var assert = require('assert');
-var config = require('../config.js');
+var defaultConfig = require('../config.js');
+var extend = require('extend');
 var file = require('../src/trace-agent.js');
 var SpanData = require('../src/span-data.js');
-var agent = file.get(config, emptyLogger);
 var constants = require('../src/constants.js');
 var cls = require('../src/cls.js');
+
+var config = extend({ projectId: '0'}, defaultConfig);
+var agent = file.get(config, emptyLogger);
 
 describe('Trace Agent', function() {
 

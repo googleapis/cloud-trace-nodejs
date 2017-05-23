@@ -28,7 +28,10 @@ describe('express + mongo with trace options header + sampling', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('..').start({ samplingRate: 1 });
+    agent = require('..').start({
+      projectId: '0',
+      samplingRate: 1
+    });
     express = require('./plugins/fixtures/express4');
   });
 

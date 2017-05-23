@@ -25,6 +25,7 @@ describe('google-gax', function() {
 
   before(function() {
     agent = require('../..').start({
+      projectId: '0',
       enhancedDatabaseReporting: true,
       samplingRate: 0
     });

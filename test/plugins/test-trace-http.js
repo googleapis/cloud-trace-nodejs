@@ -20,7 +20,10 @@ var constants = require('../../src/constants.js');
 var stream = require('stream');
 var TraceLabels = require('../../src/trace-labels.js');
 
-var agent = require('../..').start({ samplingRate: 0 });
+var agent = require('../..').start({ 
+  projectId: '0',
+  samplingRate: 0
+});
 
 var assert = require('assert');
 

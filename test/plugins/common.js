@@ -15,11 +15,6 @@
  */
 'use strict';
 
-if (!process.env.GCLOUD_PROJECT) {
-  console.log('The GCLOUD_PROJECT environment variable must be set.');
-  process.exit(1);
-}
-
 var proxyquire  = require('proxyquire');
 // Monkeypatch gcp-metadata to not ask for retries at all.
 proxyquire('gcp-metadata', {

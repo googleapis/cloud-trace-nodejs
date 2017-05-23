@@ -36,6 +36,7 @@ describe('mongodb', function() {
 
   before(function() {
     agent = require('../..').start({
+      projectId: '0',
       samplingRate: 0,
       enhancedDatabaseReporting: true,
       databaseResultReportingSize: RESULT_SIZE

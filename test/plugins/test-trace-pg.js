@@ -26,6 +26,7 @@ describe('test-trace-pg', function() {
   var releaseClient;
   before(function() {
     traceApi = require('../..').start({
+      projectId: '0',
       samplingRate: 0,
       enhancedDatabaseReporting: true
     });

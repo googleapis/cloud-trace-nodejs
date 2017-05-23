@@ -15,11 +15,6 @@
  */
 'use strict';
 
-if (!process.env.GCLOUD_PROJECT) {
-  console.log('The GCLOUD_PROJECT environment variable must be set.');
-  process.exit(1);
-}
-
 var assert = require('assert');
 var common = require('./common');
 var semver = require('semver');
@@ -32,7 +27,10 @@ describe('generic-pool2', function() {
   var api;
   var genericPool;
   before(function() {
-    api = require('../..').start({ samplingRate: 0 });
+    api = require('../..').start({
+      projectId: '0',
+      samplingRate: 0
+    });
     genericPool = require('./fixtures/generic-pool2');
   });
 
@@ -87,7 +85,10 @@ describe('generic-pool3', function() {
   }
 
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 });
+    agent = require('../..').start({
+      projectId: '0',
+      samplingRate: 0
+    });
     genericPool = require('./fixtures/generic-pool3');
   });
 
