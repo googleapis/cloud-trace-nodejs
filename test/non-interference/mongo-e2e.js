@@ -21,15 +21,6 @@ var glob = require('glob');
 var path = require('path');
 var tmp = require('tmp');
 
-if (process.argv.length === 4 && process.argv[2] === '-p') {
-  process.env.GCLOUD_PROJECT = process.argv[3];
-}
-if (!process.env.GCLOUD_PROJECT) {
-  console.log('Project number must be provided with the -p flag or' +
-      ' the GCLOUD_PROJECT environment variable must be set.');
-  process.exit(1);
-}
-
 var tmp_dir = tmp.dirSync().name;
 process.chdir(path.join(__dirname, '..', '..'));
 console.log('Packing trace');

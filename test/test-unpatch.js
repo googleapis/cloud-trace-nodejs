@@ -25,7 +25,7 @@ describe('index.js', function() {
   var agent;
   var checkUnpatches = [];
   beforeEach(function() {
-    agent = trace.start({ forceNewAgent_: true });
+    agent = trace.start({ projectId: '0', forceNewAgent_: true });
   });
 
   afterEach(function() {

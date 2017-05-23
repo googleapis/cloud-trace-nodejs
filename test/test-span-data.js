@@ -16,11 +16,6 @@
 
 'use strict';
 
-if (!process.env.GCLOUD_PROJECT) {
-  console.log('The GCLOUD_PROJECT environment variable must be set.');
-  process.exit(1);
-}
-
 var TraceLabels = require('../src/trace-labels.js');
 var assert = require('assert');
 var cls = require('../src/cls.js');
@@ -31,7 +26,10 @@ describe('SpanData', function() {
 
   var agent;
   before(function() {
-    agent = require('..').start({samplingRate: 0});
+    agent = require('..').start({
+      projectId: '0',
+      samplingRate: 0
+    });
   });
 
   it('has correct default values', function() {

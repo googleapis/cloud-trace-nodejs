@@ -33,7 +33,7 @@ describe('mongodb + express', function() {
   var mongoose;
   var express;
   before(function() {
-    agent = require('../..').start();
+    agent = require('../..').start({ projectId: '0' });
     express = require('./fixtures/express4');
     mongoose = require('./fixtures/mongoose4');
     oldWarn = common.replaceWarnLogger(agent,

@@ -29,6 +29,7 @@ describe('test-trace-express', function() {
   var express;
   before(function() {
     agent = require('../..').start({
+      projectId: '0',
       ignoreUrls: ['/ignore'],
       samplingRate: 0
     });

@@ -30,7 +30,10 @@ describe('test-trace-mongoose', function() {
   var mongoose;
   var Simple;
   before(function() {
-    agent = require('../..').start({ samplingRate: 0 });
+    agent = require('../..').start({
+      projectId: '0',
+      samplingRate: 0
+    });
 
     mongoose = require('./fixtures/mongoose4');
     mongoose.Promise = global.Promise;

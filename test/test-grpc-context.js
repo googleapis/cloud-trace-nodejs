@@ -55,7 +55,10 @@ Object.keys(versions).forEach(function(version) {
   var httpLogCount;
   describe('express + ' + version, function() {
     before(function(done) {
-      agent = require('..').start({ samplingRate: 0 });
+      agent = require('..').start({
+        projectId: '0',
+        samplingRate: 0
+      });
       express = require('./plugins/fixtures/express4');
       grpc = require(versions[version]);
 

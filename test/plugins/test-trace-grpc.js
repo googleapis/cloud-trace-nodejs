@@ -261,6 +261,7 @@ Object.keys(versions).forEach(function(version) {
     before(function() {
       // It is necessary for the samplingRate to be 0 for the tests to succeed
       agent = require('../..').start({
+        projectId: '0',
         samplingRate: 0,
         enhancedDatabaseReporting: true
       });

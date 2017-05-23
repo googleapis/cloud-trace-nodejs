@@ -39,6 +39,7 @@ describe('test-trace-knex', function() {
   var agent;
   before(function() {
     agent = require('../..').start({
+      projectId: '0',
       logLevel: 2,
       flushDelaySeconds: 1,
       enhancedDatabaseReporting: true,

@@ -25,16 +25,17 @@ describe('google-gax', function() {
 
   before(function() {
     agent = require('../..').start({
+      projectId: '0',
+      keyFilename: path.join(__dirname, '..', 'fixtures', 
+          'gcloud-credentials.json'),
       enhancedDatabaseReporting: true,
       samplingRate: 0
     });
-    process.env.GOOGLE_APPLICATION_CREDENTIALS =
-        path.join(__dirname, '..', 'fixtures', 'gcloud-credentials.json');
-    speech = require('./fixtures/google-cloud-speech0.6')();
-  });
-
-  after(function() {
-    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    speech = require('./fixtures/google-cloud-speech0.6')({
+      projectId: '0',
+      keyFilename: path.join(__dirname, '..', 'fixtures', 
+          'gcloud-credentials.json'),    
+    });
   });
 
   it('should not interfere with google-cloud api tracing', function(done) {

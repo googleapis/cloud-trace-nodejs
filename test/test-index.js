@@ -16,16 +16,11 @@
 
 'use strict';
 
-if (!process.env.GCLOUD_PROJECT) {
-  console.log('The GCLOUD_PROJECT environment variable must be set.');
-  process.exit(1);
-}
-
 var assert = require('assert');
 var trace = require('..');
 
 describe('index.js', function() {
-  var agent = trace.start();
+  var agent = trace.start({ projectId: '0' });
 
   it('should get the agent with `Trace.get`', function() {
     assert.strictEqual(agent, trace.get());

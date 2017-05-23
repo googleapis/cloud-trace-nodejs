@@ -36,6 +36,7 @@ shimmer.wrap(agent, 'get', function(original) {
   };
 });
 require('../..').start({
+  projectId: '0',
   logLevel: 1,
   samplingRate: 0
 });
