@@ -16,24 +16,29 @@
 
 'use strict';
 
-if (!process.env.GCLOUD_PROJECT ||
-  !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-  throw new Error('system-test requires credentials to be available via ' +
-    'environment. Please set GCLOUD_PROJECT and ' +
-    'GOOGLE_APPLICATION_CREDENTIALS');
+if (!process.env.TRACE_SYSTEM_TEST_PROJECT ||
+    !process.env.TRACE_SYSTEM_TEST_KEYFILE) {
+  console.error('system-test requires credentials to be available via ' +
+    'environment. Please set TRACE_SYSTEM_TEST_PROJECT and ' +
+    'TRACE_SYSTEM_TEST_KEYFILE.');
+  process.exit(1);
 }
 
+const WRITE_CONSISTENCY_DELAY_MS = 20 * 1000;
+const projectId = process.env.TRACE_SYSTEM_TEST_PROJECT;
+
 // trace-agent must be loaded before everything else.
-require('../').start({ flushDelaySeconds: 1 });
+require('../').start({
+  projectId: projectId,
+  keyFilename: process.env.TRACE_SYSTEM_TEST_KEYFILE,
+  flushDelaySeconds: 1
+});
 
 const assert = require('assert');
 const googleAuth = require('google-auto-auth');
 const got = require('got');
 const queryString = require('querystring');
 const uuid = require('uuid');
-
-const WRITE_CONSISTENCY_DELAY_MS = 20 * 1000;
-const projectId = process.env.GCLOUD_PROJECT;
 
 // TODO(ofrobots): this code should be moved to a better location. Perhaps
 // google-auto-auth or google-auth-library.
@@ -69,17 +74,21 @@ function listTraces(testPath) {
   });
   const uri = `${BASE_URI}/traces?${query}`;
 
-  return agot(uri, { json: true }).then((response) => {
-    const body = response.body;
-    const promises = body.traces.map((trace) => {
-      const uri = `${BASE_URI}/traces/${trace.traceId}`;
-      return agot(uri, { json: true });
-    });
+  return agot(uri, { json: true })
+    .catch((err) => {
+      console.error(err);
+    })
+    .then((response) => {
+      const body = response.body;
+      const promises = body.traces.map((trace) => {
+        const uri = `${BASE_URI}/traces/${trace.traceId}`;
+        return agot(uri, { json: true });
+      });
 
-    return Promise.all(promises).then((responses) => {
-      return responses.map(response => response.body);
+      return Promise.all(promises).then((responses) => {
+        return responses.map(response => response.body);
+      });
     });
-  });
 }
 
 describe('express + datastore', () => {
