@@ -26,11 +26,12 @@ if (!process.env.TRACE_SYSTEM_TEST_PROJECT ||
 
 const WRITE_CONSISTENCY_DELAY_MS = 20 * 1000;
 const projectId = process.env.TRACE_SYSTEM_TEST_PROJECT;
+const keyFilename = process.env.TRACE_SYSTEM_TEST_KEYFILE;
 
 // trace-agent must be loaded before everything else.
 require('../').start({
   projectId: projectId,
-  keyFilename: process.env.TRACE_SYSTEM_TEST_KEYFILE,
+  keyFilename: keyFilename,
   flushDelaySeconds: 1
 });
 
@@ -65,6 +66,7 @@ function makeAuthorizedGot(auth) {
 function listTraces(testPath) {
   const BASE_URI = `https://cloudtrace.googleapis.com/v1/projects/${projectId}`;
   const auth = googleAuth({
+    keyFilename: keyFilename,
     scopes: ['https://www.googleapis.com/auth/trace.readonly']
   });
   const agot = makeAuthorizedGot(auth);
