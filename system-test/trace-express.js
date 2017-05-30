@@ -99,7 +99,10 @@ describe('express + datastore', () => {
     const testPath = `/test-${uuid.v4()}`;
 
     const express = require('express');
-    const datastore = require('@google-cloud/datastore')();
+    const datastore = require('@google-cloud/datastore')({
+      projectId: projectId,
+      keyFilename: keyFilename,     
+    });
 
     const app = express();
     app.get(testPath, (req, res) => {
