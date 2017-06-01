@@ -20,6 +20,7 @@ var url = require('url');
 var isString = require('is').string;
 var merge = require('lodash.merge');
 var httpAgent = require('_http_agent');
+var semver = require('semver');
 
 function getSpanName(options) {
   if (isString(options)) {
@@ -43,8 +44,35 @@ function extractUrl(options) {
     (options.path || options.pathName || '/');
 }
 
-function patchRequest (http, api) {
-  return shimmer.wrap(http, 'request', function requestWrap(request) {
+function unpatchHttp(http) {
+  shimmer.unwrap(http, 'request');
+  if (semver.satisfies(process.version, '>=8.0.0')) {
+    shimmer.unwrap(http, 'get');
+  }
+}
+
+function patchHttp(http, api) {
+  shimmer.wrap(http, 'request', function requestWrap(request) {
+    return makeRequestTrace(request);
+  });
+
+  if (semver.satisfies(process.version, '>=8.0.0')) {
+    // http.get in Node 8 calls the private copy of request rather than the one
+    // we have patched on module.export. We need to patch get as well. Luckily,
+    // the request patch we have does work for get as well.
+    shimmer.wrap(http, 'get', function getWrap(get) {
+      return makeRequestTrace(get);
+    });
+  }
+
+  function isTraceAgentRequest (options) {
+    return options && options.headers &&
+      !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
+  }
+
+  function makeRequestTrace(request) {
+    // On Node 8+ we use the following function to patch both request and get.
+    // Here `request` may also happen to be `get`.
     return function request_trace(options, callback) {
       if (!options) {
         return request.apply(this, arguments);
@@ -120,21 +148,13 @@ function patchRequest (http, api) {
       });
       return req;
     };
-  });
-
-  function isTraceAgentRequest (options) {
-    return options && options.headers &&
-      !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
   }
-
 }
 
 module.exports = [
   {
     file: 'http',
-    patch: patchRequest,
-    unpatch: function (http) {
-      shimmer.unwrap(http, 'request');
-    }
+    patch: patchHttp,
+    unpatch: unpatchHttp
   }
 ];

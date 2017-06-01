@@ -17,6 +17,7 @@
 
 var common = require('./common.js');
 var constants = require('../../src/constants.js');
+var semver = require('semver');
 var stream = require('stream');
 var TraceLabels = require('../../src/trace-labels.js');
 
@@ -44,6 +45,15 @@ describe('test-trace-http', function() {
   afterEach(function() {
     common.cleanTraces(agent);
     server.close();
+  });
+
+  it('should patch the necessary functions', function() {
+    assert.strictEqual(http.request.__wrapped, true);
+    if (semver.satisfies(process.version, '>=8.0.0')) {
+      assert.strictEqual(http.get.__wrapped, true, 'should patch get');
+    } else {
+      assert.strictEqual(http.get.__wrapped, undefined, 'should not patch get');
+    }
   });
 
   it('should accurately measure get time with callback', function(done) {

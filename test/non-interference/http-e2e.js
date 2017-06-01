@@ -33,7 +33,10 @@ console.log('Turning off global checks');
 // The use of the -i flag as '-i.bak' to specify a backup extension of '.bak'
 // is needed to ensure that the command works on both Linux and OS X
 cp.execFileSync('sed', ['-i.bak', 's/exports.globalCheck = true/' +
-    'exports.globalCheck = false/g', path.join(node_dir, 'test', 'common.js')]);
+    'exports.globalCheck = false/g',
+    semver.satisfies(process.version, '>=8.0.0') ?
+        path.join(node_dir, 'test', 'common', 'index.js') :
+        path.join(node_dir, 'test', 'common.js')]);
 var test_glob = semver.satisfies(process.version, '0.12.x') ?
     path.join(node_dir, 'test', 'simple', 'test-http*.js') :
     path.join(node_dir, 'test', 'parallel', 'test-http*.js');
