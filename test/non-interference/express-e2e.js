@@ -23,16 +23,11 @@ var path = require('path');
 var tmp = require('tmp');
 var semver = require('semver');
 
-var SUPPORTED_VERSIONS = '<4.x';
-
-if (!semver.satisfies(process.version, SUPPORTED_VERSIONS)) {
-  console.log('Express tests do not pass on Node.js 4.0 yet');
-  process.exit(0);
-}
+var expressVersion = '4.15.3';
 
 // Setup
 var express_dir = tmp.dirSync().name;
-cp.execFileSync('git', ['clone', '--branch', '4.13.1',
+cp.execFileSync('git', ['clone', '--branch', expressVersion,
     'https://github.com/strongloop/express.git', '--depth', '1', express_dir]);
 var test_glob = path.join(express_dir, 'test', '*.js');
 var error;
@@ -44,7 +39,7 @@ cp.execFileSync('sed', ['-i.bak', 's/"express"/"e"/', 'package.json']);
 
 // Install express as it's own dependency
 console.log('Installing express dependencies');
-cp.execFileSync('npm', ['install', '--save', 'express@4.13.1']);
+cp.execFileSync('npm', ['install', '--save', 'express@' + expressVersion]);
 cp.execFileSync('npm', ['install']);
 
 // Reformat tests to use newly installed express
