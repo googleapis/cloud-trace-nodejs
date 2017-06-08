@@ -30,7 +30,7 @@
     "express": "^4.15.2",
     "glob": "^7.0.3",
     "google-auto-auth": "^0.7.0",
-    "got": "^7.0.0",
+    "got": "^5.7.1",
     "istanbul": "^0.4.2",
     "jshint": "^2.9.1",
     "mocha": "^3.0.0",
