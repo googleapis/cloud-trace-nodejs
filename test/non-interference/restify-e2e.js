@@ -23,16 +23,11 @@ var path = require('path');
 var tmp = require('tmp');
 var semver = require('semver');
 
-var SUPPORTED_VERSIONS = '<4.x';
-
-if (!semver.satisfies(process.version, SUPPORTED_VERSIONS)) {
-  console.log('Restify tests do not pass on Node.js 4.0 yet');
-  process.exit(0);
-}
+var restifyVersion = '4.3.0';
 
 // Setup
 var restify_dir = tmp.dirSync().name;
-cp.execFileSync('git', ['clone', '--branch', 'v3.0.3',
+cp.execFileSync('git', ['clone', '--branch', 'v' + restifyVersion,
     'https://github.com/restify/node-restify.git', '--depth', '1', restify_dir]);
 var test_glob = path.join(restify_dir, 'test', '*.test.js');
 process.chdir(restify_dir);
@@ -43,7 +38,7 @@ cp.execFileSync('sed', ['-i.bak', 's/"restify"/"r"/', 'package.json']);
 
 // Install restify as it's own dependency
 console.log('Installing restify dependencies');
-cp.execFileSync('npm', ['install', '--save', 'restify@3.0.3']);
+cp.execFileSync('npm', ['install', '--save', 'restify@' + restifyVersion]);
 cp.execFileSync('npm', ['install']);
 
 // Reformat tests to use newly installed restify
