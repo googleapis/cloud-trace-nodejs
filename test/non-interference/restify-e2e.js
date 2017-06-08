@@ -21,7 +21,6 @@ var cp = require('child_process');
 var glob = require('glob');
 var path = require('path');
 var tmp = require('tmp');
-var semver = require('semver');
 
 var restifyVersion = '4.3.0';
 
@@ -36,13 +35,13 @@ process.chdir(restify_dir);
 console.log('Updating restify metadata');
 cp.execFileSync('sed', ['-i.bak', 's/"restify"/"r"/', 'package.json']);
 
-// Install restify as it's own dependency
+// Install restify as its own dependency
 console.log('Installing restify dependencies');
 cp.execFileSync('npm', ['install', '--save', 'restify@' + restifyVersion]);
 cp.execFileSync('npm', ['install']);
 
 // Reformat tests to use newly installed restify
-console.log('Reformating tests');
+console.log('Reformatting tests');
 var gcloud_require = 'require(\'' + path.join(__dirname, '..', '..') +
     '\').start({ forceNewAgent_: true, samplingRate: 0, projectId: \'0\', logLevel: 1 });';
 glob(test_glob, function(err, files) {

@@ -21,7 +21,6 @@ var cp = require('child_process');
 var glob = require('glob');
 var path = require('path');
 var tmp = require('tmp');
-var semver = require('semver');
 
 var expressVersion = '4.15.3';
 
@@ -37,13 +36,13 @@ process.chdir(express_dir);
 console.log('Updating express metadata');
 cp.execFileSync('sed', ['-i.bak', 's/"express"/"e"/', 'package.json']);
 
-// Install express as it's own dependency
+// Install express as its own dependency
 console.log('Installing express dependencies');
 cp.execFileSync('npm', ['install', '--save', 'express@' + expressVersion]);
 cp.execFileSync('npm', ['install']);
 
 // Reformat tests to use newly installed express
-console.log('Reformating tests');
+console.log('Reformatting tests');
 glob(test_glob, function(err, files) {
   error = error || err;
   for (var i = 0; i < files.length; i++) {
