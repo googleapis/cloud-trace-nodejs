@@ -23,23 +23,31 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 
 1. Install with [`npm`](https://www.npmjs.com) or add to your [`package.json`](https://docs.npmjs.com/files/package.json#dependencies).
 
-        npm install --save @google-cloud/trace-agent
+    ```sh
+    # Install through npm while saving to the local 'package.json'
+    npm install --save @google-cloud/trace-agent
+    ```
 
 2. Set the GCLOUD_PROJECT environment variable. You can find your Project ID in the [Google Cloud Developers Console][cloud-console], or by running the command `gcloud projects list`. You can ensure this environment variable is set at startup time by placing it in your startup script in `package.json`:
 
-        "scripts": {
-          "start": "GCLOUD_PROJECT=<YOUR_PROJECT_ID> node server.js",
-        },
+    ```json
+    "scripts": {
+      "start": "GCLOUD_PROJECT=<YOUR_PROJECT_ID> node server.js",
+    },
+    ```
 
 3. Include and start the library *as the very first action in your application*:
 
-        var agent = require('@google-cloud/trace-agent').start();
+    ```js
+    var agent = require('@google-cloud/trace-agent').start();
+    ```
 
   If you use `--require` in your start up command, make sure that the trace agent is --required first.
 
 4. If you are running your application locally, or on a machine where you are using the [Google Cloud SDK][gcloud-sdk], make sure to log in with the application default credentials:
-
-        gcloud beta auth application-default login
+    ```sh
+    gcloud beta auth application-default login
+    ```
 
 If you are running somewhere other than the Google Cloud Platform, see [running elsewhere](#running-elsewhere).
 
@@ -47,13 +55,15 @@ If you are running somewhere other than the Google Cloud Platform, see [running 
 
 See [the default configuration](config.js) for a list of possible configuration options. These options can be passed to the agent through the object argument to the start command shown above:
 
-        require('@google-cloud/trace-agent').start({samplingRate: 500});
+```js
+require('@google-cloud/trace-agent').start({samplingRate: 500});
+```
 
 Alternatively, you can provide configuration through a config file. This can be useful if you want to load our module using `--require` on the command line instead of editing your main script. You can start by copying the default config file and modifying it to suit your needs. The `GCLOUD_DIAGNOSTICS_CONFIG` environment variable should point to your configuration file.
 
 ## Running on Google Cloud Platform
 
-There are three different services that can host Node.js application to Google Cloud Platform.
+There are three different services that can host Node.js applications within Google Cloud Platform.
 
 ### Google App Engine flexible environment
 
@@ -69,7 +79,16 @@ If you already have VMs that were created without API access and do not wish to 
 
 ### Google Container Engine
 
-Container Engine nodes need to also be created with the `https://www.googleapis.com/auth/trace.append` scope, which is configurable during cluster creation. Alternatively, you can follow the instructions for using a service account under [running elsewhere](#running-elsewhere). It's recommended that you store the service account credentials as [Kubernetes Secret](http://kubernetes.io/v1.1/docs/user-guide/secrets.html).
+As with Compute Engine, Container Engine nodes need to be created with the `https://www.googleapis.com/auth/trace.append` scope, which is configurable during cluster creation:
+* If the cluster is being created with the `gcloud` CLI, pass the scope to the command with the `--scopes` command (multiple scopes can be [delimited with a comma](https://cloud.google.com/sdk/gcloud/reference/container/clusters/create)):
+
+  ```sh
+  gcloud container clusters create example-cluster-name --scopes https://www.googleapis.com/auth/trace.append
+  ```
+
+* If the cluster is being created through the Cloud Console UI, ensure that the "Stackdriver Trace" project access is set to "Write Only" (this is the default).
+
+Alternatively, you can also follow the instructions for using a service account under [running elsewhere](#running-elsewhere). It's recommended that you store the service account credentials as [Kubernetes Secret](http://kubernetes.io/v1.1/docs/user-guide/secrets.html).
 
 ## Running elsewhere
 
@@ -77,7 +96,9 @@ If your application is running outside of Google Cloud Platform, such as locally
 
 1. You will need to specify your project ID when starting the trace agent.
 
-        GCLOUD_PROJECT=particular-future-12345 node myapp.js
+    ```sh
+    GCLOUD_PROJECT=particular-future-12345 node myapp.js
+    ```
 
 2. You need to provide service account credentials to your application. The recommended way is via [Application Default Credentials][app-default-credentials].
 
@@ -138,7 +159,7 @@ The trace configuration additionally exposes the `samplingRate` option which set
 
 In addition to the modules listed [above](#what-gets-traced), the trace agent can be configured to trace additional modules through the use of *plugins*. To load an additional plugin, specify it in the agent's configuration:
 
-```javascript
+```js
   require('@google-cloud/trace-agent').start({
     plugins: {
       // You may use a package name or absolute path to the file.
@@ -162,13 +183,13 @@ For any of the web frameworks for which we provide [built-in plugins](#what-gets
 
 Calling the `start` function returns an instance of `TraceApi`, which provides an interface for tracing:
 
-```javascript
+```js
   var traceApi = require('@google-cloud/trace-agent').start();
 ```
 
 It can also be retrieved by subsequent calls to `get` elsewhere:
 
-```javascript
+```js
   // after start() is called
   var traceApi = require('@google-cloud/trace-agent').get();
 ```
