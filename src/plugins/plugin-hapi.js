@@ -67,9 +67,9 @@ function createMiddleware(api) {
       root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
       // wrap end
-      res.end = function(chunk, encoding) {
+      res.end = function() {
         res.end = originalEnd;
-        var returned = res.end(chunk, encoding);
+        var returned = res.end.apply(this, arguments);
 
         if (req.route && req.route.path) {
           root.addLabel(

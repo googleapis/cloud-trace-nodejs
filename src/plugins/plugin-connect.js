@@ -53,9 +53,9 @@ function createMiddleware(api) {
 
       // wrap end
       var originalEnd = res.end;
-      res.end = function(data, encoding, callback) {
+      res.end = function() {
         res.end = originalEnd;
-        var returned = res.end(data, encoding, callback);
+        var returned = res.end.apply(this, arguments);
 
         if (req.route && req.route.path) {
           root.addLabel(
