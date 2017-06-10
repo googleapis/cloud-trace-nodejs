@@ -68,9 +68,9 @@ function patchRestify(restify, api) {
                         req.connection.remoteAddress);
 
       var originalEnd = res.end;
-      res.end = function(chunk, encoding) {
+      res.end = function() {
         res.end = originalEnd;
-        var returned = res.end(chunk, encoding);
+        var returned = res.end.apply(this, arguments);
 
         if (req.route && req.route.path) {
           rootSpan.addLabel('restify/request.route.path', req.route.path);
