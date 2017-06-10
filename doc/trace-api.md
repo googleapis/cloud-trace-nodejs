@@ -94,12 +94,12 @@ Use the following function to obtain the current serialized trace context. The b
 
 These functions help provide context propagation for root spans. Context should be propagated anywhere control is yielded to the user; this is either through a callback or an emitter. This will enable child spans to be associated with the correct root span.
 
-* `api.bind(fn)`
+* `api.wrap(fn)`
   * `fn`: `function`
   * Returns `function` (same signature as `fn`)
   * Binds the given function to the current context.
 
-* `api.bindEmitter(emitter)`
+* `api.wrapEmitter(emitter)`
   * `emitter`: `EventEmitter`
   * Binds any event handlers subsequently attached to the given event emitter to the current context.
 
