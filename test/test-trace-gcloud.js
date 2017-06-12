@@ -19,6 +19,13 @@ var common = require('./plugins/common.js');
 var nock = require('nock');
 var assert = require('assert');
 var path = require('path');
+var semver = require('semver');
+
+if (process.platform === 'win32' && semver.satisfies(process.version, '8.x')) {
+  // There is no grpc binary available for grpc 1.3.x (used by google-cloud)
+  // that is compatible with node version 8.
+  return;
+}
 
 nock.disableNetConnect();
 
