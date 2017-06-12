@@ -1,5 +1,37 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-06-12, Version 2.1.0 (Experimental), @matthewloring
+
+### Notable changes
+
+**bug fixes**
+
+  * [[`a8da1eb821`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a8da1eb821)] - hapi/koa: End span when request is aborted (#479) (Kelvin Jin) [#479](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/479)
+
+**new plugins**
+
+  * [[`dd7bc9b1ff`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/dd7bc9b1ff)] - Support Knex (#468) (Dominic Kramer) [#468](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/468)
+
+## Commits
+
+* [[`89c1a9769c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/89c1a9769c)] - Fix trace api docs (#507) (Matthew Loring) [#507](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/507)
+* [[`04e0ed027a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/04e0ed027a)] - fix patching of res.end (#506) (Ali Ijaz Sheikh) 
+* [[`13b4b9e893`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/13b4b9e893)] - Roll back to old version of got (#504) (Matthew Loring) [#504](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/504)
+* [[`92cab1b888`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/92cab1b888)] - **docs**: Elaborate on GKE Scopes + Syntax Highlighting (#501) (Kelvin Jin) 
+* [[`8eb502b471`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8eb502b471)] - Node 8 support (#499) (Ali Ijaz Sheikh) 
+* [[`9f83a24182`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9f83a24182)] - update devDependencies (#500) (Ali Ijaz Sheikh) 
+* [[`0b89d78723`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0b89d78723)] - fix credentials on system-test (#497) (Ali Ijaz Sheikh) 
+* [[`7c0b35c0f9`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7c0b35c0f9)] - Update config.js (#496) (Vikram) [#496](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/496)
+* [[`7fafa05cbb`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7fafa05cbb)] - run system test locally (#490) (Ali Ijaz Sheikh) 
+* [[`5746f63b86`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5746f63b86)] - system-tests to use custom env. vars. (#494) (Ali Ijaz Sheikh) 
+* [[`98b9ba7187`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/98b9ba7187)] - Unit tests should not depend on the environment (#493) (Ali Ijaz Sheikh) 
+* [[`dd7bc9b1ff`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/dd7bc9b1ff)] - Support Knex (#468) (Dominic Kramer) [#468](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/468)
+* [[`f8b74e6ec0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f8b74e6ec0)] - Fix typos in configuration comments (#491) (Oleg Shalygin) [#491](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/491)
+* [[`350efc867d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/350efc867d)] - Add a system-test (#489) (Ali Ijaz Sheikh) 
+* [[`a8da1eb821`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a8da1eb821)] - hapi/koa: End span when request is aborted (#479) (Kelvin Jin) [#479](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/479)
+* [[`8b9acd07ce`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8b9acd07ce)] - Add encrypted service account key for system tests (#488) (Matthew Loring) 
+* [[`c242d8bfbc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c242d8bfbc)] - Add test notifications to travis (#485) (Matthew Loring) [#485](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/485)
+
 ## 2017-05-15, Version 2.0.0 (Experimental), @matthewloring
 
 ### Notable changes
