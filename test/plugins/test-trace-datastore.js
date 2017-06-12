@@ -15,17 +15,17 @@
  */
 'use strict';
 
-var common = require('./plugins/common.js');
+var common = require('./common.js');
 var nock = require('nock');
 var assert = require('assert');
 var path = require('path');
 
 nock.disableNetConnect();
 
-describe('test-trace-gcloud', function() {
+describe('test-trace-datastore', function() {
   var agent;
   before(function() {
-    agent = require('..').start({
+    agent = require('../..').start({
       projectId: '0',
       samplingRate: 0,
       enhancedDatabaseReporting: true
@@ -43,11 +43,11 @@ describe('test-trace-gcloud', function() {
     // timeout is set to accommodate for this remote request and reduce
     // flakiness.
     this.timeout(20000);
-    process.env.GOOGLE_APPLICATION_CREDENTIALS =
-        path.join(__dirname, 'fixtures', 'gcloud-credentials.json');
     common.runInTransaction(agent, function(endTransaction) {
-      var gcloud = require('./plugins/fixtures/google-cloud0.44');
-      var ds = gcloud.datastore();
+      var ds = require('./fixtures/google-cloud-datastore1')({
+        projectId: '-1',
+        keyFilename: path.join(__dirname, '..', 'fixtures', 'gcloud-credentials.json')
+      });
       var key = ds.key(['bad', 'key']);
       ds.get(key, function(err, entity) {
         endTransaction();
