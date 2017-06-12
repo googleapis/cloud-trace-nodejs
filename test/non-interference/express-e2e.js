@@ -38,8 +38,9 @@ cp.execFileSync('sed', ['-i.bak', 's/"express"/"e"/', 'package.json']);
 
 // Install express as its own dependency
 console.log('Installing express dependencies');
-cp.execFileSync('npm', ['install', '--save', 'express@' + expressVersion]);
+cp.execFileSync('npm', ['--version'], { stdio: 'inherit' });
 cp.execFileSync('npm', ['install']);
+cp.execFileSync('npm', ['install', 'express@' + expressVersion]);
 
 // Reformat tests to use newly installed express
 console.log('Reformatting tests');

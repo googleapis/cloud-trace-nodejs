@@ -22,11 +22,12 @@ var glob = require('glob');
 var path = require('path');
 var tmp = require('tmp');
 
+var branchVersion = '4.x';
 var restifyVersion = '4.3.0';
 
 // Setup
 var restify_dir = tmp.dirSync().name;
-cp.execFileSync('git', ['clone', '--branch', 'v' + restifyVersion,
+cp.execFileSync('git', ['clone', '--branch', branchVersion,
     'https://github.com/restify/node-restify.git', '--depth', '1', restify_dir]);
 var test_glob = path.join(restify_dir, 'test', '*.test.js');
 process.chdir(restify_dir);
@@ -37,8 +38,8 @@ cp.execFileSync('sed', ['-i.bak', 's/"restify"/"r"/', 'package.json']);
 
 // Install restify as its own dependency
 console.log('Installing restify dependencies');
-cp.execFileSync('npm', ['install', '--save', 'restify@' + restifyVersion]);
 cp.execFileSync('npm', ['install']);
+cp.execFileSync('npm', ['install', 'restify@' + restifyVersion]);
 
 // Reformat tests to use newly installed restify
 console.log('Reformatting tests');
