@@ -469,7 +469,7 @@ function unpatchServer(server) {
 
 // # Exports
 
-var SUPPORTED_VERSIONS = '0.13 - 1';
+var SUPPORTED_VERSIONS = '0.13 - 1.4.0';
 
 module.exports = [
   {
