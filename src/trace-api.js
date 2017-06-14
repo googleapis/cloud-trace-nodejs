@@ -165,7 +165,7 @@ TraceApiImplementation.prototype.runInRootSpan = function(options, fn) {
  * Creates and returns a new ChildSpan object nested within the root span. If
  * there is no current RootSpan object, this function returns null.
  * @param {object} options An object that specifies options for how the child
- * span is created and propogated.
+ * span is created and propagated.
  * @param {string} options.name The name to apply to the child span.
  * @param {?number} options.skipFrames The number of stack frames to skip when
  * collecting call stack information for the root span, starting from the top;
