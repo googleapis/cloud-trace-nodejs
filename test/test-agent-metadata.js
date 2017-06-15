@@ -59,7 +59,7 @@ describe('agent interaction with metadata service', function() {
     agent = trace.start({logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
       assert.ok(agent.isActive());
-      assert.equal(common.getConfig(agent).projectId, '1234');
+      assert.equal(common.getConfig().projectId, '1234');
       scope.done();
       done();
     }, 500);
@@ -87,9 +87,9 @@ describe('agent interaction with metadata service', function() {
 
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.runInTransaction(agent, function(end) {
+      common.runInTransaction(function(end) {
         end();
-        var span = common.getMatchingSpan(agent, spanPredicate);
+        var span = common.getMatchingSpan(spanPredicate);
         assert.equal(span.labels[traceLabels.GCE_HOSTNAME], 'host');
         scope.done();
         done();
@@ -106,9 +106,9 @@ describe('agent interaction with metadata service', function() {
 
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.runInTransaction(agent, function(end) {
+      common.runInTransaction(function(end) {
         end();
-        var span = common.getMatchingSpan(agent, spanPredicate);
+        var span = common.getMatchingSpan(spanPredicate);
         assert.equal(span.labels[traceLabels.GCE_INSTANCE_ID], 1729);
         scope.done();
         done();
@@ -120,9 +120,9 @@ describe('agent interaction with metadata service', function() {
     nock.disableNetConnect();
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.runInTransaction(agent, function(end) {
+      common.runInTransaction(function(end) {
         end();
-        var span = common.getMatchingSpan(agent, spanPredicate);
+        var span = common.getMatchingSpan(spanPredicate);
         assert(span.labels[traceLabels.GCE_HOSTNAME],
             require('os').hostname());
         assert(!span.labels[traceLabels.GCE_INSTANCE_ID]);
@@ -144,9 +144,9 @@ describe('agent interaction with metadata service', function() {
       }
     });
     setTimeout(function() {
-      common.runInTransaction(agent, function(end) {
+      common.runInTransaction(function(end) {
         end();
-        var span = common.getMatchingSpan(agent, spanPredicate);
+        var span = common.getMatchingSpan(spanPredicate);
         assert(span.labels[traceLabels.GAE_MODULE_NAME], 'config');
         assert(span.labels[traceLabels.GAE_MODULE_VERSION], 'configVer');
         assert.equal(span.labels[traceLabels.GAE_VERSION],
@@ -171,9 +171,9 @@ describe('agent interaction with metadata service', function() {
       }
     });
     setTimeout(function() {
-      common.runInTransaction(agent, function(end) {
+      common.runInTransaction(function(end) {
         end();
-        var span = common.getMatchingSpan(agent, spanPredicate);
+        var span = common.getMatchingSpan(spanPredicate);
         assert.equal(span.labels[traceLabels.GAE_MODULE_NAME], 'foo');
         assert.equal(span.labels[traceLabels.GAE_MODULE_VERSION],
           '20151119t120000');
@@ -190,9 +190,9 @@ describe('agent interaction with metadata service', function() {
     process.env.GAE_MINOR_VERSION = '81818';
     agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     setTimeout(function() {
-      common.runInTransaction(agent, function(end) {
+      common.runInTransaction(function(end) {
         end();
-        var span = common.getMatchingSpan(agent, spanPredicate);
+        var span = common.getMatchingSpan(spanPredicate);
         assert.equal(span.labels[traceLabels.GAE_MODULE_NAME],
           'default');
         assert.equal(span.labels[traceLabels.GAE_MODULE_VERSION],
@@ -217,9 +217,9 @@ describe('agent interaction with metadata service', function() {
       delete process.env.GAE_SERVICE;
       agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
       setTimeout(function() {
-        common.runInTransaction(agent, function(end) {
+        common.runInTransaction(function(end) {
           end();
-          var span = common.getMatchingSpan(agent, spanPredicate);
+          var span = common.getMatchingSpan(spanPredicate);
           assert.equal(span.labels[traceLabels.GAE_MODULE_NAME],
             'host');
           scope.done();
@@ -240,9 +240,9 @@ describe('agent interaction with metadata service', function() {
       delete process.env.GAE_SERVICE;
       agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
       setTimeout(function() {
-        common.runInTransaction(agent, function(end) {
+        common.runInTransaction(function(end) {
           end();
-          var span = common.getMatchingSpan(agent, spanPredicate);
+          var span = common.getMatchingSpan(spanPredicate);
           scope.done();
           assert.equal(span.labels[traceLabels.GAE_MODULE_NAME],
             require('os').hostname());

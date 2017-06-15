@@ -65,7 +65,7 @@ describe('test-trace-knex', function() {
           assert.ok(result);
           knex.insert(obj).into(TABLE_NAME).then(function(result) {
             assert.ok(result);
-            common.cleanTraces(agent);
+            common.cleanTraces();
             done();
           });
         });
@@ -74,20 +74,20 @@ describe('test-trace-knex', function() {
       afterEach(function(done) {
         knex.schema.dropTable(TABLE_NAME).then(function(result) {
           assert.ok(result);
-          common.cleanTraces(agent);
+          common.cleanTraces();
           done();
         });
       });
 
       it('should perform basic operations using ' + version, function(done) {
-        common.runInTransaction(agent, function(endRootSpan) {
+        common.runInTransaction(function(endRootSpan) {
           knex(TABLE_NAME).select().then(function(res) {
             endRootSpan();
             assert(res);
             assert.equal(res.length, 1);
             assert.equal(res[0].k, 1);
             assert.equal(res[0].v, 'obj');
-            var spans = common.getMatchingSpans(agent, function (span) {
+            var spans = common.getMatchingSpans(function (span) {
               return span.name === 'mysql-query';
             });
             if (version === 'knex11') {
@@ -105,7 +105,7 @@ describe('test-trace-knex', function() {
       });
 
       it('should propagate context using ' + version, function(done) {
-        common.runInTransaction(agent, function(endRootSpan) {
+        common.runInTransaction(function(endRootSpan) {
           knex.select().from(TABLE_NAME).then(function(res) {
             assert.ok(common.hasContext());
             endRootSpan();
@@ -117,10 +117,10 @@ describe('test-trace-knex', function() {
       });
 
       it('should remove trace frames from stack using ' + version, function(done) {
-        common.runInTransaction(agent, function(endRootSpan) {
+        common.runInTransaction(function(endRootSpan) {
           knex.select().from(TABLE_NAME).then(function(res) {
             endRootSpan();
-            var spans = common.getMatchingSpans(agent, function (span) {
+            var spans = common.getMatchingSpans(function (span) {
               return span.name === 'mysql-query';
             });
             var labels = spans[0].labels;
@@ -136,7 +136,7 @@ describe('test-trace-knex', function() {
       });
 
       it('should work with events using ' + version, function(done) {
-        common.runInTransaction(agent, function(endRootSpan) {
+        common.runInTransaction(function(endRootSpan) {
           knex.select().from(TABLE_NAME).on('query-response', function(response, obj, builder) {
             var row = response[0];
             assert.ok(row);
@@ -146,7 +146,7 @@ describe('test-trace-knex', function() {
             assert.ifError(err);
           }).then(function(res) {
             endRootSpan();
-            var spans = common.getMatchingSpans(agent, function (span) {
+            var spans = common.getMatchingSpans(function (span) {
               return span.name === 'mysql-query';
             });
             if (version === 'knex11') {
@@ -166,11 +166,11 @@ describe('test-trace-knex', function() {
       });
 
       it('should work without events or callback using ' + version, function(done) {
-        common.runInTransaction(agent, function(endRootSpan) {
+        common.runInTransaction(function(endRootSpan) {
           knex.select().from(TABLE_NAME).then(function(result) {
             setTimeout(function() {
               endRootSpan();
-              var spans = common.getMatchingSpans(agent, function (span) {
+              var spans = common.getMatchingSpans(function (span) {
                 return span.name === 'mysql-query';
               });
               if (version === 'knex11') {
@@ -193,7 +193,7 @@ describe('test-trace-knex', function() {
           k: 2,
           v: 'obj2'
         };
-        common.runInTransaction(agent, function(endRootSpan) {
+        common.runInTransaction(function(endRootSpan) {
           knex.transaction(function(trx) {
             knex.insert(obj2)
                 .into(TABLE_NAME)
@@ -226,7 +226,7 @@ describe('test-trace-knex', function() {
                 assert.equal(res.length, 1);
                 assert.equal(res[0].k, 1);
                 assert.equal(res[0].v, 'obj');
-                var spans = common.getMatchingSpans(agent, function (span) {
+                var spans = common.getMatchingSpans(function (span) {
                   return span.name === 'mysql-query';
                 });
                 var expectedCmds;

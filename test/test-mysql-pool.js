@@ -57,7 +57,7 @@ if (semver.satisfies(process.version, '>=4')) {
             var result = '';
             res.on('data', function(data) { result += data; });
             res.on('end', function() {
-              var spans = common.getMatchingSpans(agent, function (span) {
+              var spans = common.getMatchingSpans(function (span) {
                 return span.name === 'mysql-query';
               });
               assert.equal(spans.length, 1);

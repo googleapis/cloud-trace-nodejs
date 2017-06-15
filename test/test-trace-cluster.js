@@ -50,7 +50,7 @@ describe('test-trace-cluster', function() {
           server.close();
           done();
         };
-        common.doRequest(agent, 'GET', finalize, expressPredicate);
+        common.doRequest('GET', finalize, expressPredicate);
       });
     }
   });

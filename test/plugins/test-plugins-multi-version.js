@@ -53,11 +53,11 @@ describe('multiple instrumentations of the same module', function() {
   });
 
   it('should record spans', function(done) {
-    common.runInTransaction(agent, function(endTransaction) {
+    common.runInTransaction(function(endTransaction) {
       clientv0.get('v0', function(err, n) {
         clientv2.get('v2', function(err, n) {
           endTransaction();
-          var spans = common.getMatchingSpans(agent, redisPredicate.bind(null, 'redis-get'));
+          var spans = common.getMatchingSpans(redisPredicate.bind(null, 'redis-get'));
           assert.equal(spans.length, 2);
           assert.equal(spans[0].labels.arguments, '["v0"]');
           assert.equal(spans[0].labels.command, 'get');
