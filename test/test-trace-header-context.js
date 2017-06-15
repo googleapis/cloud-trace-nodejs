@@ -36,7 +36,7 @@ describe('test-trace-header-context', function() {
   afterEach(function() {
     // On node 0.12, mocha may run multiple tests in the same
     // cls context, we need to manually clean out the context.
-    common.clearNamespace(agent);
+    common.clearNamespace();
   });
 
   it('should give correct context', function() {
@@ -61,14 +61,14 @@ describe('test-trace-header-context', function() {
     app.get('/self', function(req, res) {
       assert(req.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
       res.send(common.serverRes);
-      var traces = common.getTraces(agent);
+      var traces = common.getTraces();
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces(agent);
+      common.cleanTraces();
       server.close();
       done();
     });
@@ -87,14 +87,14 @@ describe('test-trace-header-context', function() {
     app.get('/self', function(req, res) {
       assert(req.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
       res.send(common.serverRes);
-      var traces = common.getTraces(agent);
+      var traces = common.getTraces();
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces(agent);
+      common.cleanTraces();
       server.close();
       done();
     });
@@ -119,14 +119,14 @@ describe('test-trace-header-context', function() {
         req.headers[constants.TRACE_CONTEXT_HEADER_NAME].slice(8),
         ';o=1');
       res.send(common.serverRes);
-      var traces = common.getTraces(agent);
+      var traces = common.getTraces();
       assert.equal(traces.length, 2);
       assert.equal(traces[0].spans.length, 2);
       assert.equal(traces[1].spans.length, 1);
       assert.equal(traces[0].spans[0].name, '/');
       assert.equal(traces[0].spans[1].name, 'localhost');
       assert.equal(traces[1].spans[0].name, '/self');
-      common.cleanTraces(agent);
+      common.cleanTraces();
       server.close();
       done();
     });

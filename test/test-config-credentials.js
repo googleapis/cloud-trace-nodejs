@@ -23,7 +23,7 @@ var common = require('./plugins/common.js');
 
 var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {
-    common.runInTransaction(agent, function(end) {
+    common.runInTransaction(function(end) {
       end();
     });
   }

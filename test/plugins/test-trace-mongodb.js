@@ -73,7 +73,7 @@ describe('mongodb', function() {
       });
 
       afterEach(function(done) {
-        common.cleanTraces(agent);
+        common.cleanTraces();
         server.command('testdb.$cmd', {dropDatabase: 1}, function(err, res) {
           assert.ifError(err);
           assert.strictEqual(res.result.dropped, 'testdb');
@@ -88,7 +88,7 @@ describe('mongodb', function() {
           f2: false,
           f3: 1729
         };
-        common.runInTransaction(agent, function(endTransaction) {
+        common.runInTransaction(function(endTransaction) {
           server.insert('testdb.simples', [data], function(err, res) {
             endTransaction();
             assert.ifError(err);
@@ -103,7 +103,7 @@ describe('mongodb', function() {
       });
 
       it('should trace an update', function(done) {
-        common.runInTransaction(agent, function(endTransaction) {
+        common.runInTransaction(function(endTransaction) {
           server.update('testdb.simples', [{
             q: {f1: 'sim'},
             u: {'$set': {f2: false}}
@@ -121,7 +121,7 @@ describe('mongodb', function() {
       });
 
       it('should propagate context', function(done) {
-        common.runInTransaction(agent, function(endTransaction) {
+        common.runInTransaction(function(endTransaction) {
           server.update('testdb.simples', [{
             q: {f1: 'sim'},
             u: {'$set': {f2: false}}
@@ -134,7 +134,7 @@ describe('mongodb', function() {
       });
 
       it('should trace a query', function(done) {
-        common.runInTransaction(agent, function(endTransaction) {
+        common.runInTransaction(function(endTransaction) {
           server.cursor('testdb.simples', {
             find: 'testdb.simples',
             query: {f1: 'sim'}
@@ -152,7 +152,7 @@ describe('mongodb', function() {
       });
 
       it('should trace a remove', function(done) {
-        common.runInTransaction(agent, function(endTransaction) {
+        common.runInTransaction(function(endTransaction) {
           server.remove('testdb.simples', [{
             q: {f1: 'sim'},
             limit: 0
@@ -170,7 +170,7 @@ describe('mongodb', function() {
       });
 
       it('should trace a command', function(done) {
-        common.runInTransaction(agent, function(endTransaction) {
+        common.runInTransaction(function(endTransaction) {
           server.command('admin.$cmd', {ismaster: true}, function(err, res) {
             endTransaction();
             assert.ifError(err);
@@ -190,13 +190,13 @@ describe('mongodb', function() {
         }).next(function(err, doc) {
           assert.ifError(err);
           assert.strictEqual(doc.f3, 42);
-          assert.strictEqual(common.getTraces(agent).length, 0);
+          assert.strictEqual(common.getTraces().length, 0);
           done();
         });
       });
 
       it('should remove trace frames from stack', function(done) {
-        common.runInTransaction(agent, function(endTransaction) {
+        common.runInTransaction(function(endTransaction) {
           server.cursor('testdb.simples', {
             find: 'testdb.simples',
             query: {f1: 'sim'}

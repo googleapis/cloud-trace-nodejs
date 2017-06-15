@@ -93,7 +93,7 @@ describe('generic-pool3', function() {
   });
 
   after(function() {
-    common.stopAgent(agent);
+    common.stopAgent();
   });
 
   it ('preserves context', function() {
@@ -141,7 +141,7 @@ describe('generic-pool3', function() {
         childSpan.endSpan();
         rootSpan.endSpan();
 
-        var spans = common.getTraces(agent)[0].spans;
+        var spans = common.getTraces()[0].spans;
         assert.ok(spans);
         assert.strictEqual(spans.length, 4);
         assert.strictEqual(spans[0].name, ROOT_SPAN);

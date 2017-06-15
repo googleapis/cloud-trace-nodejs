@@ -42,7 +42,7 @@ describe('test-trace-pg', function() {
       client.query('CREATE TABLE t (name text NOT NULL, id text NOT NULL)', [],
           function(err, res) {
         assert(!err);
-        common.cleanTraces(traceApi);
+        common.cleanTraces();
         done();
       });
     });
@@ -52,18 +52,18 @@ describe('test-trace-pg', function() {
     client.query('DROP TABLE t', [], function(err, res) {
       assert(!err);
       releaseClient();
-      common.cleanTraces(traceApi);
+      common.cleanTraces();
       done();
     });
   });
 
   it('should perform basic operations', function(done) {
-    common.runInTransaction(traceApi, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       client.query('INSERT INTO t (name, id) VALUES($1, $2)',
           ['test_name', 'test_id'], function(err, res) {
         endRootSpan();
         assert(!err);
-        var span = common.getMatchingSpan(traceApi, function (span) {
+        var span = common.getMatchingSpan(function (span) {
           return span.name === 'pg-query';
         });
         assert.equal(span.labels.query, 'INSERT INTO t (name, id) VALUES($1, $2)');
@@ -78,7 +78,7 @@ describe('test-trace-pg', function() {
   });
 
   it('should propagate context', function(done) {
-    common.runInTransaction(traceApi, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       client.query('INSERT INTO t (name, id) VALUES($1, $2)',
           ['test_name', 'test_id'], function(err, res) {
         assert.ok(common.hasContext());
@@ -89,11 +89,11 @@ describe('test-trace-pg', function() {
   });
 
   it('should remove trace frames from stack', function(done) {
-    common.runInTransaction(traceApi, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       client.query('SELECT $1::int AS number', [1], function(err, res) {
         endRootSpan();
         assert(!err);
-        var span = common.getMatchingSpan(traceApi, function (span) {
+        var span = common.getMatchingSpan(function (span) {
           return span.name === 'pg-query';
         });
         var labels = span.labels;
@@ -107,14 +107,14 @@ describe('test-trace-pg', function() {
   });
 
   it('should work with events', function(done) {
-    common.runInTransaction(traceApi, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       var query = client.query('SELECT $1::int AS number', [1]);
       query.on('row', function(row) {
         assert.strictEqual(row.number, 1);
       });
       query.on('end', function() {
         endRootSpan();
-        var span = common.getMatchingSpan(traceApi, function (span) {
+        var span = common.getMatchingSpan(function (span) {
           return span.name === 'pg-query';
         });
         assert.equal(span.labels.query, 'SELECT $1::int AS number');
@@ -125,11 +125,11 @@ describe('test-trace-pg', function() {
   });
 
   it('should work without events or callback', function(done) {
-    common.runInTransaction(traceApi, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       client.query('SELECT $1::int AS number', [1]);
       setTimeout(function() {
         endRootSpan();
-        var span = common.getMatchingSpan(traceApi, function (span) {
+        var span = common.getMatchingSpan(function (span) {
           return span.name === 'pg-query';
         });
         assert.equal(span.labels.query, 'SELECT $1::int AS number');

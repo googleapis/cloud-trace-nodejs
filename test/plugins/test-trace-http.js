@@ -43,7 +43,7 @@ describe('test-trace-http', function() {
   });
 
   afterEach(function() {
-    common.cleanTraces(agent);
+    common.cleanTraces();
     server.close();
   });
 
@@ -66,7 +66,7 @@ describe('test-trace-http', function() {
           res.on('end', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect(agent, Date.now() - start);
+            common.assertDurationCorrect(Date.now() - start);
             done();
           });
         });
@@ -99,7 +99,7 @@ describe('test-trace-http', function() {
         setTimeout(function() {
           endTransaction();
           // The only trace present should be the outer transaction
-          var traces = common.getTraces(agent);
+          var traces = common.getTraces();
           assert.equal(traces.length, 1);
           assert.equal(traces[0].spans[0].name, 'outer');
           done();
@@ -133,7 +133,7 @@ describe('test-trace-http', function() {
           writable.on('finish', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect(agent, Date.now() - start);
+            common.assertDurationCorrect(Date.now() - start);
             done();
           });
           setImmediate(function() {
@@ -162,7 +162,7 @@ describe('test-trace-http', function() {
         http.get('http://localhost:' + common.serverPort + '/?foo=bar');
         setTimeout(function() {
           endTransaction();
-          var traces = common.getTraces(agent);
+          var traces = common.getTraces();
           assert.equal(traces.length, 1);
           assert.equal(traces[0].spans[1].name, 'localhost');
           done();
@@ -185,8 +185,8 @@ describe('test-trace-http', function() {
         var req = http.get({port: common.serverPort});
         req.on('error', function() {
           endTransaction();
-          common.assertDurationCorrect(agent, Date.now() - start);
-          var span = common.getMatchingSpan(agent, function(span) { 
+          common.assertDurationCorrect(Date.now() - start);
+          var span = common.getMatchingSpan(function(span) { 
             return span.name !== 'outer'; 
           });
           assert.equal(span.labels[TraceLabels.ERROR_DETAILS_NAME],
@@ -211,7 +211,7 @@ describe('test-trace-http', function() {
           res.on('end', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect(agent, Date.now() - start);
+            common.assertDurationCorrect(Date.now() - start);
             done();
           });
         });
@@ -235,7 +235,7 @@ describe('test-trace-http', function() {
           res.on('end', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect(agent, Date.now() - start);
+            common.assertDurationCorrect(Date.now() - start);
             server.close();
             done();
           });
@@ -265,7 +265,7 @@ describe('test-trace-http', function() {
           res.on('end', function() {
             if (++completed === 5) {
               endTransaction();
-              var spans = common.getMatchingSpans(agent, function(span) {
+              var spans = common.getMatchingSpans(function(span) {
                 return span.name !== 'outer';
               });
               assert.equal(spans.length, 5);
@@ -315,7 +315,7 @@ describe('https', function() {
   });
 
   afterEach(function() {
-    common.cleanTraces(agent);
+    common.cleanTraces();
   });
 
   it('should accurately measure https#get time with callback', function(done) {
@@ -339,7 +339,7 @@ describe('https', function() {
           res.on('end', function() {
             endTransaction();
             assert.equal(common.serverRes, result);
-            common.assertDurationCorrect(agent, Date.now() - start);
+            common.assertDurationCorrect(Date.now() - start);
             secureServer.close();
             done();
           });
