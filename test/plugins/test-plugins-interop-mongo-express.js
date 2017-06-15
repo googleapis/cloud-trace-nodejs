@@ -36,7 +36,7 @@ describe('mongodb + express', function() {
     agent = require('../..').start({ projectId: '0' });
     express = require('./fixtures/express4');
     mongoose = require('./fixtures/mongoose4');
-    oldWarn = common.replaceWarnLogger(agent,
+    oldWarn = common.replaceWarnLogger(
       function(error) {
         assert(error.indexOf('mongo') === -1, error);
     });
@@ -56,8 +56,8 @@ describe('mongodb + express', function() {
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
         server.close();
-        common.cleanTraces(agent);
-        common.replaceWarnLogger(agent, oldWarn);
+        common.cleanTraces();
+        common.replaceWarnLogger(oldWarn);
         done();
       });
     });

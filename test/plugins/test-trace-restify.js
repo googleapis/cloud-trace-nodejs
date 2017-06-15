@@ -61,7 +61,7 @@ describe('restify', function() {
         process.stderr.write = write;
       });
       afterEach(function() {
-        common.cleanTraces(agent);
+        common.cleanTraces();
         server.close();
       });
 
@@ -78,7 +78,7 @@ describe('restify', function() {
           }, common.serverWait);
         });
         server.listen(common.serverPort, function(){
-          common.doRequest(agent, 'GET', done, restifyPredicate);
+          common.doRequest('GET', done, restifyPredicate);
         });
       });
 
@@ -95,7 +95,7 @@ describe('restify', function() {
           }, common.serverWait);
         });
         server.listen(common.serverPort, function(){
-          common.doRequest(agent, 'POST', done, restifyPredicate);
+          common.doRequest('POST', done, restifyPredicate);
         });
       });
 
@@ -116,7 +116,7 @@ describe('restify', function() {
           }, common.serverWait / 2);
         });
         server.listen(common.serverPort, function(){
-          common.doRequest(agent, 'GET', done, restifyPredicate);
+          common.doRequest('GET', done, restifyPredicate);
         });
       });
 
@@ -133,7 +133,7 @@ describe('restify', function() {
           }, common.serverWait);
         });
         server.listen(common.serverPort, function(){
-          common.doRequest(agent, 'GET', done, restifyPredicate);
+          common.doRequest('GET', done, restifyPredicate);
         });
       });
 
@@ -155,7 +155,7 @@ describe('restify', function() {
           }, common.serverWait / 2);
         });
         server.listen(common.serverPort, function(){
-          common.doRequest(agent, 'GET', done, restifyPredicate);
+          common.doRequest('GET', done, restifyPredicate);
         });
       });
 
@@ -171,7 +171,7 @@ describe('restify', function() {
         });
         server.listen(common.serverPort, function(){
           http.get({port: common.serverPort}, function(res) {
-            var labels = common.getMatchingSpan(agent, restifyPredicate).labels;
+            var labels = common.getMatchingSpan(restifyPredicate).labels;
             assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
             assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
             assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
@@ -193,7 +193,7 @@ describe('restify', function() {
         });
         server.listen(common.serverPort, function() {
           http.get({port: common.serverPort}, function(res) {
-            var labels = common.getMatchingSpan(agent, restifyPredicate).labels;
+            var labels = common.getMatchingSpan(restifyPredicate).labels;
             var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
             // Ensure that our middleware is on top of the stack
             assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
@@ -214,7 +214,7 @@ describe('restify', function() {
         });
         server.listen(common.serverPort, function() {
           http.get({path: '/?a=b', port: common.serverPort}, function(res) {
-            var span = common.getMatchingSpan(agent, restifyPredicate);
+            var span = common.getMatchingSpan(restifyPredicate);
             assert.equal(span.name, '/');
             done();
           });
@@ -259,7 +259,7 @@ describe('restify', function() {
         });
         server.listen(common.serverPort, function() {
           http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
-            assert.equal(common.getTraces(agent).length, 0);
+            assert.equal(common.getTraces().length, 0);
             done();
           });
         });
@@ -272,7 +272,7 @@ describe('restify', function() {
             res.write(common.serverRes);
             res.end();
             setImmediate(function() {
-              var traces = common.getTraces(agent);
+              var traces = common.getTraces();
               assert.strictEqual(traces.length, 1);
               assert.strictEqual(traces[0].spans.length, 1);
               var span = traces[0].spans[0];

@@ -35,11 +35,11 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
                 .get('/computeMetadata/v1/instance/id').reply(200)
                 .get('/computeMetadata/v1/project/project-id').reply(200);
-    var agent = require('..').start({forceNewAgent_: true});
+    require('..').start({forceNewAgent_: true});
     require('http'); // Must require http to force patching of the module
-    var oldWarn = common.replaceWarnLogger(agent, newWarn);
+    var oldWarn = common.replaceWarnLogger(newWarn);
     setTimeout(function() {
-      common.replaceWarnLogger(agent, oldWarn);
+      common.replaceWarnLogger(oldWarn);
       scope.done();
       done();
     }, 200); // Need to wait for metadata access attempt
@@ -51,19 +51,19 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/instance/id').reply(200);
     var apiScope = nock('https://cloudtrace.googleapis.com')
                 .patch('/v1/projects/0/traces').reply(200);
-    var agent = require('..').start({
+    require('..').start({
       projectId: '0',
       bufferSize: 1,
       forceNewAgent_: true
     });
-    common.avoidTraceWriterAuth(agent);
+    common.avoidTraceWriterAuth();
     require('http'); // Must require http to force patching of the module
-    var oldWarn = common.replaceWarnLogger(agent, newWarn);
-    common.runInTransaction(agent, function(end) {
+    var oldWarn = common.replaceWarnLogger(newWarn);
+    common.runInTransaction(function(end) {
       end();
       setTimeout(function() {
-        assert.equal(common.getTraces(agent).length, 0);
-        common.replaceWarnLogger(agent, oldWarn);
+        assert.equal(common.getTraces().length, 0);
+        common.replaceWarnLogger(oldWarn);
         metadataScope.done();
         apiScope.done();
         done();

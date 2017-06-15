@@ -17,16 +17,23 @@
 'use strict';
 
 var assert = require('assert');
+var cls = require('../src/cls.js');
 var common = require('./plugins/common.js');
 var EventEmitter = require('events');
 var extend = require('extend');
+var request = require('request');
 var TraceAPI = require('../src/trace-api.js');
 var TracingPolicy = require('../src/tracing-policy.js');
+var TraceWriter = require('../src/trace-writer.js');
 
 var config = extend({}, require('../config.js'),
   { samplingRate: 0, projectId: '0' });
 var logger = require('@google-cloud/common').logger();
 var agent = require('../src/trace-agent.js').get(config, logger);
+
+function replaceTracingPolicy(traceApi, fn) {
+  return common.replaceFunction(traceApi.private_(), 'policy', fn);
+}
 
 function assertAPISurface(traceAPI) {
   assert.strictEqual(typeof traceAPI.enhancedDatabaseReportingEnabled(), 'boolean');
@@ -94,13 +101,14 @@ describe('Trace Interface', function() {
     
     before(function() {
       traceAPI.enable_(agent);
-      common.init(traceAPI);
-      common.avoidTraceWriterAuth(traceAPI);
+      traceAPI.private_().traceWriter.request = request;
+      common.avoidTraceWriterAuth();
     });
 
     afterEach(function() {
-      common.cleanTraces(traceAPI);
-      common.clearNamespace(traceAPI);
+      TraceWriter.get().buffer_ = []; // clear traces
+      cls.destroyNamespace();
+      traceAPI.private_().namespace = cls.createNamespace();
     });
 
     it('should produce real child spans', function(done) {
@@ -113,7 +121,7 @@ describe('Trace Interface', function() {
           var spanPredicate = function(span) {
             return span.name === 'sub';
           };
-          var matchingSpan = common.getMatchingSpan(traceAPI, spanPredicate);
+          var matchingSpan = common.getMatchingSpan(spanPredicate);
           var duration = Date.parse(matchingSpan.endTime) - Date.parse(matchingSpan.startTime);
           assert(duration > 190);
           assert(duration < 300);
@@ -133,7 +141,7 @@ describe('Trace Interface', function() {
           var spanPredicate = function(span) {
             return span.name === 'root';
           };
-          var matchingSpan = common.getMatchingSpan(traceAPI, spanPredicate);
+          var matchingSpan = common.getMatchingSpan(spanPredicate);
           var duration = Date.parse(matchingSpan.endTime) - Date.parse(matchingSpan.startTime);
           assert(duration > 190);
           assert(duration < 300);
@@ -150,7 +158,7 @@ describe('Trace Interface', function() {
             assert.strictEqual(rootSpan2, null);
           });
           rootSpan1.endSpan();
-          var span = common.getMatchingSpan(traceAPI, function() { return true; });
+          var span = common.getMatchingSpan(function() { return true; });
           assert.equal(span.name, 'root');
           var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
           assert(duration > 190);
@@ -174,10 +182,10 @@ describe('Trace Interface', function() {
     });
 
     it('should respect sampling policy', function(done) {
-      var oldPolicy = common.replaceTracingPolicy(traceAPI, new TracingPolicy.TraceNonePolicy());
+      var oldPolicy = replaceTracingPolicy(traceAPI, new TracingPolicy.TraceNonePolicy());
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
         assert.strictEqual(rootSpan, null);
-        common.replaceTracingPolicy(traceAPI, oldPolicy);
+        replaceTracingPolicy(traceAPI, oldPolicy);
         done();
       });
     });
@@ -185,14 +193,14 @@ describe('Trace Interface', function() {
     it('should respect filter urls', function() {
       var url = 'rootUrl';
       var filterPolicy = new TracingPolicy.FilterPolicy(new TracingPolicy.TraceAllPolicy(), [url]);
-      var oldPolicy = common.replaceTracingPolicy(traceAPI, filterPolicy);
+      var oldPolicy = replaceTracingPolicy(traceAPI, filterPolicy);
       traceAPI.runInRootSpan({name: 'root1', url: url}, function(rootSpan) {
         assert.strictEqual(rootSpan, null);
       });
       traceAPI.runInRootSpan({name: 'root2', url: 'alternativeUrl'}, function(rootSpan) {
         assert.strictEqual(rootSpan.span_.span.name, 'root2');
       });
-      common.replaceTracingPolicy(traceAPI, oldPolicy);
+      replaceTracingPolicy(traceAPI, oldPolicy);
     });
   });
 });

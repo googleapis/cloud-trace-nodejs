@@ -39,7 +39,7 @@ describe('google-gax', function() {
   });
 
   it('should not interfere with google-cloud api tracing', function(done) {
-    common.runInTransaction(agent, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       speech.recognize('./index.js', {
         encoding: 'LINEAR16',
         sampleRate: 16000
@@ -49,7 +49,7 @@ describe('google-gax', function() {
         // generated.
         assert.equal(err.message, 'invalid_client');
         assert.equal(err.code, 16);
-        var span = common.getMatchingSpan(agent, function(span) {
+        var span = common.getMatchingSpan(function(span) {
           return span.kind === 'RPC_CLIENT' && span.name.indexOf('grpc:') === 0;
         });
         assert.ok(span);

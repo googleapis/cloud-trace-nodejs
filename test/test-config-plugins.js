@@ -26,8 +26,8 @@ var instrumentedModules = ['connect', 'express', 'generic-pool', 'grpc', 'hapi',
 
 describe('plugin configuration', function() {
   it('should have correct defaults', function() {
-    var agent = trace.start({forceNewAgent_: true});
-    var plugins = common.getConfig(agent).plugins;
+    trace.start({forceNewAgent_: true});
+    var plugins = common.getConfig().plugins;
     assert.strictEqual(JSON.stringify(Object.keys(plugins)),
       JSON.stringify(instrumentedModules));
     for (var i = 0; i < instrumentedModules.length; i++) {
@@ -37,8 +37,8 @@ describe('plugin configuration', function() {
   });
 
   it('should handle empty object', function() {
-    var agent = trace.start({forceNewAgent_: true, plugins: {}});
-    var plugins = common.getConfig(agent).plugins;
+    trace.start({forceNewAgent_: true, plugins: {}});
+    var plugins = common.getConfig().plugins;
     assert.strictEqual(JSON.stringify(Object.keys(plugins)),
       JSON.stringify(instrumentedModules));
     assert.ok(instrumentedModules.every(function(e) {
@@ -47,10 +47,10 @@ describe('plugin configuration', function() {
   });
 
   it('should overwrite builtin plugins correctly', function() {
-    var agent = trace.start({forceNewAgent_: true, plugins: {
+    trace.start({forceNewAgent_: true, plugins: {
       express: 'foo'
     }});
-    var plugins = common.getConfig(agent).plugins;
+    var plugins = common.getConfig().plugins;
     assert.strictEqual(JSON.stringify(Object.keys(plugins)),
       JSON.stringify(instrumentedModules));
     assert.ok(instrumentedModules.filter(function(e) {

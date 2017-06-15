@@ -36,10 +36,10 @@ describe('generic-pool2', function() {
 
   after(function() {
     common.stopAgent(api);
-    common.cleanTraces(api);
+    common.cleanTraces();
   });
 
-  it('perserves context', function(done) {
+  it('preserves context', function(done) {
     var config = {
       name: 'generic-pool2 test',
       create: function(callback) {
@@ -94,8 +94,8 @@ describe('generic-pool3', function() {
   });
 
   after(function() {
-    common.stopAgent(agent);
-    common.cleanTraces(agent);
+    common.stopAgent();
+    common.cleanTraces();
   });
 
   it ('preserves context', function() {
@@ -143,7 +143,7 @@ describe('generic-pool3', function() {
         childSpan.endSpan();
         rootSpan.endSpan();
 
-        var spans = common.getTraces(agent)[0].spans;
+        var spans = common.getTraces()[0].spans;
         assert.ok(spans);
         assert.strictEqual(spans.length, 4);
         assert.strictEqual(spans[0].name, ROOT_SPAN);

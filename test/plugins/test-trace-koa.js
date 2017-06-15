@@ -45,14 +45,14 @@ describe('koa', function() {
       var buildKoaApp = appBuilders[version];
 
       afterEach(function() {
-        common.cleanTraces(agent);
+        common.cleanTraces();
         server.close();
       });
 
       it('should accurately measure get time, get', function(done) {
         var app = buildKoaApp();
         server = app.listen(common.serverPort, function() {
-          common.doRequest(agent, 'GET', done, koaPredicate);
+          common.doRequest('GET', done, koaPredicate);
         });
       });
 
@@ -70,7 +70,7 @@ describe('koa', function() {
                 traceLabels.HTTP_SOURCE_IP,
                 traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY
               ];
-              var span = common.getMatchingSpan(agent, koaPredicate);
+              var span = common.getMatchingSpan(koaPredicate);
               expectedKeys.forEach(function(key) {
                 assert(span.labels[key]);
               });
@@ -84,7 +84,7 @@ describe('koa', function() {
         var app = buildKoaApp();
         server = app.listen(common.serverPort, function() {
           http.get({port: common.serverPort}, function(res) {
-            var labels = common.getMatchingSpan(agent, koaPredicate).labels;
+            var labels = common.getMatchingSpan(koaPredicate).labels;
             var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
             // Ensure that our middleware is on top of the stack
             assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
@@ -97,7 +97,7 @@ describe('koa', function() {
         var app = buildKoaApp();
         server = app.listen(common.serverPort, function() {
           http.get({path: '/?a=b', port: common.serverPort}, function(res) {
-            var name = common.getMatchingSpan(agent, koaPredicate).name;
+            var name = common.getMatchingSpan(koaPredicate).name;
             assert.equal(name, '/');
             done();
           });
@@ -126,7 +126,7 @@ describe('koa', function() {
         var app = buildKoaApp();
         server = app.listen(common.serverPort, function() {
           http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
-            assert.equal(common.getTraces(agent).length, 0);
+            assert.equal(common.getTraces().length, 0);
             done();
           });
         });
@@ -151,7 +151,7 @@ describe('koa', function() {
           // res.end if the request was aborted. As a call to res.end is
           // conditional on this client-side behavior, we also end a span in
           // koa if the 'aborted' event is emitted.
-          var traces = common.getTraces(agent);
+          var traces = common.getTraces();
           assert.strictEqual(traces.length, 1);
           assert.strictEqual(traces[0].spans.length, 1);
           var span = traces[0].spans[0];

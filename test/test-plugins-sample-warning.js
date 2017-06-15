@@ -38,7 +38,7 @@ describe('express + dbs', function() {
   });
 
   beforeEach(function() {
-    oldWarn = common.replaceWarnLogger(agent, function(msg) {
+    oldWarn = common.replaceWarnLogger(function(msg) {
       if (msg.indexOf('http') !== -1) {
         untracedHttpSpanCount++;
       }
@@ -46,7 +46,7 @@ describe('express + dbs', function() {
   });
 
   afterEach(function() {
-    common.replaceWarnLogger(agent, oldWarn);
+    common.replaceWarnLogger(oldWarn);
     untracedHttpSpanCount = 0;
   });
 
@@ -68,7 +68,7 @@ describe('express + dbs', function() {
       http.get({port: common.serverPort}, function(res) {
         http.get({port: common.serverPort}, function(res) {
           server.close();
-          common.cleanTraces(agent);
+          common.cleanTraces();
           assert.equal(untracedHttpSpanCount, 2);
           done();
         });
@@ -91,7 +91,7 @@ describe('express + dbs', function() {
       http.get({port: common.serverPort + 1}, function(res) {
         http.get({port: common.serverPort + 1}, function(res) {
           server.close();
-          common.cleanTraces(agent);
+          common.cleanTraces();
           assert.equal(untracedHttpSpanCount, 2);
           done();
         });
@@ -112,7 +112,7 @@ describe('express + dbs', function() {
       http.get({port: common.serverPort + 2}, function(res) {
         http.get({port: common.serverPort + 2}, function(res) {
           server.close();
-          common.cleanTraces(agent);
+          common.cleanTraces();
           assert.equal(untracedHttpSpanCount, 2);
           done();
         });
@@ -139,7 +139,7 @@ describe('express + dbs', function() {
       http.get({port: common.serverPort + 3}, function(res) {
         http.get({port: common.serverPort + 3}, function(res) {
           server.close();
-          common.cleanTraces(agent);
+          common.cleanTraces();
           assert.equal(untracedHttpSpanCount, 2);
           done();
         });

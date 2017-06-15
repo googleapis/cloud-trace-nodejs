@@ -51,7 +51,7 @@ describe('test-trace-mysql', function() {
           connection = conn;
           assert(!err);
           assert.equal(res.affectedRows, 1);
-          common.cleanTraces(agent);
+          common.cleanTraces();
           done();
         });
       });
@@ -62,20 +62,20 @@ describe('test-trace-mysql', function() {
     connection.query('DROP TABLE t', function(err) {
       assert(!err);
       connection.release();
-      common.cleanTraces(agent);
+      common.cleanTraces();
       done();
     });
   });
 
   it('should perform basic operations', function(done) {
-    common.runInTransaction(agent, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       connection.query('SELECT * FROM t', function(err, res) {
         endRootSpan();
         assert(!err);
         assert.equal(res.length, 1);
         assert.equal(res[0].k, 1);
         assert.equal(res[0].v, 'obj');
-        var spans = common.getMatchingSpans(agent, function (span) {
+        var spans = common.getMatchingSpans(function (span) {
           return span.name === 'mysql-query';
         });
         assert.equal(spans.length, 1);
@@ -86,7 +86,7 @@ describe('test-trace-mysql', function() {
   });
 
   it('should propagate context', function(done) {
-    common.runInTransaction(agent, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       connection.query('SELECT * FROM t', function(err, res) {
         assert.ok(common.hasContext());
         endRootSpan();
@@ -96,11 +96,11 @@ describe('test-trace-mysql', function() {
   });
 
   it('should remove trace frames from stack', function(done) {
-    common.runInTransaction(agent, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       connection.query('SELECT * FROM t', function(err, res) {
         endRootSpan();
         assert(!err);
-        var spans = common.getMatchingSpans(agent, function (span) {
+        var spans = common.getMatchingSpans(function (span) {
           return span.name === 'mysql-query';
         });
         var labels = spans[0].labels;
@@ -114,7 +114,7 @@ describe('test-trace-mysql', function() {
   });
 
   it('should work with events', function(done) {
-    common.runInTransaction(agent, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       var query = connection.query('SELECT * FROM t');
       query.on('result', function(row) {
         assert.equal(row.k, 1);
@@ -122,7 +122,7 @@ describe('test-trace-mysql', function() {
       });
       query.on('end', function() {
         endRootSpan();
-        var spans = common.getMatchingSpans(agent, function (span) {
+        var spans = common.getMatchingSpans(function (span) {
           return span.name === 'mysql-query';
         });
         assert.equal(spans.length, 1);
@@ -133,11 +133,11 @@ describe('test-trace-mysql', function() {
   });
 
   it('should work without events or callback', function(done) {
-    common.runInTransaction(agent, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       connection.query('SELECT * FROM t');
       setTimeout(function() {
         endRootSpan();
-        var spans = common.getMatchingSpans(agent, function (span) {
+        var spans = common.getMatchingSpans(function (span) {
           return span.name === 'mysql-query';
         });
         assert.equal(spans.length, 1);
@@ -152,7 +152,7 @@ describe('test-trace-mysql', function() {
       k: 2,
       v: 'obj2'
     };
-    common.runInTransaction(agent, function(endRootSpan) {
+    common.runInTransaction(function(endRootSpan) {
       connection.beginTransaction(function(err) {
         assert(!err);
         connection.query('INSERT INTO t SET ?', obj2, function(err, res) {
@@ -174,7 +174,7 @@ describe('test-trace-mysql', function() {
                   assert.equal(res.length, 1);
                   assert.equal(res[0].k, 1);
                   assert.equal(res[0].v, 'obj');
-                  var spans = common.getMatchingSpans(agent, function (span) {
+                  var spans = common.getMatchingSpans(function (span) {
                     return span.name === 'mysql-query';
                   });
                   var expectedCmds = ['START TRANSACTION', 'INSERT INTO t SET ?',

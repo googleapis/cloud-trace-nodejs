@@ -61,7 +61,7 @@ describe('hapi', function() {
       });
 
       afterEach(function(done) {
-        common.cleanTraces(agent);
+        common.cleanTraces();
         server.stop(done);
       });
 
@@ -78,7 +78,7 @@ describe('hapi', function() {
           }
         });
         server.start(function() {
-          common.doRequest(agent, 'GET', done, hapiPredicate);
+          common.doRequest('GET', done, hapiPredicate);
         });
       });
 
@@ -95,7 +95,7 @@ describe('hapi', function() {
           }
         });
         server.start(function() {
-          common.doRequest(agent, 'POST', done, hapiPredicate);
+          common.doRequest('POST', done, hapiPredicate);
         });
       });
 
@@ -115,7 +115,7 @@ describe('hapi', function() {
           handler: { custom: { val: common.serverRes } }
         });
         server.start(function() {
-          common.doRequest(agent, 'GET', done, hapiPredicate);
+          common.doRequest('GET', done, hapiPredicate);
         });
       });
 
@@ -144,7 +144,7 @@ describe('hapi', function() {
         }, function(err) {
           assert(!err);
           server.start(function() {
-            common.doRequest(agent, 'GET', done, hapiPredicate);
+            common.doRequest('GET', done, hapiPredicate);
           });
         });
       });
@@ -172,7 +172,7 @@ describe('hapi', function() {
         });
         server.start(function() {
           assert(afterSuccess);
-          common.doRequest(agent, 'GET', done, hapiPredicate);
+          common.doRequest('GET', done, hapiPredicate);
         });
       });
 
@@ -200,7 +200,7 @@ describe('hapi', function() {
             assert(extensionSuccess);
             done();
           };
-          common.doRequest(agent, 'GET', cb, hapiPredicate);
+          common.doRequest('GET', cb, hapiPredicate);
         });
       });
 
@@ -216,7 +216,7 @@ describe('hapi', function() {
         });
         server.start(function() {
           http.get({port: common.serverPort}, function(res) {
-            var labels = common.getMatchingSpan(agent, hapiPredicate).labels;
+            var labels = common.getMatchingSpan(hapiPredicate).labels;
             assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
             assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
             assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
@@ -238,7 +238,7 @@ describe('hapi', function() {
         });
         server.start(function() {
           http.get({port: common.serverPort}, function(res) {
-            var labels = common.getMatchingSpan(agent, hapiPredicate).labels;
+            var labels = common.getMatchingSpan(hapiPredicate).labels;
             var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
             // Ensure that our middleware is on top of the stack
             assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
@@ -259,7 +259,7 @@ describe('hapi', function() {
         });
         server.start(function() {
           http.get({path: '/?a=b', port: common.serverPort}, function(res) {
-            var span = common.getMatchingSpan(agent, hapiPredicate);
+            var span = common.getMatchingSpan(hapiPredicate);
             assert.equal(span.name, '/');
             done();
           });
@@ -304,7 +304,7 @@ describe('hapi', function() {
         });
         server.start(function() {
           http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
-            assert.equal(common.getTraces(agent).length, 0);
+            assert.equal(common.getTraces().length, 0);
             done();
           });
         });
@@ -322,7 +322,7 @@ describe('hapi', function() {
             // conditional on this client-side behavior, we also listen for the
             // 'aborted' event, and end the span there.
             req.raw.req.on('aborted', function() {
-              var traces = common.getTraces(agent);
+              var traces = common.getTraces();
               assert.strictEqual(traces.length, 1);
               assert.strictEqual(traces[0].spans.length, 1);
               var span = traces[0].spans[0];

@@ -21,9 +21,7 @@ proxyquire('gcp-metadata', {
   'retry-request': require('request')
 });
 
-// We want to disable publishing to avoid conflicts with production.
-require('../../src/trace-writer').publish_ = function() {};
-
+var trace = require('../..');
 var cls = require('../../src/cls.js');
 var TraceWriter = require('../../src/trace-writer.js');
 var pluginLoader = require('../../src/trace-plugin-loader.js');
@@ -41,7 +39,8 @@ var SERVER_RES = '1729';
 var SERVER_KEY = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'));
 var SERVER_CERT = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
 
-function init(agent) {
+function trackShouldTraceArgs() {
+  var agent = trace.get();
   var privateAgent = agent.private_();
   privateAgent._shouldTraceArgs = [];
   var shouldTrace = privateAgent.shouldTrace;
@@ -57,23 +56,16 @@ function replaceFunction(target, prop, fn) {
   return old;
 }
 
-function replaceWarnLogger(agent, fn) {
+function replaceWarnLogger(fn) {
+  var agent = trace.get();
   return replaceFunction(agent.private_().logger, 'warn', fn);
-}
-
-function replaceTracingPolicy(agent, fn) {
-  return replaceFunction(agent.private_(), 'policy', fn);
 }
 
 /**
  * Cleans the tracer state between test runs.
  */
-function cleanTraces(agent) {
-  if (arguments.length !== 1) {
-    throw new Error('cleanTraces() expected 1 argument.  ' +
-      'Received: ' + arguments.length);
-  }
-
+function cleanTraces() {
+  var agent = trace.get();
   var privateAgent = agent.private_();
   if (privateAgent) {
     privateAgent._shouldTraceArgs = [];
@@ -81,43 +73,25 @@ function cleanTraces(agent) {
   TraceWriter.get().buffer_ = [];
 }
 
-function getTraces(agent) {
-  if (arguments.length !== 1) {
-    throw new Error('getTraces() expected 1 argument.  ' +
-      'Received: ' + arguments.length);
-  }
-
+function getTraces() {
   return TraceWriter.get().buffer_.map(JSON.parse);
 }
 
-function getShouldTraceArgs(agent) {
-  if (arguments.length !== 1) {
-    throw new Error('getSHouldTraceArgs() expected 1 argument.  ' +
-      'Received: ' + arguments.length);
-  }
-
+function getShouldTraceArgs() {
+  var agent = trace.get();
   return agent.private_()._shouldTraceArgs;
 }
 
-function getMatchingSpan(agent, predicate) {
-  if (arguments.length !== 2) {
-    throw new Error('getMatchingSpan() expected 2 arguments.  ' +
-      'Received: ' + arguments.length);
-  }
-
-  var spans = getMatchingSpans(agent, predicate);
+function getMatchingSpan(predicate) {
+  var spans = getMatchingSpans(predicate);
   assert.equal(spans.length, 1,
     'predicate did not isolate a single span');
   return spans[0];
 }
 
-function getMatchingSpans(agent, predicate) {
-  if (arguments.length !== 2) {
-    throw new Error('getMatchingSpans() expected 2 arguments.  ' +
-      'Received: ' + arguments.length);
-  }
+function getMatchingSpans(predicate) {
   var list = [];
-  getTraces(agent).forEach(function(trace) {
+  getTraces().forEach(function(trace) {
     trace.spans.forEach(function(span) {
       if (predicate(span)) {
         list.push(span);
@@ -128,11 +102,6 @@ function getMatchingSpans(agent, predicate) {
 }
 
 function assertSpanDurationCorrect(span, expectedDuration) {
-  if (arguments.length !== 2) {
-    throw new Error('assertSpanDurationCorrect() expected 2 argument.  ' +
-      'Received: ' + arguments.length);
-  }
-
   var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
   assert(duration > expectedDuration * (1 - FORGIVENESS),
       'Duration was ' + duration + ', expected ' + expectedDuration);
@@ -152,43 +121,29 @@ function assertSpanDurationCorrect(span, expectedDuration) {
  *
  * @param {function(?)=} predicate
  */
-function assertDurationCorrect(agent, expectedDuration, predicate) {
-  if (arguments.length < 2) {
-    throw new Error('assertDurationCorrect() expected at least two argument.  ' +
-      'Received: ' + arguments.length);
-  }
-
+function assertDurationCorrect(expectedDuration, predicate) {
   // We assume that the tests never care about top level transactions created
   // by the harness itself
   predicate = predicate || function(span) { return span.name !== 'outer'; };
-  var span = getMatchingSpan(agent, predicate);
+  var span = getMatchingSpan(predicate);
   assertSpanDurationCorrect(span, expectedDuration);
 }
 
-function doRequest(agent, method, done, tracePredicate, path) {
-  if (arguments.length < 4) {
-    throw new Error('doRequest() expected at least 4 arguments.  ' +
-      'Received: ' + arguments.length);
-  }
-
+function doRequest(method, done, tracePredicate, path) {
   var start = Date.now();
   http.get({port: SERVER_PORT, method: method, path: path || '/'}, function(res) {
     var result = '';
     res.on('data', function(data) { result += data; });
     res.on('end', function() {
       assert.equal(SERVER_RES, result);
-      assertDurationCorrect(agent, Date.now() - start, tracePredicate);
+      assertDurationCorrect(Date.now() - start, tracePredicate);
       done();
     });
   });
 }
 
-function runInTransaction(agent, fn) {
-  if (arguments.length !== 2) {
-    throw new Error('runInTransaction() expected 2 arguments.  ' +
-      'Received: ' + arguments.length);
-  }
-
+function runInTransaction(fn) {
+  var agent = trace.get();
   cls.getNamespace().run(function() {
     var spanData = agent.private_().createRootSpanData('outer');
     fn(function() {
@@ -201,12 +156,8 @@ function runInTransaction(agent, fn) {
 // Also calls cb after that duration.
 // Returns a method which, when called, closes the child span
 // right away and cancels callback from being called after the duration.
-function createChildSpan(agent, cb, duration) {
-  if (arguments.length !== 3) {
-    throw new Error('createChildSpan() expected 3 arguments.  ' +
-      'Received: ' + arguments.length);
-  }
-
+function createChildSpan(cb, duration) {
+  var agent = trace.get();
   var privateAgent = agent.private_();
   var span = privateAgent.startSpan('inner');
   var t = setTimeout(function() {
@@ -221,25 +172,28 @@ function createChildSpan(agent, cb, duration) {
   };
 }
 
-function createRootSpanData(agent, name, traceId, parentId, skipFrames,
+function createRootSpanData(name, traceId, parentId, skipFrames,
                             spanKind) {
+  var agent = trace.get();
   return agent.private_().createRootSpanData(name, traceId, parentId,
                                              skipFrames, spanKind);
 }
 
-function getConfig(agent) {
+function getConfig() {
+  var agent = trace.get();
   return agent.private_().config();
 }
 
-function installNoopTraceWriter(agent) {
+function installNoopTraceWriter() {
   TraceWriter.get().writeSpan = function() {};
 }
 
-function avoidTraceWriterAuth(agent) {
+function avoidTraceWriterAuth() {
   TraceWriter.get().request = request;
 }
 
-function stopAgent(agent) {
+function stopAgent() {
+  var agent = trace.get();
   if (agent.isActive()) {
     agent.private_().stop();
     agent.disable_();
@@ -247,7 +201,8 @@ function stopAgent(agent) {
   }
 }
 
-function clearNamespace(agent) {
+function clearNamespace() {
+  var agent = trace.get();
   cls.destroyNamespace();
   agent.private_().namespace = cls.createNamespace();
 }
@@ -257,7 +212,7 @@ function hasContext() {
 }
 
 module.exports = {
-  init: init,
+  trackShouldTraceArgs: trackShouldTraceArgs,
   assertSpanDurationCorrect: assertSpanDurationCorrect,
   assertDurationCorrect: assertDurationCorrect,
   cleanTraces: cleanTraces,
@@ -268,8 +223,8 @@ module.exports = {
   getTraces: getTraces,
   runInTransaction: runInTransaction,
   getShouldTraceArgs: getShouldTraceArgs,
+  replaceFunction: replaceFunction,
   replaceWarnLogger: replaceWarnLogger,
-  replaceTracingPolicy: replaceTracingPolicy,
   createRootSpanData: createRootSpanData,
   clearNamespace: clearNamespace,
   hasContext: hasContext,

@@ -29,7 +29,7 @@ describe('index.js', function() {
   });
 
   afterEach(function() {
-    common.stopAgent(agent);
+    common.stopAgent();
     checkUnpatches.forEach(function(f) { f(); });
     checkUnpatches = [];
   });
