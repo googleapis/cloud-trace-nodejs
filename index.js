@@ -109,7 +109,7 @@ function start(projectConfig) {
   headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
   if (modulesLoadedBeforeTrace.length > 0) {
-    logger.warn('Tracing might not work as the following modules ' +
+    logger.error('Tracing might not work as the following modules ' +
       'were loaded before the trace agent was initialized: ' +
       JSON.stringify(modulesLoadedBeforeTrace));
   }
