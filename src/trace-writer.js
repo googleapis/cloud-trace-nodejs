@@ -271,9 +271,17 @@ TraceWriter.prototype.publish_ = function(projectId, json) {
   });
 };
 
-/**
- * Export TraceWriter.
- * FIXME(ofrobots): TraceWriter should be a singleton. We should export
- * a get function that returns the instance instead.
- */
-module.exports = TraceWriter;
+// Singleton
+var traceWriter;
+
+module.exports = {
+  create: function(logger, config) {
+    if (!traceWriter || config.forceNewAgent_) {
+      traceWriter = new TraceWriter(logger, config);
+    }
+    return traceWriter;
+  },
+  get: function() {
+    return traceWriter;
+  }
+};
