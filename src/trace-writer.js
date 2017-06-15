@@ -282,6 +282,9 @@ module.exports = {
     return traceWriter;
   },
   get: function() {
+    if (!traceWriter) {
+      throw new Error('TraceWriter singleton was not initialized.');
+    }
     return traceWriter;
   }
 };
