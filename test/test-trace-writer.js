@@ -16,6 +16,7 @@
 
 'use strict';
 
+// Loading this file patches gcpMetadata so requests don't time out.
 require('./plugins/common.js');
 var assert = require('assert');
 var fakeCredentials = require('./fixtures/gcloud-credentials.json');
@@ -28,7 +29,6 @@ nock.disableNetConnect();
 
 var PROJECT = 'fake-project';
 var DEFAULT_DELAY = 200;
-
 
 var fakeLogger = {
   warn: function() {},
@@ -61,9 +61,10 @@ describe('TraceWriter', function() {
   var TraceWriter = require('../src/trace-writer.js');
 
   it('should be a Service instance', function() {
-    var writer = new TraceWriter(fakeLogger, {
+    var writer = TraceWriter.create(fakeLogger, {
       projectId: 'fake project',
-      serviceContext: {}
+      serviceContext: {},
+      forceNewAgent_: true
     });
     assert.ok(writer instanceof Service);
   });
@@ -73,7 +74,10 @@ describe('TraceWriter', function() {
        function(done) {
          var scope = nocks.projectId('from metadata');
          // the constructor should fetch the projectId.
-         new TraceWriter(fakeLogger, { serviceContext: {} });
+         TraceWriter.create(fakeLogger, {
+           serviceContext: {},
+           forceNewAgent_: true
+          });
          setTimeout(function() {
            assert.ok(scope.isDone());
            done();
@@ -84,12 +88,12 @@ describe('TraceWriter', function() {
   describe('writeSpan', function(done) {
 
     it('should close spans, add defaultLabels and queue', function(done) {
-      var writer =
-          new TraceWriter(fakeLogger, {
-            projectId: PROJECT,
-            bufferSize: 4,
-            serviceContext: {}
-          });
+      var writer = TraceWriter.create(fakeLogger, {
+        projectId: PROJECT,
+        bufferSize: 4,
+        serviceContext: {},
+        forceNewAgent_: true
+      });
       var spanData = createFakeSpan('fake span');
       writer.queueTrace_ = function(trace) {
         assert.ok(trace && trace.spans && trace.spans[0]);
@@ -112,12 +116,12 @@ describe('TraceWriter', function() {
       nocks.oauth2();
       var scope = nocks.patchTraces(PROJECT);
 
-      var writer = new TraceWriter(
-          fakeLogger, {
-            projectId: PROJECT,
-            credentials: fakeCredentials,
-            serviceContext: {}
-          });
+      var writer = TraceWriter.create(fakeLogger, {
+        projectId: PROJECT,
+        credentials: fakeCredentials,
+        serviceContext: {},
+        forceNewAgent_: true
+      });
       writer.publish_(PROJECT, '{"valid": "json"}');
       setTimeout(function() {
         assert.ok(scope.isDone());
@@ -131,12 +135,12 @@ describe('TraceWriter', function() {
       var scope = nocks.patchTraces(PROJECT, null, 'Simulated Network Error',
                                     true /* withError */);
 
-      var writer = new TraceWriter(
-          fakeLogger, {
-            projectId: PROJECT,
-            credentials: fakeCredentials,
-            serviceContext: {}
-          });
+      var writer = TraceWriter.create(fakeLogger, {
+        projectId: PROJECT,
+        credentials: fakeCredentials,
+        serviceContext: {},
+        forceNewAgent_: true
+      });
       writer.publish_(PROJECT, JSON.stringify(MESSAGE));
       setTimeout(function() {
         assert.ok(scope.isDone());
@@ -148,13 +152,13 @@ describe('TraceWriter', function() {
 
   describe('publishing', function() {
     it('should publish when the queue fills', function(done) {
-      var writer = new TraceWriter(
-          fakeLogger, {
-            projectId: PROJECT,
-            bufferSize: 4,
-            flushDelaySeconds: 3600,
-            serviceContext: {}
-          });
+      var writer = TraceWriter.create(fakeLogger, {
+        projectId: PROJECT,
+        bufferSize: 4,
+        flushDelaySeconds: 3600,
+        serviceContext: {},
+        forceNewAgent_: true
+      });
       writer.publish_ = function() { done(); };
       for (var i = 0; i < 4; i++) {
         writer.writeSpan(createFakeSpan(i));
@@ -163,12 +167,12 @@ describe('TraceWriter', function() {
 
     it('should publish after timeout', function(done) {
       var published = false;
-      var writer = new TraceWriter(
-          fakeLogger, {
-            projectId: PROJECT,
-            flushDelaySeconds: 0.01,
-            serviceContext: {}
-          });
+      var writer = TraceWriter.create(fakeLogger, {
+        projectId: PROJECT,
+        flushDelaySeconds: 0.01,
+        serviceContext: {},
+        forceNewAgent_: true
+      });
       writer.publish_ = function() { published = true; };
       writer.writeSpan(createFakeSpan('fake span'));
       setTimeout(function() {

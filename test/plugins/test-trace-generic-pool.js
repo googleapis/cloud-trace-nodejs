@@ -36,6 +36,7 @@ describe('generic-pool2', function() {
 
   after(function() {
     common.stopAgent(api);
+    common.cleanTraces(api);
   });
 
   it('perserves context', function(done) {
@@ -94,6 +95,7 @@ describe('generic-pool3', function() {
 
   after(function() {
     common.stopAgent(agent);
+    common.cleanTraces(agent);
   });
 
   it ('preserves context', function() {
