@@ -39,13 +39,14 @@ var SERVER_RES = '1729';
 var SERVER_KEY = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'));
 var SERVER_CERT = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
 
+var shouldTraceArgs = [];
+
 function trackShouldTraceArgs() {
   var agent = trace.get();
   var privateAgent = agent.private_();
-  privateAgent._shouldTraceArgs = [];
   var shouldTrace = privateAgent.shouldTrace;
   privateAgent.shouldTrace = function() {
-    privateAgent._shouldTraceArgs.push([].slice.call(arguments, 0));
+    shouldTraceArgs.push([].slice.call(arguments, 0));
     return shouldTrace.apply(this, arguments);
   };
 }
@@ -65,11 +66,7 @@ function replaceWarnLogger(fn) {
  * Cleans the tracer state between test runs.
  */
 function cleanTraces() {
-  var agent = trace.get();
-  var privateAgent = agent.private_();
-  if (privateAgent) {
-    privateAgent._shouldTraceArgs = [];
-  }
+  shouldTraceArgs = [];
   TraceWriter.get().buffer_ = [];
 }
 
@@ -78,8 +75,7 @@ function getTraces() {
 }
 
 function getShouldTraceArgs() {
-  var agent = trace.get();
-  return agent.private_()._shouldTraceArgs;
+  return shouldTraceArgs;
 }
 
 function getMatchingSpan(predicate) {

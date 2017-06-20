@@ -101,12 +101,12 @@ describe('Trace Interface', function() {
     
     before(function() {
       traceAPI.enable_(agent);
-      traceAPI.private_().traceWriter.request = request;
+      TraceWriter.get().request = request;
       common.avoidTraceWriterAuth();
     });
 
     afterEach(function() {
-      TraceWriter.get().buffer_ = []; // clear traces
+      common.cleanTraces();
       cls.destroyNamespace();
       traceAPI.private_().namespace = cls.createNamespace();
     });
