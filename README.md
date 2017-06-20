@@ -198,6 +198,15 @@ A `TraceApi` object is guaranteed to be returned by both of these calls, even if
 
 A fully detailed overview of the `TraceApi` object is available [here](doc/trace-api.md).
 
+## How does automatic tracing work?
+
+Node.js provides concurrency through as asynchronous execution model. To be able to keep track of the current request across asynchronous execution boundaries we use the [async-listener][] module. It modifies the core async APIs in Node.js, and Promises, to save and restore the 'execution context' across the async bounaries. In addition, we instrument frameworks (like express, hapi, etc. if loaded) to create request contexts for the execution of the incoming requests. Similarly, we instrument RPC libraries (like mysql, redis, outbound http, etc.) to keep track of the latency of these operations and to correlate them to the incoming request.
+
+This `async-listener` based mechanism works great in most cases, but it does have some limitations that can prevent us from being able to properly track execution context:
+
+* It is possible to use JavaScript code that does its own queuing of callback functions – simulating async hops. For example, one may write a http request buffering library that queues requests and then performs them in a batch in one shot. In such a case, when all the callbacks fire, they seem to be executing on behalf of the wrong in coming context. This problem is called the pooling problem or the [user-space queuing problem][queueing-problem], and is a fundamental limitation of JavaScript. In such cases we try to work around the problem through monkey patching, or work with the library authors to fix the code to properly propagate context.
+* Presently, it is not possible for `async-listener` to keep track of async transitions in ES7 async/await functions that are available with Node 7+. If your application uses async functions, we will not be properly track RPCs. We do expect to be able to track async/await functions in the future once we switch to the new [async-hooks][] API in Node 8+.
+
 ## Contributing changes
 
 * See [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -206,19 +215,22 @@ A fully detailed overview of the `TraceApi` object is available [here](doc/trace
 
 * See [LICENSE](LICENSE)
 
-[cloud-console]: https://console.cloud.google.com
-[gcloud-sdk]: https://cloud.google.com/sdk/gcloud/
 [app-default-credentials]: https://developers.google.com/identity/protocols/application-default-credentials
-[service-account]: https://console.developers.google.com/apis/credentials/serviceaccountkey
-[npm-image]: https://badge.fury.io/js/%40google-cloud%2Ftrace-agent.svg
-[npm-url]: https://npmjs.org/package/@google-cloud/trace-agent
-[travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
-[travis-url]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs
+[async-hooks]: https://nodejs.org/api/async_hooks.html
+[async-listener]: https://www.npmjs.com/package/async-listener
+[cloud-console]: https://console.cloud.google.com
 [coveralls-image]: https://coveralls.io/repos/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg?branch=master&service=github
 [coveralls-url]: https://coveralls.io/github/GoogleCloudPlatform/cloud-trace-nodejs?branch=master
-[david-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs.svg
-[david-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs
 [david-dev-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs/dev-status.svg
 [david-dev-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs?type=dev
+[david-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs.svg
+[david-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs
+[gcloud-sdk]: https://cloud.google.com/sdk/gcloud/
+[npm-image]: https://badge.fury.io/js/%40google-cloud%2Ftrace-agent.svg
+[npm-url]: https://npmjs.org/package/@google-cloud/trace-agent
+[queueing-problem]: https://github.com/groundwater/nodejs-symposiums/tree/master/2016-02-26-Errors/Round1/UserModeQueuing
+[service-account]: https://console.developers.google.com/apis/credentials/serviceaccountkey
 [snyk-image]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg
 [snyk-url]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs
+[travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
+[travis-url]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs
