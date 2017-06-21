@@ -43,7 +43,7 @@ describe('test-trace-datastore', function() {
     // timeout is set to accommodate for this remote request and reduce
     // flakiness.
     this.timeout(20000);
-    common.runInTransaction(agent, function(endTransaction) {
+    common.runInTransaction(function(endTransaction) {
       var ds = require('./fixtures/google-cloud-datastore1')({
         projectId: '-1',
         keyFilename: path.join(__dirname, '..', 'fixtures', 'gcloud-credentials.json')
@@ -55,13 +55,13 @@ describe('test-trace-datastore', function() {
         assert.strictEqual(err.code, 401);
         assert.notStrictEqual(
             err.message.indexOf('accounts.google.com:443/o/oauth2/token'), -1);
-        var trace = common.getMatchingSpan(agent, grpcPredicate);
+        var trace = common.getMatchingSpan(grpcPredicate);
         assert(trace);
         assert.notStrictEqual(trace.labels.argument.indexOf(
             '"keys":[{"path":[{"kind":"bad","name":"key"}]}]'), -1);
         assert(trace.labels.error);
         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-        common.cleanTraces(agent);
+        common.cleanTraces();
         done();
       });
     });

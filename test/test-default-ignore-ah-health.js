@@ -42,7 +42,7 @@ describe('test-default-ignore-ah-health', function() {
         res.on('data', function(data) { result += data; });
         res.on('end', function() {
           assert.equal(result, '🏥');
-          assert.equal(common.getTraces(agent).length, 0);
+          assert.equal(common.getTraces().length, 0);
           server.close();
           done();
         });

@@ -29,7 +29,7 @@ var path = '/v1/projects/0/traces';
 
 var queueSpans = function(n, agent) {
   for (var i = 0; i < n; i++) {
-    common.runInTransaction(agent, function(end) {
+    common.runInTransaction(function(end) {
       end();
     });
   }
@@ -71,10 +71,10 @@ describe('tracewriter publishing', function() {
         samplingRate: 0,
         onUncaughtException: 'flush'
       });
-      common.avoidTraceWriterAuth(agent);
+      common.avoidTraceWriterAuth();
       cls.getNamespace().run(function() {
         queueSpans(2, agent);
-        buf = common.getTraces(agent);
+        buf = common.getTraces();
         throw new Error(':(');
       });
     });

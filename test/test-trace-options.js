@@ -65,8 +65,8 @@ function sendRequests(agent, options, expectedTraceCount, done) {
       res.on('data', function() {});
       res.on('end', function() {
         if (++doneCount === options.length) {
-          assert.equal(common.getTraces(agent).length, expectedTraceCount);
-          common.cleanTraces(agent);
+          assert.equal(common.getTraces().length, expectedTraceCount);
+          common.cleanTraces();
           done();
         }
       });

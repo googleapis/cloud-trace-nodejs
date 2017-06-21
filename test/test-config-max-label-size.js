@@ -24,14 +24,14 @@ var common = require('./plugins/common.js');
 
 describe('maximumLabelValueSize configuration', function() {
   it('should not allow values above server maximum', function() {
-    var agent = trace.start({forceNewAgent_: true, maximumLabelValueSize: 1000000});
-    var valueMax = common.getConfig(agent).maximumLabelValueSize;
+    trace.start({forceNewAgent_: true, maximumLabelValueSize: 1000000});
+    var valueMax = common.getConfig().maximumLabelValueSize;
     assert.strictEqual(valueMax, constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
   });
 
   it('should not modify values below server maximum', function() {
-    var agent = trace.start({forceNewAgent_: true, maximumLabelValueSize: 10});
-    var valueMax = common.getConfig(agent).maximumLabelValueSize;
+    trace.start({forceNewAgent_: true, maximumLabelValueSize: 10});
+    var valueMax = common.getConfig().maximumLabelValueSize;
     assert.strictEqual(valueMax, 10);
   });
 });

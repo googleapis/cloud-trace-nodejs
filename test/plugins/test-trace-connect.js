@@ -49,7 +49,7 @@ describe('test-trace-connect', function() {
   });
 
   afterEach(function() {
-    common.cleanTraces(agent);
+    common.cleanTraces();
     server.close();
   });
 
@@ -61,7 +61,7 @@ describe('test-trace-connect', function() {
       }, common.serverWait);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest(agent, 'GET', done, connectPredicate);
+      common.doRequest('GET', done, connectPredicate);
     });
   });
 
@@ -78,7 +78,7 @@ describe('test-trace-connect', function() {
       }, common.serverWait / 2);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest(agent, 'GET', done, connectPredicate);
+      common.doRequest('GET', done, connectPredicate);
     });
   });
 
@@ -91,7 +91,7 @@ describe('test-trace-connect', function() {
       }, common.serverWait);
     });
     server = app.listen(common.serverPort, function() {
-      common.doRequest(agent, 'GET', done, connectPredicate);
+      common.doRequest('GET', done, connectPredicate);
     });
   });
 
@@ -102,7 +102,7 @@ describe('test-trace-connect', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(agent, connectPredicate).labels;
+        var labels = common.getMatchingSpan(connectPredicate).labels;
         assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
         assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
         assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
@@ -119,7 +119,7 @@ describe('test-trace-connect', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(agent, connectPredicate).labels;
+        var labels = common.getMatchingSpan(connectPredicate).labels;
         var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our middleware is on top of the stack
         assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
@@ -135,7 +135,7 @@ describe('test-trace-connect', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({path: '/?a=b', port: common.serverPort}, function(res) {
-        var span = common.getMatchingSpan(agent, connectPredicate);
+        var span = common.getMatchingSpan(connectPredicate);
         assert.equal(span.name, '/');
         done();
       });
@@ -149,7 +149,7 @@ describe('test-trace-connect', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
-        var labels = common.getMatchingSpan(agent, connectPredicate).labels;
+        var labels = common.getMatchingSpan(connectPredicate).labels;
         assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
         done();
       });
@@ -186,7 +186,7 @@ describe('test-trace-connect', function() {
     });
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort, path: '/ignore/me'}, function(res) {
-        assert.equal(common.getTraces(agent).length, 0);
+        assert.equal(common.getTraces().length, 0);
         done();
       });
     });
@@ -198,7 +198,7 @@ describe('test-trace-connect', function() {
       setTimeout(function() {
         res.end(common.serverRes);
         setImmediate(function() {
-          var traces = common.getTraces(agent);
+          var traces = common.getTraces();
           assert.strictEqual(traces.length, 1);
           assert.strictEqual(traces[0].spans.length, 1);
           var span = traces[0].spans[0];

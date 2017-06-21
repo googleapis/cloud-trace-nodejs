@@ -58,7 +58,7 @@ describe('test-trace-mongoose', function() {
       assert(!err, 'Skipping: error connecting to mongo at localhost:27017.');
       sim.save(function(err) {
         assert(!err);
-        common.cleanTraces(agent);
+        common.cleanTraces();
         done();
       });
     });
@@ -69,7 +69,7 @@ describe('test-trace-mongoose', function() {
       assert(!err);
       mongoose.connection.close(function(err) {
         assert(!err);
-        common.cleanTraces(agent);
+        common.cleanTraces();
         done();
       });
     });
@@ -81,11 +81,11 @@ describe('test-trace-mongoose', function() {
       f2: false,
       f3: 1729
     });
-    common.runInTransaction(agent, function(endTransaction) {
+    common.runInTransaction(function(endTransaction) {
       data.save(function(err) {
         endTransaction();
         assert(!err);
-        var trace = common.getMatchingSpan(agent, mongoPredicate.bind(null, 'mongo-insert'));
+        var trace = common.getMatchingSpan(mongoPredicate.bind(null, 'mongo-insert'));
         assert(trace);
         done();
       });
@@ -93,14 +93,14 @@ describe('test-trace-mongoose', function() {
   });
 
   it('should accurately measure update time', function(done) {
-    common.runInTransaction(agent, function(endTransaction) {
+    common.runInTransaction(function(endTransaction) {
       Simple.findOne({f1: 'sim'}, function(err, res) {
         assert(!err);
         res.f2 = false;
         res.save(function(err) {
           endTransaction();
           assert(!err);
-          var trace = common.getMatchingSpan(agent, mongoPredicate.bind(null, 'mongo-update'));
+          var trace = common.getMatchingSpan(mongoPredicate.bind(null, 'mongo-update'));
           assert(trace);
           done();
         });
@@ -109,11 +109,11 @@ describe('test-trace-mongoose', function() {
   });
 
   it('should accurately measure retrieval time', function(done) {
-    common.runInTransaction(agent, function(endTransaction) {
+    common.runInTransaction(function(endTransaction) {
       Simple.findOne({f1: 'sim'}, function(err, res) {
         endTransaction();
         assert(!err);
-        var trace = common.getMatchingSpan(agent, mongoPredicate.bind(null, 'mongo-cursor'));
+        var trace = common.getMatchingSpan(mongoPredicate.bind(null, 'mongo-cursor'));
         assert(trace);
         done();
       });
@@ -121,11 +121,11 @@ describe('test-trace-mongoose', function() {
   });
 
   it('should accurately measure delete time', function(done) {
-    common.runInTransaction(agent, function(endTransaction) {
+    common.runInTransaction(function(endTransaction) {
       Simple.remove({f1: 'sim'}, function(err, res) {
         endTransaction();
         assert(!err);
-        var trace = common.getMatchingSpan(agent, mongoPredicate.bind(null, 'mongo-remove'));
+        var trace = common.getMatchingSpan(mongoPredicate.bind(null, 'mongo-remove'));
         assert(trace);
         done();
       });
@@ -141,11 +141,11 @@ describe('test-trace-mongoose', function() {
   });
 
   it('should remove trace frames from stack', function(done) {
-    common.runInTransaction(agent, function(endTransaction) {
+    common.runInTransaction(function(endTransaction) {
       Simple.findOne({f1: 'sim'}, function(err, res) {
         endTransaction();
         assert(!err);
-        var trace = common.getMatchingSpan(agent, mongoPredicate.bind(null, 'mongo-cursor'));
+        var trace = common.getMatchingSpan(mongoPredicate.bind(null, 'mongo-cursor'));
         var labels = trace.labels;
         var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our patch is on top of the stack

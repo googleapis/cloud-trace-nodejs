@@ -34,7 +34,7 @@ describe('SpanData', function() {
 
   it('has correct default values', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var spanData = common.createRootSpanData('name', 1, 2);
       assert.ok(spanData.trace);
       assert.strictEqual(spanData.trace.traceId, 1);
       assert.ok(spanData.span.spanId);
@@ -44,7 +44,7 @@ describe('SpanData', function() {
 
   it('converts label values to strings', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var spanData = common.createRootSpanData('name', 1, 2);
       spanData.addLabel('a', 'b');
       assert.strictEqual(spanData.span.labels.a, 'b');
       spanData.addLabel('c', 5);
@@ -54,7 +54,7 @@ describe('SpanData', function() {
 
   it('serializes object labels correctly', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var spanData = common.createRootSpanData('name', 1, 2);
       spanData.addLabel('a', [{i: 5}, {j: 6}]);
       assert.strictEqual(spanData.span.labels.a, '[ { i: 5 }, { j: 6 } ]');
     });
@@ -62,7 +62,7 @@ describe('SpanData', function() {
 
   it('serializes symbol labels correctly', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var spanData = common.createRootSpanData('name', 1, 2);
       spanData.addLabel('a', Symbol('b'));
       assert.strictEqual(spanData.span.labels.a, 'Symbol(b)');
     });
@@ -70,7 +70,7 @@ describe('SpanData', function() {
 
   it('truncate large span names to limit', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, Array(200).join('a'), 1, 2);
+      var spanData = common.createRootSpanData(Array(200).join('a'), 1, 2);
       assert.strictEqual(
         spanData.span.name,
         Array(constants.TRACE_SERVICE_SPAN_NAME_LIMIT - 2).join('a') + '...');
@@ -79,7 +79,7 @@ describe('SpanData', function() {
 
   it('truncate large label keys to limit', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var spanData = common.createRootSpanData('name', 1, 2);
       var longLabelKey = Array(200).join('a');
       spanData.addLabel(longLabelKey, 5);
       assert.strictEqual(
@@ -90,17 +90,17 @@ describe('SpanData', function() {
 
   it('truncate large label values to limit', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var spanData = common.createRootSpanData('name', 1, 2);
       var longLabelVal = Array(16550).join('a');
       spanData.addLabel('a', longLabelVal);
       assert.strictEqual(spanData.span.labels.a,
-        Array(common.getConfig(agent).maximumLabelValueSize - 2).join('a') + '...');
+        Array(common.getConfig().maximumLabelValueSize - 2).join('a') + '...');
     });
   });
 
   it('creates children', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var spanData = common.createRootSpanData('name', 1, 2);
       var child = spanData.createChildSpanData('name2');
       assert.strictEqual(child.span.name, 'name2');
       assert.strictEqual(child.span.parentSpanId, spanData.span.spanId);
@@ -111,7 +111,7 @@ describe('SpanData', function() {
 
   it('closes', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2);
+      var spanData = common.createRootSpanData('name', 1, 2);
       assert.ok(!spanData.span.isClosed());
       spanData.close();
       assert.ok(spanData.span.isClosed());
@@ -119,9 +119,9 @@ describe('SpanData', function() {
   });
 
   it('captures stack traces', function() {
-    common.getConfig(agent).stackTraceLimit = 25;
+    common.getConfig().stackTraceLimit = 25;
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2, 1);
+      var spanData = common.createRootSpanData('name', 1, 2, 1);
       assert.ok(!spanData.span.isClosed());
       spanData.close();
       var stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
@@ -135,9 +135,9 @@ describe('SpanData', function() {
   });
 
   it('does not limit stack trace', function() {
-    common.getConfig(agent).maximumLabelValueSize = 10;
+    common.getConfig().maximumLabelValueSize = 10;
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'name', 1, 2, 1);
+      var spanData = common.createRootSpanData('name', 1, 2, 1);
       spanData.close();
       var stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.ok(stack.length > 10);
@@ -148,10 +148,10 @@ describe('SpanData', function() {
 
   it('should close all spans', function() {
     cls.getNamespace().run(function() {
-      var spanData = common.createRootSpanData(agent, 'hi');
+      var spanData = common.createRootSpanData('hi');
       spanData.createChildSpanData('sub');
       spanData.close();
-      var traces = common.getTraces(agent);
+      var traces = common.getTraces();
       for (var i = 0; i < traces.length; i++) {
         for (var j = 0; j < traces[i].spans.length; j++) {
           assert.notEqual(traces[i].spans[j].endTime, '');
