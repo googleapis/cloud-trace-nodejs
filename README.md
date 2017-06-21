@@ -18,6 +18,7 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 1. Your application will need to be using Node.js version 4.0 or greater.
 1. You will need a project in the [Google Developers Console][cloud-console]. Your application can run anywhere, but the trace data is associated with a particular project.
 1. [Enable the Trace API](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) for your project.
+1. At this point, code using async/await is not supported by this module. See [this section](#how-does-automatic-tracing-work).
 
 ## Installation
 
@@ -200,7 +201,7 @@ A fully detailed overview of the `TraceApi` object is available [here](doc/trace
 
 ## How does automatic tracing work?
 
-Node.js provides concurrency through as asynchronous execution model. To be able to keep track of the current request across asynchronous execution boundaries we use the [async-listener][] module. It modifies the core async APIs in Node.js, and Promises, to save and restore the 'execution context' across the async bounaries. In addition, we instrument frameworks (like express, hapi, etc. if loaded) to create request contexts for the execution of the incoming requests. Similarly, we instrument RPC libraries (like mysql, redis, outbound http, etc.) to keep track of the latency of these operations and to correlate them to the incoming request.
+Node.js provides concurrency through an asynchronous execution model. To be able to keep track of the current request across asynchronous execution boundaries we use the [async-listener][] module. It modifies the core async APIs in Node.js, and Promises, to save and restore the 'execution context' across the async bounaries. In addition, we instrument frameworks (like express, hapi, etc. if loaded) to create request contexts for the execution of the incoming requests. Similarly, we instrument RPC libraries (like mysql, redis, outbound http, etc.), utilizing the saved/restored context, to keep track of the latency of these operations and to correlate them to the incoming request.
 
 This `async-listener` based mechanism works great in most cases, but it does have some limitations that can prevent us from being able to properly track execution context:
 
