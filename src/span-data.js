@@ -94,6 +94,10 @@ function SpanData(agent, trace, name, parentSpanId, isRoot, skipFrames) {
  * @returns {SpanData} The new child trace span data.
  */
 SpanData.prototype.createChildSpanData = function(name, skipFrames) {
+  if (this.span.isClosed()) {
+    this.agent.logger.warn('creating child for an already closed span',
+        name, this.span.name);
+  }
   return new SpanData(this.agent, this.trace, name, this.span.spanId, false,
       skipFrames + 1);
 };
