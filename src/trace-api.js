@@ -23,13 +23,12 @@ var util = require('./util.js');
 var Trace = require('./trace.js');
 var SpanData = require('./span-data.js');
 var uuid = require('uuid');
-var tracingPolicy = require('./tracing-policy.js');
+var TracingPolicy = require('./tracing-policy.js');
 
 /**
- * Phantom implementation of the trace api. This allows API users to decouple
- * the enable/disable logic from the calls to the tracing API. The phantom API
- * has a lower overhead than isEnabled checks inside the API functions.
- * @private
+ * Phantom implementation of the trace api. When disabled, a TraceAgent instance
+ * will have its public method implementations replaced with corresponding
+ * no-op implementations in this object.
  */
 var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
@@ -40,38 +39,51 @@ var phantomApiImpl = {
   wrapEmitter: function(ee) {},
 };
 
-/**
- * This file describes an interface for third-party plugins to enable tracing
- * for arbitrary modules.
- */
-
 // A sentinal stored in CLS to indicate that the current request was not sampled.
 var nullSpan = {};
 
 /**
- * The functional implementation of the Trace API
- * TODO doc options includes pluginName, logger, policy
+ * TraceAgent exposes a number of methods to create trace spans and propagate
+ * trace context across asynchronous boundaries. Trace spans are published
+ * in the background with a separate TraceWriter instance, which should be
+ * initialized beforehand.
+ * @constructor
+ * @param {String} name A string identifying this TraceAgent instance in logs.
+ * @param {common.logger} logger A logger object.
+ * @param {Configuration} config An object specifying how this instance should
+ * be configured.
  */
 function TraceAgent(name, logger, config) {
   this.pluginName_ = name;
   this.logger_ = logger;
   this.namespace_ = cls.getNamespace();
-  this.policy_ = tracingPolicy.createTracePolicy(config);
+  this.policy_ = TracingPolicy.createTracePolicy(config);
   this.config_ = config;
 }
 
+/**
+ * Disable this TraceAgent instance. This function is only for internal use and
+ * unit tests.
+ * @private
+ */
 TraceAgent.prototype.disable = function() {
   // Even though plugins should be unpatched, setting a new policy that
   // never generates traces allows persisting wrapped methods (either because
   // they are already instantiated or the plugin doesn't unpatch them) to
   // short-circuit out of trace generation logic.
-  this.policy_ = new tracingPolicy.TraceNonePolicy();
+  this.policy_ = new TracingPolicy.TraceNonePolicy();
   this.namespace_ = null;
   for (var memberName in phantomApiImpl) {
     this[memberName] = phantomApiImpl[memberName];
   }
 };
 
+/**
+ * Returns whether the TraceAgent instance is active. This function is only for
+ * internal use and unit tests; under normal circumstances it will always return
+ * true.
+ * @private
+ */
 TraceAgent.prototype.isActive = function() {
   return !!this.namespace_;
 };
@@ -110,6 +122,8 @@ TraceAgent.prototype.enhancedDatabaseReportingEnabled = function() {
 TraceAgent.prototype.runInRootSpan = function(options, fn) {
   var that = this;
   // TODO validate options
+  // Don't create a root span if the required namespace doesn't exist, or we
+  // are already in a root span
   if (!this.namespace_) {
     this.logger_.warn(this.pluginName_ + ': CLS namespace not present; not ' +
       'running in root span.');
@@ -119,8 +133,8 @@ TraceAgent.prototype.runInRootSpan = function(options, fn) {
     this.logger_.warn(this.pluginName_ + ': Cannot create nested root spans.');
     return fn(null);
   }
+
   return this.namespace_.runAndReturn(function() {
-    var skipFrames = options.skipFrames ? options.skipFrames + 2 : 2;
     // Attempt to read incoming trace context.
     var incomingTraceContext;
     if (is.string(options.traceContext) && !that.config_.ignoreContextHeader) {
@@ -128,6 +142,8 @@ TraceAgent.prototype.runInRootSpan = function(options, fn) {
     }
     incomingTraceContext = incomingTraceContext || {};
 
+    // Consult the trace policy, and don't create a root span if the trace
+    // policy disallows it.
     var locallyAllowed = that.policy_.shouldTrace(Date.now(), options.url || '');
     var remotelyAllowed = isNaN(incomingTraceContext.options) ||
       (incomingTraceContext.options & constants.TRACE_OPTIONS_TRACE_ENABLED);
@@ -136,13 +152,14 @@ TraceAgent.prototype.runInRootSpan = function(options, fn) {
       return fn(null);
     }
 
+    // Create a new root span, and invoke fn with it.
     var traceId = incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
     var parentId = incomingTraceContext.spanId || '0';
     var rootContext = new SpanData(new Trace(0, traceId), /* Trace object */
       options.name, /* Span name */
       parentId, /* Parent's span ID */
       true, /* Is root span */
-      skipFrames); /* # of frames to skip in stack trace */
+      options.skipFrames ? options.skipFrames + 2 : 2);
     rootContext.span.kind = 'RPC_SERVER';
     cls.setRootContext(rootContext);
     return fn(rootContext);
@@ -163,17 +180,20 @@ TraceAgent.prototype.runInRootSpan = function(options, fn) {
 TraceAgent.prototype.createChildSpan = function(options) {
   var rootSpan = cls.getRootContext();
   if (!rootSpan) {
-    // Lost context
+    // Context was lost.
     this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
       'without root');
     return null;
   } else if (rootSpan === nullSpan) {
-    // Chose not to sample
+    // Context wasn't lost, but there's no root span, indicating that this
+    // request should not be traced.
     return null;
-  } else if (rootSpan.span.isClosed()) {
-    this.logger_.warn('creating child for an already closed span',
-        options.name, rootSpan.span.name);
   } else {
+    if (rootSpan.span.isClosed()) {
+      this.logger_.warn(this.pluginName_ + ': creating child for an already closed span',
+        options.name, rootSpan.span.name);
+    }
+    // Create a new child span and return it.
     options = options || {};
     var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
     var childContext = new SpanData(rootSpan.trace, /* Trace object */

@@ -77,6 +77,14 @@ function parseContextFromHeader(str) {
   };
 }
 
+/**
+ * Generates a trace context header value that can be used
+ * to follow the associated request through other Google services.
+ *
+ * @param {?{traceId: string, spanId: string, options: number}} traceContext
+ *        An object with information sufficient for creating a serialized trace
+ *        context.
+ */
 function generateTraceContext(traceContext) {
   if (!traceContext) {
     return '';

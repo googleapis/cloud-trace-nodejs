@@ -21,7 +21,7 @@ var TraceSpan = require('./trace-span.js');
 var TraceLabels = require('./trace-labels.js');
 var traceUtil = require('./util.js');
 var util = require('util');
-var traceWriter = require('./trace-writer.js');
+var TraceWriter = require('./trace-writer.js');
 
 // Auto-incrementing integer
 var uid = 1;
@@ -38,10 +38,6 @@ var uid = 1;
 function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
   var spanId = uid++;
   var spanName = traceUtil.truncate(name, constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
-  this.config_ = {
-    stackTraceLimit: traceWriter.get().config_.stackTraceLimit,
-    maximumLabelValueSize: traceWriter.get().config_.maximumLabelValueSize
-  };
   this.span = new TraceSpan(spanName, spanId, parentSpanId);
   this.trace = trace;
   this.isRoot = isRoot;
@@ -51,7 +47,7 @@ function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
     options: 1 // always traced; TODO
   });
   trace.spans.push(this.span);
-  if (this.config_.stackTraceLimit > 0) {
+  if (TraceWriter.get().config_.stackTraceLimit > 0) {
     // This is a mechanism to get the structured stack trace out of V8.
     // prepareStackTrace is called th first time the Error#stack property is
     // accessed. The original behavior is to format the stack as an exception
@@ -60,7 +56,7 @@ function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
     // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
     //
     var origLimit = Error.stackTraceLimit;
-    Error.stackTraceLimit = this.config_.stackTraceLimit + skipFrames;
+    Error.stackTraceLimit = TraceWriter.get().config_.stackTraceLimit + skipFrames;
 
     var origPrepare = Error.prepareStackTrace;
     Error.prepareStackTrace = function(error, structured) {
@@ -101,7 +97,7 @@ SpanData.prototype.getTraceContext = function() {
 SpanData.prototype.addLabel = function(key, value) {
   var k = traceUtil.truncate(key, constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
   var string_val = typeof value === 'string' ? value : util.inspect(value);
-  var v = traceUtil.truncate(string_val, this.config_.maximumLabelValueSize);
+  var v = traceUtil.truncate(string_val, TraceWriter.get().config_.maximumLabelValueSize);
   this.span.setLabel(k, v);
 };
 
@@ -111,7 +107,7 @@ SpanData.prototype.addLabel = function(key, value) {
 SpanData.prototype.endSpan = function() {
   this.span.close();
   if (this.isRoot) {
-    traceWriter.get().writeSpan(this);
+    TraceWriter.get().writeSpan(this);
   }
 };
 

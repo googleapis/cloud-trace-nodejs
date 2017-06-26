@@ -30,11 +30,11 @@ var gcpMetadata = require('gcp-metadata');
 var traceUtil = require('./src/util.js');
 var TraceAgent = require('./src/trace-api.js');
 var pluginLoader = require('./src/trace-plugin-loader.js');
-var traceWriter = require('./src/trace-writer.js');
+var TraceWriter = require('./src/trace-writer.js');
 
 var modulesLoadedBeforeTrace = [];
 
-var traceApi;
+var traceAgent;
 
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
@@ -44,6 +44,13 @@ for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   }
 }
 
+/**
+ * Normalizes the user-provided configuration object by adding default values
+ * and overriding with env variables when they are provided.
+ * @param {*} projectConfig The user-provided configuration object. It will not
+ * be modified.
+ * @return A normalized configuration object.
+ */
 function initConfig(projectConfig) {
   var envConfig = {
     logLevel: process.env.GCLOUD_TRACE_LOGLEVEL,
@@ -55,24 +62,26 @@ function initConfig(projectConfig) {
     }
   };
   var config = extend(true, {}, require('./config.js'), projectConfig, envConfig);
+  // Enforce the upper limit for the label value size.
   if (config.maximumLabelValueSize > constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
     config.maximumLabelValueSize = constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
+  }
+  // Clamp the logger level.
+  if (config.logLevel < 0) {
+    config.logLevel = 0;
+  } else if (config.logLevel >= common.logger.LEVELS.length) {
+    config.logLevel = common.logger.LEVELS.length - 1;
   }
   return config;
 }
 
-function createLogger(logLevel) {
-  if (logLevel < 0) {
-    logLevel = 0;
-  } else if (logLevel >= common.logger.LEVELS.length) {
-    logLevel = common.logger.LEVELS.length - 1;
-  }
-  return common.logger({
-    level: common.logger.LEVELS[logLevel],
-    tag: '@google-cloud/trace-agent'
-  });
-}
-
+/**
+ * Retrieves various fields from the GCP metadata service, and calls
+ * setMetadata on the TraceWriter singleton with these values.
+ * @param {common.logger} logger A logger object.
+ * @param {Boolean} getProjectId Whether the project ID should be retrieved
+ * from the metadata service.
+ */
 function getMetadata(logger, getProjectId) {
   // Headers for GCP metadata requests
   var headers = {};
@@ -99,7 +108,7 @@ function getMetadata(logger, getProjectId) {
           logger.warn('Unable to retrieve GCE instance id.', err);
         }
         metadata.instanceId = instanceId;
-        traceWriter.get().setMetadata(metadata);
+        TraceWriter.get().setMetadata(metadata);
       });
     });
   };
@@ -135,10 +144,15 @@ function getMetadata(logger, getProjectId) {
   }
 }
 
+/**
+ * Stops the Trace Agent. This disables the publicly exposed agent instance,
+ * as well as any instances passed to plugins. This also prevents the Trace
+ * Writer from publishing additional traces.
+ */
 function stop() {
-  if (traceApi && traceApi.isActive()) {
-    traceWriter.get().stop();
-    traceApi.disable();
+  if (traceAgent && traceAgent.isActive()) {
+    TraceWriter.get().stop();
+    traceAgent.disable();
     pluginLoader.deactivate();
     cls.destroyNamespace();
   }
@@ -159,22 +173,25 @@ function stop() {
 function start(projectConfig) {
   var config = initConfig(projectConfig);
 
-  if (traceApi && !config.forceNewAgent_) { // already started.
+  if (traceAgent && !config.forceNewAgent_) { // already started.
     throw new Error('Cannot call start on an already started agent.');
-  } else if (traceApi) {
+  } else if (traceAgent) {
     // For unit tests only.
     // Undoes initialization that occurred last time start() was called.
     stop();
   }
 
   if (!config.enabled) {
-    return traceApi;
+    return traceAgent;
   }
 
-  var logger = createLogger(config.logLevel);
+  var logger = common.logger({
+    level: common.logger.LEVELS[config.logLevel],
+    tag: '@google-cloud/trace-agent'
+  });
   // CLS namespace for context propagation
   cls.createNamespace();
-  traceWriter.create(logger, config);
+  TraceWriter.create(logger, config);
 
   if (modulesLoadedBeforeTrace.length > 0) {
     logger.error('Tracing might not work as the following modules ' +
@@ -182,7 +199,7 @@ function start(projectConfig) {
       JSON.stringify(modulesLoadedBeforeTrace));
   }
 
-  traceApi = new TraceAgent('Custom Span API', logger, config);
+  traceAgent = new TraceAgent('Custom Span API', logger, config);
   pluginLoader.activate(logger, config);
 
   // Get metadata.
@@ -197,14 +214,14 @@ function start(projectConfig) {
   }
 
   // Make trace agent available globally without requiring package
-  global._google_trace_agent = traceApi;
+  global._google_trace_agent = traceAgent;
 
   logger.info('trace agent activated');
-  return traceApi;
+  return traceAgent;
 }
 
 function get() {
-  return traceApi;
+  return traceAgent;
 }
 
 module.exports = {

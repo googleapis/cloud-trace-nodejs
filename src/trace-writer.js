@@ -24,7 +24,7 @@ var constants = require('./constants.js');
 
 var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
 
-var headers = {};		
+var headers = {};
 headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
 /* @const {Array<string>} list of scopes needed to operate with the trace API */
@@ -72,7 +72,7 @@ function TraceWriter(logger, config) {
   if (onUncaughtException !== 'ignore') {
     var that = this;
     this.unhandledException_ = function() {
-      that.flushBuffer_(that.projectId);
+      that.flushBuffer_();
       if (onUncaughtException === 'flushAndExit') {
         setTimeout(function() {
           process.exit(1);
@@ -80,6 +80,11 @@ function TraceWriter(logger, config) {
       }
     };
     process.on('uncaughtException', this.unhandledException_);
+  }
+
+  if (typeof config.projectId !== undefined) {
+    this.projectId_ = config.projectId;
+    this.scheduleFlush_();
   }
 }
 util.inherits(TraceWriter, common.Service);
@@ -89,7 +94,8 @@ TraceWriter.prototype.stop = function() {
 };
 
 TraceWriter.prototype.setMetadata = function(metadata) {
-  var projectId = metadata.projectId;
+  this.logger_.debug('TraceWriter: Got the following info from the metadata service: ' +
+    util.inspect(metadata));
   var hostname = metadata.hostname;
   var instanceId = metadata.instanceId;
 
@@ -120,18 +126,20 @@ TraceWriter.prototype.setMetadata = function(metadata) {
   this.defaultLabels_ = labels;
 
   // Set project ID, and start scheduling buffer flushes
-  this.projectId = projectId;
-  for (var i = 0; i < this.buffer_; i++) {
-    var trace = JSON.parse(this.buffer_[i]);
-    trace.projectId = projectId;
-    this.buffer_[i] = JSON.stringify(trace);
+  if (metadata.projectId) {
+    if (typeof this.projectId_ !== undefined) {
+      this.logger_.error('TraceWriter: Project ID was provided locally, but also' +
+        ' fetched from metadata.');
+      return;
+    }
+    this.projectId_ = metadata.projectId;
+    for (var i = 0; i < this.buffer_; i++) {
+      var trace = JSON.parse(this.buffer_[i]);
+      trace.projectId = this.projectId_;
+      this.buffer_[i] = JSON.stringify(trace);
+    }
+    this.scheduleFlush_();
   }
-  if (this.buffer_.length >= this.config_.bufferSize) {
-    this.logger_.info('Flushing: trace buffer full');
-    var that = this;
-    setImmediate(function() { that.flushBuffer_(); });
-  }
-  this.scheduleFlush_();
 };
 
 /**
@@ -163,12 +171,12 @@ TraceWriter.prototype.writeSpan = function(spanData) {
  * @param {Trace} trace The trace to be queued.
  */
 TraceWriter.prototype.queueTrace_ = function(trace) {
-  trace.projectId = this.projectId;
+  trace.projectId = this.projectId_;
   this.buffer_.push(JSON.stringify(trace));
   this.logger_.debug('queued trace. new size:', this.buffer_.length);
 
   // Publish soon if the buffer is getting big
-  if (this.projectId && this.buffer_.length >= this.config_.bufferSize) {
+  if (this.projectId_ && this.buffer_.length >= this.config_.bufferSize) {
     this.logger_.info('Flushing: trace buffer full');
     var that = this;
     setImmediate(function() { that.flushBuffer_(); });
@@ -217,8 +225,6 @@ TraceWriter.prototype.flushBuffer_ = function() {
  * @param {string} json The stringified json representation of the queued traces.
  */
 TraceWriter.prototype.publish_ = function(json) {
-  // TODO(ofrobots): assert.ok(this.config_.project), and stop accepting
-  // projectId as an argument.
   var that = this;
   var uri = 'https://cloudtrace.googleapis.com/v1/projects/' +
     this.projectId + '/traces';
@@ -229,6 +235,7 @@ TraceWriter.prototype.publish_ = function(json) {
     body: json,
     headers: headers
   };
+  that.logger_.debug('TraceWriter: publishing to ' + uri);
   that.request(options, function(err, body, response) {
     if (err) {
       that.logger_.error('TraceWriter: error: ',

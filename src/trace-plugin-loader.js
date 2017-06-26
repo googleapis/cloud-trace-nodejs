@@ -26,7 +26,7 @@ var plugins = Object.create(null);
 var intercepts = Object.create(null);
 var activated = false;
 
-var logger;
+var logger_;
 
 function checkLoadedModules() {
   for (var moduleName in plugins) {
@@ -35,7 +35,7 @@ function checkLoadedModules() {
       '\\' + path.sep);
     for (var file in require.cache) {
       if (file.match(regex)) {
-        logger.error(moduleName + ' tracing might not work as ' + file +
+        logger_.error(moduleName + ' tracing might not work as ' + file +
             ' was loaded before the trace agent was initialized.');
         break;
       }
@@ -44,7 +44,7 @@ function checkLoadedModules() {
   if (process._preload_modules && process._preload_modules.length > 0) {
     var first = process._preload_modules[0];
     if (first !== '@google-cloud/trace-agent') {
-      logger.error('Tracing might not work as ' + first +
+      logger_.error('Tracing might not work as ' + first +
             ' was loaded with --require before the trace agent was initialized.');
     }
   }
@@ -58,36 +58,32 @@ function checkPatch(patch) {
     throw new Error('Plugin for ' + patch.file + ' has ' +
       'both intercept and patch functions.');
   } else if (patch.unpatch && patch.intercept) {
-    logger.warn('Plugin for ' + patch.file + ': unpatch is not compatible ' +
+    logger_.warn('Plugin for ' + patch.file + ': unpatch is not compatible ' +
       'with intercept.');
   } else if (patch.patch && !patch.unpatch) {
-    logger.warn('Plugin for ' + patch.file + ': patch method given without ' +
+    logger_.warn('Plugin for ' + patch.file + ': patch method given without ' +
       'accompanying unpatch.');
   }
 }
 
-function activate(logger_, config) {
+function activate(logger, config) {
   if (activated) {
-    logger.error('Plugins activated more than once.');
+    logger_.error('Plugins activated more than once.');
     return;
   }
   activated = true;
 
-  logger = logger_;
+  logger_ = logger;
 
   var pluginConfig = config.plugins;
   for (var moduleName in pluginConfig) {
     if (!pluginConfig[moduleName]) {
       continue;
     }
-    // Create a new object exposing functions to create trace spans and
-    // propagate context. This relies on functions currently exposed by the
-    // agent.
-    var agent = new TraceAgent(moduleName, logger, config);
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
       patches: {},
-      agent: agent
+      agent: new TraceAgent(moduleName, logger_, config)
     };
   }
 
@@ -114,7 +110,7 @@ function activate(logger_, config) {
           }
         });
         if (Object.keys(patchSet).length === 0) {
-          logger.warn(moduleRoot + ': version ' + version + ' not supported ' +
+          logger_.warn(moduleRoot + ': version ' + version + ' not supported ' +
             'by plugin.');
         }
         instrumentation.patches[moduleRoot] = patchSet;
@@ -157,7 +153,7 @@ function activate(logger_, config) {
         if (moduleAlreadyPatched(instrumentation, moduleRoot, moduleVersion)) {
           return originalModuleLoad.apply(this, arguments);
         }
-        logger.info('Patching ' + request + ' at version ' + moduleVersion);
+        logger_.info('Patching ' + request + ' at version ' + moduleVersion);
         var patchedRoot = loadAndPatch(instrumentation, moduleRoot,
           moduleVersion);
         if (patchedRoot !== null) {
@@ -185,7 +181,7 @@ function deactivate() {
         for (var file in patchSet) {
           var patch = patchSet[file];
           if (patch.unpatch !== undefined) {
-            logger.info('Unpatching' + moduleName);
+            logger_.info('Unpatching' + moduleName);
             patch.unpatch(patch.module);
           }
         }
