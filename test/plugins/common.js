@@ -21,16 +21,35 @@ proxyquire('gcp-metadata', {
   'retry-request': require('request')
 });
 
+var logger = require('@google-cloud/common').logger;
 var trace = require('../..');
 var cls = require('../../src/cls.js');
+var tracePolicy = require('../../src/tracing-policy.js');
 var TraceWriter = require('../../src/trace-writer.js');
-var pluginLoader = require('../../src/trace-plugin-loader.js');
 
 var assert = require('assert');
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var request = require('request');
+var shimmer = require('shimmer');
+
+var TraceAgent = require('../../src/trace-api.js');
+var testTraceAgent;
+shimmer.wrap(trace, 'start', function(original) {
+  return function() {
+    var result = original.apply(this, arguments);
+    testTraceAgent = new TraceAgent(
+      'test',
+      logger(), {
+        policy: new tracePolicy.TraceAllPolicy(),
+        enhancedDatabaseReporting: false,
+        ignoreTraceContext: false
+      }
+    );
+    return result;
+  };
+});
 
 var FORGIVENESS = 0.2;
 var SERVER_WAIT = 200;
@@ -38,18 +57,6 @@ var SERVER_PORT = 9042;
 var SERVER_RES = '1729';
 var SERVER_KEY = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'));
 var SERVER_CERT = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
-
-var shouldTraceArgs = [];
-
-function trackShouldTraceArgs() {
-  var agent = trace.get();
-  var privateAgent = agent.private_();
-  var shouldTrace = privateAgent.shouldTrace;
-  privateAgent.shouldTrace = function() {
-    shouldTraceArgs.push([].slice.call(arguments, 0));
-    return shouldTrace.apply(this, arguments);
-  };
-}
 
 function replaceFunction(target, prop, fn) {
   var old = target[prop];
@@ -59,23 +66,18 @@ function replaceFunction(target, prop, fn) {
 
 function replaceWarnLogger(fn) {
   var agent = trace.get();
-  return replaceFunction(agent.private_().logger, 'warn', fn);
+  return replaceFunction(agent.logger_, 'warn', fn);
 }
 
 /**
  * Cleans the tracer state between test runs.
  */
 function cleanTraces() {
-  shouldTraceArgs = [];
   TraceWriter.get().buffer_ = [];
 }
 
 function getTraces() {
   return TraceWriter.get().buffer_.map(JSON.parse);
-}
-
-function getShouldTraceArgs() {
-  return shouldTraceArgs;
 }
 
 function getMatchingSpan(predicate) {
@@ -139,11 +141,10 @@ function doRequest(method, done, tracePredicate, path) {
 }
 
 function runInTransaction(fn) {
-  var agent = trace.get();
-  cls.getNamespace().run(function() {
-    var spanData = agent.private_().createRootSpanData('outer');
+  testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
+    assert(span);
     fn(function() {
-      spanData.close();
+      span.endSpan();
     });
   });
 }
@@ -153,31 +154,18 @@ function runInTransaction(fn) {
 // Returns a method which, when called, closes the child span
 // right away and cancels callback from being called after the duration.
 function createChildSpan(cb, duration) {
-  var agent = trace.get();
-  var privateAgent = agent.private_();
-  var span = privateAgent.startSpan('inner');
+  var span = testTraceAgent.createChildSpan({ name: 'inner' });
+  assert(span);
   var t = setTimeout(function() {
-    privateAgent.endSpan(span);
+    span.endSpan();
     if (cb) {
       cb();
     }
   }, duration);
   return function() {
-    privateAgent.endSpan(span);
+    span.endSpan();
     clearTimeout(t);
   };
-}
-
-function createRootSpanData(name, traceId, parentId, skipFrames,
-                            spanKind) {
-  var agent = trace.get();
-  return agent.private_().createRootSpanData(name, traceId, parentId,
-                                             skipFrames, spanKind);
-}
-
-function getConfig() {
-  var agent = trace.get();
-  return agent.private_().config();
 }
 
 function installNoopTraceWriter() {
@@ -188,27 +176,11 @@ function avoidTraceWriterAuth() {
   TraceWriter.get().request = request;
 }
 
-function stopAgent() {
-  var agent = trace.get();
-  if (agent.isActive()) {
-    agent.private_().stop();
-    agent.disable_();
-    pluginLoader.deactivate();
-  }
-}
-
-function clearNamespace() {
-  var agent = trace.get();
-  cls.destroyNamespace();
-  agent.private_().namespace = cls.createNamespace();
-}
-
 function hasContext() {
   return !!cls.getRootContext();
 }
 
 module.exports = {
-  trackShouldTraceArgs: trackShouldTraceArgs,
   assertSpanDurationCorrect: assertSpanDurationCorrect,
   assertDurationCorrect: assertDurationCorrect,
   cleanTraces: cleanTraces,
@@ -218,16 +190,11 @@ module.exports = {
   createChildSpan: createChildSpan,
   getTraces: getTraces,
   runInTransaction: runInTransaction,
-  getShouldTraceArgs: getShouldTraceArgs,
   replaceFunction: replaceFunction,
   replaceWarnLogger: replaceWarnLogger,
-  createRootSpanData: createRootSpanData,
-  clearNamespace: clearNamespace,
   hasContext: hasContext,
-  getConfig: getConfig,
   installNoopTraceWriter: installNoopTraceWriter,
   avoidTraceWriterAuth: avoidTraceWriterAuth,
-  stopAgent: stopAgent,
   serverWait: SERVER_WAIT,
   serverRes: SERVER_RES,
   serverPort: SERVER_PORT,

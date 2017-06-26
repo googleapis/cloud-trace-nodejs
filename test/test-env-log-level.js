@@ -16,30 +16,53 @@
 
 'use strict';
 
-process.env.GCLOUD_TRACE_LOGLEVEL = 4;
-
 var assert = require('assert');
+var gcloudCommon = require('@google-cloud/common');
+var shimmer = require('shimmer');
 var trace = require('..');
 
-var common = require('./plugins/common.js');
-
 describe('should respect environment variables', function() {
+  var logLevel;
+
+  before(function() {
+    process.env.GCLOUD_TRACE_LOGLEVEL = 4;
+    // Wrap logger constructor so that the log level (string) is saved
+    // in logLevel
+    shimmer.wrap(gcloudCommon, 'logger', function(original) {
+      var wrapped = function(options) {
+        logLevel = options.level;
+        return original.apply(this, arguments);
+      };
+      wrapped.LEVELS = original.LEVELS;
+      return wrapped;
+    });
+  });
+
+  after(function() {
+    delete process.env.GCLOUD_TRACE_LOGLEVEL;
+    shimmer.unwrap(gcloudCommon, 'logger');
+  });
+
+  afterEach(function() {
+    logLevel = null;
+  });
+
   it('should respect GCLOUD_TRACE_LOGLEVEL', function() {
     trace.start({forceNewAgent_: true});
-    assert.equal(common.getConfig().logLevel, 4);
+    assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[4]);
   });
 
   it('should prefer env to config', function() {
     trace.start({logLevel: 2, forceNewAgent_: true});
-    assert.equal(common.getConfig().logLevel, 4);
+    assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[4]);
   });
 
   it('should fix out of bounds log level', function() {
     process.env.GCLOUD_TRACE_LOGLEVEL = -5;
     trace.start({forceNewAgent_: true});
-    assert.equal(common.getConfig().logLevel, 0);
+    assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[0]);
     process.env.GCLOUD_TRACE_LOGLEVEL = 300;
     trace.start({forceNewAgent_: true});
-    assert.equal(common.getConfig().logLevel, 5);
+    assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[5]);
   });
 });

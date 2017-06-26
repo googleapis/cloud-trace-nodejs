@@ -18,19 +18,47 @@
 
 process.env.GCLOUD_PROJECT = 1729;
 
-var assert = require('assert');
 var trace = require('..');
 
-var common = require('./plugins/common.js');
+var assert = require('assert');
+var nock = require('nock');
+var nocks = require('./nocks.js');
+var shimmer = require('shimmer');
+var TraceWriter = require('../src/trace-writer.js');
 
 describe('should respect environment variables', function() {
-  it('should respect GCLOUD_PROJECT', function() {
-    trace.start({forceNewAgent_: true});
-    assert.equal(common.getConfig().projectId, 1729);
+  before(function() {
+    nock.disableNetConnect();
   });
 
-  it('should prefer env to config', function() {
+  beforeEach(function() {
+    nocks.hostname('');
+    nocks.instanceId('');
+  });
+
+  after(function() {
+    nock.enableNetConnect();
+  });
+
+  it('should respect GCLOUD_PROJECT', function(done) {
+    trace.start({forceNewAgent_: true});
+    shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
+      return function(metadata) {
+        assert.equal(metadata.projectId, 1729);
+        shimmer.unwrap(TraceWriter.get(), 'setMetadata');
+        done();
+      };
+    });
+  });
+
+  it('should prefer env to config', function(done) {
     trace.start({projectId: 1927, forceNewAgent_: true});
-    assert.equal(common.getConfig().projectId, 1729);
+    shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
+      return function(metadata) {
+        assert.equal(metadata.projectId, 1729);
+        shimmer.unwrap(TraceWriter.get(), 'setMetadata');
+        done();
+      };
+    });
   });
 });

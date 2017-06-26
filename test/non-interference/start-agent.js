@@ -16,7 +16,7 @@
 'use strict';
 
 var shimmer = require('shimmer');
-var agent = require('../../src/trace-agent.js');
+var util = require('../../src/util.js');
 // Stub generateTraceContext so that it always returns the same thing.
 // This is because web framework unit tests check that similar/identical
 // incoming requests yield the same outgoing headers (for example, express
@@ -24,15 +24,9 @@ var agent = require('../../src/trace-agent.js');
 // same response headers).
 // This problem doesn't manifest when samplingRate is set to default, because
 // traces are almost never generated.
-shimmer.wrap(agent, 'get', function(original) {
+shimmer.wrap(util, 'generateTraceContext', function() {
   return function() {
-    var privateAgent = original.apply(this, arguments);
-    shimmer.wrap(privateAgent, 'generateTraceContext', function() {
-      return function() {
-        return 'ffeeddccbbaa99887766554433221100/0?o=1';
-      };
-    });
-    return privateAgent;
+    return 'ffeeddccbbaa99887766554433221100/0?o=1';
   };
 });
 require('../..').start({

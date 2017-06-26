@@ -18,10 +18,12 @@
 
 var assert = require('assert');
 var nock = require('nock');
+var shimmer = require('shimmer');
 var traceLabels = require('../src/trace-labels.js');
 
 var common = require('./plugins/common.js');
 var trace = require('..');
+var TraceWriter = require('../src/trace-writer.js');
 
 nock.disableNetConnect();
 
@@ -39,7 +41,7 @@ describe('agent interaction with metadata service', function() {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/project-id')
-                .times(2)
+                .times(1)
                 .reply(404, 'foo');
 
     agent = trace.start({logLevel: 0});
@@ -54,28 +56,47 @@ describe('agent interaction with metadata service', function() {
     nock.disableNetConnect();
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/project/project-id')
-                .times(2)
+                .times(1)
                 .reply(200, '1234');
     agent = trace.start({logLevel: 0, forceNewAgent_: true});
-    setTimeout(function() {
-      assert.ok(agent.isActive());
-      assert.equal(common.getConfig().projectId, '1234');
-      scope.done();
-      done();
-    }, 500);
+    shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
+      return function(metadata) {
+        assert.ok(agent.isActive());
+        assert.equal(metadata.projectId, '1234');
+        shimmer.unwrap(TraceWriter.get(), 'setMetadata');
+        scope.done();
+        done();
+      };
+    });
   });
 
   it('should not query metadata service when config.projectId is set',
-    function() {
+    function(done) {
       nock.disableNetConnect();
       agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
+      shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
+        return function(metadata) {
+          assert.ok(agent.isActive());
+          assert.equal(metadata.projectId, '0');
+          shimmer.unwrap(TraceWriter.get(), 'setMetadata');
+          done();
+        };
+      });
     });
 
-  it('should not query metadata service when env. var. is set', function() {
+  it('should not query metadata service when env. var. is set', function(done) {
     nock.disableNetConnect();
-    process.env.GCLOUD_PROJECT=0;
+    process.env.GCLOUD_PROJECT='0';
     agent = trace.start({logLevel: 0, forceNewAgent_: true});
-    delete process.env.GCLOUD_PROJECT;
+    shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
+      return function(metadata) {
+        assert.ok(agent.isActive());
+        assert.equal(metadata.projectId, '0');
+        shimmer.unwrap(TraceWriter.get(), 'setMetadata');
+        delete process.env.GCLOUD_PROJECT;
+        done();
+      };
+    });
   });
 
   it('should attach hostname to spans when provided', function(done) {
@@ -85,7 +106,7 @@ describe('agent interaction with metadata service', function() {
                 .times(1)
                 .reply(200, 'host');
 
-    agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
+    agent = trace.start({projectId: '0', logLevel: 0, samplingRate: 0, forceNewAgent_: true});
     setTimeout(function() {
       common.runInTransaction(function(end) {
         end();
@@ -123,7 +144,7 @@ describe('agent interaction with metadata service', function() {
       common.runInTransaction(function(end) {
         end();
         var span = common.getMatchingSpan(spanPredicate);
-        assert(span.labels[traceLabels.GCE_HOSTNAME],
+        assert.equal(span.labels[traceLabels.GCE_HOSTNAME],
             require('os').hostname());
         assert(!span.labels[traceLabels.GCE_INSTANCE_ID]);
         done();
@@ -147,8 +168,8 @@ describe('agent interaction with metadata service', function() {
       common.runInTransaction(function(end) {
         end();
         var span = common.getMatchingSpan(spanPredicate);
-        assert(span.labels[traceLabels.GAE_MODULE_NAME], 'config');
-        assert(span.labels[traceLabels.GAE_MODULE_VERSION], 'configVer');
+        assert.equal(span.labels[traceLabels.GAE_MODULE_NAME], 'config');
+        assert.equal(span.labels[traceLabels.GAE_MODULE_VERSION], 'configVer');
         assert.equal(span.labels[traceLabels.GAE_VERSION],
           'config:configVer.0');
         done();

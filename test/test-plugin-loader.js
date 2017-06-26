@@ -27,6 +27,14 @@ var logs = {
   warn: '',
   info: ''
 };
+function writeToLog(log, data) {
+  logs[log] += data + '\n';
+}
+var logger = {
+  error: writeToLog.bind(null, 'error'),
+  warn: writeToLog.bind(null, 'warn'),
+  info: writeToLog.bind(null, 'info')
+};
 
 // Facilitates loading "fake" modules upon calling require().
 var fakeModules = {};
@@ -38,25 +46,6 @@ function addModuleMock(moduleName, version, mock) {
   fakeModules[moduleName.replace('/', path.sep)] = {
     exports: mock,
     version: version
-  };
-}
-
-// This function creates an object with just enough properties to appear to the
-// plugin loader as the trace agent. It accepts the list of plugins that the
-// plugin loader reads.
-function createFakeAgent(plugins) {
-  function writeToLog(log, data) {
-    logs[log] += data + '\n';
-  }
-  return {
-    logger: {
-      error: writeToLog.bind(null, 'error'),
-      warn: writeToLog.bind(null, 'warn'),
-      info: writeToLog.bind(null, 'info')
-    },
-    config: function() {
-      return { plugins: plugins };
-    }
   };
 }
 
@@ -125,10 +114,10 @@ describe('Trace Plugin Loader', function() {
       { file: '', patch: function() { patched.push('b'); } }
     ]);
     // Activate plugin loader
-    pluginLoader.activate(createFakeAgent({
+    pluginLoader.activate(logger, {
       'module-a': 'module-a-plugin',
       'module-b': 'module-b-plugin'
-    }));
+    });
     assert.deepEqual(patched, [],
       'No patches are initially loaded');
     require('module-a');
@@ -167,9 +156,9 @@ describe('Trace Plugin Loader', function() {
     assert.strictEqual(require('module-c').getStatus(), 'not wrapped',
       'Plugin loader shouldn\'t affect module before plugin is loaded');
     // Activate plugin loader
-    pluginLoader.activate(createFakeAgent({
+    pluginLoader.activate(logger, {
       'module-c': 'module-c-plugin'
-    }));
+    });
     assert.strictEqual(require('module-c').getStatus(), 'wrapped',
       'Plugin patch() method is called the right arguments');
     assert.strictEqual(require('module-d').getStatus(), 'not wrapped',
@@ -193,10 +182,10 @@ describe('Trace Plugin Loader', function() {
       { versions: '1.x', patch: function() { patched.push('f-1.x'); } }
     ]);
     // Activate plugin loader
-    pluginLoader.activate(createFakeAgent({
+    pluginLoader.activate(logger, {
       'module-e': 'module-e-plugin',
       'module-f': 'module-f-plugin'
-    }));
+    });
     assert.deepEqual(patched, []);
     require('module-e');
     assert.deepEqual(patched, ['e-1.x'],
@@ -254,9 +243,9 @@ describe('Trace Plugin Loader', function() {
     assert.strictEqual(require('module-g').createSentence(),
       'bad tests don\'t make sense.');
     // Activate plugin loader
-    pluginLoader.activate(createFakeAgent({
+    pluginLoader.activate(logger, {
       'module-g': 'module-g-plugin'
-    }));
+    });
     assert.strictEqual(require('module-g').createSentence(),
       'good tests make sense.',
       'Files internal to a module are patched');
@@ -308,9 +297,9 @@ describe('Trace Plugin Loader', function() {
     assert.strictEqual(require('module-h').createSentence(),
       'bad tests don\'t make sense.');
     // Activate plugin loader
-    pluginLoader.activate(createFakeAgent({
+    pluginLoader.activate(logger, {
       'module-h': 'module-h-plugin'
-    }));
+    });
     assert.strictEqual(require('module-h').createSentence(),
       'good tests make sense.',
       'Files internal to a module are patched');
@@ -328,9 +317,9 @@ describe('Trace Plugin Loader', function() {
     }]);
     assert.strictEqual(require('module-i')(), 1);
     // Activate plugin loader
-    pluginLoader.activate(createFakeAgent({
+    pluginLoader.activate(logger, {
       'module-i': 'module-i-plugin'
-    }));
+    });
     assert.strictEqual(require('module-i')(), 2,
       'Module can be intercepted');
   });
@@ -354,16 +343,16 @@ describe('Trace Plugin Loader', function() {
       }
     }]);
     assert.strictEqual(require('module-j').getPatchMode(), 'none');
-    pluginLoader.activate(createFakeAgent({
+    pluginLoader.activate(logger, {
       'module-j': 'module-j-plugin'
-    }));
+    });
     assert.strictEqual(require('module-j').getPatchMode(), 'patch');
     pluginLoader.deactivate();
     assert.strictEqual(require('module-j').getPatchMode(), 'none',
       'Module gets unpatched');
-    pluginLoader.activate(createFakeAgent({
+    pluginLoader.activate(logger, {
       'module-j': 'module-j-plugin'
-    }));
+    });
     assert.strictEqual(require('module-j').getPatchMode(), 'patch',
       'Patches still work after unpatching');
   });
@@ -372,7 +361,7 @@ describe('Trace Plugin Loader', function() {
     var moduleExports = {};
     addModuleMock('module-k', '1.0.0', moduleExports);
     assert(require('module-k') === moduleExports);
-    pluginLoader.activate(createFakeAgent({ 'module-k': '' }));
+    pluginLoader.activate(logger, { 'module-k': '' });
     assert(require('module-k') === moduleExports,
       'Module exports the same thing as before');
   });
@@ -381,46 +370,46 @@ describe('Trace Plugin Loader', function() {
    * Loads plugins with bad patches and ensures that they throw/log
    */
   it('throws and warns for serious problems', function() {
-    addModuleMock('module-k', '1.0.0', {});
-    addModuleMock('module-k-plugin-noop', '', [{}]);
-    addModuleMock('module-k-plugin-pi', '', [{
+    addModuleMock('module-l', '1.0.0', {});
+    addModuleMock('module-l-plugin-noop', '', [{}]);
+    addModuleMock('module-l-plugin-pi', '', [{
       patch: function() {},
       intercept: function() { return 'intercepted'; }
     }]);
-    addModuleMock('module-k-plugin-upi', '', [{
+    addModuleMock('module-l-plugin-upi', '', [{
       unpatch: function() {},
       intercept: function() { return 'intercepted'; }
     }]);
-    addModuleMock('module-k-plugin-noup', '', [{
+    addModuleMock('module-l-plugin-noup', '', [{
       patch: function(m) { m.patched = true; }
     }]);
     
-    pluginLoader.activate(createFakeAgent({
-      'module-k': 'module-k-plugin-noop'
-    }));
-    assert.throws(function() { require('module-k'); },
+    pluginLoader.activate(logger, {
+      'module-l': 'module-l-plugin-noop'
+    });
+    assert.throws(function() { require('module-l'); },
       'Loading patch object with no patch/intercept function throws');
     pluginLoader.deactivate();
 
-    pluginLoader.activate(createFakeAgent({
-      'module-k': 'module-k-plugin-pi'
-    }));
-    assert.throws(function() { require('module-k'); },
+    pluginLoader.activate(logger, {
+      'module-l': 'module-l-plugin-pi'
+    });
+    assert.throws(function() { require('module-l'); },
       'Loading patch object with both patch/intercept functions throws');
     pluginLoader.deactivate();
 
-    pluginLoader.activate(createFakeAgent({
-      'module-k': 'module-k-plugin-upi'
-    }));
-    assert.strictEqual(require('module-k'), 'intercepted');
+    pluginLoader.activate(logger, {
+      'module-l': 'module-l-plugin-upi'
+    });
+    assert.strictEqual(require('module-l'), 'intercepted');
     assert(logs.warn.indexOf('unpatch is not compatible with intercept') !== -1,
       'Warn when plugin has both unpatch and intercept');
     pluginLoader.deactivate();
 
-    pluginLoader.activate(createFakeAgent({
-      'module-k': 'module-k-plugin-noup'
-    }));
-    assert.ok(require('module-k').patched);
+    pluginLoader.activate(logger, {
+      'module-l': 'module-l-plugin-noup'
+    });
+    assert.ok(require('module-l').patched);
     assert(logs.warn.indexOf('without accompanying unpatch') !== -1,
       'Warn when plugin has both patch and no unpatch');
   });

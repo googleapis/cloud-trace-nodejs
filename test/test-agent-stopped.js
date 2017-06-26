@@ -20,6 +20,7 @@ require('./plugins/common.js');
 var assert = require('assert');
 var http = require('http');
 var nock = require('nock');
+var trace = require('..');
 
 describe('test-agent-stopped', function() {
   var agent;
@@ -32,7 +33,7 @@ describe('test-agent-stopped', function() {
                 .get('/computeMetadata/v1/project/project-id')
                 .reply(404);
     delete process.env.GCLOUD_PROJECT;
-    agent = require('..').start();
+    agent = trace.start();
     // Wait 200ms for agent to fail getting remote project id.
     setTimeout(function() {
       assert.ok(!agent.isActive());

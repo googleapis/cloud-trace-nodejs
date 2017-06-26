@@ -17,17 +17,36 @@
 'use strict';
 
 var assert = require('assert');
+var shimmer = require('shimmer');
 var trace = require('..');
-
-var common = require('./plugins/common.js');
+var pluginLoader = require('../src/trace-plugin-loader.js');
 
 var instrumentedModules = ['connect', 'express', 'generic-pool', 'grpc', 'hapi',
   'http', 'knex', 'koa', 'mongodb-core', 'mysql', 'pg', 'redis', 'restify'];
 
 describe('plugin configuration', function() {
+  var plugins;
+
+  before(function() {
+    // When the plugin loader is activated, save the incoming value of plugins.
+    shimmer.wrap(pluginLoader, 'activate', function(original) {
+      return function(logger, pluginConfig, policy) {
+        plugins = pluginConfig;
+        return original.apply(this, arguments);
+      };
+    });
+  });
+
+  after(function() {
+    shimmer.unwrap(pluginLoader, 'activate');
+  });
+
+  afterEach(function() {
+    plugins = null;
+  });
+
   it('should have correct defaults', function() {
     trace.start({forceNewAgent_: true});
-    var plugins = common.getConfig().plugins;
     assert.strictEqual(JSON.stringify(Object.keys(plugins)),
       JSON.stringify(instrumentedModules));
     for (var i = 0; i < instrumentedModules.length; i++) {
@@ -38,7 +57,6 @@ describe('plugin configuration', function() {
 
   it('should handle empty object', function() {
     trace.start({forceNewAgent_: true, plugins: {}});
-    var plugins = common.getConfig().plugins;
     assert.strictEqual(JSON.stringify(Object.keys(plugins)),
       JSON.stringify(instrumentedModules));
     assert.ok(instrumentedModules.every(function(e) {
@@ -50,7 +68,6 @@ describe('plugin configuration', function() {
     trace.start({forceNewAgent_: true, plugins: {
       express: 'foo'
     }});
-    var plugins = common.getConfig().plugins;
     assert.strictEqual(JSON.stringify(Object.keys(plugins)),
       JSON.stringify(instrumentedModules));
     assert.ok(instrumentedModules.filter(function(e) {

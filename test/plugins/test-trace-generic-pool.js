@@ -29,13 +29,13 @@ describe('generic-pool2', function() {
   before(function() {
     api = require('../..').start({
       projectId: '0',
-      samplingRate: 0
+      samplingRate: 0,
+      forceNewAgent_: true
     });
     genericPool = require('./fixtures/generic-pool2');
   });
 
   after(function() {
-    common.stopAgent(api);
     common.cleanTraces();
   });
 
@@ -88,13 +88,13 @@ describe('generic-pool3', function() {
   before(function() {
     agent = require('../..').start({
       projectId: '0',
-      samplingRate: 0
+      samplingRate: 0,
+      forceNewAgent_: true
     });
     genericPool = require('./fixtures/generic-pool3');
   });
 
   after(function() {
-    common.stopAgent();
     common.cleanTraces();
   });
 

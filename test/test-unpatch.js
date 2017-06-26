@@ -16,22 +16,37 @@
 
 'use strict';
 
+require('./plugins/common.js');
 var assert = require('assert');
+var nock = require('nock');
+var nocks = require('./nocks.js');
 var trace = require('..');
-
-var common = require('./plugins/common.js');
 
 describe('index.js', function() {
   var agent;
+  var scope;
   var checkUnpatches = [];
-  beforeEach(function() {
-    agent = trace.start({ projectId: '0', forceNewAgent_: true });
+  before(function() {
+    delete process.env.GCLOUD_PROJECT;
+    nock.disableNetConnect();
   });
 
-  afterEach(function() {
-    common.stopAgent();
-    checkUnpatches.forEach(function(f) { f(); });
-    checkUnpatches = [];
+  beforeEach(function() {
+    // Set things up so that the trace agent won't be able to get a project id,
+    // and stop.
+    scope = nocks.projectId(404);
+    agent = trace.start({ forceNewAgent_: true });
+  });
+
+  afterEach(function(done) {
+    // Trace agent will automatically stop.
+    setTimeout(function() {
+      assert(!agent.isActive());
+      scope.done();
+      checkUnpatches.forEach(function(f) { f(); });
+      checkUnpatches = [];
+      done();
+    }, 100);
   });
   
   function wrapTest(nodule, property) {
