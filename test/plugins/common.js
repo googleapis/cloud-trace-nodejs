@@ -42,11 +42,10 @@ shimmer.wrap(trace, 'start', function(original) {
     testTraceAgent = new TraceAgent(
       'test',
       logger(), {
-        policy: new tracePolicy.TraceAllPolicy(),
         enhancedDatabaseReporting: false,
         ignoreTraceContext: false
-      }
-    );
+      });
+    testTraceAgent.policy_ = new tracePolicy.TraceAllPolicy();
     return result;
   };
 });

@@ -30,8 +30,8 @@ describe('plugin configuration', function() {
   before(function() {
     // When the plugin loader is activated, save the incoming value of plugins.
     shimmer.wrap(pluginLoader, 'activate', function(original) {
-      return function(logger, pluginConfig, policy) {
-        plugins = pluginConfig;
+      return function(logger, config) {
+        plugins = config.plugins;
         return original.apply(this, arguments);
       };
     });

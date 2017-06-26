@@ -44,7 +44,9 @@ describe('should respect environment variables', function() {
     trace.start({forceNewAgent_: true});
     shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
       return function(metadata) {
-        assert.equal(metadata.projectId, 1729);
+        // ensure that projectId wasn't set from environment
+        assert.strictEqual(typeof metadata.projectId, 'undefined');
+        assert.strictEqual(TraceWriter.get().config_.projectId, '1729');
         shimmer.unwrap(TraceWriter.get(), 'setMetadata');
         done();
       };
@@ -55,7 +57,9 @@ describe('should respect environment variables', function() {
     trace.start({projectId: 1927, forceNewAgent_: true});
     shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
       return function(metadata) {
-        assert.equal(metadata.projectId, 1729);
+        // ensure that projectId wasn't set from environment
+        assert.strictEqual(typeof metadata.projectId, 'undefined');
+        assert.strictEqual(TraceWriter.get().config_.projectId, '1729');
         shimmer.unwrap(TraceWriter.get(), 'setMetadata');
         done();
       };

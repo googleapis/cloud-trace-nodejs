@@ -29,11 +29,12 @@ var constants = require('./src/constants.js');
 var gcpMetadata = require('gcp-metadata');
 var traceUtil = require('./src/util.js');
 var TraceAgent = require('./src/trace-api.js');
-var tracingPolicy = require('./src/tracing-policy.js');
 var pluginLoader = require('./src/trace-plugin-loader.js');
 var traceWriter = require('./src/trace-writer.js');
 
 var modulesLoadedBeforeTrace = [];
+
+var traceApi;
 
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
@@ -72,14 +73,12 @@ function createLogger(logLevel) {
   });
 }
 
-var traceApi;
-
-function getMetadata(logger, projectId, cb) {
+function getMetadata(logger, getProjectId) {
   // Headers for GCP metadata requests
   var headers = {};
   headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
-  // Object that will be passed to cb
-  var result = {};
+
+  var metadata = {};
   var getHostnameAndInstanceId = function() {
     gcpMetadata.instance({
       property: 'hostname',
@@ -90,7 +89,7 @@ function getMetadata(logger, projectId, cb) {
         logger.warn('Unable to retrieve GCE hostname.', err);
       }
       // default to locally provided hostname.
-      result.hostname = hostname || require('os').hostname();
+      metadata.hostname = hostname || require('os').hostname();
       gcpMetadata.instance({
         property: 'id',
         headers: headers
@@ -99,16 +98,13 @@ function getMetadata(logger, projectId, cb) {
           // We are running on GCP.
           logger.warn('Unable to retrieve GCE instance id.', err);
         }
-        result.instanceId = instanceId;
-        cb(null, result);
+        metadata.instanceId = instanceId;
+        traceWriter.get().setMetadata(metadata);
       });
     });
   };
 
-  if (typeof projectId === 'string') {
-    result.projectId = projectId;
-    getHostnameAndInstanceId();
-  } else if (typeof projectId === 'undefined') {
+  if (getProjectId) {
     gcpMetadata.project({
       property: 'project-id',
       headers: headers
@@ -127,17 +123,15 @@ function getMetadata(logger, projectId, cb) {
         logger.error('Unable to acquire the project number from metadata ' +
           'service. Please provide a valid project number as an env. ' +
           'variable, or through config.projectId passed to start(). ' + err);
-        cb(err);
+        stop();
         return;
       }
       logger.info('Acquired ProjectId from metadata: ' + projectId);
-      result.projectId = projectId;
+      metadata.projectId = projectId;
       getHostnameAndInstanceId();
     });
   } else {
-    logger.error('config.projectId, if provided, must be a string. ' +
-      'Disabling trace agent.');
-    cb(new Error());
+    getHostnameAndInstanceId();
   }
 }
 
@@ -168,6 +162,8 @@ function start(projectConfig) {
   if (traceApi && !config.forceNewAgent_) { // already started.
     throw new Error('Cannot call start on an already started agent.');
   } else if (traceApi) {
+    // For unit tests only.
+    // Undoes initialization that occurred last time start() was called.
     stop();
   }
 
@@ -186,25 +182,19 @@ function start(projectConfig) {
       JSON.stringify(modulesLoadedBeforeTrace));
   }
 
-  var agentOptions = {
-    policy: tracingPolicy.createTracePolicy({
-      samplingRate: config.samplingRate,
-      ignoreUrls: config.ignoreUrls
-    }),
-    enhancedDatabaseReporting: config.enhancedDatabaseReporting,
-    ignoreContextHeader: config.ignoreContextHeader
-  };
-  traceApi = new TraceAgent('Custom Span API', logger, agentOptions);
-  pluginLoader.activate(logger, config.plugins, agentOptions);
+  traceApi = new TraceAgent('Custom Span API', logger, config);
+  pluginLoader.activate(logger, config);
 
   // Get metadata.
-  getMetadata(logger, config.projectId, function(err, metadata) {
-    if (err) {
-      stop();
-    } else {
-      traceWriter.get().setMetadata(metadata);
-    }
-  });
+  if (typeof config.projectId === 'string') {
+    getMetadata(logger, false);
+  } else if (typeof config.projectId === 'undefined') {
+    getMetadata(logger, true);
+  } else {
+    logger.error('config.projectId, if provided, must be a string. ' +
+      'Disabling trace agent.');
+    stop();
+  }
 
   // Make trace agent available globally without requiring package
   global._google_trace_agent = traceApi;

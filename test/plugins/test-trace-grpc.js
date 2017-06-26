@@ -19,7 +19,9 @@ var assert = require('assert');
 var cls = require('../../src/cls.js');
 var util = require('../../src/util.js');
 var constants = require('../../src/constants.js');
+var shimmer = require('shimmer');
 var traceLabels = require('../../src/trace-labels.js');
+var TracingPolicy = require('../../src/tracing-policy.js');
 var common = require('./common.js');
 
 var versions = {
@@ -260,19 +262,25 @@ Object.keys(versions).forEach(function(version) {
   var shouldTraceArgs = [];
   describe(version, function() {
     before(function() {
+      // Set up to record invocations of shouldTrace
+      shimmer.wrap(TracingPolicy, 'createTracePolicy', function(original) {
+        return function() {
+          var result = original.apply(this, arguments);
+          var shouldTrace = result.shouldTrace;
+          result.shouldTrace = function() {
+            shouldTraceArgs.push([].slice.call(arguments, 0));
+            return shouldTrace.apply(this, arguments);
+          };
+          return result;
+        };
+      });
+
       // It is necessary for the samplingRate to be 0 for the tests to succeed
       agent = require('../..').start({
         projectId: '0',
         samplingRate: 0,
         enhancedDatabaseReporting: true
       });
-
-      // Set up to record invocations of shouldTrace
-      var shouldTrace = agent.policy_.shouldTrace;
-      agent.policy_.shouldTrace = function() {
-        shouldTraceArgs.push([].slice.call(arguments, 0));
-        return shouldTrace.apply(this, arguments);
-      };
 
       grpc = require(versions[version]);
 

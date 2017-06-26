@@ -77,7 +77,7 @@ describe('agent interaction with metadata service', function() {
       shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
         return function(metadata) {
           assert.ok(agent.isActive());
-          assert.equal(metadata.projectId, '0');
+          assert.strictEqual(typeof metadata.projectId, 'undefined');
           shimmer.unwrap(TraceWriter.get(), 'setMetadata');
           done();
         };
@@ -91,7 +91,7 @@ describe('agent interaction with metadata service', function() {
     shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
       return function(metadata) {
         assert.ok(agent.isActive());
-        assert.equal(metadata.projectId, '0');
+        assert.strictEqual(typeof metadata.projectId, 'undefined');
         shimmer.unwrap(TraceWriter.get(), 'setMetadata');
         delete process.env.GCLOUD_PROJECT;
         done();

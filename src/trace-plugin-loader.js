@@ -66,7 +66,7 @@ function checkPatch(patch) {
   }
 }
 
-function activate(logger_, pluginConfig, agentConfig) {
+function activate(logger_, config) {
   if (activated) {
     logger.error('Plugins activated more than once.');
     return;
@@ -75,6 +75,7 @@ function activate(logger_, pluginConfig, agentConfig) {
 
   logger = logger_;
 
+  var pluginConfig = config.plugins;
   for (var moduleName in pluginConfig) {
     if (!pluginConfig[moduleName]) {
       continue;
@@ -82,7 +83,7 @@ function activate(logger_, pluginConfig, agentConfig) {
     // Create a new object exposing functions to create trace spans and
     // propagate context. This relies on functions currently exposed by the
     // agent.
-    var agent = new TraceAgent(moduleName, logger, agentConfig);
+    var agent = new TraceAgent(moduleName, logger, config);
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
       patches: {},

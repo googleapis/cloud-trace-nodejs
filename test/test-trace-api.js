@@ -27,12 +27,13 @@ var TraceWriter = require('../src/trace-writer.js');
 
 var logger = require('@google-cloud/common').logger();
 
-function createTraceAgent() {
-  return new TraceAgent('test', logger, {
-    policy: new TracingPolicy.TraceAllPolicy(),
+function createTraceAgent(policy, config) {
+  var result = new TraceAgent('test', logger, config || {
     enhancedDatabaseReporting: false,
     ignoreContextHeader: false
   });
+  result.policy_ = policy || new TracingPolicy.TraceAllPolicy();
+  return result;
 }
 
 function assertAPISurface(traceAPI) {
@@ -174,12 +175,8 @@ describe('Trace Interface', function() {
       });
     });
 
-    it('should respect sampling policy', function(done) {
-      var traceAPI = new TraceAgent('test', logger, {
-        policy: new TracingPolicy.TraceNonePolicy(),
-        enhancedDatabaseReporting: false,
-        ignoreContextHeader: false
-      });
+    it('should respect trace policy', function(done) {
+      var traceAPI = createTraceAgent(new TracingPolicy.TraceNonePolicy());
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
         assert.strictEqual(rootSpan, null);
         done();
@@ -188,13 +185,9 @@ describe('Trace Interface', function() {
 
     it('should respect filter urls', function() {
       var url = 'rootUrl';
-      var traceAPI = new TraceAgent('test', logger, {
-        policy: new TracingPolicy.FilterPolicy(
-          new TracingPolicy.TraceAllPolicy(),
-          [url]),
-        enhancedDatabaseReporting: false,
-        ignoreContextHeader: false
-      });
+      var traceAPI = createTraceAgent(new TracingPolicy.FilterPolicy(
+        new TracingPolicy.TraceAllPolicy(),
+        [url]));
       traceAPI.runInRootSpan({name: 'root1', url: url}, function(rootSpan) {
         assert.strictEqual(rootSpan, null);
       });
@@ -205,8 +198,7 @@ describe('Trace Interface', function() {
 
     it('should respect enhancedDatabaseReporting options field', function() {
       [true, false].forEach(function(enhancedDatabaseReporting) {
-        var traceAPI = new TraceAgent('test', logger, {
-          policy: new TracingPolicy.TraceAllPolicy(),
+        var traceAPI = createTraceAgent(null, {
           enhancedDatabaseReporting: enhancedDatabaseReporting,
           ignoreContextHeader: false
         });
@@ -218,8 +210,7 @@ describe('Trace Interface', function() {
     it('should respect ignoreContextHeader options field', function() {
       var traceAPI;
       // ignoreContextHeader: true
-      traceAPI = new TraceAgent('test', logger, {
-        policy: new TracingPolicy.TraceAllPolicy(),
+      traceAPI = createTraceAgent(null, {
         enhancedDatabaseReporting: false,
         ignoreContextHeader: true
       });
@@ -233,8 +224,7 @@ describe('Trace Interface', function() {
         assert.notEqual(rootSpan.span.parentSpanId, '667');
       });
       // ignoreContextHeader: false
-      traceAPI = new TraceAgent('test', logger, {
-        policy: new TracingPolicy.TraceAllPolicy(),
+      traceAPI = createTraceAgent(null, {
         enhancedDatabaseReporting: false,
         ignoreContextHeader: false
       });

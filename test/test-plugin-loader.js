@@ -115,8 +115,10 @@ describe('Trace Plugin Loader', function() {
     ]);
     // Activate plugin loader
     pluginLoader.activate(logger, {
-      'module-a': 'module-a-plugin',
-      'module-b': 'module-b-plugin'
+      plugins: {
+        'module-a': 'module-a-plugin',
+        'module-b': 'module-b-plugin'
+      }
     });
     assert.deepEqual(patched, [],
       'No patches are initially loaded');
@@ -157,7 +159,9 @@ describe('Trace Plugin Loader', function() {
       'Plugin loader shouldn\'t affect module before plugin is loaded');
     // Activate plugin loader
     pluginLoader.activate(logger, {
-      'module-c': 'module-c-plugin'
+      plugins: {
+        'module-c': 'module-c-plugin'
+      }
     });
     assert.strictEqual(require('module-c').getStatus(), 'wrapped',
       'Plugin patch() method is called the right arguments');
@@ -183,8 +187,10 @@ describe('Trace Plugin Loader', function() {
     ]);
     // Activate plugin loader
     pluginLoader.activate(logger, {
-      'module-e': 'module-e-plugin',
-      'module-f': 'module-f-plugin'
+      plugins: {
+        'module-e': 'module-e-plugin',
+        'module-f': 'module-f-plugin'
+      }
     });
     assert.deepEqual(patched, []);
     require('module-e');
@@ -244,7 +250,9 @@ describe('Trace Plugin Loader', function() {
       'bad tests don\'t make sense.');
     // Activate plugin loader
     pluginLoader.activate(logger, {
-      'module-g': 'module-g-plugin'
+      plugins: {
+        'module-g': 'module-g-plugin'
+      }
     });
     assert.strictEqual(require('module-g').createSentence(),
       'good tests make sense.',
@@ -298,7 +306,9 @@ describe('Trace Plugin Loader', function() {
       'bad tests don\'t make sense.');
     // Activate plugin loader
     pluginLoader.activate(logger, {
-      'module-h': 'module-h-plugin'
+      plugins: {
+        'module-h': 'module-h-plugin'
+      }
     });
     assert.strictEqual(require('module-h').createSentence(),
       'good tests make sense.',
@@ -318,7 +328,9 @@ describe('Trace Plugin Loader', function() {
     assert.strictEqual(require('module-i')(), 1);
     // Activate plugin loader
     pluginLoader.activate(logger, {
-      'module-i': 'module-i-plugin'
+      plugins: {
+        'module-i': 'module-i-plugin'
+      }
     });
     assert.strictEqual(require('module-i')(), 2,
       'Module can be intercepted');
@@ -344,14 +356,18 @@ describe('Trace Plugin Loader', function() {
     }]);
     assert.strictEqual(require('module-j').getPatchMode(), 'none');
     pluginLoader.activate(logger, {
-      'module-j': 'module-j-plugin'
+      plugins: {
+        'module-j': 'module-j-plugin'
+      }
     });
     assert.strictEqual(require('module-j').getPatchMode(), 'patch');
     pluginLoader.deactivate();
     assert.strictEqual(require('module-j').getPatchMode(), 'none',
       'Module gets unpatched');
     pluginLoader.activate(logger, {
-      'module-j': 'module-j-plugin'
+      plugins: {
+        'module-j': 'module-j-plugin'
+      }
     });
     assert.strictEqual(require('module-j').getPatchMode(), 'patch',
       'Patches still work after unpatching');
@@ -361,7 +377,7 @@ describe('Trace Plugin Loader', function() {
     var moduleExports = {};
     addModuleMock('module-k', '1.0.0', moduleExports);
     assert(require('module-k') === moduleExports);
-    pluginLoader.activate(logger, { 'module-k': '' });
+    pluginLoader.activate(logger, { plugins: { 'module-k': '' } });
     assert(require('module-k') === moduleExports,
       'Module exports the same thing as before');
   });
@@ -385,21 +401,27 @@ describe('Trace Plugin Loader', function() {
     }]);
     
     pluginLoader.activate(logger, {
-      'module-l': 'module-l-plugin-noop'
+      plugins: {
+        'module-l': 'module-l-plugin-noop'
+      }
     });
     assert.throws(function() { require('module-l'); },
       'Loading patch object with no patch/intercept function throws');
     pluginLoader.deactivate();
 
     pluginLoader.activate(logger, {
-      'module-l': 'module-l-plugin-pi'
+      plugins: {
+        'module-l': 'module-l-plugin-pi'
+      }
     });
     assert.throws(function() { require('module-l'); },
       'Loading patch object with both patch/intercept functions throws');
     pluginLoader.deactivate();
 
     pluginLoader.activate(logger, {
-      'module-l': 'module-l-plugin-upi'
+      plugins: {
+        'module-l': 'module-l-plugin-upi'
+      }
     });
     assert.strictEqual(require('module-l'), 'intercepted');
     assert(logs.warn.indexOf('unpatch is not compatible with intercept') !== -1,
@@ -407,7 +429,9 @@ describe('Trace Plugin Loader', function() {
     pluginLoader.deactivate();
 
     pluginLoader.activate(logger, {
-      'module-l': 'module-l-plugin-noup'
+      plugins: {
+        'module-l': 'module-l-plugin-noup'
+      }
     });
     assert.ok(require('module-l').patched);
     assert(logs.warn.indexOf('without accompanying unpatch') !== -1,

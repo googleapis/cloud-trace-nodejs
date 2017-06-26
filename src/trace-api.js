@@ -52,16 +52,12 @@ var nullSpan = {};
  * The functional implementation of the Trace API
  * TODO doc options includes pluginName, logger, policy
  */
-function TraceAgent(name, logger, options) {
-  options = options || {};
+function TraceAgent(name, logger, config) {
   this.pluginName_ = name;
   this.logger_ = logger;
   this.namespace_ = cls.getNamespace();
-  this.policy_ = options.policy || new tracingPolicy.TraceAllPolicy();
-  this.config_ = {
-    enhancedDatabaseReporting: options.enhancedDatabaseReporting,
-    ignoreContextHeader: options.ignoreContextHeader
-  };
+  this.policy_ = tracingPolicy.createTracePolicy(config);
+  this.config_ = config;
 }
 
 TraceAgent.prototype.disable = function() {

@@ -52,18 +52,7 @@ function TraceWriter(logger, config) {
   this.logger_ = logger;
 
   /** @private */
-  this.config_ = {
-    forceNewAgent_: config.forceNewAgent_,
-    serviceContext: config.serviceContext,
-    credentials: config.credentials,
-    keyFilename: config.keyFilename,
-    projectId: config.projectId,
-    flushDelaySeconds: config.flushDelaySeconds,
-    bufferSize: config.bufferSize,
-    onUncaughtException: config.onUncaughtException,
-    stackTraceLimit: config.stackTraceLimit,
-    maximumLabelValueSize: config.maximumLabelValueSize
-  };
+  this.config_ = config;
 
   /** @private {Array<string>} stringified traces to be published */
   this.buffer_ = [];
