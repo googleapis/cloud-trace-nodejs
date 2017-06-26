@@ -77,6 +77,17 @@ function parseContextFromHeader(str) {
   };
 }
 
+function generateTraceContext(traceContext) {
+  if (!traceContext) {
+    return '';
+  }
+  var header = traceContext.traceId + '/' + traceContext.spanId;
+  if (typeof traceContext.options !== 'undefined') {
+    header += (';o=' + traceContext.options);
+  }
+  return header;
+}
+
 /**
  * Retrieves a package name from the full import path.
  * For example:
@@ -128,6 +139,7 @@ function findModuleVersion(modulePath, load) {
 module.exports = {
   truncate: truncate,
   parseContextFromHeader: parseContextFromHeader,
+  generateTraceContext: generateTraceContext,
   packageNameFromPath: packageNameFromPath,
   findModulePath: findModulePath,
   findModuleVersion: findModuleVersion

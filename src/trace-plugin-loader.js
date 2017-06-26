@@ -20,7 +20,7 @@ var shimmer = require('shimmer');
 var path = require('path');
 var semver = require('semver');
 var util = require('./util.js');
-var TraceApi = require('./trace-api.js');
+var TraceAgent = require('./trace-api.js');
 
 var plugins = Object.create(null);
 var intercepts = Object.create(null);
@@ -66,15 +66,15 @@ function checkPatch(patch) {
   }
 }
 
-function activate(agent) {
+function activate(logger_, pluginConfig, agentConfig) {
   if (activated) {
     logger.error('Plugins activated more than once.');
     return;
   }
   activated = true;
-  logger = agent.logger;
 
-  var pluginConfig = agent.config().plugins;
+  logger = logger_;
+
   for (var moduleName in pluginConfig) {
     if (!pluginConfig[moduleName]) {
       continue;
@@ -82,12 +82,11 @@ function activate(agent) {
     // Create a new object exposing functions to create trace spans and
     // propagate context. This relies on functions currently exposed by the
     // agent.
-    var api = new TraceApi(moduleName);
-    api.enable_(agent);
+    var agent = new TraceAgent(moduleName, logger, agentConfig);
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
       patches: {},
-      api: api
+      agent: agent
     };
   }
 
@@ -127,10 +126,10 @@ function activate(agent) {
           patch.module = originalModuleLoad(loadPath, module, false);
         }
         if (patch.patch) {
-          patch.patch(patch.module, instrumentation.api);
+          patch.patch(patch.module, instrumentation.agent);
         }
         if (patch.intercept) {
-          patch.module = patch.intercept(patch.module, instrumentation.api);
+          patch.module = patch.intercept(patch.module, instrumentation.agent);
           intercepts[loadPath] = {
             interceptedValue: patch.module
           };
@@ -179,7 +178,7 @@ function deactivate() {
     activated = false;
     for (var moduleName in plugins) {
       var instrumentation = plugins[moduleName];
-      instrumentation.api.disable_();
+      instrumentation.agent.disable();
       for (var moduleRoot in instrumentation.patches) {
         var patchSet = instrumentation.patches[moduleRoot];
         for (var file in patchSet) {
