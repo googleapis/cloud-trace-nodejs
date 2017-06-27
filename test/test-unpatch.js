@@ -22,13 +22,20 @@ var nock = require('nock');
 var nocks = require('./nocks.js');
 var trace = require('..');
 
+nock.disableNetConnect();
+
 describe('index.js', function() {
   var agent;
   var scope;
   var checkUnpatches = [];
+  var envGcloudProject = process.env.GCLOUD_PROJECT;
+
   before(function() {
     delete process.env.GCLOUD_PROJECT;
-    nock.disableNetConnect();
+  });
+
+  after(function() {
+    process.env.GCLOUD_PROJECT = envGcloudProject;
   });
 
   beforeEach(function() {

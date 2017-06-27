@@ -70,25 +70,7 @@ describe('TraceWriter', function() {
     assert.ok(writer instanceof Service);
   });
 
-  // describe('projectId', function() {
-  //   it('should request project from metadata if not locally available',
-  //     function(done) {
-  //       var scope = nocks.projectId('from metadata');
-  //       // the constructor should fetch the projectId.
-  //       TraceWriter.create(fakeLogger, {
-  //         serviceContext: {},
-  //         onUncaughtException: 'ignore',
-  //         forceNewAgent_: true
-  //       });
-  //       setTimeout(function() {
-  //         assert.ok(scope.isDone());
-  //         done();
-  //       }, DEFAULT_DELAY);
-  //     });
-  // });
-
   describe('writeSpan', function(done) {
-
     it('should close spans, add defaultLabels and queue', function(done) {
       var writer = TraceWriter.create(fakeLogger, {
         projectId: PROJECT,
@@ -97,14 +79,16 @@ describe('TraceWriter', function() {
         onUncaughtException: 'ignore',
         forceNewAgent_: true
       });
-      writer.setMetadata({});
+      writer.defaultLabels_ = {
+        fakeKey: 'value'
+      };
       var spanData = createFakeSpan('fake span');
       writer.queueTrace_ = function(trace) {
         assert.ok(trace && trace.spans && trace.spans[0]);
         var span = trace.spans[0];
         assert.strictEqual(span.name, 'fake span');
         assert.ok(span.closed_);
-        assert.ok(spanData.labels_[traceLabels.AGENT_DATA]);
+        assert.strictEqual(spanData.labels_.fakeKey, 'value');
         // TODO(ofrobots): check serviceContext labels as well.
         done();
       };
@@ -181,7 +165,6 @@ describe('TraceWriter', function() {
         onUncaughtException: 'ignore',
         forceNewAgent_: true
       });
-      writer.setMetadata({});
       writer.publish_ = function() { published = true; };
       writer.writeSpan(createFakeSpan('fake span'));
       setTimeout(function() {

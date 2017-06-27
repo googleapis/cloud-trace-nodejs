@@ -17,6 +17,8 @@
 'use strict';
 
 var common = require('@google-cloud/common');
+var getMetadata = require('./metadata.js');
+var os = require('os');
 var util = require('util');
 var traceLabels = require('./trace-labels.js');
 var pjson = require('../package.json');
@@ -93,53 +95,76 @@ TraceWriter.prototype.stop = function() {
   this.isActive = false;
 };
 
-TraceWriter.prototype.setMetadata = function(metadata) {
-  this.logger_.debug('TraceWriter: Got the following info from the metadata service: ' +
-    util.inspect(metadata));
-  var hostname = metadata.hostname;
-  var instanceId = metadata.instanceId;
+TraceWriter.prototype.initialize = function(cb) {
+  var that = this;
+  // Create a list of properties to retrieve from the metadata service.
+  // If we already have a project ID, don't try to get it.
+  var properties = typeof this.projectId_ !== 'undefined' ? [] : [{
+    endpoint: 'project',
+    property: 'project-id',
+    onError: 'break'
+  }];
+  properties.push({
+    endpoint: 'instance',
+    property: 'id',
+    onError: 'continue'
+  }, {
+    endpoint: 'instance',
+    property: 'hostname',
+    onError: 'continue'
+  });
 
-  // Set labels
-  var labels = {};
-  labels[traceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
-  labels[traceLabels.GCE_HOSTNAME] = hostname;
-  if (instanceId) {
-    labels[traceLabels.GCE_INSTANCE_ID] = instanceId;
-  }
-  var moduleName = this.config_.serviceContext.service || hostname;
-  labels[traceLabels.GAE_MODULE_NAME] = moduleName;
-
-  var moduleVersion = this.config_.serviceContext.version;
-  if (moduleVersion) {
-    labels[traceLabels.GAE_MODULE_VERSION] = moduleVersion;
-    var minorVersion = this.config_.serviceContext.minorVersion;
-    if (minorVersion) {
-      var versionLabel = '';
-      if (moduleName !== 'default') {
-        versionLabel = moduleName + ':';
-      }
-      versionLabel += moduleVersion + '.' + minorVersion;
-      labels[traceLabels.GAE_VERSION] = versionLabel;
-    }
-  }
-  Object.freeze(labels);
-  this.defaultLabels_ = labels;
-
-  // Set project ID, and start scheduling buffer flushes
-  if (metadata.projectId) {
-    if (typeof this.projectId_ !== undefined) {
-      this.logger_.error('TraceWriter: Project ID was provided locally, but also' +
-        ' fetched from metadata.');
+  getMetadata(this.logger_, properties, function(err, metadata) {
+    if (err) {
+      cb(err);
       return;
     }
-    this.projectId_ = metadata.projectId;
-    for (var i = 0; i < this.buffer_; i++) {
-      var trace = JSON.parse(this.buffer_[i]);
-      trace.projectId = this.projectId_;
-      this.buffer_[i] = JSON.stringify(trace);
+
+    that.logger_.debug('TraceWriter: Got the following info from the metadata service: ' +
+      util.inspect(metadata));
+    var hostname = metadata.instance.hostname || os.hostname();
+    var instanceId = metadata.instance.id;
+    var projectId = metadata.project && metadata.project['project-id'];
+
+    // Set labels
+    var labels = {};
+    labels[traceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
+    labels[traceLabels.GCE_HOSTNAME] = hostname;
+    if (instanceId) {
+      labels[traceLabels.GCE_INSTANCE_ID] = instanceId;
     }
-    this.scheduleFlush_();
-  }
+    var moduleName = that.config_.serviceContext.service || hostname;
+    labels[traceLabels.GAE_MODULE_NAME] = moduleName;
+
+    var moduleVersion = that.config_.serviceContext.version;
+    if (moduleVersion) {
+      labels[traceLabels.GAE_MODULE_VERSION] = moduleVersion;
+      var minorVersion = that.config_.serviceContext.minorVersion;
+      if (minorVersion) {
+        var versionLabel = '';
+        if (moduleName !== 'default') {
+          versionLabel = moduleName + ':';
+        }
+        versionLabel += moduleVersion + '.' + minorVersion;
+        labels[traceLabels.GAE_VERSION] = versionLabel;
+      }
+    }
+    Object.freeze(labels);
+    that.defaultLabels_ = labels;
+
+    // Set project ID, and start scheduling buffer flushes
+    if (projectId) {
+      that.projectId_ = projectId;
+      for (var i = 0; i < that.buffer_; i++) {
+        var trace = JSON.parse(that.buffer_[i]);
+        trace.projectId = that.projectId_;
+        that.buffer_[i] = JSON.stringify(trace);
+      }
+      that.scheduleFlush_();
+    }
+    // Signal that metadata was retrieved without error.
+    cb(null, metadata);
+  });
 };
 
 /**

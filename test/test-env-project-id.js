@@ -21,9 +21,9 @@ process.env.GCLOUD_PROJECT = 1729;
 var trace = require('..');
 
 var assert = require('assert');
+var common = require('./plugins/common.js');
 var nock = require('nock');
 var nocks = require('./nocks.js');
-var shimmer = require('shimmer');
 var TraceWriter = require('../src/trace-writer.js');
 
 describe('should respect environment variables', function() {
@@ -41,28 +41,22 @@ describe('should respect environment variables', function() {
   });
 
   it('should respect GCLOUD_PROJECT', function(done) {
-    trace.start({forceNewAgent_: true});
-    shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
-      return function(metadata) {
-        // ensure that projectId wasn't set from environment
-        assert.strictEqual(typeof metadata.projectId, 'undefined');
-        assert.strictEqual(TraceWriter.get().config_.projectId, '1729');
-        shimmer.unwrap(TraceWriter.get(), 'setMetadata');
-        done();
-      };
+    common.wrapTraceWriterInitialize(function(err, metadata) {
+      // ensure that projectId wasn't set from environment
+      assert.ok(!metadata.project);
+      assert.strictEqual(TraceWriter.get().config_.projectId, '1729');
+      done();
     });
+    trace.start({forceNewAgent_: true});
   });
 
   it('should prefer env to config', function(done) {
-    trace.start({projectId: 1927, forceNewAgent_: true});
-    shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
-      return function(metadata) {
-        // ensure that projectId wasn't set from environment
-        assert.strictEqual(typeof metadata.projectId, 'undefined');
-        assert.strictEqual(TraceWriter.get().config_.projectId, '1729');
-        shimmer.unwrap(TraceWriter.get(), 'setMetadata');
-        done();
-      };
+    common.wrapTraceWriterInitialize(function(err, metadata) {
+      // ensure that projectId wasn't set from environment
+      assert.ok(!metadata.project);
+      assert.strictEqual(TraceWriter.get().config_.projectId, '1729');
+      done();
     });
+    trace.start({projectId: 1927, forceNewAgent_: true});
   });
 });

@@ -18,7 +18,6 @@
 
 var assert = require('assert');
 var nock = require('nock');
-var shimmer = require('shimmer');
 var traceLabels = require('../src/trace-labels.js');
 
 var common = require('./plugins/common.js');
@@ -58,45 +57,37 @@ describe('agent interaction with metadata service', function() {
                 .get('/computeMetadata/v1/project/project-id')
                 .times(1)
                 .reply(200, '1234');
-    agent = trace.start({logLevel: 0, forceNewAgent_: true});
-    shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
-      return function(metadata) {
-        assert.ok(agent.isActive());
-        assert.equal(metadata.projectId, '1234');
-        shimmer.unwrap(TraceWriter.get(), 'setMetadata');
-        scope.done();
-        done();
-      };
+    common.wrapTraceWriterInitialize(function(err, metadata) {
+      assert.ok(!err);
+      assert.ok(agent.isActive());
+      assert.equal(metadata.project['project-id'], '1234');
+      scope.done();
+      done();
     });
+    agent = trace.start({logLevel: 0, forceNewAgent_: true});
   });
 
   it('should not query metadata service when config.projectId is set',
     function(done) {
       nock.disableNetConnect();
-      agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
-      shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
-        return function(metadata) {
-          assert.ok(agent.isActive());
-          assert.strictEqual(typeof metadata.projectId, 'undefined');
-          shimmer.unwrap(TraceWriter.get(), 'setMetadata');
-          done();
-        };
+      common.wrapTraceWriterInitialize(function(err, metadata) {
+        assert.ok(agent.isActive());
+        assert.ok(!metadata.project);
+        done();
       });
+      agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
     });
 
   it('should not query metadata service when env. var. is set', function(done) {
     nock.disableNetConnect();
     process.env.GCLOUD_PROJECT='0';
-    agent = trace.start({logLevel: 0, forceNewAgent_: true});
-    shimmer.wrap(TraceWriter.get(), 'setMetadata', function() {
-      return function(metadata) {
-        assert.ok(agent.isActive());
-        assert.strictEqual(typeof metadata.projectId, 'undefined');
-        shimmer.unwrap(TraceWriter.get(), 'setMetadata');
-        delete process.env.GCLOUD_PROJECT;
-        done();
-      };
+    common.wrapTraceWriterInitialize(function(err, metadata) {
+      assert.ok(agent.isActive());
+      assert.ok(!metadata.project);
+      delete process.env.GCLOUD_PROJECT;
+      done();
     });
+    agent = trace.start({logLevel: 0, forceNewAgent_: true});
   });
 
   it('should attach hostname to spans when provided', function(done) {

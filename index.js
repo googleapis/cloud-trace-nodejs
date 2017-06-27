@@ -76,75 +76,6 @@ function initConfig(projectConfig) {
 }
 
 /**
- * Retrieves various fields from the GCP metadata service, and calls
- * setMetadata on the TraceWriter singleton with these values.
- * @param {common.logger} logger A logger object.
- * @param {Boolean} getProjectId Whether the project ID should be retrieved
- * from the metadata service.
- */
-function getMetadata(logger, getProjectId) {
-  // Headers for GCP metadata requests
-  var headers = {};
-  headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
-
-  var metadata = {};
-  var getHostnameAndInstanceId = function() {
-    gcpMetadata.instance({
-      property: 'hostname',
-      headers: headers
-    }, function(err, response, hostname) {
-      if (err && err.code !== 'ENOTFOUND') {
-        // We are running on GCP.
-        logger.warn('Unable to retrieve GCE hostname.', err);
-      }
-      // default to locally provided hostname.
-      metadata.hostname = hostname || require('os').hostname();
-      gcpMetadata.instance({
-        property: 'id',
-        headers: headers
-      }, function(err, response, instanceId) {
-        if (err && err.code !== 'ENOTFOUND') {
-          // We are running on GCP.
-          logger.warn('Unable to retrieve GCE instance id.', err);
-        }
-        metadata.instanceId = instanceId;
-        TraceWriter.get().setMetadata(metadata);
-      });
-    });
-  };
-
-  if (getProjectId) {
-    gcpMetadata.project({
-      property: 'project-id',
-      headers: headers
-    }, function(err, response, projectId) {
-      if (response && response.statusCode !== 200) {
-        if (response.statusCode === 503) {
-          err = new Error('Metadata service responded with a 503 status ' +
-            'code. This may be due to a temporary server error; please try ' +
-            'again later.');
-        } else {
-          err = new Error('Metadata service responded with the following ' +
-            'status code: ' + response.statusCode);
-        }
-      }
-      if (err) {
-        logger.error('Unable to acquire the project number from metadata ' +
-          'service. Please provide a valid project number as an env. ' +
-          'variable, or through config.projectId passed to start(). ' + err);
-        stop();
-        return;
-      }
-      logger.info('Acquired ProjectId from metadata: ' + projectId);
-      metadata.projectId = projectId;
-      getHostnameAndInstanceId();
-    });
-  } else {
-    getHostnameAndInstanceId();
-  }
-}
-
-/**
  * Stops the Trace Agent. This disables the publicly exposed agent instance,
  * as well as any instances passed to plugins. This also prevents the Trace
  * Writer from publishing additional traces.
@@ -189,29 +120,31 @@ function start(projectConfig) {
     level: common.logger.LEVELS[config.logLevel],
     tag: '@google-cloud/trace-agent'
   });
-  // CLS namespace for context propagation
-  cls.createNamespace();
-  TraceWriter.create(logger, config);
 
   if (modulesLoadedBeforeTrace.length > 0) {
     logger.error('Tracing might not work as the following modules ' +
       'were loaded before the trace agent was initialized: ' +
       JSON.stringify(modulesLoadedBeforeTrace));
   }
+  // CLS namespace for context propagation
+  cls.createNamespace();
+  TraceWriter.create(logger, config);
 
   traceAgent = new TraceAgent('Custom Span API', logger, config);
   pluginLoader.activate(logger, config);
 
   // Get metadata.
-  if (typeof config.projectId === 'string') {
-    getMetadata(logger, false);
-  } else if (typeof config.projectId === 'undefined') {
-    getMetadata(logger, true);
-  } else {
+  if (typeof config.projectId !== 'string' && typeof config.projectId !== 'undefined') {
     logger.error('config.projectId, if provided, must be a string. ' +
       'Disabling trace agent.');
     stop();
+    return;
   }
+  TraceWriter.get().initialize(function(err) {
+    if (err) {
+      stop();
+    }
+  });
 
   // Make trace agent available globally without requiring package
   global._google_trace_agent = traceAgent;

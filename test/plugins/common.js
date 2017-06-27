@@ -175,6 +175,25 @@ function avoidTraceWriterAuth() {
   TraceWriter.get().request = request;
 }
 
+function wrapTraceWriterInitialize(onInitializeFinished) {
+  shimmer.wrap(TraceWriter, 'create', function(twCreate) {
+    return function() {
+      var result = twCreate.apply(this, arguments);
+      shimmer.wrap(result, 'initialize', function(twpInitialize) {
+        return function() {
+          twpInitialize.call(this, function(cb) {
+            shimmer.unwrap(result, 'initialize');
+            onInitializeFinished.apply(null, arguments);
+            cb.apply(this, arguments);
+          })
+        };
+      });
+      shimmer.unwrap(TraceWriter, 'create');
+      return result;
+    }
+  });
+}
+
 function hasContext() {
   return !!cls.getRootContext();
 }
@@ -194,6 +213,7 @@ module.exports = {
   hasContext: hasContext,
   installNoopTraceWriter: installNoopTraceWriter,
   avoidTraceWriterAuth: avoidTraceWriterAuth,
+  wrapTraceWriterInitialize: wrapTraceWriterInitialize,
   serverWait: SERVER_WAIT,
   serverRes: SERVER_RES,
   serverPort: SERVER_PORT,
