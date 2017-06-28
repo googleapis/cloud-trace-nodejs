@@ -181,7 +181,7 @@ function deactivate() {
         for (var file in patchSet) {
           var patch = patchSet[file];
           if (patch.unpatch !== undefined) {
-            logger_.info('Unpatching' + moduleName);
+            logger_.info('Unpatching ' + moduleName);
             patch.unpatch(patch.module);
           }
         }

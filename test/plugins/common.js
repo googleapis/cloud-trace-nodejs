@@ -185,12 +185,12 @@ function wrapTraceWriterInitialize(onInitializeFinished) {
             shimmer.unwrap(result, 'initialize');
             onInitializeFinished.apply(null, arguments);
             cb.apply(this, arguments);
-          })
+          });
         };
       });
       shimmer.unwrap(TraceWriter, 'create');
       return result;
-    }
+    };
   });
 }
 

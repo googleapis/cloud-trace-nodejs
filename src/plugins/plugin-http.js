@@ -68,7 +68,6 @@ function patchHttp(http, api) {
   function isTraceAgentRequest (options) {
     var result = options && options.headers &&
       !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
-    console.log(options.href, result);
     return result;
   }
 

@@ -23,7 +23,6 @@ var fakeCredentials = require('./fixtures/gcloud-credentials.json');
 var nock = require('nock');
 var nocks = require('./nocks.js');
 var Service = require('@google-cloud/common').Service;
-var traceLabels = require('../src/trace-labels.js');
 
 nock.disableNetConnect();
 

@@ -84,7 +84,7 @@ function TraceWriter(logger, config) {
     process.on('uncaughtException', this.unhandledException_);
   }
 
-  if (typeof config.projectId !== undefined) {
+  if (config.projectId !== undefined) {
     this.projectId_ = config.projectId;
     this.scheduleFlush_();
   }
@@ -97,34 +97,39 @@ TraceWriter.prototype.stop = function() {
 
 TraceWriter.prototype.initialize = function(cb) {
   var that = this;
-  // Create a list of properties to retrieve from the metadata service.
-  // If we already have a project ID, don't try to get it.
-  var properties = typeof this.projectId_ !== 'undefined' ? [] : [{
-    endpoint: 'project',
-    property: 'project-id',
-    onError: 'break'
-  }];
-  properties.push({
-    endpoint: 'instance',
-    property: 'id',
-    onError: 'continue'
-  }, {
-    endpoint: 'instance',
-    property: 'hostname',
-    onError: 'continue'
-  });
 
-  getMetadata(this.logger_, properties, function(err, metadata) {
-    if (err) {
-      cb(err);
-      return;
-    }
-
+  var metadata = {};
+  var haveProjectId = this.projectId_ !== undefined;
+  var getProjectId = haveProjectId ? Promise.resolve() :
+    getMetadata('project', 'project-id')
+      .then(function(projectId) {
+        metadata.projectId = projectId;
+      });
+  getProjectId.then(function() {
+    return getMetadata('instance', 'id').then(function(id) {
+      metadata.instanceId = id;
+    }, function(err) {
+      if (err.code !== 'ENOTFOUND') {
+        // We are running on GCP.
+        that.logger_.warn('Unable to retrieve instance ID from metadata: ', err);
+      }
+      // Continue anyway
+    });
+  }).then(function() {
+    return getMetadata('instance', 'hostname').then(function(hostname) {
+      metadata.hostname = hostname;
+    }, function(err) {
+      if (err.code !== 'ENOTFOUND') {
+        // We are running on GCP.
+        that.logger_.warn('Unable to retrieve hostname from metadata: ', err);
+      }
+    });
+  }).then(function() {
     that.logger_.debug('TraceWriter: Got the following info from the metadata service: ' +
       util.inspect(metadata));
-    var hostname = metadata.instance.hostname || os.hostname();
-    var instanceId = metadata.instance.id;
-    var projectId = metadata.project && metadata.project['project-id'];
+    var hostname = metadata.hostname || os.hostname();
+    var instanceId = metadata.instanceId;
+    var projectId = metadata.projectId;
 
     // Set labels
     var labels = {};
@@ -163,7 +168,12 @@ TraceWriter.prototype.initialize = function(cb) {
       that.scheduleFlush_();
     }
     // Signal that metadata was retrieved without error.
-    cb(null, metadata);
+    setImmediate(cb.bind(null, null, metadata));
+  }).catch(function(err) {
+    that.logger_.error('Unable to acquire the project number from metadata ' +
+      'service. Please provide a valid project number as an env. ' +
+      'variable, or through config.projectId passed to start(). ' + err);
+    setImmediate(cb.bind(null, err));
   });
 };
 

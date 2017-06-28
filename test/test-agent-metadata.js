@@ -22,7 +22,6 @@ var traceLabels = require('../src/trace-labels.js');
 
 var common = require('./plugins/common.js');
 var trace = require('..');
-var TraceWriter = require('../src/trace-writer.js');
 
 nock.disableNetConnect();
 
@@ -60,7 +59,7 @@ describe('agent interaction with metadata service', function() {
     common.wrapTraceWriterInitialize(function(err, metadata) {
       assert.ok(!err);
       assert.ok(agent.isActive());
-      assert.equal(metadata.project['project-id'], '1234');
+      assert.equal(metadata.projectId, '1234');
       scope.done();
       done();
     });
@@ -71,8 +70,9 @@ describe('agent interaction with metadata service', function() {
     function(done) {
       nock.disableNetConnect();
       common.wrapTraceWriterInitialize(function(err, metadata) {
+        assert.ok(!err);
         assert.ok(agent.isActive());
-        assert.ok(!metadata.project);
+        assert.strictEqual(metadata.projectId, undefined);
         done();
       });
       agent = trace.start({projectId: '0', logLevel: 0, forceNewAgent_: true});
@@ -82,8 +82,9 @@ describe('agent interaction with metadata service', function() {
     nock.disableNetConnect();
     process.env.GCLOUD_PROJECT='0';
     common.wrapTraceWriterInitialize(function(err, metadata) {
+      assert.ok(!err);
       assert.ok(agent.isActive());
-      assert.ok(!metadata.project);
+      assert.strictEqual(metadata.projectId, undefined);
       delete process.env.GCLOUD_PROJECT;
       done();
     });

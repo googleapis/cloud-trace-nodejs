@@ -26,7 +26,6 @@ var cls = require('./src/cls.js');
 var common = require('@google-cloud/common');
 var extend = require('extend');
 var constants = require('./src/constants.js');
-var gcpMetadata = require('gcp-metadata');
 var traceUtil = require('./src/util.js');
 var TraceAgent = require('./src/trace-api.js');
 var pluginLoader = require('./src/trace-plugin-loader.js');
@@ -138,7 +137,7 @@ function start(projectConfig) {
     logger.error('config.projectId, if provided, must be a string. ' +
       'Disabling trace agent.');
     stop();
-    return;
+    return traceAgent;
   }
   TraceWriter.get().initialize(function(err) {
     if (err) {
