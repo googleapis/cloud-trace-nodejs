@@ -55,6 +55,7 @@ function TraceWriter(logger, config) {
 
   /** @private */
   this.config_ = config;
+  this.projectId_ = config.projectId;
 
   /** @private {Array<string>} stringified traces to be published */
   this.buffer_ = [];
@@ -83,11 +84,6 @@ function TraceWriter(logger, config) {
     };
     process.on('uncaughtException', this.unhandledException_);
   }
-
-  if (config.projectId !== undefined) {
-    this.projectId_ = config.projectId;
-    this.scheduleFlush_();
-  }
 }
 util.inherits(TraceWriter, common.Service);
 
@@ -95,17 +91,24 @@ TraceWriter.prototype.stop = function() {
   this.isActive = false;
 };
 
-TraceWriter.prototype.initialize = function(cb) {
+/**
+ * @private
+ */
+TraceWriter.prototype.getMetadata_ = function() {
   var that = this;
-
   var metadata = {};
-  var haveProjectId = this.projectId_ !== undefined;
-  var getProjectId = haveProjectId ? Promise.resolve() :
-    getMetadata('project', 'project-id')
-      .then(function(projectId) {
-        metadata.projectId = projectId;
-      });
-  getProjectId.then(function() {
+  // Either sets metadata.projectId if it can retrieve it and resolves, or
+  // rejects with an error.
+  function getProjectId() {
+    return that.projectId_ !== undefined ? Promise.resolve() :
+      getMetadata('project', 'project-id')
+        .then(function(projectId) {
+          metadata.projectId = projectId;
+        });
+  }
+
+  // Sets metadata.instanceId if it can retrieve it, and always resolves.
+  function getInstanceId() {
     return getMetadata('instance', 'id').then(function(id) {
       metadata.instanceId = id;
     }, function(err) {
@@ -115,7 +118,10 @@ TraceWriter.prototype.initialize = function(cb) {
       }
       // Continue anyway
     });
-  }).then(function() {
+  }
+
+  // Sets metadata.hostname if it can retrieve it, and always resolves.
+  function getHostname() {
     return getMetadata('instance', 'hostname').then(function(hostname) {
       metadata.hostname = hostname;
     }, function(err) {
@@ -124,7 +130,20 @@ TraceWriter.prototype.initialize = function(cb) {
         that.logger_.warn('Unable to retrieve hostname from metadata: ', err);
       }
     });
-  }).then(function() {
+  }
+
+  return getProjectId()
+    .then(getInstanceId)
+    .then(getHostname)
+    .then(function() {
+      return metadata;
+    });
+};
+
+TraceWriter.prototype.initialize = function(cb) {
+  var that = this;
+
+  this.getMetadata_().then(function(metadata) {
     that.logger_.debug('TraceWriter: Got the following info from the metadata service: ' +
       util.inspect(metadata));
     var hostname = metadata.hostname || os.hostname();
@@ -165,8 +184,9 @@ TraceWriter.prototype.initialize = function(cb) {
         trace.projectId = that.projectId_;
         that.buffer_[i] = JSON.stringify(trace);
       }
-      that.scheduleFlush_();
     }
+    that.scheduleFlush_();
+
     // Signal that metadata was retrieved without error.
     setImmediate(cb.bind(null, null, metadata));
   }).catch(function(err) {
@@ -262,7 +282,7 @@ TraceWriter.prototype.flushBuffer_ = function() {
 TraceWriter.prototype.publish_ = function(json) {
   var that = this;
   var uri = 'https://cloudtrace.googleapis.com/v1/projects/' +
-    this.projectId + '/traces';
+    this.projectId_ + '/traces';
 
   var options = {
     method: 'PATCH',
