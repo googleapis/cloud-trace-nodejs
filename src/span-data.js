@@ -44,7 +44,7 @@ function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
   this.serializedTraceContext = traceUtil.generateTraceContext({
     traceId: this.trace.traceId,
     spanId: this.span.spanId,
-    options: 1 // always traced; TODO
+    options: 1 // always traced
   });
   trace.spans.push(this.span);
   if (TraceWriter.get().config_.stackTraceLimit > 0) {
