@@ -17,8 +17,7 @@
 'use strict';
 
 var common = require('@google-cloud/common');
-var getMetadata = require('./metadata.js');
-var os = require('os');
+var gcpMetadata = require('gcp-metadata');
 var util = require('util');
 var traceLabels = require('./trace-labels.js');
 var pjson = require('../package.json');
@@ -55,7 +54,6 @@ function TraceWriter(logger, config) {
 
   /** @private */
   this.config_ = config;
-  this.projectId_ = config.projectId;
 
   /** @private {Array<string>} stringified traces to be published */
   this.buffer_ = [];
@@ -91,109 +89,118 @@ TraceWriter.prototype.stop = function() {
   this.isActive = false;
 };
 
-/**
- * @private
- */
-TraceWriter.prototype.getMetadata_ = function() {
-  var that = this;
-  var metadata = {};
-  // Either sets metadata.projectId if it can retrieve it and resolves, or
-  // rejects with an error.
-  function getProjectId() {
-    return that.projectId_ !== undefined ? Promise.resolve() :
-      getMetadata('project', 'project-id')
-        .then(function(projectId) {
-          metadata.projectId = projectId;
-        });
-  }
-
-  // Sets metadata.instanceId if it can retrieve it, and always resolves.
-  function getInstanceId() {
-    return getMetadata('instance', 'id').then(function(id) {
-      metadata.instanceId = id;
-    }, function(err) {
-      if (err.code !== 'ENOTFOUND') {
-        // We are running on GCP.
-        that.logger_.warn('Unable to retrieve instance ID from metadata: ', err);
-      }
-      // Continue anyway
-    });
-  }
-
-  // Sets metadata.hostname if it can retrieve it, and always resolves.
-  function getHostname() {
-    return getMetadata('instance', 'hostname').then(function(hostname) {
-      metadata.hostname = hostname;
-    }, function(err) {
-      if (err.code !== 'ENOTFOUND') {
-        // We are running on GCP.
-        that.logger_.warn('Unable to retrieve hostname from metadata: ', err);
-      }
-    });
-  }
-
-  return getProjectId()
-    .then(getInstanceId)
-    .then(getHostname)
-    .then(function() {
-      return metadata;
-    });
-};
-
 TraceWriter.prototype.initialize = function(cb) {
   var that = this;
+  // Ensure that cb is called only once.
+  var pendingOperations = 2;
 
-  this.getMetadata_().then(function(metadata) {
-    that.logger_.debug('TraceWriter: Got the following info from the metadata service: ' +
-      util.inspect(metadata));
-    var hostname = metadata.hostname || os.hostname();
-    var instanceId = metadata.instanceId;
-    var projectId = metadata.projectId;
-
-    // Set labels
-    var labels = {};
-    labels[traceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
-    labels[traceLabels.GCE_HOSTNAME] = hostname;
-    if (instanceId) {
-      labels[traceLabels.GCE_INSTANCE_ID] = instanceId;
+  // Schedule periodic flushing of the buffer, but only if we are able to get
+  // the project number (potentially from the network.)
+  that.getProjectId(function(err, project) {
+    if (err) {
+      that.logger_.error('Unable to acquire the project number from metadata ' +
+        'service. Please provide a valid project number as an env. ' +
+        'variable, or through config.projectId passed to start(). ' + err);
+      cb(err);
+    } else {
+      that.config_.projectId = project;
+      that.scheduleFlush_();
+      if (--pendingOperations === 0) {
+        cb();
+      }
     }
-    var moduleName = that.config_.serviceContext.service || hostname;
-    labels[traceLabels.GAE_MODULE_NAME] = moduleName;
+  });
 
-    var moduleVersion = that.config_.serviceContext.version;
-    if (moduleVersion) {
-      labels[traceLabels.GAE_MODULE_VERSION] = moduleVersion;
-      var minorVersion = that.config_.serviceContext.minorVersion;
-      if (minorVersion) {
-        var versionLabel = '';
-        if (moduleName !== 'default') {
-          versionLabel = moduleName + ':';
+  that.getHostname(function(hostname) {
+    that.getInstanceId(function(instanceId) {
+      var labels = {};
+      labels[traceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
+      labels[traceLabels.GCE_HOSTNAME] = hostname;
+      if (instanceId) {
+        labels[traceLabels.GCE_INSTANCE_ID] = instanceId;
+      }
+      var moduleName = that.config_.serviceContext.service || hostname;
+      labels[traceLabels.GAE_MODULE_NAME] = moduleName;
+
+      var moduleVersion = that.config_.serviceContext.version;
+      if (moduleVersion) {
+        labels[traceLabels.GAE_MODULE_VERSION] = moduleVersion;
+        var minorVersion = that.config_.serviceContext.minorVersion;
+        if (minorVersion) {
+          var versionLabel = '';
+          if (moduleName !== 'default') {
+            versionLabel = moduleName + ':';
+          }
+          versionLabel += moduleVersion + '.' + minorVersion;
+          labels[traceLabels.GAE_VERSION] = versionLabel;
         }
-        versionLabel += moduleVersion + '.' + minorVersion;
-        labels[traceLabels.GAE_VERSION] = versionLabel;
       }
-    }
-    Object.freeze(labels);
-    that.defaultLabels_ = labels;
-
-    // Set project ID, and start scheduling buffer flushes
-    if (projectId) {
-      that.projectId_ = projectId;
-      for (var i = 0; i < that.buffer_; i++) {
-        var trace = JSON.parse(that.buffer_[i]);
-        trace.projectId = that.projectId_;
-        that.buffer_[i] = JSON.stringify(trace);
+      Object.freeze(labels);
+      that.defaultLabels_ = labels;
+      if (--pendingOperations === 0) {
+        cb();
       }
-    }
-    that.scheduleFlush_();
+    });
+  });
+};
+util.inherits(TraceWriter, common.Service);
 
-    // Signal that metadata was retrieved without error.
-    setImmediate(cb.bind(null, null, metadata));
-  }).catch(function(err) {
-    that.logger_.error('Unable to acquire the project number from metadata ' +
-      'service. Please provide a valid project number as an env. ' +
-      'variable, or through config.projectId passed to start(). ' + err);
-    setImmediate(cb.bind(null, err));
+TraceWriter.prototype.stop = function() {
+  this.isActive = false;
+};
+
+TraceWriter.prototype.getHostname = function(cb) {
+  var that = this;
+  gcpMetadata.instance({
+    property: 'hostname',
+    headers: headers
+  }, function(err, response, hostname) {
+    if (err && err.code !== 'ENOTFOUND') {
+      // We are running on GCP.
+      that.logger_.warn('Unable to retrieve GCE hostname.', err);
+    }
+    cb(hostname || require('os').hostname());
+  });
+};
+
+TraceWriter.prototype.getInstanceId = function(cb) {
+  var that = this;
+  gcpMetadata.instance({
+    property: 'id',
+    headers: headers
+  }, function(err, response, instanceId) {
+    if (err && err.code !== 'ENOTFOUND') {
+      // We are running on GCP.
+      that.logger_.warn('Unable to retrieve GCE instance id.', err);
+    }
+    cb(instanceId);
+  });
+};
+
+/**
+ * Returns the project ID if it has been cached and attempts to load
+ * it from the enviroment or network otherwise.
+ *
+ * @param {function(?, number):?} callback an (err, result) style callback
+ */
+TraceWriter.prototype.getProjectId = function(callback) {
+  var that = this;
+  if (that.config_.projectId) {
+    callback(null, that.config_.projectId);
+    return;
+  }
+
+  gcpMetadata.project({
+    property: 'project-id',
+    headers: headers
+  }, function(err, response, projectId) {
+    if (err) {
+      callback(err);
+      return;
+    }
+    that.logger_.info('Acquired ProjectId from metadata: ' + projectId);
+    that.config_.projectId = projectId;
+    callback(null, projectId);
   });
 };
 
@@ -226,18 +233,24 @@ TraceWriter.prototype.writeSpan = function(spanData) {
  * @param {Trace} trace The trace to be queued.
  */
 TraceWriter.prototype.queueTrace_ = function(trace) {
-  trace.projectId = this.projectId_;
-  this.buffer_.push(JSON.stringify(trace));
-  this.logger_.debug('queued trace. new size:', this.buffer_.length);
+  var that = this;
 
-  // Publish soon if the buffer is getting big
-  if (this.projectId_ && this.buffer_.length >= this.config_.bufferSize) {
-    this.logger_.info('Flushing: trace buffer full');
-    var that = this;
-    setImmediate(function() { that.flushBuffer_(); });
-  }
-  // If projectId is not available, this trace will be published when it's set
-  // in setProjectId
+  that.getProjectId(function(err, project) {
+    if (err) {
+      that.logger_.info('No project number, dropping trace.');
+      return; // if we even reach this point, disabling traces is already imminent.
+    }
+
+    trace.projectId = project;
+    that.buffer_.push(JSON.stringify(trace));
+    that.logger_.debug('queued trace. new size:', that.buffer_.length);
+
+    // Publish soon if the buffer is getting big
+    if (that.buffer_.length >= that.config_.bufferSize) {
+      that.logger_.info('Flushing: trace buffer full');
+      setImmediate(function() { that.flushBuffer_(); });
+    }
+  });
 };
 
 /**
@@ -282,7 +295,7 @@ TraceWriter.prototype.flushBuffer_ = function() {
 TraceWriter.prototype.publish_ = function(json) {
   var that = this;
   var uri = 'https://cloudtrace.googleapis.com/v1/projects/' +
-    this.projectId_ + '/traces';
+    this.config_.projectId + '/traces';
 
   var options = {
     method: 'PATCH',

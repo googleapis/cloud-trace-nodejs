@@ -177,75 +177,103 @@ describe('TraceWriter', function() {
     });
   });
 
-  describe('getMetadata_', function() {
+  describe('initialize', function() {
     var testCases = [
       {
-        description: 'reject if no projectId is available',
-        localProjectId: undefined,
-        metadataProjectId: undefined,
-        assertResults: function(err, metadata) {
+        description: 'yield error if no projectId is available',
+        config: {},
+        metadata: {},
+        assertResults: function(err, tw) {
           assert.ok(err);
+          assert.strictEqual(tw.config_.projectId, undefined);
         }
       },
       {
         description: 'not get projectId if it\'s locally available',
-        localProjectId: 'foo',
-        metadataProjectId: undefined,
-        assertResults: function(err, metadata) {
+        config: { projectId: 'foo' },
+        metadata: {},
+        assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.deepStrictEqual(metadata, {});
+          assert.strictEqual(tw.config_.projectId, 'foo');
         }
       },
       {
         description: 'get projectId if it\'s not locally available',
-        localProjectId: undefined,
-        metadataProjectId: 'foo',
-        assertResults: function(err, metadata) {
+        config: {},
+        metadata: { projectId: 'foo' },
+        assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.deepStrictEqual(metadata, {
-            projectId: 'foo'
-          });
+          assert.strictEqual(tw.config_.projectId, 'foo');
         }
       },
       {
         description: 'get hostname even if instanceId isn\'t available',
-        localProjectId: undefined,
-        metadataProjectId: 'foo',
-        metadataHostname: 'bar',
-        assertResults: function(err, metadata) {
+        config: {},
+        metadata: {
+          projectId: 'foo',
+          hostname: 'bar'
+        },
+        assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.deepStrictEqual(metadata, {
-            projectId: 'foo',
-            hostname: 'bar'
-          });
+          // Having a hostname is reflected in whether these labels are set
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'bar');
+          // Having an instanceId is reflected in whether this label is set
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], undefined);
         }
       },
       {
         description: 'get instanceId even if hostname isn\'t available',
-        localProjectId: undefined,
-        metadataProjectId: 'foo',
-        metadataInstanceId: 'baz',
-        assertResults: function(err, metadata) {
+        config: {},
+        metadata: {
+          projectId: 'foo',
+          instanceId: 'baz'
+        },
+        assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.deepStrictEqual(metadata, {
-            projectId: 'foo',
-            instanceId: 'baz'
-          });
+          // Having a hostname is reflected in whether these labels are set
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], os.hostname());
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], os.hostname());
+          // Having an instanceId is reflected in whether this label is set
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
         }
       },
       {
         description: 'get all fields if they exist',
-        localProjectId: undefined,
-        metadataProjectId: 'foo',
-        metadataHostname: 'bar',
-        metadataInstanceId: 'baz',
-        assertResults: function(err, metadata) {
+        config: {},
+        metadata: {
+          projectId: 'foo',
+          hostname: 'bar',
+          instanceId: 'baz'
+        },
+        assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.deepStrictEqual(metadata, {
-            projectId: 'foo',
-            hostname: 'bar',
-            instanceId: 'baz'
-          });
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
+        }
+      },
+      {
+        description: 'prioritize config-provided information when setting labels',
+        config: {
+          serviceContext: {
+            service: 'barz',
+            version: '1',
+            minorVersion: '2'
+          }
+        },
+        metadata: {
+          projectId: 'foo',
+          hostname: 'bar',
+          instanceId: 'baz'
+        },
+        assertResults: function(err, tw) {
+          assert.ok(!err);
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'barz');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_VERSION], '1');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_VERSION], 'barz:1.2');
         }
       }
     ];
@@ -260,120 +288,24 @@ describe('TraceWriter', function() {
 
     testCases.forEach(function(testCase) {
       it('should ' + testCase.description, function(done) {
-        if (testCase.metadataProjectId) {
-          nocks.projectId(function() { return testCase.metadataProjectId; });
+        if (testCase.metadata.projectId) {
+          nocks.projectId(function() { return testCase.metadata.projectId; });
         }
-        if (testCase.metadataHostname) {
-          nocks.hostname(function() { return testCase.metadataHostname; });
+        if (testCase.metadata.hostname) {
+          nocks.hostname(function() { return testCase.metadata.hostname; });
         }
-        if (testCase.metadataInstanceId) {
-          nocks.instanceId(function() { return testCase.metadataInstanceId; });
+        if (testCase.metadata.instanceId) {
+          nocks.instanceId(function() { return testCase.metadata.instanceId; });
         }
 
-        TraceWriter.create(fakeLogger, {
-          forceNewAgent_: true,
-          projectId: testCase.localProjectId,
-          onUncaughtException: 'ignore'
-        });
-        // Use setImmediate so assert failures don't show up as rejected promises
-        TraceWriter.get().getMetadata_().then(function(metadata) {
-          setImmediate(function() {
-            testCase.assertResults(null, metadata);
-            done();
-          });
-        }, function(err) {
-          setImmediate(function() {
-            testCase.assertResults(err);
-            done();
-          });
-        });
-      });
-    });
-  });
-
-  describe('initialize', function() {
-    it('handles getMetadata_ rejection', function(done) {
-      TraceWriter.create(fakeLogger, {
-        forceNewAgent_: true,
-        projectId: undefined,
-        onUncaughtException: 'ignore'
-      });
-      var metadataErr = new Error('');
-      TraceWriter.get().getMetadata_ = function() {
-        return Promise.reject(metadataErr);
-      };
-      TraceWriter.get().initialize(function(err) {
-        assert.strictEqual(metadataErr, err);
-        done();
-      });
-    });
-
-    var testCases = [
-      {
-        description: 'set labels to os.hostname() if metadata isn\'t available',
-        config: {
-          projectId: 'foo',
-          serviceContext: {}
-        },
-        metadata: {},
-        assertResults: function(tw) {
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], os.hostname());
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], os.hostname());
-        }
-      },
-      {
-        description: 'set labels to metadata-provided information',
-        config: {
-          serviceContext: {}
-        },
-        metadata: {
-          projectId: 'foo',
-          hostname: 'bar',
-          instanceId: 'baz'
-        },
-        assertResults: function(tw) {
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
-        }
-      },
-      {
-        description: 'prioritizes config-provided information when setting labels',
-        config: {
-          serviceContext: {
-            service: 'barz',
-            version: '1',
-            minorVersion: '2'
-          }
-        },
-        metadata: {
-          projectId: 'foo',
-          hostname: 'bar',
-          instanceId: 'baz'
-        },
-        assertResults: function(tw) {
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'barz');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_VERSION], '1');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_VERSION], 'barz:1.2');
-        }
-      }
-    ];
-
-    testCases.forEach(function(testCase) {
-      it('should ' + testCase.description, function(done) {
         TraceWriter.create(fakeLogger, Object.assign({
           forceNewAgent_: true,
-          onUncaughtException: 'ignore'
+          onUncaughtException: 'ignore',
+          serviceContext: {}
         }, testCase.config));
-        TraceWriter.get().getMetadata_ = function() {
-          return Promise.resolve(testCase.metadata);
-        };
-        TraceWriter.get().scheduleFlush_ = function() {};
+        // Use setImmediate so assert failures don't show up as rejected promises
         TraceWriter.get().initialize(function(err) {
-          assert.ok(!err, err);
-          testCase.assertResults(TraceWriter.get());
+          testCase.assertResults(err, TraceWriter.get());
           done();
         });
       });
