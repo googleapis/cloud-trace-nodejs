@@ -17,6 +17,7 @@
 'use strict';
 
 var assert = require('assert');
+var inspect = require('util').inspect;
 var Module = require('module');
 var semver = require('semver');
 var util = require('../src/util.js');
@@ -80,5 +81,85 @@ describe('util.findModuleVersion', function() {
     var truePackage =
       require('../node_modules/@google-cloud/common/package.json');
     assert.equal(util.findModuleVersion(modulePath, Module._load), truePackage.version);
+  });
+});
+
+describe('util.parseContextFromHeader', function() {
+  describe('valid inputs', function() {
+    it('should return expected values: 123456/667;o=1', function() {
+      var result = util.parseContextFromHeader(
+        '123456/667;o=1');
+      assert(result);
+      assert.strictEqual(result.traceId, '123456');
+      assert.strictEqual(result.spanId, '667');
+      assert.strictEqual(result.options, 1);
+    });
+
+    it('should return expected values:' +
+        '123456/123456123456123456123456123456123456;o=1', function() {
+      var result = util.parseContextFromHeader(
+        '123456/123456123456123456123456123456123456;o=1');
+      assert(result);
+      assert.strictEqual(result.traceId, '123456');
+      assert.strictEqual(result.spanId, '123456123456123456123456123456123456');
+      assert.strictEqual(result.options, 1);
+    });
+
+    it('should return expected values: 123456/667', function() {
+      var result = util.parseContextFromHeader(
+        '123456/667');
+      assert(result);
+      assert.strictEqual(result.traceId, '123456');
+      assert.strictEqual(result.spanId, '667');
+      assert.strictEqual(result.options, undefined);
+    });
+  });
+
+  describe('invalid inputs', function() {
+    var inputs = [
+      '',
+      null,
+      undefined,
+      '123456',
+      '123456;o=1',
+      'o=1;123456',
+      '123;456;o=1',
+      '123/o=1;456',
+      '123/abc/o=1'
+    ];
+    inputs.forEach(function(s) {
+      it('should reject ' + s, function() {
+        var result = util.parseContextFromHeader(s);
+        assert.ok(!result);
+      });
+    });
+  });
+});
+
+describe('util.generateTraceContext', function() {
+  var inputs = [
+    {
+      traceId: '123456',
+      spanId: '667',
+      options: 1
+    },
+    {
+      traceId: '123456',
+      spanId: '667',
+      options: undefined
+    }
+  ];
+
+  inputs.forEach(function(s) {
+    it('returns well-formatted trace context for ' + inspect(s), function() {
+      var context = util.generateTraceContext(s, true);
+      var parsed = util.parseContextFromHeader(context);
+      assert.deepEqual(parsed, s);
+    });
+  });
+
+  it('returns an empty string if passed a falsy value', function() {
+    var context = util.generateTraceContext(null);
+    assert.equal(context, '');
   });
 });

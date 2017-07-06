@@ -17,100 +17,76 @@
 'use strict';
 var cls = require('./cls.js');
 var constants = require('./constants.js');
-var extend = require('extend');
 var is = require('is');
 var TraceLabels = require('./trace-labels.js');
+var util = require('./util.js');
+var Trace = require('./trace.js');
+var SpanData = require('./span-data.js');
+var uuid = require('uuid');
+var TracingPolicy = require('./tracing-policy.js');
 
 /**
- * This file describes an interface for third-party plugins to enable tracing
- * for arbitrary modules.
+ * Phantom implementation of the trace api. When disabled, a TraceAgent instance
+ * will have its public method implementations replaced with corresponding
+ * no-op implementations in this object.
  */
-
-/**
- * An object that represents a single child span. It exposes functions for
- * adding labels to or closing the span.
- * @param {TraceAgent} agent The underlying trace agent object.
- * @param {SpanData} span The internal data structure backing the child span.
- */
-function ChildSpan(agent, span) {
-  this.agent_ = agent;
-  this.span_ = span;
-  this.serializedTraceContext_ = agent.generateTraceContext(span, true);
-}
-
-/**
- * Adds a label to the child span.
- * @param {string} key The name of the label to add.
- * @param {*} value The value of the label to add.
- */
-ChildSpan.prototype.addLabel = function(key, value) {
-  this.span_.addLabel(key, value);
-};
-
-/**
- * Ends the child span. This function should only be called once.
- */
-ChildSpan.prototype.endSpan = function() {
-  this.span_.close();
-};
-
-/**
- * Gets the trace context serialized as a string. This string can be set as the
- * 'x-cloud-trace-context' field in an HTTP request header to support
- * distributed tracing.
- */
-ChildSpan.prototype.getTraceContext = function() {
-  return this.serializedTraceContext_;
-};
-
-/**
- * An object that represents a single root span. It exposes functions for adding
- * labels to or closing the span.
- * @param {TraceAgent} agent The underlying trace agent object.
- * @param {SpanData} span The internal data structure backing the root span.
- */
-function RootSpan(agent, span) {
-  this.agent_ = agent;
-  this.span_ = span;
-  this.serializedTraceContext_ = agent.generateTraceContext(span, true);
-}
-
-/**
- * Adds a label to the span.
- * @param {string} key The name of the label to add.
- * @param {*} value The value of the label to add.
- */
-RootSpan.prototype.addLabel = function(key, value) {
-  this.span_.addLabel(key, value);
-};
-
-/**
- * Ends the span. This function should only be called once.
- */
-RootSpan.prototype.endSpan = function() {
-  this.span_.close();
-};
-
-/**
- * Gets the trace context serialized as a string. This string can be set as the
- * 'x-cloud-trace-context' field in an HTTP request header to support
- * distributed tracing.
- */
-RootSpan.prototype.getTraceContext = function() {
-  return this.serializedTraceContext_;
+var phantomApiImpl = {
+  enhancedDatabaseReportingEnabled: function() { return false; },
+  runInRootSpan: function(opts, fn) { return fn(null); },
+  createChildSpan: function(opts) { return null; },
+  getResponseTraceContext: function(context, traced) { return ''; },
+  wrap: function(fn) { return fn; },
+  wrapEmitter: function(ee) {},
 };
 
 // A sentinal stored in CLS to indicate that the current request was not sampled.
 var nullSpan = {};
 
 /**
- * The functional implementation of the Trace API
+ * TraceAgent exposes a number of methods to create trace spans and propagate
+ * trace context across asynchronous boundaries. Trace spans are published
+ * in the background with a separate TraceWriter instance, which should be
+ * initialized beforehand.
+ * @constructor
+ * @param {String} name A string identifying this TraceAgent instance in logs.
+ * @param {common.logger} logger A logger object.
+ * @param {Configuration} config An object specifying how this instance should
+ * be configured.
  */
-function TraceApiImplementation(agent, pluginName) {
-  this.agent_ = agent;
-  this.logger_ = agent.logger;
-  this.pluginName_ = pluginName;
+function TraceAgent(name, logger, config) {
+  this.pluginName_ = name;
+  this.logger_ = logger;
+  this.namespace_ = cls.getNamespace();
+  this.policy_ = TracingPolicy.createTracePolicy(config);
+  this.config_ = config;
 }
+
+/**
+ * Disable this TraceAgent instance. This function is only for internal use and
+ * unit tests.
+ * @private
+ */
+TraceAgent.prototype.disable = function() {
+  // Even though plugins should be unpatched, setting a new policy that
+  // never generates traces allows persisting wrapped methods (either because
+  // they are already instantiated or the plugin doesn't unpatch them) to
+  // short-circuit out of trace generation logic.
+  this.policy_ = new TracingPolicy.TraceNonePolicy();
+  this.namespace_ = null;
+  for (var memberName in phantomApiImpl) {
+    this[memberName] = phantomApiImpl[memberName];
+  }
+};
+
+/**
+ * Returns whether the TraceAgent instance is active. This function is only for
+ * internal use and unit tests; under normal circumstances it will always return
+ * true.
+ * @private
+ */
+TraceAgent.prototype.isActive = function() {
+  return !!this.namespace_;
+};
 
 /**
  * Gets the value of enhancedDatabaseReporting in the trace agent's
@@ -118,8 +94,8 @@ function TraceApiImplementation(agent, pluginName) {
  * @returns A boolean value indicating whether the trace agent was configured
  * to have an enhanced level of reporting enabled.
  */
-TraceApiImplementation.prototype.enhancedDatabaseReportingEnabled = function() {
-  return this.agent_.config_.enhancedDatabaseReporting;
+TraceAgent.prototype.enhancedDatabaseReportingEnabled = function() {
+  return this.config_.enhancedDatabaseReporting;
 };
 
 /**
@@ -143,9 +119,12 @@ TraceApiImplementation.prototype.enhancedDatabaseReportingEnabled = function() {
  * argument.
  * @returns The return value of calling fn.
  */
-TraceApiImplementation.prototype.runInRootSpan = function(options, fn) {
+TraceAgent.prototype.runInRootSpan = function(options, fn) {
   var that = this;
-  if (!this.agent_.namespace) {
+  // TODO validate options
+  // Don't create a root span if the required namespace doesn't exist, or we
+  // are already in a root span
+  if (!this.namespace_) {
     this.logger_.warn(this.pluginName_ + ': CLS namespace not present; not ' +
       'running in root span.');
     return fn(null);
@@ -154,10 +133,36 @@ TraceApiImplementation.prototype.runInRootSpan = function(options, fn) {
     this.logger_.warn(this.pluginName_ + ': Cannot create nested root spans.');
     return fn(null);
   }
-  return this.agent_.namespace.runAndReturn(function() {
-    var skipFrames = options.skipFrames ? options.skipFrames + 3 : 3;
-    var rootSpan = createRootSpan_(that, options, skipFrames);
-    return fn(rootSpan);
+
+  return this.namespace_.runAndReturn(function() {
+    // Attempt to read incoming trace context.
+    var incomingTraceContext;
+    if (is.string(options.traceContext) && !that.config_.ignoreContextHeader) {
+      incomingTraceContext = util.parseContextFromHeader(options.traceContext);
+    }
+    incomingTraceContext = incomingTraceContext || {};
+
+    // Consult the trace policy, and don't create a root span if the trace
+    // policy disallows it.
+    var locallyAllowed = that.policy_.shouldTrace(Date.now(), options.url || '');
+    var remotelyAllowed = isNaN(incomingTraceContext.options) ||
+      (incomingTraceContext.options & constants.TRACE_OPTIONS_TRACE_ENABLED);
+    if (!locallyAllowed || !remotelyAllowed) {
+      cls.setRootContext(nullSpan);
+      return fn(null);
+    }
+
+    // Create a new root span, and invoke fn with it.
+    var traceId = incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
+    var parentId = incomingTraceContext.spanId || '0';
+    var rootContext = new SpanData(new Trace(0, traceId), /* Trace object */
+      options.name, /* Span name */
+      parentId, /* Parent's span ID */
+      true, /* Is root span */
+      options.skipFrames ? options.skipFrames + 2 : 2);
+    rootContext.span.kind = 'RPC_SERVER';
+    cls.setRootContext(rootContext);
+    return fn(rootContext);
   });
 };
 
@@ -172,21 +177,31 @@ TraceApiImplementation.prototype.runInRootSpan = function(options, fn) {
  * this should be set to avoid including frames in the plugin. Defaults to 0.
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
-TraceApiImplementation.prototype.createChildSpan = function(options) {
+TraceAgent.prototype.createChildSpan = function(options) {
   var rootSpan = cls.getRootContext();
   if (!rootSpan) {
-    // Lost context
+    // Context was lost.
     this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
       'without root');
     return null;
   } else if (rootSpan === nullSpan) {
-    // Chose not to sample
+    // Context wasn't lost, but there's no root span, indicating that this
+    // request should not be traced.
     return null;
   } else {
+    if (rootSpan.span.isClosed()) {
+      this.logger_.warn(this.pluginName_ + ': creating child for an already closed span',
+        options.name, rootSpan.span.name);
+    }
+    // Create a new child span and return it.
     options = options || {};
-    var childContext = this.agent_.startSpan(options.name, {},
-      options.skipFrames ? options.skipFrames + 2 : 2);
-    return new ChildSpan(this.agent_, childContext);
+    var skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
+    var childContext = new SpanData(rootSpan.trace, /* Trace object */
+      options.name, /* Span name */
+      rootSpan.span.spanId, /* Parent's span ID */
+      false, /* Is root span */
+      skipFrames); /* # of frames to skip in stack trace */
+    return childContext;
   }
 };
 
@@ -204,15 +219,14 @@ TraceApiImplementation.prototype.createChildSpan = function(options) {
  * header, the string to be set as this header's value. Otherwise, an empty
  * string.
  */
-TraceApiImplementation.prototype.getResponseTraceContext = function(
+TraceAgent.prototype.getResponseTraceContext = function(
     incomingTraceContext, isTraced) {
-  var traceContext = this.agent_.parseContextFromHeader(incomingTraceContext);
+  var traceContext = util.parseContextFromHeader(incomingTraceContext);
   if (!traceContext) {
     return '';
   }
   traceContext.options = traceContext.options & isTraced;
-  return traceContext.traceId + '/' + traceContext.spanId + ';o=' +
-    traceContext.options;
+  return util.generateTraceContext(traceContext);
 };
 
 /**
@@ -221,13 +235,13 @@ TraceApiImplementation.prototype.getResponseTraceContext = function(
  * that are called asynchronously (for example, in a network response handler).
  * @param {function} fn A function to which to bind the trace context.
  */
-TraceApiImplementation.prototype.wrap = function(fn) {
-  if (!this.agent_.namespace) {
+TraceAgent.prototype.wrap = function(fn) {
+  if (!this.namespace_) {
     this.logger_.warn(this.pluginName_ + ': No CLS namespace to bind ' +
       'function');
     return fn;
   }
-  return this.agent_.namespace.bind(fn);
+  return this.namespace_.bind(fn);
 };
 
 /**
@@ -236,106 +250,16 @@ TraceApiImplementation.prototype.wrap = function(fn) {
  * @param {EventEmitter} emitter An event emitter whose handlers should have
  * the trace context binded to them.
  */
-TraceApiImplementation.prototype.wrapEmitter = function(emitter) {
-  if (!this.agent_.namespace) {
+TraceAgent.prototype.wrapEmitter = function(emitter) {
+  if (!this.namespace_) {
     this.logger_.warn(this.pluginName_ + ': No CLS namespace to bind ' +
       'emitter to');
   }
-  this.agent_.namespace.bindEmitter(emitter);
+  this.namespace_.bindEmitter(emitter);
 };
 
-TraceApiImplementation.prototype.constants = constants;
+TraceAgent.prototype.constants = constants;
 
-TraceApiImplementation.prototype.labels = TraceLabels;
+TraceAgent.prototype.labels = TraceLabels;
 
-/**
- * Phantom implementation of the trace api. This allows API users to decouple
- * the enable/disable logic from the calls to the tracing API. The phantom API
- * has a lower overhead than isEnabled checks inside the API functions.
- * @private
- */
-var phantomApiImpl = {
-  enhancedDatabaseReportingEnabled: function() { return false; },
-  runInRootSpan: function(opts, fn) { return fn(null); },
-  createChildSpan: function(opts) { return null; },
-  getResponseTraceContext: function(context, traced) { return ''; },
-  wrap: function(fn) { return fn; },
-  wrapEmitter: function(ee) {},
-  constants: constants,
-  labels: TraceLabels
-};
-
-/**
- * Creates an object that provides an interface to the trace agent
- * implementation.
- * Upon creation, the object is in an "uninitialized" state, corresponding
- * to its intended (no-op) behavior before the trace agent is started.
- * When the trace agent is started, the interface object becomes
- * "initialized", and its underlying implementation is switched to that of
- * the actual agent implementation.
- * Finally, when the trace agent is stopped, this object enters the "disabled"
- * state, and its underlying implementation is switched back to no-op.
- * Currently, this only happens when the application's GCP project ID could
- * not be determined from the GCP metadata service.
- * This object's state changes strictly from uninitialized to initialized,
- * and from initialized to disabled.
- */
-module.exports = function TraceApi(pluginName) {
-  var impl = phantomApiImpl;
-  extend(this, {
-    enhancedDatabaseReportingEnabled: function() {
-      return impl.enhancedDatabaseReportingEnabled();
-    },
-    runInRootSpan: function(opts, fn) {
-      return impl.runInRootSpan(opts, fn);
-    },
-    createChildSpan: function(opts) {
-      return impl.createChildSpan(opts);
-    },
-    getResponseTraceContext: function(incomingTraceContext, isTraced) {
-      return impl.getResponseTraceContext(incomingTraceContext, isTraced);
-    },
-    wrap: function(fn) {
-      return impl.wrap(fn);
-    },
-    wrapEmitter: function(ee) {
-      return impl.wrapEmitter(ee);
-    },
-    constants: impl.constants,
-    labels: impl.labels,
-    isActive: function() {
-      return impl !== phantomApiImpl;
-    },
-    enable_: function(agent) {
-      impl = new TraceApiImplementation(agent, pluginName);
-    },
-    disable_: function() {
-      impl = phantomApiImpl;
-    },
-    private_: function() { return impl.agent_; }
-  });
-  return this;
-};
-
-// Module-private functions
-
-function createRootSpan_(api, options, skipFrames) {
-  options = options || {};
-  // If the options object passed in has the getTraceContext field set,
-  // try to retrieve the header field containing incoming trace metadata.
-  var incomingTraceContext;
-  if (is.string(options.traceContext)) {
-    incomingTraceContext = api.agent_.parseContextFromHeader(options.traceContext);
-  }
-  incomingTraceContext = incomingTraceContext || {};
-  if (!api.agent_.shouldTrace(options.url || '',
-      incomingTraceContext.options)) {
-    cls.setRootContext(nullSpan);
-    return null;
-  }
-  var rootContext = api.agent_.createRootSpanData(options.name,
-    incomingTraceContext.traceId,
-    incomingTraceContext.spanId,
-    skipFrames + 1);
-  return new RootSpan(api.agent_, rootContext);
-}
+module.exports = TraceAgent;

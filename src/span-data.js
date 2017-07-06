@@ -17,11 +17,11 @@
 'use strict';
 
 var constants = require('./constants.js');
-var is = require('is');
 var TraceSpan = require('./trace-span.js');
 var TraceLabels = require('./trace-labels.js');
 var traceUtil = require('./util.js');
 var util = require('util');
+var TraceWriter = require('./trace-writer.js');
 
 // Auto-incrementing integer
 var uid = 1;
@@ -35,15 +35,19 @@ var uid = 1;
  * @param {number} skipFrames the number of frames to remove from the top of the stack.
  * @constructor
  */
-function SpanData(agent, trace, name, parentSpanId, isRoot, skipFrames) {
+function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
   var spanId = uid++;
-  this.agent = agent;
   var spanName = traceUtil.truncate(name, constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
   this.span = new TraceSpan(spanName, spanId, parentSpanId);
   this.trace = trace;
   this.isRoot = isRoot;
+  this.serializedTraceContext = traceUtil.generateTraceContext({
+    traceId: this.trace.traceId,
+    spanId: this.span.spanId,
+    options: 1 // always traced
+  });
   trace.spans.push(this.span);
-  if (agent.config().stackTraceLimit > 0) {
+  if (TraceWriter.get().config().stackTraceLimit > 0) {
     // This is a mechanism to get the structured stack trace out of V8.
     // prepareStackTrace is called th first time the Error#stack property is
     // accessed. The original behavior is to format the stack as an exception
@@ -52,7 +56,7 @@ function SpanData(agent, trace, name, parentSpanId, isRoot, skipFrames) {
     // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
     //
     var origLimit = Error.stackTraceLimit;
-    Error.stackTraceLimit = agent.config().stackTraceLimit + skipFrames;
+    Error.stackTraceLimit = TraceWriter.get().config().stackTraceLimit + skipFrames;
 
     var origPrepare = Error.prepareStackTrace;
     Error.prepareStackTrace = function(error, structured) {
@@ -86,52 +90,24 @@ function SpanData(agent, trace, name, parentSpanId, isRoot, skipFrames) {
   }
 }
 
-/**
- * Creates a child span of this span.
- * @param name The name of the child span.
- * @param {number} skipFrames The number of caller frames to eliminate from
- *                            stack traces.
- * @returns {SpanData} The new child trace span data.
- */
-SpanData.prototype.createChildSpanData = function(name, skipFrames) {
-  if (this.span.isClosed()) {
-    this.agent.logger.warn('creating child for an already closed span',
-        name, this.span.name);
-  }
-  return new SpanData(this.agent, this.trace, name, this.span.spanId, false,
-      skipFrames + 1);
+SpanData.prototype.getTraceContext = function() {
+  return this.serializedTraceContext;
 };
 
 SpanData.prototype.addLabel = function(key, value) {
   var k = traceUtil.truncate(key, constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
   var string_val = typeof value === 'string' ? value : util.inspect(value);
-  var v = traceUtil.truncate(string_val, this.agent.config().maximumLabelValueSize);
+  var v = traceUtil.truncate(string_val, TraceWriter.get().config().maximumLabelValueSize);
   this.span.setLabel(k, v);
 };
 
 /**
- * Add properties from provided `labels` param to the span as labels.
- * 
- * @param {Object<string, string}>=} labels Labels to be attached to the newly 
- *   created span. Non-object data types are silently ignored.
+ * Closes the span.
  */
-SpanData.prototype.addLabels = function(labels) {
-  var that = this;
-  if (is.object(labels)) {
-    Object.keys(labels).forEach(function(key) {
-      that.addLabel(key, labels[key]);
-    });
-  }
-};
-
-/**
- * Closes the span and queues it for publishing if it is a root.
- */
-SpanData.prototype.close = function() {
+SpanData.prototype.endSpan = function() {
   this.span.close();
   if (this.isRoot) {
-    this.agent.logger.info('Writing root span');
-    this.agent.traceWriter.writeSpan(this);
+    TraceWriter.get().writeSpan(this);
   }
 };
 

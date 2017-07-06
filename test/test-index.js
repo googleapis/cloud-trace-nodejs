@@ -16,27 +16,46 @@
 
 'use strict';
 
+require('./plugins/common.js');
 var assert = require('assert');
+var nock = require('nock');
 var trace = require('..');
 
 describe('index.js', function() {
-  var agent = trace.start({ projectId: '0' });
+  describe('in valid environment', function() {
+    var agent;
+    before(function() {
+      agent = trace.start({ projectId: '0', forceNewAgent_: true });
+    });
 
-  it('should get the agent with `Trace.get`', function() {
-    assert.strictEqual(agent, trace.get());
+    it('should get the agent with `Trace.get`', function() {
+      assert.strictEqual(agent, trace.get());
+    });
+
+    it('should throw an error if `start` is called on an active agent',
+      function() {
+        assert.throws(trace.start, Error);
+    });
+
+    it('should set agent on global object', function() {
+      assert.equal(global._google_trace_agent, agent);
+    });
   });
 
-  it('should throw an error if `start` is called on an active agent',
-    function() {
-      assert.throws(trace.start, Error);
-  });
-  
-  it('should not attach exception handler with ignore option', function() {
-    // Mocha attaches 1 exception handler
-    assert.equal(process.listeners('uncaughtException').length, 1);
-  });
-
-  it('should set agent on global object', function() {
-    assert.equal(global._google_trace_agent, agent);
+  it('should stop if TraceWriter fails to initialize', function(done) {
+    var envProjectId = process.env.GCLOUD_PROJECT;
+    delete process.env.GCLOUD_PROJECT;
+    nock.disableNetConnect();
+    var scope = nock('http://metadata.google.internal')
+                .get('/computeMetadata/v1/project/project-id')
+                .times(1)
+                .reply(404, 'foo');
+    var agent = trace.start({logLevel: 0, forceNewAgent_: true});
+    setTimeout(function() {
+      assert.ok(!agent.isActive());
+      scope.done();
+      process.env.GCLOUD_PROJECT = envProjectId;
+      done();
+    }, 500);
   });
 });

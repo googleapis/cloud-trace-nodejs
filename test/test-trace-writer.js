@@ -22,6 +22,7 @@ var assert = require('assert');
 var fakeCredentials = require('./fixtures/gcloud-credentials.json');
 var nock = require('nock');
 var nocks = require('./nocks.js');
+var os = require('os');
 var Service = require('@google-cloud/common').Service;
 var traceLabels = require('../src/trace-labels.js');
 
@@ -64,50 +65,46 @@ describe('TraceWriter', function() {
     var writer = TraceWriter.create(fakeLogger, {
       projectId: 'fake project',
       serviceContext: {},
+      onUncaughtException: 'ignore',
       forceNewAgent_: true
     });
     assert.ok(writer instanceof Service);
   });
-
-  describe('projectId', function() {
-    it('should request project from metadata if not locally available',
-       function(done) {
-         var scope = nocks.projectId('from metadata');
-         // the constructor should fetch the projectId.
-         TraceWriter.create(fakeLogger, {
-           serviceContext: {},
-           forceNewAgent_: true
-          });
-         setTimeout(function() {
-           assert.ok(scope.isDone());
-           done();
-         }, DEFAULT_DELAY);
-       });
+  
+  it('should not attach exception handler with ignore option', function() {
+    TraceWriter.create(fakeLogger, {
+      projectId: '0',
+      onUncaughtException: 'ignore',
+      forceNewAgent_: true
+    });
+    // Mocha attaches 1 exception handler
+    assert.equal(process.listeners('uncaughtException').length, 1);
   });
 
   describe('writeSpan', function(done) {
-
     it('should close spans, add defaultLabels and queue', function(done) {
       var writer = TraceWriter.create(fakeLogger, {
         projectId: PROJECT,
         bufferSize: 4,
         serviceContext: {},
+        onUncaughtException: 'ignore',
         forceNewAgent_: true
+      }, function() {
+        var spanData = createFakeSpan('fake span');
+        writer.defaultLabels_ = {
+          fakeKey: 'value'
+        };
+        writer.queueTrace_ = function(trace) {
+          assert.ok(trace && trace.spans && trace.spans[0]);
+          var span = trace.spans[0];
+          assert.strictEqual(span.name, 'fake span');
+          assert.ok(span.closed_);
+          assert.strictEqual(spanData.labels_.fakeKey, 'value');
+          // TODO(ofrobots): check serviceContext labels as well.
+          done();
+        };
+        writer.writeSpan(spanData);
       });
-      var spanData = createFakeSpan('fake span');
-      writer.queueTrace_ = function(trace) {
-        assert.ok(trace && trace.spans && trace.spans[0]);
-        var span = trace.spans[0];
-        assert.strictEqual(span.name, 'fake span');
-        assert.ok(span.closed_);
-        assert.ok(spanData.labels_[traceLabels.AGENT_DATA]);
-        // TODO(ofrobots): check serviceContext labels as well.
-        done();
-      };
-
-      // TODO(ofrobots): the delay is needed to allow async initialization of
-      // labels.
-      setTimeout(function() { writer.writeSpan(spanData); }, DEFAULT_DELAY);
     });
   });
 
@@ -120,6 +117,7 @@ describe('TraceWriter', function() {
         projectId: PROJECT,
         credentials: fakeCredentials,
         serviceContext: {},
+        onUncaughtException: 'ignore',
         forceNewAgent_: true
       });
       writer.publish_(PROJECT, '{"valid": "json"}');
@@ -139,6 +137,7 @@ describe('TraceWriter', function() {
         projectId: PROJECT,
         credentials: fakeCredentials,
         serviceContext: {},
+        onUncaughtException: 'ignore',
         forceNewAgent_: true
       });
       writer.publish_(PROJECT, JSON.stringify(MESSAGE));
@@ -157,6 +156,7 @@ describe('TraceWriter', function() {
         bufferSize: 4,
         flushDelaySeconds: 3600,
         serviceContext: {},
+        onUncaughtException: 'ignore',
         forceNewAgent_: true
       });
       writer.publish_ = function() { done(); };
@@ -171,14 +171,150 @@ describe('TraceWriter', function() {
         projectId: PROJECT,
         flushDelaySeconds: 0.01,
         serviceContext: {},
+        onUncaughtException: 'ignore',
         forceNewAgent_: true
       });
       writer.publish_ = function() { published = true; };
-      writer.writeSpan(createFakeSpan('fake span'));
-      setTimeout(function() {
-        assert.ok(published);
-        done();
-      }, DEFAULT_DELAY);
+      writer.initialize(function() {
+        writer.writeSpan(createFakeSpan('fake span'));
+        setTimeout(function() {
+          assert.ok(published);
+          done();
+        }, DEFAULT_DELAY);
+      });
+    });
+  });
+
+  describe('initialize', function() {
+    var testCases = [
+      {
+        description: 'yield error if no projectId is available',
+        config: {},
+        metadata: {},
+        assertResults: function(err, tw) {
+          assert.ok(err);
+          assert.strictEqual(tw.config_.projectId, undefined);
+        }
+      },
+      {
+        description: 'not get projectId if it\'s locally available',
+        config: { projectId: 'foo' },
+        metadata: {},
+        assertResults: function(err, tw) {
+          assert.ok(!err);
+          assert.strictEqual(tw.config_.projectId, 'foo');
+        }
+      },
+      {
+        description: 'get projectId if it\'s not locally available',
+        config: {},
+        metadata: { projectId: 'foo' },
+        assertResults: function(err, tw) {
+          assert.ok(!err);
+          assert.strictEqual(tw.config_.projectId, 'foo');
+        }
+      },
+      {
+        description: 'get hostname even if instanceId isn\'t available',
+        config: {},
+        metadata: {
+          projectId: 'foo',
+          hostname: 'bar'
+        },
+        assertResults: function(err, tw) {
+          assert.ok(!err);
+          // Having a hostname is reflected in whether these labels are set
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'bar');
+          // Having an instanceId is reflected in whether this label is set
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], undefined);
+        }
+      },
+      {
+        description: 'get instanceId even if hostname isn\'t available',
+        config: {},
+        metadata: {
+          projectId: 'foo',
+          instanceId: 'baz'
+        },
+        assertResults: function(err, tw) {
+          assert.ok(!err);
+          // Having a hostname is reflected in whether these labels are set
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], os.hostname());
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], os.hostname());
+          // Having an instanceId is reflected in whether this label is set
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
+        }
+      },
+      {
+        description: 'get all fields if they exist',
+        config: {},
+        metadata: {
+          projectId: 'foo',
+          hostname: 'bar',
+          instanceId: 'baz'
+        },
+        assertResults: function(err, tw) {
+          assert.ok(!err);
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
+        }
+      },
+      {
+        description: 'prioritize config-provided information when setting labels',
+        config: {
+          serviceContext: {
+            service: 'barz',
+            version: '1',
+            minorVersion: '2'
+          }
+        },
+        metadata: {
+          projectId: 'foo',
+          hostname: 'bar',
+          instanceId: 'baz'
+        },
+        assertResults: function(err, tw) {
+          assert.ok(!err);
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'barz');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_VERSION], '1');
+          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_VERSION], 'barz:1.2');
+        }
+      }
+    ];
+
+    before(function() {
+      nock.disableNetConnect();
+    });
+
+    after(function() {
+      nock.enableNetConnect();
+    });
+
+    testCases.forEach(function(testCase) {
+      it('should ' + testCase.description, function(done) {
+        if (testCase.metadata.projectId) {
+          nocks.projectId(function() { return testCase.metadata.projectId; });
+        }
+        if (testCase.metadata.hostname) {
+          nocks.hostname(function() { return testCase.metadata.hostname; });
+        }
+        if (testCase.metadata.instanceId) {
+          nocks.instanceId(function() { return testCase.metadata.instanceId; });
+        }
+
+        TraceWriter.create(fakeLogger, Object.assign({
+          forceNewAgent_: true,
+          onUncaughtException: 'ignore',
+          serviceContext: {}
+        }, testCase.config), function(err) {
+          testCase.assertResults(err, TraceWriter.get());
+          done();
+        });
+      });
     });
   });
 });

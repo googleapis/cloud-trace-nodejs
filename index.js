@@ -22,15 +22,18 @@ var filesLoadedBeforeTrace = Object.keys(require.cache);
 // patched before any user-land modules get loaded.
 require('continuation-local-storage');
 
+var cls = require('./src/cls.js');
 var common = require('@google-cloud/common');
 var extend = require('extend');
 var constants = require('./src/constants.js');
-var gcpMetadata = require('gcp-metadata');
 var traceUtil = require('./src/util.js');
-var TraceApi = require('./src/trace-api.js');
+var TraceAgent = require('./src/trace-api.js');
 var pluginLoader = require('./src/trace-plugin-loader.js');
+var TraceWriter = require('./src/trace-writer.js');
 
 var modulesLoadedBeforeTrace = [];
+
+var traceAgent;
 
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
@@ -40,9 +43,14 @@ for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   }
 }
 
-var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
-
-var initConfig = function(projectConfig) {
+/**
+ * Normalizes the user-provided configuration object by adding default values
+ * and overriding with env variables when they are provided.
+ * @param {*} projectConfig The user-provided configuration object. It will not
+ * be modified.
+ * @return A normalized configuration object.
+ */
+function initConfig(projectConfig) {
   var envConfig = {
     logLevel: process.env.GCLOUD_TRACE_LOGLEVEL,
     projectId: process.env.GCLOUD_PROJECT,
@@ -53,14 +61,32 @@ var initConfig = function(projectConfig) {
     }
   };
   var config = extend(true, {}, require('./config.js'), projectConfig, envConfig);
+  // Enforce the upper limit for the label value size.
   if (config.maximumLabelValueSize > constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
     config.maximumLabelValueSize = constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
   }
+  // Clamp the logger level.
+  if (config.logLevel < 0) {
+    config.logLevel = 0;
+  } else if (config.logLevel >= common.logger.LEVELS.length) {
+    config.logLevel = common.logger.LEVELS.length - 1;
+  }
   return config;
-};
+}
 
-var traceApi = new TraceApi('Custom Span API');
-var agent;
+/**
+ * Stops the Trace Agent. This disables the publicly exposed agent instance,
+ * as well as any instances passed to plugins. This also prevents the Trace
+ * Writer from publishing additional traces.
+ */
+function stop() {
+  if (traceAgent && traceAgent.isActive()) {
+    TraceWriter.get().stop();
+    traceAgent.disable();
+    pluginLoader.deactivate();
+    cls.destroyNamespace();
+  }
+}
 
 /**
  * Start the Trace agent that will make your application available for
@@ -77,91 +103,57 @@ var agent;
 function start(projectConfig) {
   var config = initConfig(projectConfig);
 
-  if (traceApi.isActive() && !config.forceNewAgent_) { // already started.
+  if (traceAgent && !config.forceNewAgent_) { // already started.
     throw new Error('Cannot call start on an already started agent.');
+  } else if (traceAgent) {
+    // For unit tests only.
+    // Undoes initialization that occurred last time start() was called.
+    stop();
   }
 
   if (!config.enabled) {
-    return traceApi;
+    return traceAgent;
   }
 
-  if (config.logLevel < 0) {
-    config.logLevel = 0;
-  } else if (config.logLevel >= common.logger.LEVELS.length) {
-    config.logLevel = common.logger.LEVELS.length - 1;
-  }
   var logger = common.logger({
     level: common.logger.LEVELS[config.logLevel],
     tag: '@google-cloud/trace-agent'
   });
-
-  if (config.projectId) {
-    logger.info('Locally provided ProjectId: ' + config.projectId);
-  }
-
-  if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
-    logger.error('The value of onUncaughtException should be one of ',
-      onUncaughtExceptionValues);
-    throw new Error('Invalid value for onUncaughtException configuration.');
-  }
-
-  var headers = {};
-  headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
   if (modulesLoadedBeforeTrace.length > 0) {
     logger.error('Tracing might not work as the following modules ' +
       'were loaded before the trace agent was initialized: ' +
       JSON.stringify(modulesLoadedBeforeTrace));
   }
+  // CLS namespace for context propagation
+  cls.createNamespace();
+  TraceWriter.create(logger, config, function(err) {
+    if (err) {
+      stop();
+    }
+  });
 
-  if (typeof config.projectId === 'undefined') {
-    // Queue the work to acquire the projectId (potentially from the
-    // network.)
-    gcpMetadata.project({
-      property: 'project-id',
-      headers: headers
-    }, function(err, response, projectId) {
-      if (response && response.statusCode !== 200) {
-        if (response.statusCode === 503) {
-          err = new Error('Metadata service responded with a 503 status ' +
-            'code. This may be due to a temporary server error; please try ' +
-            'again later.');
-        } else {
-          err = new Error('Metadata service responded with the following ' +
-            'status code: ' + response.statusCode);
-        }
-      }
-      if (err) {
-        logger.error('Unable to acquire the project number from metadata ' +
-          'service. Please provide a valid project number as an env. ' +
-          'variable, or through config.projectId passed to start(). ' + err);
-        if (traceApi.isActive()) {
-          agent.stop();
-          traceApi.disable_();
-          pluginLoader.deactivate();
-        }
-        return;
-      }
-      config.projectId = projectId;
-    });
-  } else if (typeof config.projectId !== 'string') {
+  traceAgent = new TraceAgent('Custom Span API', logger, config);
+  pluginLoader.activate(logger, config);
+
+  if (typeof config.projectId !== 'string' && typeof config.projectId !== 'undefined') {
     logger.error('config.projectId, if provided, must be a string. ' +
       'Disabling trace agent.');
-    return traceApi;
+    stop();
+    return traceAgent;
   }
 
-  agent = require('./src/trace-agent.js').get(config, logger);
-  traceApi.enable_(agent);
-  pluginLoader.activate(agent);
+  // Make trace agent available globally without requiring package
+  global._google_trace_agent = traceAgent;
 
-  return traceApi;
+  logger.info('trace agent activated');
+  return traceAgent;
 }
 
 function get() {
-  return traceApi;
+  return traceAgent;
 }
 
-global._google_trace_agent = traceApi;
 module.exports = {
   start: start,
   get: get

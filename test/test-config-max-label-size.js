@@ -19,19 +19,18 @@
 var assert = require('assert');
 var constants = require('../src/constants.js');
 var trace = require('..');
-
-var common = require('./plugins/common.js');
+var TraceWriter = require('../src/trace-writer.js');
 
 describe('maximumLabelValueSize configuration', function() {
   it('should not allow values above server maximum', function() {
     trace.start({forceNewAgent_: true, maximumLabelValueSize: 1000000});
-    var valueMax = common.getConfig().maximumLabelValueSize;
+    var valueMax = TraceWriter.get().config_.maximumLabelValueSize;
     assert.strictEqual(valueMax, constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
   });
 
   it('should not modify values below server maximum', function() {
     trace.start({forceNewAgent_: true, maximumLabelValueSize: 10});
-    var valueMax = common.getConfig().maximumLabelValueSize;
+    var valueMax = TraceWriter.get().config_.maximumLabelValueSize;
     assert.strictEqual(valueMax, 10);
   });
 });

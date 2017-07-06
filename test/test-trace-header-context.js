@@ -33,12 +33,6 @@ describe('test-trace-header-context', function() {
     express = require('./plugins/fixtures/express4');
   });
 
-  afterEach(function() {
-    // On node 0.12, mocha may run multiple tests in the same
-    // cls context, we need to manually clean out the context.
-    common.clearNamespace();
-  });
-
   it('should give correct context', function() {
     var tracedContext = fakeTraceId + '/0;o=1';
     var untracedContext = fakeTraceId + '/0;o=0';

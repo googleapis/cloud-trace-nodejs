@@ -41,6 +41,20 @@ function nockProjectId(reply) {
     .reply(reply);
 }
 
+function nockInstanceId(reply) {
+  return nock('http://metadata.google.internal')
+    .get('/computeMetadata/v1/instance/id')
+    .once()
+    .reply(reply);
+}
+
+function nockHostname(reply) {
+  return nock('http://metadata.google.internal')
+    .get('/computeMetadata/v1/instance/hostname')
+    .once()
+    .reply(reply);
+}
+
 function nockPatchTraces(project, validator, reply, withError) {
   validator = validator || accept;
   var scope = nock('https://cloudtrace.googleapis.com')
@@ -57,4 +71,6 @@ module.exports = {
   oauth2: nockOAuth2,
   patchTraces: nockPatchTraces,
   projectId: nockProjectId,
+  instanceId: nockInstanceId,
+  hostname: nockHostname
 };

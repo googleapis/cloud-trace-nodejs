@@ -20,19 +20,20 @@ var assert = require('assert');
 var cls = require('../src/cls.js');
 var common = require('./plugins/common.js');
 var EventEmitter = require('events');
-var extend = require('extend');
 var request = require('request');
-var TraceAPI = require('../src/trace-api.js');
+var TraceAgent = require('../src/trace-api.js');
 var TracingPolicy = require('../src/tracing-policy.js');
 var TraceWriter = require('../src/trace-writer.js');
 
-var config = extend({}, require('../config.js'),
-  { samplingRate: 0, projectId: '0' });
 var logger = require('@google-cloud/common').logger();
-var agent = require('../src/trace-agent.js').get(config, logger);
 
-function replaceTracingPolicy(traceApi, fn) {
-  return common.replaceFunction(traceApi.private_(), 'policy', fn);
+function createTraceAgent(policy, config) {
+  var result = new TraceAgent('test', logger, config || {
+    enhancedDatabaseReporting: false,
+    ignoreContextHeader: false
+  });
+  result.policy_ = policy || new TracingPolicy.TraceAllPolicy();
+  return result;
 }
 
 function assertAPISurface(traceAPI) {
@@ -60,35 +61,36 @@ function assertAPISurface(traceAPI) {
 }
 
 describe('Trace Interface', function() {
+  before(function(done) {
+    TraceWriter.create(logger,
+      Object.assign(require('../config.js'), {
+        projectId: '0'
+      }), function(err) {
+      assert.ok(!err);
+      done();
+    });
+    cls.createNamespace();
+  });
+
   it('should correctly manage internal state', function() {
-    var traceAPI = new TraceAPI('test');
-    assert.ok(!traceAPI.isActive(),
-      'Newly created instances have no-op implementation');
-    traceAPI.enable_(agent);
+    var traceAPI = createTraceAgent();
     assert.ok(traceAPI.isActive(),
-      'Being enabled sets operational implementation');
-    traceAPI.disable_();
+      'Newly created instances are active');
+    traceAPI.disable();
     assert.ok(!traceAPI.isActive(),
-      'Being disabled sets no-op implementation');
+      'Being disabled sets isActive to false');
   });
 
   it('should expose the same interface regardless of state', function() {
-    var traceAPI = new TraceAPI('test');
+    var traceAPI = createTraceAgent();
     assertAPISurface(traceAPI);
-    traceAPI.enable_(agent);
-    assertAPISurface(traceAPI);
-    traceAPI.disable_();
+    traceAPI.disable();
     assertAPISurface(traceAPI);
   });
 
   describe('constants', function() {
     it('have correct values', function() {
-      var traceAPI = new TraceAPI('test');
-      assert.equal(traceAPI.constants.TRACE_CONTEXT_HEADER_NAME,
-        'x-cloud-trace-context');
-      assert.equal(traceAPI.constants.TRACE_AGENT_REQUEST_HEADER,
-        'x-cloud-trace-agent-request');
-      traceAPI.enable_(agent);
+      var traceAPI = createTraceAgent();
       assert.equal(traceAPI.constants.TRACE_CONTEXT_HEADER_NAME,
         'x-cloud-trace-context');
       assert.equal(traceAPI.constants.TRACE_AGENT_REQUEST_HEADER,
@@ -97,21 +99,17 @@ describe('Trace Interface', function() {
   });
 
   describe('behavior when initialized', function() {
-    var traceAPI = new TraceAPI('test');
-    
     before(function() {
-      traceAPI.enable_(agent);
       TraceWriter.get().request = request;
       common.avoidTraceWriterAuth();
     });
 
     afterEach(function() {
       common.cleanTraces();
-      cls.destroyNamespace();
-      traceAPI.private_().namespace = cls.createNamespace();
     });
 
     it('should produce real child spans', function(done) {
+      var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root'}, function(root) {
         var child = traceAPI.createChildSpan({name: 'sub'});
         setTimeout(function() {
@@ -132,6 +130,7 @@ describe('Trace Interface', function() {
     });
 
     it('should produce real root spans runInRootSpan', function(done) {
+      var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
         rootSpan.addLabel('key', 'val');
         var childSpan = traceAPI.createChildSpan({name: 'sub'});
@@ -152,6 +151,7 @@ describe('Trace Interface', function() {
     });
 
     it('should not allow nested root spans', function(done) {
+      var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1) {
         setTimeout(function() {
           traceAPI.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
@@ -169,38 +169,80 @@ describe('Trace Interface', function() {
     });
 
     it('should add labels to spans', function() {
+      var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(root) {
         var child = traceAPI.createChildSpan({name: 'sub'});
         child.addLabel('test1', 'value');
         child.endSpan();
-        var traceSpan = child.span_.span;
-        assert.equal(traceSpan.name, 'sub');
-        assert.ok(traceSpan.labels);
-        assert.equal(traceSpan.labels.test1, 'value');
+        assert.equal(child.span.name, 'sub');
+        assert.ok(child.span.labels);
+        assert.equal(child.span.labels.test1, 'value');
         root.endSpan();
       });
     });
 
-    it('should respect sampling policy', function(done) {
-      var oldPolicy = replaceTracingPolicy(traceAPI, new TracingPolicy.TraceNonePolicy());
+    it('should respect trace policy', function(done) {
+      var traceAPI = createTraceAgent(new TracingPolicy.TraceNonePolicy());
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
         assert.strictEqual(rootSpan, null);
-        replaceTracingPolicy(traceAPI, oldPolicy);
         done();
       });
     });
 
     it('should respect filter urls', function() {
       var url = 'rootUrl';
-      var filterPolicy = new TracingPolicy.FilterPolicy(new TracingPolicy.TraceAllPolicy(), [url]);
-      var oldPolicy = replaceTracingPolicy(traceAPI, filterPolicy);
+      var traceAPI = createTraceAgent(new TracingPolicy.FilterPolicy(
+        new TracingPolicy.TraceAllPolicy(),
+        [url]));
       traceAPI.runInRootSpan({name: 'root1', url: url}, function(rootSpan) {
         assert.strictEqual(rootSpan, null);
       });
       traceAPI.runInRootSpan({name: 'root2', url: 'alternativeUrl'}, function(rootSpan) {
-        assert.strictEqual(rootSpan.span_.span.name, 'root2');
+        assert.strictEqual(rootSpan.span.name, 'root2');
       });
-      replaceTracingPolicy(traceAPI, oldPolicy);
+    });
+
+    it('should respect enhancedDatabaseReporting options field', function() {
+      [true, false].forEach(function(enhancedDatabaseReporting) {
+        var traceAPI = createTraceAgent(null, {
+          enhancedDatabaseReporting: enhancedDatabaseReporting,
+          ignoreContextHeader: false
+        });
+        assert.strictEqual(traceAPI.enhancedDatabaseReportingEnabled(),
+          enhancedDatabaseReporting);
+      });
+    });
+
+    it('should respect ignoreContextHeader options field', function() {
+      var traceAPI;
+      // ignoreContextHeader: true
+      traceAPI = createTraceAgent(null, {
+        enhancedDatabaseReporting: false,
+        ignoreContextHeader: true
+      });
+      traceAPI.runInRootSpan({
+        name: 'root',
+        traceContext: '123456/667;o=1'
+      }, function(rootSpan) {
+        assert.ok(rootSpan);
+        assert.strictEqual(rootSpan.span.name, 'root');
+        assert.notEqual(rootSpan.trace.traceId, '123456');
+        assert.notEqual(rootSpan.span.parentSpanId, '667');
+      });
+      // ignoreContextHeader: false
+      traceAPI = createTraceAgent(null, {
+        enhancedDatabaseReporting: false,
+        ignoreContextHeader: false
+      });
+      traceAPI.runInRootSpan({
+        name: 'root',
+        traceContext: '123456/667;o=1'
+      }, function(rootSpan) {
+        assert.ok(rootSpan);
+        assert.strictEqual(rootSpan.span.name, 'root');
+        assert.strictEqual(rootSpan.trace.traceId, '123456');
+        assert.strictEqual(rootSpan.span.parentSpanId, '667');
+      });
     });
   });
 });

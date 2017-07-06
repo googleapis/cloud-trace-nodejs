@@ -16,18 +16,20 @@
 
 'use strict';
 
-var gcpMetadata = require('gcp-metadata');
 var common = require('@google-cloud/common');
+var gcpMetadata = require('gcp-metadata');
 var util = require('util');
 var traceLabels = require('./trace-labels.js');
 var pjson = require('../package.json');
 var constants = require('./constants.js');
 
-/* @const {Array<string>} list of scopes needed to operate with the trace API */
-var SCOPES = ['https://www.googleapis.com/auth/trace.append'];
+var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
 
 var headers = {};
 headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
+
+/* @const {Array<string>} list of scopes needed to operate with the trace API */
+var SCOPES = ['https://www.googleapis.com/auth/trace.append'];
 
 /**
  * Creates a basic trace writer.
@@ -36,8 +38,8 @@ headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
  *   authorization credentials.
  * @constructor
  */
-function TraceWriter(logger, options) {
-  options = options || {};
+function TraceWriter(logger, config) {
+  config = config || {};
 
   var serviceOptions = {
     packageJson: pjson,
@@ -45,13 +47,13 @@ function TraceWriter(logger, options) {
     baseUrl: 'https://cloudtrace.googleapis.com/v1',
     scopes: SCOPES
   };
-  common.Service.call(this, serviceOptions, options);
+  common.Service.call(this, serviceOptions, config);
 
   /** @private */
   this.logger_ = logger;
 
   /** @private */
-  this.config_ = options;
+  this.config_ = config;
 
   /** @private {Array<string>} stringified traces to be published */
   this.buffer_ = [];
@@ -62,12 +64,51 @@ function TraceWriter(logger, options) {
   /** @private {Boolean} whether the trace writer is active */
   this.isActive = true;
 
+  if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
+    logger.error('The value of onUncaughtException should be one of ',
+      onUncaughtExceptionValues);
+    throw new Error('Invalid value for onUncaughtException configuration.');
+  }
+  var onUncaughtException = config.onUncaughtException;
+  if (onUncaughtException !== 'ignore') {
+    var that = this;
+    this.unhandledException_ = function() {
+      that.flushBuffer_();
+      if (onUncaughtException === 'flushAndExit') {
+        setTimeout(function() {
+          process.exit(1);
+        }, 2000);
+      }
+    };
+    process.on('uncaughtException', this.unhandledException_);
+  }
+}
+util.inherits(TraceWriter, common.Service);
+
+TraceWriter.prototype.stop = function() {
+  this.isActive = false;
+};
+
+TraceWriter.prototype.initialize = function(cb) {
+  var that = this;
+  // Ensure that cb is called only once.
+  var pendingOperations = 2;
+
   // Schedule periodic flushing of the buffer, but only if we are able to get
   // the project number (potentially from the network.)
-  var that = this;
   that.getProjectId(function(err, project) {
-    if (err) { return; } // ignore as index.js takes care of this.
-    that.scheduleFlush_(project);
+    if (err) {
+      that.logger_.error('Unable to acquire the project number from metadata ' +
+        'service. Please provide a valid project number as an env. ' +
+        'variable, or through config.projectId passed to start(). ' + err);
+      cb(err);
+    } else {
+      that.config_.projectId = project;
+      that.scheduleFlush_();
+      if (--pendingOperations === 0) {
+        cb();
+      }
+    }
   });
 
   that.getHostname(function(hostname) {
@@ -96,13 +137,15 @@ function TraceWriter(logger, options) {
       }
       Object.freeze(labels);
       that.defaultLabels_ = labels;
+      if (--pendingOperations === 0) {
+        cb();
+      }
     });
   });
-}
-util.inherits(TraceWriter, common.Service);
+};
 
-TraceWriter.prototype.stop = function() {
-  this.isActive = false;
+TraceWriter.prototype.config = function() {
+  return this.config_;
 };
 
 TraceWriter.prototype.getHostname = function(cb) {
@@ -150,6 +193,16 @@ TraceWriter.prototype.getProjectId = function(callback) {
     property: 'project-id',
     headers: headers
   }, function(err, response, projectId) {
+    if (response && response.statusCode !== 200) {
+      if (response.statusCode === 503) {
+        err = new Error('Metadata service responded with a 503 status ' +
+          'code. This may be due to a temporary server error; please try ' +
+          'again later.');
+      } else {
+        err = new Error('Metadata service responded with the following ' +
+          'status code: ' + response.statusCode);
+      }
+    }
     if (err) {
       callback(err);
       return;
@@ -194,7 +247,7 @@ TraceWriter.prototype.queueTrace_ = function(trace) {
   that.getProjectId(function(err, project) {
     if (err) {
       that.logger_.info('No project number, dropping trace.');
-      return; // ignore as index.js takes care of this.
+      return; // if we even reach this point, disabling traces is already imminent.
     }
 
     trace.projectId = project;
@@ -204,7 +257,7 @@ TraceWriter.prototype.queueTrace_ = function(trace) {
     // Publish soon if the buffer is getting big
     if (that.buffer_.length >= that.config_.bufferSize) {
       that.logger_.info('Flushing: trace buffer full');
-      setImmediate(function() { that.flushBuffer_(project); });
+      setImmediate(function() { that.flushBuffer_(); });
     }
   });
 };
@@ -214,13 +267,13 @@ TraceWriter.prototype.queueTrace_ = function(trace) {
  * controlled by the flushDelay property of this
  * TraceWriter's config.
  */
-TraceWriter.prototype.scheduleFlush_ = function(project) {
+TraceWriter.prototype.scheduleFlush_ = function() {
   this.logger_.info('Flushing: performing periodic flush');
-  this.flushBuffer_(project);
+  this.flushBuffer_();
 
   // Do it again after delay
   if (this.isActive) {
-    setTimeout(this.scheduleFlush_.bind(this, project),
+    setTimeout(this.scheduleFlush_.bind(this),
       this.config_.flushDelaySeconds * 1000).unref();
   }
 };
@@ -230,7 +283,7 @@ TraceWriter.prototype.scheduleFlush_ = function(project) {
  *
  * @param {number} projectId The id of the project that traces should publish on.
  */
-TraceWriter.prototype.flushBuffer_ = function(projectId) {
+TraceWriter.prototype.flushBuffer_ = function() {
   if (this.buffer_.length === 0) {
     return;
   }
@@ -239,7 +292,7 @@ TraceWriter.prototype.flushBuffer_ = function(projectId) {
   var buffer = this.buffer_;
   this.buffer_ = [];
   this.logger_.debug('Flushing traces', buffer);
-  this.publish_(projectId, '{"traces":[' + buffer.join() + ']}');
+  this.publish_('{"traces":[' + buffer.join() + ']}');
 };
 
 /**
@@ -248,12 +301,10 @@ TraceWriter.prototype.flushBuffer_ = function(projectId) {
  * @param {number} projectId The id of the project that traces should publish on.
  * @param {string} json The stringified json representation of the queued traces.
  */
-TraceWriter.prototype.publish_ = function(projectId, json) {
-  // TODO(ofrobots): assert.ok(this.config_.project), and stop accepting
-  // projectId as an argument.
+TraceWriter.prototype.publish_ = function(json) {
   var that = this;
   var uri = 'https://cloudtrace.googleapis.com/v1/projects/' +
-    projectId + '/traces';
+    this.config_.projectId + '/traces';
 
   var options = {
     method: 'PATCH',
@@ -261,6 +312,7 @@ TraceWriter.prototype.publish_ = function(projectId, json) {
     body: json,
     headers: headers
   };
+  that.logger_.debug('TraceWriter: publishing to ' + uri);
   that.request(options, function(err, body, response) {
     if (err) {
       that.logger_.error('TraceWriter: error: ',
@@ -275,9 +327,13 @@ TraceWriter.prototype.publish_ = function(projectId, json) {
 var traceWriter;
 
 module.exports = {
-  create: function(logger, config) {
+  create: function(logger, config, cb) {
+    if (!cb) {
+      cb = function() {};
+    }
     if (!traceWriter || config.forceNewAgent_) {
       traceWriter = new TraceWriter(logger, config);
+      traceWriter.initialize(cb);
     }
     return traceWriter;
   },

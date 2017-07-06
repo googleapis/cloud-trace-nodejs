@@ -19,7 +19,10 @@ var assert = require('assert');
 var cls = require('../../src/cls.js');
 var util = require('../../src/util.js');
 var constants = require('../../src/constants.js');
+var shimmer = require('shimmer');
 var traceLabels = require('../../src/trace-labels.js');
+var TracingPolicy = require('../../src/tracing-policy.js');
+var common = require('./common.js');
 
 var versions = {
   grpc1: './fixtures/grpc1'
@@ -51,7 +54,7 @@ function checkServerMetadata(metadata) {
   }
 }
 
-function startServer(proto, grpc, common, agent, metadata, trailing_metadata) {
+function startServer(proto, grpc, agent, metadata, trailing_metadata) {
   var _server = new grpc.Server();
   _server.addProtoService(proto.Tester.service, {
     testUnary: function(call, cb) {
@@ -252,22 +255,32 @@ function callBidi(client, grpc, metadata, cb) {
 
 Object.keys(versions).forEach(function(version) {
   var agent;
-  var common;
   var grpc;
   var metadata;
   var server;
   var client;
+  var shouldTraceArgs = [];
   describe(version, function() {
     before(function() {
+      // Set up to record invocations of shouldTrace
+      shimmer.wrap(TracingPolicy, 'createTracePolicy', function(original) {
+        return function() {
+          var result = original.apply(this, arguments);
+          var shouldTrace = result.shouldTrace;
+          result.shouldTrace = function() {
+            shouldTraceArgs.push([].slice.call(arguments, 0));
+            return shouldTrace.apply(this, arguments);
+          };
+          return result;
+        };
+      });
+
       // It is necessary for the samplingRate to be 0 for the tests to succeed
       agent = require('../..').start({
         projectId: '0',
         samplingRate: 0,
         enhancedDatabaseReporting: true
       });
-
-      common = require('./common.js');
-      common.trackShouldTraceArgs(agent);
 
       grpc = require(versions[version]);
 
@@ -280,7 +293,7 @@ Object.keys(versions).forEach(function(version) {
       trailing_metadata.set('c', 'd');
 
       var proto = grpc.load(protoFile).nodetest;
-      server = startServer(proto, grpc, common, agent, metadata, trailing_metadata);
+      server = startServer(proto, grpc, agent, metadata, trailing_metadata);
       client = createClient(proto, grpc);
     });
 
@@ -289,8 +302,8 @@ Object.keys(versions).forEach(function(version) {
     });
 
     afterEach(function() {
+      shouldTraceArgs = [];
       common.cleanTraces();
-      common.clearNamespace();
       checkMetadata = false;
     });
 
@@ -310,7 +323,6 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
           assert(common.getMatchingSpan(grpcServerInnerPredicate));
-          // var shouldTraceArgs = common.getShouldTraceArgs();
           done();
         });
       });
@@ -400,17 +412,16 @@ Object.keys(versions).forEach(function(version) {
 
     it('should respect the tracing policy', function(done) {
       var next = function() {
-        var args = common.getShouldTraceArgs();
-        assert.strictEqual(args.length, 4,
+        assert.strictEqual(shouldTraceArgs.length, 4,
           'expected one call for each of four gRPC method types but got ' +
-          args.length + ' instead');
+          shouldTraceArgs.length + ' instead');
         var prefix = 'grpc:/nodetest.Tester/Test';
         // calls to shouldTrace should be in the order which the client method
         // of each type was called.
-        assert.deepEqual(args[3], [prefix + 'Unary', undefined]);
-        assert.deepEqual(args[2], [prefix + 'ClientStream', undefined]);
-        assert.deepEqual(args[1], [prefix + 'ServerStream', undefined]);
-        assert.deepEqual(args[0], [prefix + 'BidiStream', undefined]);
+        assert.strictEqual(shouldTraceArgs[3][1], prefix + 'Unary');
+        assert.strictEqual(shouldTraceArgs[2][1], prefix + 'ClientStream');
+        assert.strictEqual(shouldTraceArgs[1][1], prefix + 'ServerStream');
+        assert.strictEqual(shouldTraceArgs[0][1], prefix + 'BidiStream');
         done();
       };
       next = callUnary.bind(null, client, grpc, {}, next);
@@ -474,6 +485,10 @@ Object.keys(versions).forEach(function(version) {
                 assert(traces[0].startTime !== traces[1].startTime);
                 common.assertSpanDurationCorrect(traces[0], endFirst - startFirst);
                 common.assertSpanDurationCorrect(traces[1], Date.now() - startSecond);
+                // Clear root context so the next call to runInTransaction
+                // doesn't think we are still in one.
+                // TODO: Maybe we should do this automatically upon root.endSpan
+                cls.setRootContext(null);
                 setImmediate(prevNext);
               }
             };
