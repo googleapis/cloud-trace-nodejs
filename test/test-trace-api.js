@@ -61,8 +61,14 @@ function assertAPISurface(traceAPI) {
 }
 
 describe('Trace Interface', function() {
-  before(function() {
-    TraceWriter.create(logger, require('../config.js') /*default values*/);
+  before(function(done) {
+    TraceWriter.create(logger,
+      Object.assign(require('../config.js'), {
+        projectId: '0'
+      }), function(err) {
+      assert.ok(!err);
+      done();
+    });
     cls.createNamespace();
   });
 

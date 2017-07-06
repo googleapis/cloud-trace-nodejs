@@ -47,7 +47,7 @@ function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
     options: 1 // always traced
   });
   trace.spans.push(this.span);
-  if (TraceWriter.get().config_.stackTraceLimit > 0) {
+  if (TraceWriter.get().config().stackTraceLimit > 0) {
     // This is a mechanism to get the structured stack trace out of V8.
     // prepareStackTrace is called th first time the Error#stack property is
     // accessed. The original behavior is to format the stack as an exception
@@ -56,7 +56,7 @@ function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
     // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
     //
     var origLimit = Error.stackTraceLimit;
-    Error.stackTraceLimit = TraceWriter.get().config_.stackTraceLimit + skipFrames;
+    Error.stackTraceLimit = TraceWriter.get().config().stackTraceLimit + skipFrames;
 
     var origPrepare = Error.prepareStackTrace;
     Error.prepareStackTrace = function(error, structured) {
@@ -97,7 +97,7 @@ SpanData.prototype.getTraceContext = function() {
 SpanData.prototype.addLabel = function(key, value) {
   var k = traceUtil.truncate(key, constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
   var string_val = typeof value === 'string' ? value : util.inspect(value);
-  var v = traceUtil.truncate(string_val, TraceWriter.get().config_.maximumLabelValueSize);
+  var v = traceUtil.truncate(string_val, TraceWriter.get().config().maximumLabelValueSize);
   this.span.setLabel(k, v);
 };
 

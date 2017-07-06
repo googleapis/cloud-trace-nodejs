@@ -70,6 +70,16 @@ describe('TraceWriter', function() {
     });
     assert.ok(writer instanceof Service);
   });
+  
+  it('should not attach exception handler with ignore option', function() {
+    TraceWriter.create(fakeLogger, {
+      projectId: '0',
+      onUncaughtException: 'ignore',
+      forceNewAgent_: true
+    });
+    // Mocha attaches 1 exception handler
+    assert.equal(process.listeners('uncaughtException').length, 1);
+  });
 
   describe('writeSpan', function(done) {
     it('should close spans, add defaultLabels and queue', function(done) {
@@ -79,24 +89,22 @@ describe('TraceWriter', function() {
         serviceContext: {},
         onUncaughtException: 'ignore',
         forceNewAgent_: true
+      }, function() {
+        var spanData = createFakeSpan('fake span');
+        writer.defaultLabels_ = {
+          fakeKey: 'value'
+        };
+        writer.queueTrace_ = function(trace) {
+          assert.ok(trace && trace.spans && trace.spans[0]);
+          var span = trace.spans[0];
+          assert.strictEqual(span.name, 'fake span');
+          assert.ok(span.closed_);
+          assert.strictEqual(spanData.labels_.fakeKey, 'value');
+          // TODO(ofrobots): check serviceContext labels as well.
+          done();
+        };
+        writer.writeSpan(spanData);
       });
-      writer.defaultLabels_ = {
-        fakeKey: 'value'
-      };
-      var spanData = createFakeSpan('fake span');
-      writer.queueTrace_ = function(trace) {
-        assert.ok(trace && trace.spans && trace.spans[0]);
-        var span = trace.spans[0];
-        assert.strictEqual(span.name, 'fake span');
-        assert.ok(span.closed_);
-        assert.strictEqual(spanData.labels_.fakeKey, 'value');
-        // TODO(ofrobots): check serviceContext labels as well.
-        done();
-      };
-
-      // TODO(ofrobots): the delay is needed to allow async initialization of
-      // labels.
-      setTimeout(function() { writer.writeSpan(spanData); }, DEFAULT_DELAY);
     });
   });
 
@@ -302,9 +310,7 @@ describe('TraceWriter', function() {
           forceNewAgent_: true,
           onUncaughtException: 'ignore',
           serviceContext: {}
-        }, testCase.config));
-        // Use setImmediate so assert failures don't show up as rejected promises
-        TraceWriter.get().initialize(function(err) {
+        }, testCase.config), function(err) {
           testCase.assertResults(err, TraceWriter.get());
           done();
         });

@@ -127,23 +127,21 @@ function start(projectConfig) {
   }
   // CLS namespace for context propagation
   cls.createNamespace();
-  TraceWriter.create(logger, config);
+  TraceWriter.create(logger, config, function(err) {
+    if (err) {
+      stop();
+    }
+  });
 
   traceAgent = new TraceAgent('Custom Span API', logger, config);
   pluginLoader.activate(logger, config);
 
-  // Get metadata.
   if (typeof config.projectId !== 'string' && typeof config.projectId !== 'undefined') {
     logger.error('config.projectId, if provided, must be a string. ' +
       'Disabling trace agent.');
     stop();
     return traceAgent;
   }
-  TraceWriter.get().initialize(function(err) {
-    if (err) {
-      stop();
-    }
-  });
 
   // Make trace agent available globally without requiring package
   global._google_trace_agent = traceAgent;

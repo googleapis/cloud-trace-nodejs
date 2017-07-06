@@ -143,10 +143,9 @@ TraceWriter.prototype.initialize = function(cb) {
     });
   });
 };
-util.inherits(TraceWriter, common.Service);
 
-TraceWriter.prototype.stop = function() {
-  this.isActive = false;
+TraceWriter.prototype.config = function() {
+  return this.config_;
 };
 
 TraceWriter.prototype.getHostname = function(cb) {
@@ -194,6 +193,16 @@ TraceWriter.prototype.getProjectId = function(callback) {
     property: 'project-id',
     headers: headers
   }, function(err, response, projectId) {
+    if (response && response.statusCode !== 200) {
+      if (response.statusCode === 503) {
+        err = new Error('Metadata service responded with a 503 status ' +
+          'code. This may be due to a temporary server error; please try ' +
+          'again later.');
+      } else {
+        err = new Error('Metadata service responded with the following ' +
+          'status code: ' + response.statusCode);
+      }
+    }
     if (err) {
       callback(err);
       return;
@@ -318,9 +327,13 @@ TraceWriter.prototype.publish_ = function(json) {
 var traceWriter;
 
 module.exports = {
-  create: function(logger, config) {
+  create: function(logger, config, cb) {
+    if (!cb) {
+      cb = function() {};
+    }
     if (!traceWriter || config.forceNewAgent_) {
       traceWriter = new TraceWriter(logger, config);
+      traceWriter.initialize(cb);
     }
     return traceWriter;
   },
