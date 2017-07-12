@@ -7,7 +7,7 @@
 [![devDependency Status][david-dev-image]][david-dev-url]
 [![Known Vulnerabilities][snyk-image]][snyk-url]
 
-> *This module is experimental, and should be used by early adopters. This module uses APIs that may be undocumented and subject to change without notice.*
+> **Beta**. *This is a Beta release of the Stackdriver Trace agent for Node.js. These libraries might be changed in backward-incompatible ways and are not subject to any SLA or deprecation policy.*
 
 This module provides Stackdriver Trace support for Node.js applications. [Stackdriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
 
