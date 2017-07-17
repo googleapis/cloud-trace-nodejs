@@ -1,5 +1,21 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-07-17, Version 2.1.1 (Beta), @ofrobots
+
+This module is now in Beta.
+
+### Commits
+
+* [[`17555e2071`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/17555e2071)] - beta (#524) (Ali Ijaz Sheikh) [#524](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/524)
+* [[`e6671790c1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e6671790c1)] - Deduplicate internal code (#511) (Kelvin Jin) [#511](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/511)
+* [[`eaab39ac1e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/eaab39ac1e)] - **test**: omit agent argument from all test-common helper functions (#518) (Kelvin Jin) [#518](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/518)
+* [[`ca72dd7f44`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ca72dd7f44)] - warn when creating a child of a closed span (#520) (Ali Ijaz Sheikh)
+* [[`be0b006b35`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/be0b006b35)] - make TraceWriter a singleton (#517) (Kelvin Jin) [#517](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/517)
+* [[`eb0a11be23`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/eb0a11be23)] - increase severity of module order log message (#519) (Ali Ijaz Sheikh)
+* [[`300dc4fc34`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/300dc4fc34)] - Fix document source link (#514) (Oleg Shalygin) [#514](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/514)
+* [[`8561232a04`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/8561232a04)] - Fix typos (#513) (Oleg Shalygin) [#513](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/513)
+* [[`a9e46cb1c8`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a9e46cb1c8)] - Update datastore test to use datastore module (#509) (Matthew Loring) [#509](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/509)
+
 ## 2017-06-12, Version 2.1.0 (Experimental), @matthewloring
 
 ### Notable changes
