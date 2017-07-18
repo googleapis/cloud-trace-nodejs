@@ -33,9 +33,7 @@ var TraceWriter = require('./src/trace-writer.js');
 
 var modulesLoadedBeforeTrace = [];
 
-var traceAgent = new TraceAgent('Custom Span API', null, {
-  enabled: false
-});
+var traceAgent = new TraceAgent('Custom Span API');
 
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
@@ -135,7 +133,7 @@ function start(projectConfig) {
     }
   });
 
-  traceAgent = new TraceAgent('Custom Span API', logger, config);
+  traceAgent.enable(logger, config);
   pluginLoader.activate(logger, config);
 
   if (typeof config.projectId !== 'string' && typeof config.projectId !== 'undefined') {

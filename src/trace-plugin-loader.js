@@ -80,10 +80,12 @@ function activate(logger, config) {
     if (!pluginConfig[moduleName]) {
       continue;
     }
+    var agent = new TraceAgent(moduleName);
+    agent.enable(logger_, config);
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
       patches: {},
-      agent: new TraceAgent(moduleName, logger_, config)
+      agent: agent
     };
   }
 

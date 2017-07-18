@@ -53,17 +53,27 @@ var nullSpan = {};
  * @param {Configuration} config An object specifying how this instance should
  * be configured.
  */
-function TraceAgent(name, logger, config) {
+function TraceAgent(name) {
   this.pluginName_ = name;
+  this.disable(); // start disabled
+}
+
+/**
+ * TODO
+ * @private
+ */
+TraceAgent.prototype.enable = function(logger, config) {
+  if (this.isActive()) {
+    return;
+  }
   this.logger_ = logger;
   this.config_ = config;
-  if (config.enabled) {
-    this.namespace_ = cls.getNamespace();
-    this.policy_ = TracingPolicy.createTracePolicy(config);
-  } else {
-    this.disable();
+  this.policy_ = TracingPolicy.createTracePolicy(config);
+  this.namespace_ = cls.getNamespace();
+  for (var memberName in TraceAgent.prototype) {
+    this[memberName] = TraceAgent.prototype[memberName];
   }
-}
+};
 
 /**
  * Disable this TraceAgent instance. This function is only for internal use and
@@ -71,6 +81,9 @@ function TraceAgent(name, logger, config) {
  * @private
  */
 TraceAgent.prototype.disable = function() {
+  if (!this.isActive()) {
+    return;
+  }
   // Even though plugins should be unpatched, setting a new policy that
   // never generates traces allows persisting wrapped methods (either because
   // they are already instantiated or the plugin doesn't unpatch them) to
