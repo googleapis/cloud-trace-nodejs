@@ -21,7 +21,25 @@ var assert = require('assert');
 var nock = require('nock');
 var trace = require('..');
 
+var disabledAgent = trace.get();
+
 describe('index.js', function() {
+  it('should get a disabled agent with `Trace.get`', function() {
+    assert.ok(!disabledAgent.isActive()); // ensure it's disabled first
+    [
+      'enhancedDatabaseReportingEnabled',
+      'runInRootSpan',
+      'createChildSpan',
+      'getResponseTraceContext',
+      'wrap',
+      'wrapEmitter'
+    ].forEach(function(fn) {
+      assert.strictEqual(typeof disabledAgent[fn], 'function');
+    });
+    assert.ok(disabledAgent.constants);
+    assert.ok(disabledAgent.labels);
+  });
+
   describe('in valid environment', function() {
     var agent;
     before(function() {

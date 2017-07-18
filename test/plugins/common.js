@@ -43,7 +43,8 @@ shimmer.wrap(trace, 'start', function(original) {
       'test',
       logger(), {
         enhancedDatabaseReporting: false,
-        ignoreTraceContext: false
+        ignoreTraceContext: false,
+        enabled: true
       });
     testTraceAgent.policy_ = new tracePolicy.TraceAllPolicy();
     return result;
@@ -141,7 +142,7 @@ function doRequest(method, done, tracePredicate, path) {
 
 function runInTransaction(fn) {
   testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
-    assert(span);
+    assert.ok(span);
     fn(function() {
       span.endSpan();
     });

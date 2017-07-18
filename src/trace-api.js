@@ -56,9 +56,13 @@ var nullSpan = {};
 function TraceAgent(name, logger, config) {
   this.pluginName_ = name;
   this.logger_ = logger;
-  this.namespace_ = cls.getNamespace();
-  this.policy_ = TracingPolicy.createTracePolicy(config);
   this.config_ = config;
+  if (config.enabled) {
+    this.namespace_ = cls.getNamespace();
+    this.policy_ = TracingPolicy.createTracePolicy(config);
+  } else {
+    this.disable();
+  }
 }
 
 /**
