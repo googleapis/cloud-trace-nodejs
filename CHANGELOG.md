@@ -1,5 +1,13 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-07-19, Version 2.1.2 (Beta), @kjin
+
+This version fixes a bug introduced in 2.1.1 where module top-level functions would return `null` if the Trace Agent was not first started in enabled mode.
+
+### Commits
+
+* [[`9f013f1a55`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9f013f1a55)] - **fix**: start/get returns null when disabled in 2.1.1 (#528) (Kelvin Jin) [#528](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/528)
+
 ## 2017-07-17, Version 2.1.1 (Beta), @ofrobots
 
 This module is now in Beta.
