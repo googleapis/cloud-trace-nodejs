@@ -44,14 +44,9 @@ var nullSpan = {};
 
 /**
  * TraceAgent exposes a number of methods to create trace spans and propagate
- * trace context across asynchronous boundaries. Trace spans are published
- * in the background with a separate TraceWriter instance, which should be
- * initialized beforehand.
+ * trace context across asynchronous boundaries.
  * @constructor
  * @param {String} name A string identifying this TraceAgent instance in logs.
- * @param {common.logger} logger A logger object.
- * @param {Configuration} config An object specifying how this instance should
- * be configured.
  */
 function TraceAgent(name) {
   this.pluginName_ = name;
@@ -59,7 +54,11 @@ function TraceAgent(name) {
 }
 
 /**
- * TODO
+ * Enables this instance. This function is only for internal use and
+ * unit tests. A separate TraceWriter instance should be initialized beforehand.
+ * @param {common.logger} logger A logger object.
+ * @param {Configuration} config An object specifying how this instance should
+ * be configured.
  * @private
  */
 TraceAgent.prototype.enable = function(logger, config) {
@@ -76,7 +75,7 @@ TraceAgent.prototype.enable = function(logger, config) {
 };
 
 /**
- * Disable this TraceAgent instance. This function is only for internal use and
+ * Disable this instance. This function is only for internal use and
  * unit tests.
  * @private
  */
