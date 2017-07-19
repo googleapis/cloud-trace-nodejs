@@ -44,29 +44,45 @@ var nullSpan = {};
 
 /**
  * TraceAgent exposes a number of methods to create trace spans and propagate
- * trace context across asynchronous boundaries. Trace spans are published
- * in the background with a separate TraceWriter instance, which should be
- * initialized beforehand.
+ * trace context across asynchronous boundaries.
  * @constructor
  * @param {String} name A string identifying this TraceAgent instance in logs.
- * @param {common.logger} logger A logger object.
- * @param {Configuration} config An object specifying how this instance should
- * be configured.
  */
-function TraceAgent(name, logger, config) {
+function TraceAgent(name) {
   this.pluginName_ = name;
-  this.logger_ = logger;
-  this.namespace_ = cls.getNamespace();
-  this.policy_ = TracingPolicy.createTracePolicy(config);
-  this.config_ = config;
+  this.disable(); // start disabled
 }
 
 /**
- * Disable this TraceAgent instance. This function is only for internal use and
+ * Enables this instance. This function is only for internal use and
+ * unit tests. A separate TraceWriter instance should be initialized beforehand.
+ * @param {common.logger} logger A logger object.
+ * @param {Configuration} config An object specifying how this instance should
+ * be configured.
+ * @private
+ */
+TraceAgent.prototype.enable = function(logger, config) {
+  if (this.isActive()) {
+    return;
+  }
+  this.logger_ = logger;
+  this.config_ = config;
+  this.policy_ = TracingPolicy.createTracePolicy(config);
+  this.namespace_ = cls.getNamespace();
+  for (var memberName in TraceAgent.prototype) {
+    this[memberName] = TraceAgent.prototype[memberName];
+  }
+};
+
+/**
+ * Disable this instance. This function is only for internal use and
  * unit tests.
  * @private
  */
 TraceAgent.prototype.disable = function() {
+  if (!this.isActive()) {
+    return;
+  }
   // Even though plugins should be unpatched, setting a new policy that
   // never generates traces allows persisting wrapped methods (either because
   // they are already instantiated or the plugin doesn't unpatch them) to

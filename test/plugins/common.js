@@ -39,12 +39,11 @@ var testTraceAgent;
 shimmer.wrap(trace, 'start', function(original) {
   return function() {
     var result = original.apply(this, arguments);
-    testTraceAgent = new TraceAgent(
-      'test',
-      logger(), {
-        enhancedDatabaseReporting: false,
-        ignoreTraceContext: false
-      });
+    testTraceAgent = new TraceAgent('test');
+    testTraceAgent.enable(logger(), {
+      enhancedDatabaseReporting: false,
+      ignoreTraceContext: false
+    });
     testTraceAgent.policy_ = new tracePolicy.TraceAllPolicy();
     return result;
   };
@@ -141,7 +140,7 @@ function doRequest(method, done, tracePredicate, path) {
 
 function runInTransaction(fn) {
   testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
-    assert(span);
+    assert.ok(span);
     fn(function() {
       span.endSpan();
     });

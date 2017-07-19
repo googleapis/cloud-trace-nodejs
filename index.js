@@ -33,7 +33,7 @@ var TraceWriter = require('./src/trace-writer.js');
 
 var modulesLoadedBeforeTrace = [];
 
-var traceAgent;
+var traceAgent = new TraceAgent('Custom Span API');
 
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
@@ -103,9 +103,9 @@ function stop() {
 function start(projectConfig) {
   var config = initConfig(projectConfig);
 
-  if (traceAgent && !config.forceNewAgent_) { // already started.
+  if (traceAgent.isActive() && !config.forceNewAgent_) { // already started.
     throw new Error('Cannot call start on an already started agent.');
-  } else if (traceAgent) {
+  } else if (traceAgent.isActive()) {
     // For unit tests only.
     // Undoes initialization that occurred last time start() was called.
     stop();
@@ -133,7 +133,7 @@ function start(projectConfig) {
     }
   });
 
-  traceAgent = new TraceAgent('Custom Span API', logger, config);
+  traceAgent.enable(logger, config);
   pluginLoader.activate(logger, config);
 
   if (typeof config.projectId !== 'string' && typeof config.projectId !== 'undefined') {
