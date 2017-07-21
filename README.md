@@ -18,6 +18,7 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 1. Your application will need to be using Node.js version 4.0 or greater.
 1. You will need a project in the [Google Developers Console][cloud-console]. Your application can run anywhere, but the trace data is associated with a particular project.
 1. [Enable the Trace API](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) for your project.
+1. At this point, code using untranspiled async/await is not supported by this module. See [this section](#how-does-automatic-tracing-work).
 
 ## Installation
 
@@ -196,6 +197,15 @@ A `TraceApi` object is guaranteed to be returned by both of these calls, even if
 
 A fully detailed overview of the `TraceApi` object is available [here](doc/trace-api.md).
 
+## How does automatic tracing work?
+
+The Trace Agent automatically patches well-known modules to insert calls to functions that start, label, and end spans to measure latency of RPCs (such as mysql, redis, etc.) and incoming requests (such as express, hapi, etc.). As each RPC is typically performed on behalf of an incoming request, we must make sure that this association is accurately reflected in span data. To provide a uniform, generalized way of keeping track of which RPC belongs to which incoming request, we rely on the [continuation-local-storage][] module to keep track of the "trace context" across asynchronous boundaries.
+
+This method, which relies on [async-listener][] to preserve continuations over asynchronous boundaries, works great in most cases. However, it does have some limitations that can prevent us from being able to properly propagate trace context:
+
+* It is possible to use JavaScript code that does its own queuing of callback functions – effectively merging asynchronous execution contexts. For example, one may write a http request buffering library that queues requests and then performs them in a batch in one shot. In such a case, when all the callbacks fire, they will execute in the context which flushed the queue instead of the context which added the callbacks to the queue. This problem is called the pooling problem or the [user-space queuing problem][queueing-problem], and is a fundamental limitation of JavaScript. If your application uses such code, you will notice that RPCs from many requests are showing up under a single trace, or that certain portions of your outbound RPCs do not get traced. In such cases we try to work around the problem through monkey patching, or by working with the library authors to fix the code to properly propagate context. However, finding problematic code is not always trivial.
+* Presently, it is not possible for [async-listener][] to keep track of async transitions in ES7 async/await functions that are available with Node 7.6+. If your application uses untranspiled async functions, we will not be properly track RPCs. We do expect to be able to track native async/await functions in the once [async-listener][] has support for the new [async-hooks][] API.
+
 ## Contributing changes
 
 * See [CONTRIBUTING.md](CONTRIBUTING.md)
@@ -204,19 +214,23 @@ A fully detailed overview of the `TraceApi` object is available [here](doc/trace
 
 * See [LICENSE](LICENSE)
 
-[cloud-console]: https://console.cloud.google.com
-[gcloud-sdk]: https://cloud.google.com/sdk/gcloud/
 [app-default-credentials]: https://developers.google.com/identity/protocols/application-default-credentials
-[service-account]: https://console.developers.google.com/apis/credentials/serviceaccountkey
-[npm-image]: https://badge.fury.io/js/%40google-cloud%2Ftrace-agent.svg
-[npm-url]: https://npmjs.org/package/@google-cloud/trace-agent
-[travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
-[travis-url]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs
+[async-hooks]: https://nodejs.org/api/async_hooks.html
+[async-listener]: https://www.npmjs.com/package/async-listener
+[cloud-console]: https://console.cloud.google.com
+[continuation-local-storage]: https://www.npmjs.com/package/continuation-local-storage
 [coveralls-image]: https://coveralls.io/repos/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg?branch=master&service=github
 [coveralls-url]: https://coveralls.io/github/GoogleCloudPlatform/cloud-trace-nodejs?branch=master
-[david-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs.svg
-[david-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs
 [david-dev-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs/dev-status.svg
 [david-dev-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs?type=dev
+[david-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs.svg
+[david-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs
+[gcloud-sdk]: https://cloud.google.com/sdk/gcloud/
+[npm-image]: https://badge.fury.io/js/%40google-cloud%2Ftrace-agent.svg
+[npm-url]: https://npmjs.org/package/@google-cloud/trace-agent
+[queueing-problem]: https://github.com/groundwater/nodejs-symposiums/tree/master/2016-02-26-Errors/Round1/UserModeQueuing
+[service-account]: https://console.developers.google.com/apis/credentials/serviceaccountkey
 [snyk-image]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg
 [snyk-url]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs
+[travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
+[travis-url]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs
