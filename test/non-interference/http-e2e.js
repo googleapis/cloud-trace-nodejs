@@ -71,6 +71,12 @@ glob(test_glob, function(err, files) {
       console.log('Skipped: ' + files[testCount]);
       continue;
     }
+
+    // Check if the test has a '// Flags:' section at the top.
+    const contents = fs.readFileSync(files[testCount], 'utf8');
+    const matches = contents.match(/^\/\/ Flags: (.*)$/m);
+    const flags = matches ? matches[1] : '';
+
     // The use of the -i flag as '-i.bak' to specify a backup extension of 
     // '.bak' is needed to ensure that the command works on both Linux and OS X
     cp.execFileSync('sed', ['-i.bak', 's#\'use strict\';#' +
@@ -80,8 +86,8 @@ glob(test_glob, function(err, files) {
           ' >' +  files[testCount] + '.instru.js' + '&& mv ' + files[testCount] +
           '.instru.js' + ' ' + files[testCount]);
     }
-    // Use natives flag to allow http tests to force GC.
-    var results = cp.spawnSync('node', ['--allow_natives_syntax', files[testCount]]);
+
+    var results = cp.spawnSync('node', [flags, files[testCount]]);
     if (results.status) {
       console.log('Failed: ' + files[testCount]);
       errors ++;
