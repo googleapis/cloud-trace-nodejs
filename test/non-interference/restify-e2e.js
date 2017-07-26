@@ -23,7 +23,7 @@ var path = require('path');
 var tmp = require('tmp');
 
 var branchVersion = '4.x';
-var restifyVersion = '4.3.0';
+var restifyVersion = branchVersion;
 
 // Setup
 var restify_dir = tmp.dirSync().name;
