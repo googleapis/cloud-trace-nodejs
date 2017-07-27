@@ -49,7 +49,10 @@ if [ "$cover" ]; then
 fi
 
 # Run non-interference tests
-node test/non-interference/http-e2e.js || exit 1
+for test in test/non-interference/*-e2e.js ;
+do
+  node ${test} || exit 1
+done
 
 # When running locally, or on non-PR builds on travis, run the system tests.
 if [[ (-z "${CIRCLECI}" && -z "${APPVEYOR}" && -z "${TRAVIS_PULL_REQUEST}") || \
