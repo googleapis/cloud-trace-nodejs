@@ -36,7 +36,7 @@ var modulesLoadedBeforeTrace = [];
 
 var traceAgent = new TraceAgent('Custom Span API');
 
-var traceModuleName = '@google-cloud' + path.sep + 'trace-agent';
+var traceModuleName = path.join('@google-cloud', 'trace-agent');
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
   if (moduleName && moduleName !== traceModuleName &&
