@@ -50,7 +50,8 @@ var nullSpan = {};
  */
 function TraceAgent(name) {
   this.pluginName_ = name;
-  this.disable(); // start disabled
+  this.active_ = true;
+  this.disable(); // disable immediately
 }
 
 /**
@@ -72,6 +73,7 @@ TraceAgent.prototype.enable = function(logger, config) {
   for (var memberName in TraceAgent.prototype) {
     this[memberName] = TraceAgent.prototype[memberName];
   }
+  this.active_ = true;
 };
 
 /**
@@ -92,6 +94,7 @@ TraceAgent.prototype.disable = function() {
   for (var memberName in phantomApiImpl) {
     this[memberName] = phantomApiImpl[memberName];
   }
+  this.active_ = false;
 };
 
 /**
@@ -101,7 +104,7 @@ TraceAgent.prototype.disable = function() {
  * @private
  */
 TraceAgent.prototype.isActive = function() {
-  return !!this.namespace_;
+  return this.active_;
 };
 
 /**
