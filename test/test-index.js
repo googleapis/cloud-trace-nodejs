@@ -20,6 +20,7 @@ require('./plugins/common.js');
 var assert = require('assert');
 var nock = require('nock');
 var trace = require('..');
+var TraceAgent = require('../src/trace-api.js');
 
 var disabledAgent = trace.get();
 
@@ -35,6 +36,7 @@ describe('index.js', function() {
       'wrapEmitter'
     ].forEach(function(fn) {
       assert.strictEqual(typeof disabledAgent[fn], 'function');
+      assert.notStrictEqual(disabledAgent[fn], TraceAgent.prototype[fn]);
     });
     assert.ok(disabledAgent.constants);
     assert.ok(disabledAgent.labels);
