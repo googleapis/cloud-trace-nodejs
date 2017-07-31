@@ -22,6 +22,7 @@ var filesLoadedBeforeTrace = Object.keys(require.cache);
 // patched before any user-land modules get loaded.
 require('continuation-local-storage');
 
+var path = require('path');
 var cls = require('./src/cls.js');
 var common = require('@google-cloud/common');
 var extend = require('extend');
@@ -35,9 +36,10 @@ var modulesLoadedBeforeTrace = [];
 
 var traceAgent = new TraceAgent('Custom Span API');
 
+var traceModuleName = path.join('@google-cloud', 'trace-agent');
 for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
   var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
-  if (moduleName && moduleName !== '@google-cloud/trace-agent' &&
+  if (moduleName && moduleName !== traceModuleName &&
       modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
     modulesLoadedBeforeTrace.push(moduleName);
   }
