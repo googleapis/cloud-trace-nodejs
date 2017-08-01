@@ -1,3 +1,18 @@
+# Change Log
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+<a name="2.1.3"></a>
+## [2.1.3](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/compare/v2.1.2...v2.1.3) (2017-08-01)
+
+
+### Bug Fixes
+
+* add explicit active flag in trace agent ([#533](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues/533)) ([b01f4b2](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b01f4b2))
+* don't warn about trace loading before itself on windows ([#534](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues/534)) ([7e1cc34](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7e1cc34))
+
+
+
 # Node.js Agent for Google Cloud Trace ChangeLog
 
 ## 2017-07-19, Version 2.1.2 (Beta), @kjin
