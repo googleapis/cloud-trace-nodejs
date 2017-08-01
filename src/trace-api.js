@@ -50,7 +50,6 @@ var nullSpan = {};
  */
 function TraceAgent(name) {
   this.pluginName_ = name;
-  this.active_ = true;
   this.disable(); // disable immediately
 }
 
@@ -63,9 +62,6 @@ function TraceAgent(name) {
  * @private
  */
 TraceAgent.prototype.enable = function(logger, config) {
-  if (this.isActive()) {
-    return;
-  }
   this.logger_ = logger;
   this.config_ = config;
   this.policy_ = TracingPolicy.createTracePolicy(config);
@@ -73,7 +69,6 @@ TraceAgent.prototype.enable = function(logger, config) {
   for (var memberName in TraceAgent.prototype) {
     this[memberName] = TraceAgent.prototype[memberName];
   }
-  this.active_ = true;
 };
 
 /**
@@ -82,9 +77,6 @@ TraceAgent.prototype.enable = function(logger, config) {
  * @private
  */
 TraceAgent.prototype.disable = function() {
-  if (!this.isActive()) {
-    return;
-  }
   // Even though plugins should be unpatched, setting a new policy that
   // never generates traces allows persisting wrapped methods (either because
   // they are already instantiated or the plugin doesn't unpatch them) to
@@ -94,7 +86,6 @@ TraceAgent.prototype.disable = function() {
   for (var memberName in phantomApiImpl) {
     this[memberName] = phantomApiImpl[memberName];
   }
-  this.active_ = false;
 };
 
 /**
@@ -104,7 +95,7 @@ TraceAgent.prototype.disable = function() {
  * @private
  */
 TraceAgent.prototype.isActive = function() {
-  return this.active_;
+  return !!this.namespace_;
 };
 
 /**
