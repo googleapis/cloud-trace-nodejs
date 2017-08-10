@@ -19,7 +19,7 @@ before_install:
   - psql -c "alter user postgres with password 'Password12!';" -U postgres
 
 env:
-  - CXX=g++-4.8
+  - CXX=g++-4.8 GCLOUD_TRACE_NEW_CONTEXT=1
 
 script:
   - ./bin/run-test.sh -c

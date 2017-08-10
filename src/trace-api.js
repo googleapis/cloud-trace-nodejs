@@ -24,6 +24,9 @@ var Trace = require('./trace.js');
 var SpanData = require('./span-data.js');
 var uuid = require('uuid');
 var TracingPolicy = require('./tracing-policy.js');
+var semver = require('semver');
+
+var ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
 
 /**
  * Phantom implementation of the trace api. When disabled, a TraceAgent instance
@@ -170,7 +173,7 @@ TraceAgent.prototype.runInRootSpan = function(options, fn) {
       options.name, /* Span name */
       parentId, /* Parent's span ID */
       true, /* Is root span */
-      options.skipFrames ? options.skipFrames + 2 : 2);
+      ROOT_SPAN_STACK_OFFSET + (options.skipFrames || 0));
     rootContext.span.kind = 'RPC_SERVER';
     cls.setRootContext(rootContext);
     return fn(rootContext);

@@ -23,8 +23,8 @@ install:
   - npm install
   - ps: ForEach ($fix in Get-ChildItem -Directory test/plugins/fixtures/*) { cd $fix; npm install --silent }
   - ps: cd ..\..\..\..
-  # set GCLOUD_PROJECT
   - SET GCLOUD_PROJECT=0
+  - SET GCLOUD_TRACE_NEW_CONTEXT=1
 
 before_test:
   - SET PATH=C:\Program Files\MySql\MySQL Server 5.7\bin;%PATH%

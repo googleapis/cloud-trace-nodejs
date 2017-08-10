@@ -21,9 +21,18 @@ proxyquire('gcp-metadata', {
   'retry-request': require('request')
 });
 
+var semver = require('semver');
+
 var logger = require('@google-cloud/common').logger;
 var trace = require('../..');
 var cls = require('../../src/cls.js');
+if (semver.satisfies(process.version, '>=8')) {
+  // Monkeypatch the monkeypatcher
+  var oldIt = global.it;
+  global.it = function it(title, fn) {
+    return oldIt.call(this, title, cls.createNamespace().bind(fn));
+  };
+}
 var tracePolicy = require('../../src/tracing-policy.js');
 var TraceWriter = require('../../src/trace-writer.js');
 

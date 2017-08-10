@@ -124,7 +124,7 @@ describe('SpanData', function() {
 
   it('captures stack traces', function() {
     TraceWriter.get().config_.stackTraceLimit = 25;
-    cls.getNamespace().run(function() {
+    cls.getNamespace().run(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
       assert.ok(!spanData.span.isClosed());
       spanData.endSpan();
@@ -134,19 +134,19 @@ describe('SpanData', function() {
       var frames = JSON.parse(stack);
       assert.ok(frames && frames.stack_frame);
       assert.ok(Array.isArray(frames.stack_frame));
-      assert.strictEqual(frames.stack_frame[1].method_name, 'Namespace.run [as run]');
+      assert.strictEqual(frames.stack_frame[0].method_name, 'awesome');
     });
   });
 
   it('does not limit stack trace', function() {
     TraceWriter.get().config_.maximumLabelValueSize = 10;
-    cls.getNamespace().run(function() {
+    cls.getNamespace().run(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
       spanData.endSpan();
       var stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.ok(stack.length > 10);
       var frames = JSON.parse(stack);
-      assert.strictEqual(frames.stack_frame[1].method_name, 'Namespace.run [as run]');
+      assert.strictEqual(frames.stack_frame[0].method_name, 'awesome');
     });
   });
 
