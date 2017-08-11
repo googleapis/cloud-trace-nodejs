@@ -60,6 +60,12 @@ See [the default configuration](config.js) for a list of possible configuration 
 require('@google-cloud/trace-agent').start({samplingRate: 500});
 ```
 
+Alternatively, you can provide configuration through a config file. This can be useful if you want to load our module using `--require` on the command line instead of editing your main script. You can start by copying the default config file and modifying it to suit your needs. The `GCLOUD_TRACE_CONFIG` environment variable should point to your configuration file.
+
+```bash
+export GCLOUD_TRACE_CONFIG=./path/to/your/trace/configuration.js
+```
+
 ## Running on Google Cloud Platform
 
 There are three different services that can host Node.js applications within Google Cloud Platform.

@@ -18,6 +18,7 @@
 module.exports = {
   logLevel: 4,
   stackTraceLimit: 1,
-  flushDelaySeconds: 31
+  flushDelaySeconds: 31,
+  samplingRate: 15
 };
 

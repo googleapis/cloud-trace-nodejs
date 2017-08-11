@@ -53,6 +53,7 @@ for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
  * @return A normalized configuration object.
  */
 function initConfig(projectConfig) {
+
   var envConfig = {
     logLevel: process.env.GCLOUD_TRACE_LOGLEVEL,
     projectId: process.env.GCLOUD_PROJECT,
@@ -62,7 +63,16 @@ function initConfig(projectConfig) {
       minorVersion: process.env.GAE_MINOR_VERSION
     }
   };
-  var config = extend(true, {}, require('./config.js'), projectConfig, envConfig);
+
+  var envSetConfig = {};
+  if (process.env.hasOwnProperty('GCLOUD_TRACE_CONFIG')) {
+    envSetConfig = require(path.resolve(process.env.GCLOUD_TRACE_CONFIG));
+  }
+  // Configuration order of precedence:
+  // Default < Environment Variable Set Configuration File < Project
+  var config = extend(true, {}, require('./config.js'), envSetConfig,
+    projectConfig, envConfig);
+
   // Enforce the upper limit for the label value size.
   if (config.maximumLabelValueSize > constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
     config.maximumLabelValueSize = constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
