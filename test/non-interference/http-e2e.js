@@ -22,7 +22,6 @@ var fs = require('fs');
 var glob = require('glob');
 var path = require('path');
 var tmp = require('tmp');
-var semver = require('semver');
 
 // Setup
 var node_dir = tmp.dirSync().name;
@@ -44,9 +43,7 @@ if (!testCommonPath) {
 }
 cp.execFileSync('sed', ['-i.bak', 's/exports.globalCheck = true/' +
     'exports.globalCheck = false/g', testCommonPath]);
-var test_glob = semver.satisfies(process.version, '0.12.x') ?
-    path.join(node_dir, 'test', 'simple', 'test-http*.js') :
-    path.join(node_dir, 'test', 'parallel', 'test-http*.js');
+var test_glob = path.join(node_dir, 'test', 'parallel', 'test-http-*.js');
 
 // Run tests
 console.log('Running tests');
