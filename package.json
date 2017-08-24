@@ -10,8 +10,7 @@
     "changelog": "./bin/run-changelog.sh",
     "coverage": "./bin/run-test.sh -c",
     "bump": "./bin/run-bump.sh",
-    "closure": "./node_modules/.bin/closure-npc",
-    "commitmsg": "commitlint -e"
+    "closure": "./node_modules/.bin/closure-npc"
   },
   "keywords": [
     "google",
@@ -24,8 +23,6 @@
     "node": ">=0.12"
   },
   "devDependencies": {
-    "@commitlint/cli": "^3.0.3",
-    "@commitlint/config-angular": "^3.0.3",
     "@google-cloud/datastore": "^1.0.2",
     "changelog-maker": "^2.2.2",
     "closure-npc": "*",
@@ -34,7 +31,6 @@
     "glob": "^7.0.3",
     "google-auto-auth": "^0.7.0",
     "got": "^5.7.1",
-    "husky": "^0.14.3",
     "istanbul": "^0.4.2",
     "jshint": "^2.9.1",
     "mocha": "^3.0.0",
