@@ -9,8 +9,7 @@
     "system-test": "mocha --no-timeouts system-test/*.js",
     "changelog": "./bin/run-changelog.sh",
     "coverage": "./bin/run-test.sh -c",
-    "bump": "./bin/run-bump.sh",
-    "closure": "./node_modules/.bin/closure-npc"
+    "bump": "./bin/run-bump.sh"
   },
   "keywords": [
     "google",
@@ -25,7 +24,6 @@
   "devDependencies": {
     "@google-cloud/datastore": "^1.0.2",
     "changelog-maker": "^2.2.2",
-    "closure-npc": "*",
     "coveralls": "^2.11.8",
     "express": "^4.15.2",
     "glob": "^7.0.3",
