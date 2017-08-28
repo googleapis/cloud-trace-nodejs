@@ -99,18 +99,20 @@ function activate(logger, config) {
         // Load the plugin object
         var plugin = originalModuleLoad(instrumentation.file, module, false);
         patchSet = {};
-        plugin.forEach(function(patch) {
-          if (!patch.versions || semver.satisfies(version, patch.versions)) {
-            var file = patch.file || '';
-            patchSet[file] = {
-              file: file,
-              patch: patch.patch,
-              unpatch: patch.unpatch,
-              intercept: patch.intercept
-            };
-            checkPatch(patchSet[file]);
-          }
-        });
+        if (semver.valid(version)) {
+          plugin.forEach(function(patch) {
+            if (!patch.versions || semver.satisfies(version, patch.versions)) {
+              var file = patch.file || '';
+              patchSet[file] = {
+                file: file,
+                patch: patch.patch,
+                unpatch: patch.unpatch,
+                intercept: patch.intercept
+              };
+              checkPatch(patchSet[file]);
+            }
+          });
+        }
         if (Object.keys(patchSet).length === 0) {
           logger_.warn(moduleRoot + ': version ' + version + ' not supported ' +
             'by plugin.');
