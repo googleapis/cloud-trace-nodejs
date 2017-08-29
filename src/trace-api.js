@@ -33,6 +33,7 @@ var TracingPolicy = require('./tracing-policy.js');
 var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
   runInRootSpan: function(opts, fn) { return fn(null); },
+  getCurrentContext: function() { return null; },
   createChildSpan: function(opts) { return null; },
   getResponseTraceContext: function(context, traced) { return ''; },
   wrap: function(fn) { return fn; },
@@ -174,6 +175,22 @@ TraceAgent.prototype.runInRootSpan = function(options, fn) {
     cls.setRootContext(rootContext);
     return fn(rootContext);
   });
+};
+
+/**
+ * Returns a unique identifier for the currently active context. This can be
+ * used to uniquely identify the current root span. If there is no current,
+ * context, or if we have lost context, this will return null. The structure and
+ * the length of the returned string should be treated opaquely - the only
+ * guarantee is that the value would unique for every root span.
+ * @returns {string} an id for the current context, or null if there is none
+ */
+TraceAgent.prototype.getCurrentContextId = function() {
+  const rootSpan = cls.getRootContext();
+  if (!rootSpan || rootSpan === nullSpan) {
+    return null;
+  }
+  return rootSpan.trace.traceId;
 };
 
 /**

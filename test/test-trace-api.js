@@ -48,6 +48,7 @@ function assertAPISurface(traceAPI) {
       assert.strictEqual(typeof root.getTraceContext(), 'string');
     }
   });
+  assert.strictEqual(typeof traceAPI.getCurrentContextId, 'function');
   var child = traceAPI.createChildSpan({ name: 'child' });
   // TODO: Ditto but with child spans
   if (child) {
@@ -167,6 +168,19 @@ describe('Trace Interface', function() {
           done();
         }, 200);
       });
+    });
+
+    it('should return null context id when one does not exist', function() {
+      var traceAPI = createTraceAgent();
+      assert.strictEqual(traceAPI.getCurrentContextId(), null);
+    });
+
+    it('should return the appropriate trace id', function() {
+      var traceAPI = createTraceAgent();
+      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
+        var id = traceAPI.getCurrentContextId();
+        assert.strictEqual(id, rootSpan.trace.traceId);
+      });      
     });
 
     it('should add labels to spans', function() {
