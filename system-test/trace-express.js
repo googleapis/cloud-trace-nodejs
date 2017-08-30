@@ -40,6 +40,10 @@ const googleAuth = require('google-auto-auth');
 const got = require('got');
 const queryString = require('querystring');
 const uuid = require('uuid');
+const semver = require('semver');
+
+const usingAsyncHooks = semver.satisfies(process.version, '>=8') &&
+                        process.env.GCLOUD_TRACE_NEW_CONTEXT;
 
 // TODO(ofrobots): this code should be moved to a better location. Perhaps
 // google-auto-auth or google-auth-library.
@@ -128,8 +132,12 @@ describe('express + datastore', () => {
       assert.equal(traces.length, 1, 'there should be exactly one trace');
 
       const trace = traces[0];
-      console.log(trace);
-      assert.equal(trace.spans.length, 2, 'should be 2 spans: parent, child');
+      if (usingAsyncHooks) {
+        assert.equal(trace.spans.length, 3, 'should be 3 spans: parent, child, auth');
+        assert.equal(trace.spans[2].name, 'accounts.google.com');
+      } else {
+        assert.equal(trace.spans.length, 2, 'should be 2 spans: parent, child');
+      }
       const parent = trace.spans[0];
       const child = trace.spans[1];
 
