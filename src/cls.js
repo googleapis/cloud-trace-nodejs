@@ -16,8 +16,10 @@
 
 'use strict';
 
-
-var cls = require('continuation-local-storage');
+var semver = require('semver');
+var cls = semver.satisfies(process.version, '>=8') &&
+          process.env.GCLOUD_TRACE_NEW_CONTEXT ?
+            require('./cls-ah.js') : require('continuation-local-storage');
 
 /** @const {string} */
 var TRACE_NAMESPACE = 'com.google.cloud.trace';

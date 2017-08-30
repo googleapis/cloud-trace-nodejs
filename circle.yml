@@ -5,3 +5,4 @@ machine:
     - redis
   environment:
     GCLOUD_PROJECT: 0
+    GCLOUD_TRACE_NEW_CONTEXT: 1

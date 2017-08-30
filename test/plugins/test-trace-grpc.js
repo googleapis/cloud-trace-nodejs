@@ -284,6 +284,19 @@ Object.keys(versions).forEach(function(version) {
 
       grpc = require(versions[version]);
 
+      var oldRegister = grpc.Server.prototype.register;
+      grpc.Server.prototype.register = function register(n, h, s, d, m) {
+        var result = oldRegister.call(this, n, h, s, d, m);
+        var oldFunc = this.handlers[n].func;
+        this.handlers[n].func = function() {
+          if (cls.getRootContext()) {
+            cls.setRootContext(null);
+          }
+          return oldFunc.apply(this, arguments);
+        };
+        return result;
+      };
+
       // This metadata can be used by all test methods.
       metadata = new grpc.Metadata();
       metadata.set('a', 'b');
@@ -432,6 +445,17 @@ Object.keys(versions).forEach(function(version) {
     });
 
     it('should support distributed trace context', function(done) {
+      function makeLink(fn, meta, next) {
+        return function() {
+          cls.setRootContext(null);
+          common.runInTransaction(function(terminate) {
+            fn(client, grpc, meta, function() {
+              terminate();
+              next();
+            });
+          });
+        };
+      }
       // Enable asserting properties of the metdata on the grpc server.
       checkMetadata = true;
       common.runInTransaction(function (endTransaction) {
@@ -445,16 +469,16 @@ Object.keys(versions).forEach(function(version) {
         // the grpc client methods at all if no fields are present).
         // The plugin should automatically create a new Metadata object and
         // populate it with trace context data accordingly.
-        next = callUnary.bind(null, client, grpc, {}, next);
-        next = callClientStream.bind(null, client, grpc, {}, next);
-        next = callServerStream.bind(null, client, grpc, {}, next);
-        next = callBidi.bind(null, client, grpc, {}, next);
+        next = makeLink(callUnary, {}, next);
+        next = makeLink(callClientStream, {}, next);
+        next = makeLink(callServerStream, {}, next);
+        next = makeLink(callBidi, {}, next);
         // Try with metadata. The plugin should simply add trace context data
         // to it.
-        next = callUnary.bind(null, client, grpc, metadata, next);
-        next = callClientStream.bind(null, client, grpc, metadata, next);
-        next = callServerStream.bind(null, client, grpc, metadata, next);
-        next = callBidi.bind(null, client, grpc, metadata, next);
+        next = makeLink(callUnary, metadata, next);
+        next = makeLink(callClientStream, metadata, next);
+        next = makeLink(callServerStream, metadata, next);
+        next = makeLink(callBidi, metadata, next);
         next();
       });
     });

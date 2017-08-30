@@ -16,6 +16,7 @@
 
 'use strict';
 
+var assert = require('assert');
 var common = require('./plugins/common.js');
 var cluster = require('cluster');
 
@@ -32,8 +33,9 @@ describe('test-trace-cluster', function() {
 
   it('should not interfere with express span', function(done) {
     if (cluster.isMaster) {
-      cluster.fork();
-      cluster.on('disconnect', function(worker) {
+      var worker = cluster.fork();
+      worker.on('exit', function(code) {
+        assert.equal(code, 0);
         console.log('Success!');
         done();
       });
