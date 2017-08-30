@@ -25,6 +25,7 @@ var SpanData = require('./span-data.js');
 var uuid = require('uuid');
 var TracingPolicy = require('./tracing-policy.js');
 var semver = require('semver');
+var TraceWriter = require('./trace-writer.js');
 
 var ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
 
@@ -36,9 +37,10 @@ var ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
 var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
   runInRootSpan: function(opts, fn) { return fn(null); },
-  getCurrentContext: function() { return null; },
+  getCurrentContextId: function() { return null; },
   createChildSpan: function(opts) { return null; },
   getResponseTraceContext: function(context, traced) { return ''; },
+  getWriterProjectId : function() { return null; },
   wrap: function(fn) { return fn; },
   wrapEmitter: function(ee) {},
 };
@@ -194,6 +196,23 @@ TraceAgent.prototype.getCurrentContextId = function() {
     return null;
   }
   return rootSpan.trace.traceId;
+};
+
+/**
+ * Returns the projectId that was either configured or auto-discovered by the
+ * TraceWriter. Note that the auto-discovery is done asynchronously, so this
+ * will return null until the projectId auto-discovery completes.
+ */
+TraceAgent.prototype.getWriterProjectId = function() {
+  var traceWriter;
+  try {
+     traceWriter = TraceWriter.get();
+  } catch(err) {
+    // The TraceWriter.get() call could fail if the TraceWriter has not been
+    // initialized yet.
+    return null;
+  }
+  return traceWriter.config().projectId;
 };
 
 /**
