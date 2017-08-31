@@ -76,11 +76,9 @@ If you are using [Google App Engine flexible environment](https://cloud.google.c
 
 ### Google Compute Engine
 
-Your VM instances need to be created with the `https://www.googleapis.com/auth/trace.append` scope if created via the [gcloud](https://cloud.google.com/sdk) CLI or the Google Cloud Platform API, or with the 'Allow API access' checkbox selected if created via the [console][cloud-console] (see screenshot).
+For __Google Compute Engine instances__, you need to explicitly enable the `https://www.googleapis.com/auth/trace.append` access scope for each instance. When creating a new instance through the Google Cloud Platform Console, you can do this under __Identity and API access__: Use the Compute Engine default service account, select the __Set access for each API__ access scopes option, and ensure that the __Stackdriver Trace__ access is set to _Write Only_.
 
-![GCE API](doc/images/gce.png?raw=true)
-
-If you already have VMs that were created without API access and do not wish to recreate it, you can follow the instructions for using a service account under [running elsewhere](#running-elsewhere).
+To enable to scope on existing GCE instances, you can follow the instructions for using a service account under [running elsewhere](#running-elsewhere).
 
 ### Google Container Engine
 
