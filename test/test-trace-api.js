@@ -184,9 +184,10 @@ describe('Trace Interface', function() {
       });
     });
 
-    it('should return get the project ID if set in the writer', function() {
-      var traceApi = createTraceAgent();
-      assert.equal(traceApi.getWriterProjectId(), '0');
+    it('should return get the project ID if set in config', function() {
+      var config = {projectId: 'project-1'};
+      var traceApi = createTraceAgent(null /* policy */, config);
+      assert.equal(traceApi.getWriterProjectId(), 'project-1');
     });
 
     it('should add labels to spans', function() {
