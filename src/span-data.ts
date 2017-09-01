@@ -16,6 +16,33 @@
 
 'use strict';
 
+declare global {
+  interface CallSite {
+    getThis: (...args: any[]) => any;
+    getTypeName: (...args: any[]) => any;
+    getFunction: (...args: any[]) => any;
+    getFunctionName: (...args: any[]) => any;
+    getMethodName: (...args: any[]) => any;
+    getFileName: (...args: any[]) => any;
+    getLineNumber: (...args: any[]) => any;
+    getColumnNumber: (...args: any[]) => any;
+    getEvalOrigin: (...args: any[]) => any;
+    isToplevel: (...args: any[]) => any;
+    isEval: (...args: any[]) => any;
+    isNative: (...args: any[]) => any;
+    isConstructor: (...args: any[]) => any;
+  }
+
+  interface ErrorConstructor {
+    prepareStackTrace?: (
+      error: Error,
+      structuredStackTrace: CallSite[]
+    ) => CallSite[] | string;
+    captureStackTrace(targetObject: Object, constructorOpt?: Function): void;
+    stackTraceLimit: number;
+  }
+}
+
 var constants = require('./constants'/*.js*/);
 var TraceSpan = require('./trace-span'/*.js*/);
 var TraceLabels = require('./trace-labels'/*.js*/);
@@ -49,7 +76,7 @@ function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
   trace.spans.push(this.span);
   if (TraceWriter.get().config().stackTraceLimit > 0) {
     // This is a mechanism to get the structured stack trace out of V8.
-    // prepareStackTrace is called th first time the Error#stack property is
+    // prepareStackTrace is called the first time the Error#stack property is
     // accessed. The original behavior is to format the stack as an exception
     // throw, which is not what we like. We customize it.
     //
@@ -62,10 +89,10 @@ function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
     Error.prepareStackTrace = function(error, structured) {
       return structured;
     };
-    var e = {};
+    var e: { stack?: any } = {};
     Error.captureStackTrace(e, SpanData);
 
-    var stackFrames = [];
+    var stackFrames: any[] = [];
     e.stack.forEach(function(callSite, i) {
       if (i < skipFrames) {
         return;

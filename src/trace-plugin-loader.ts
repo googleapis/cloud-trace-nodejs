@@ -15,6 +15,14 @@
  */
 'use strict';
 
+declare global {
+  namespace NodeJS {
+    export interface Process {
+      _preload_modules: string[];
+    }
+  }
+}
+
 var Module = require('module');
 var shimmer = require('shimmer');
 var path = require('path');

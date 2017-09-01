@@ -16,6 +16,14 @@
 
 'use strict';
 
+declare global {
+  namespace NodeJS {
+    export interface Global {
+      _google_trace_agent: any;
+    }
+  }
+}
+
 var filesLoadedBeforeTrace = Object.keys(require.cache);
 
 // Load continuation-local-storage first to ensure the core async APIs get
@@ -35,7 +43,7 @@ var TraceAgent = require('./src/trace-api'/*.js*/);
 var pluginLoader = require('./src/trace-plugin-loader'/*.js*/);
 var TraceWriter = require('./src/trace-writer'/*.js*/);
 
-var modulesLoadedBeforeTrace = [];
+var modulesLoadedBeforeTrace: any[] = [];
 
 var traceAgent = new TraceAgent('Custom Span API');
 
