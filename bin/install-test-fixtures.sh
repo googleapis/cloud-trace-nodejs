@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install framework deps
-for dir in test/plugins/fixtures/*/ ;
+for dir in build/test/plugins/fixtures/*/ ;
 do
   echo -en "travis_fold:start:npm_install_${dir}\\r" | tr / _
   pushd "${dir}" > /dev/null
