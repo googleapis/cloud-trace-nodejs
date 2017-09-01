@@ -200,7 +200,7 @@ TraceAgent.prototype.getCurrentContextId = function() {
 /**
  * Returns the projectId that was either configured or auto-discovered by the
  * TraceWriter. Note that the auto-discovery is done asynchronously, so this
- * will return null until the projectId auto-discovery completes.
+ * may return falsey until the projectId auto-discovery completes.
  */
 TraceAgent.prototype.getWriterProjectId = function() {
   return this.config_.projectId;
