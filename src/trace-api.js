@@ -25,7 +25,6 @@ var SpanData = require('./span-data.js');
 var uuid = require('uuid');
 var TracingPolicy = require('./tracing-policy.js');
 var semver = require('semver');
-var TraceWriter = require('./trace-writer.js');
 
 var ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
 
@@ -204,15 +203,7 @@ TraceAgent.prototype.getCurrentContextId = function() {
  * will return null until the projectId auto-discovery completes.
  */
 TraceAgent.prototype.getWriterProjectId = function() {
-  var traceWriter;
-  try {
-     traceWriter = TraceWriter.get();
-  } catch(err) {
-    // The TraceWriter.get() call could fail if the TraceWriter has not been
-    // initialized yet.
-    return null;
-  }
-  return traceWriter.config().projectId;
+  return this.config_.projectId;
 };
 
 /**
