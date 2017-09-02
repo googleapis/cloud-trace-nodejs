@@ -80,7 +80,10 @@ describe('index.js', function() {
     }, 500);
   });
 
-  it.only('should allow project ID to be read after discovery', function(done) {
+  it('should allow project ID to be read after discovery', function(done) {
+    var envProjectId = process.env.GCLOUD_PROJECT;
+    delete process.env.GCLOUD_PROJECT;
+
     nocks.projectId(function() { return 'project1'; });
     nocks.hostname(function() { return 'host1'; });
     nocks.instanceId(function() { return 'instance1'; });
@@ -89,6 +92,7 @@ describe('index.js', function() {
 
     setTimeout(function() {
       assert.strictEqual(agent.getWriterProjectId(), 'project1');
+      process.env.GCLOUD_PROJECT = envProjectId;
       done();
     }, 500);
   });
