@@ -19,6 +19,7 @@
 require('./plugins/common.js');
 var assert = require('assert');
 var nock = require('nock');
+var nocks = require('./nocks.js');
 var trace = require('..');
 var TraceAgent = require('../src/trace-api.js');
 
@@ -74,6 +75,23 @@ describe('index.js', function() {
     setTimeout(function() {
       assert.ok(!agent.isActive());
       scope.done();
+      process.env.GCLOUD_PROJECT = envProjectId;
+      done();
+    }, 500);
+  });
+
+  it('should allow project ID to be read after discovery', function(done) {
+    var envProjectId = process.env.GCLOUD_PROJECT;
+    delete process.env.GCLOUD_PROJECT;
+
+    nocks.projectId(function() { return 'project1'; });
+    nocks.hostname(function() { return 'host1'; });
+    nocks.instanceId(function() { return 'instance1'; });
+
+    var agent = trace.start({logLevel: 0, forceNewAgent_: true});
+
+    setTimeout(function() {
+      assert.strictEqual(agent.getWriterProjectId(), 'project1');
       process.env.GCLOUD_PROJECT = envProjectId;
       done();
     }, 500);

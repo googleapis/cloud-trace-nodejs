@@ -36,9 +36,10 @@ var ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
 var phantomApiImpl = {
   enhancedDatabaseReportingEnabled: function() { return false; },
   runInRootSpan: function(opts, fn) { return fn(null); },
-  getCurrentContext: function() { return null; },
+  getCurrentContextId: function() { return null; },
   createChildSpan: function(opts) { return null; },
   getResponseTraceContext: function(context, traced) { return ''; },
+  getWriterProjectId : function() { return null; },
   wrap: function(fn) { return fn; },
   wrapEmitter: function(ee) {},
 };
@@ -194,6 +195,15 @@ TraceAgent.prototype.getCurrentContextId = function() {
     return null;
   }
   return rootSpan.trace.traceId;
+};
+
+/**
+ * Returns the projectId that was either configured or auto-discovered by the
+ * TraceWriter. Note that the auto-discovery is done asynchronously, so this
+ * may return falsey until the projectId auto-discovery completes.
+ */
+TraceAgent.prototype.getWriterProjectId = function() {
+  return this.config_.projectId;
 };
 
 /**

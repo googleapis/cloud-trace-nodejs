@@ -49,6 +49,7 @@ function assertAPISurface(traceAPI) {
     }
   });
   assert.strictEqual(typeof traceAPI.getCurrentContextId, 'function');
+  assert.strictEqual(typeof traceAPI.getWriterProjectId, 'function');
   var child = traceAPI.createChildSpan({ name: 'child' });
   // TODO: Ditto but with child spans
   if (child) {
@@ -180,7 +181,13 @@ describe('Trace Interface', function() {
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
         var id = traceAPI.getCurrentContextId();
         assert.strictEqual(id, rootSpan.trace.traceId);
-      });      
+      });
+    });
+
+    it('should return get the project ID if set in config', function() {
+      var config = {projectId: 'project-1'};
+      var traceApi = createTraceAgent(null /* policy */, config);
+      assert.equal(traceApi.getWriterProjectId(), 'project-1');
     });
 
     it('should add labels to spans', function() {
