@@ -30,7 +30,14 @@ if (semver.satisfies(process.version, '>=8')) {
   // Monkeypatch the monkeypatcher
   var oldIt = global.it;
   global.it = function it(title, fn) {
-    return oldIt.call(this, title, cls.createNamespace().bind(fn));
+    var wrapped = cls.createNamespace().bind(fn);
+    if (fn.length === 1) {
+      var oldWrapped = wrapped;
+      wrapped = function(done) {
+        return oldWrapped.apply(this, arguments);
+      };
+    }
+    return oldIt.call(this, title, wrapped);
   };
 }
 var tracePolicy = require('../../src/tracing-policy.js');
