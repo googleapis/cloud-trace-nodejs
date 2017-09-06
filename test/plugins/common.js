@@ -26,18 +26,11 @@ var semver = require('semver');
 var logger = require('@google-cloud/common').logger;
 var trace = require('../..');
 var cls = require('../../src/cls.js');
-if (semver.satisfies(process.version, '>=8')) {
+if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CONTEXT) {
   // Monkeypatch the monkeypatcher
   var oldIt = global.it;
   global.it = function it(title, fn) {
-    var wrapped = cls.createNamespace().bind(fn);
-    if (fn.length === 1) {
-      var oldWrapped = wrapped;
-      wrapped = function(done) {
-        return oldWrapped.apply(this, arguments);
-      };
-    }
-    return oldIt.call(this, title, wrapped);
+    return oldIt.call(this, title, cls.createNamespace().bind(fn));
   };
 }
 var tracePolicy = require('../../src/tracing-policy.js');
