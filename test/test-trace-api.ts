@@ -27,7 +27,7 @@ var TraceWriter = require('../src/trace-writer'/*.js*/);
 
 var logger = require('@google-cloud/common').logger();
 
-function createTraceAgent(policy, config) {
+function createTraceAgent(policy?, config?) {
   var result = new TraceAgent('test');
   result.enable(logger, config || {
     enhancedDatabaseReporting: false,

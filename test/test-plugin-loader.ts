@@ -75,8 +75,8 @@ describe('Trace Plugin Loader', function() {
     });
 
     // proxyquire the plugin loader with stubbed module utility methods
-    pluginLoader = proxyquire('../src/trace-plugin-loader.js', {
-      './util.js': {
+    pluginLoader = proxyquire('../src/trace-plugin-loader'/*.js*/, {
+      './util'/*.js*/: {
         findModulePath: function(request) {
           return request.replace('/', path.sep);
         },
@@ -104,7 +104,7 @@ describe('Trace Plugin Loader', function() {
    * applied correctly.
    */
   it('loads plugins no more than once', function() {
-    var patched = [];
+    var patched: any[] = [];
     addModuleMock('module-a', '1.0.0', {});
     addModuleMock('module-b', '1.0.0', {});
     addModuleMock('module-a-plugin', '', [
@@ -175,7 +175,7 @@ describe('Trace Plugin Loader', function() {
    * that nothing gets patched at all.
    */
   it('respects patch set semver conditions', function() {
-    var patched = [];
+    var patched: any[] = [];
     addModuleMock('module-e', '1.0.0', {});
     addModuleMock('module-f', '2.0.0', {});
     addModuleMock('module-e-plugin', '', [

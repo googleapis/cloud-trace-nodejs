@@ -26,7 +26,7 @@ var assert = require('assert');
 process.env.GCLOUD_TRACE_CONFIG =
   path.resolve(__dirname, '..', 'test', 'fixtures', 'test-config.js');
 
-process.env.GCLOUD_TRACE_LOGLEVEL = 2;
+process.env.GCLOUD_TRACE_LOGLEVEL = '2';
 
 var agent = require('..').start({ logLevel: 3,
   stackTraceLimit: 2 });

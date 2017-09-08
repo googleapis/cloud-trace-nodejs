@@ -16,7 +16,7 @@
 
 'use strict';
 
-process.env.GCLOUD_PROJECT = 1729;
+process.env.GCLOUD_PROJECT = '1729';
 
 var trace = require('..');
 

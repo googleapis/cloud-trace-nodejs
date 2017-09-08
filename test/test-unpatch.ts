@@ -27,7 +27,7 @@ nock.disableNetConnect();
 describe('index.js', function() {
   var agent;
   var scope;
-  var checkUnpatches = [];
+  var checkUnpatches: any[] = [];
   var envGcloudProject = process.env.GCLOUD_PROJECT;
 
   before(function() {

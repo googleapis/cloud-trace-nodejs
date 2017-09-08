@@ -49,7 +49,7 @@ describe('hapi', function() {
   });
 
   Object.keys(versions).forEach(function(version) {
-    if (version.substring(4) > 10 && semver.satisfies(process.version, '<4')) {
+    if (Number(version.substring(4)) > 10 && semver.satisfies(process.version, '<4')) {
       // v11 started using ES6 features (const)
       return;
     }
@@ -120,7 +120,7 @@ describe('hapi', function() {
       });
 
       it('should accurately measure get time, custom plugin', function(done) {
-        var plugin = function(server, options, next) {
+        var plugin = Object.assign(function(server, options, next) {
           server.route({
             method: 'GET',
             path: '/',
@@ -131,11 +131,12 @@ describe('hapi', function() {
             }
           });
           return next();
-        };
-        plugin.attributes = {
-          name: 'plugin',
-          version: '1.0.0'
-        };
+        }, {
+          attributes: {
+            name: 'plugin',
+            version: '1.0.0'
+          }
+        });
         server = new hapi.Server();
         server.connection({ port: common.serverPort });
         server.register({
@@ -150,7 +151,7 @@ describe('hapi', function() {
       });
 
       it('should accurately measure get time, after + get', function(done) {
-        if (version.substring(4) > 10) {
+        if (Number(version.substring(4)) > 10) {
           // after was removed in v11 https://github.com/hapijs/hapi/issues/2850
           return done();
         }

@@ -21,8 +21,8 @@ var assert = require('assert');
 var constants = require('../../src/constants'/*.js*/);
 var traceLabels = require('../../src/trace-labels'/*.js*/);
 var semver = require('semver');
-var appBuilders = {
-  koa1: buildKoa1App
+var appBuilders: any = {
+  koa1: buildKoa1App,
 };
 if (semver.satisfies(process.version, '>4')) {
   appBuilders.koa2 = buildKoa2App;

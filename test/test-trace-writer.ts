@@ -26,6 +26,17 @@ var os = require('os');
 var Service = require('@google-cloud/common').Service;
 var traceLabels = require('../src/trace-labels'/*.js*/);
 
+interface TestCase {
+  description: string,
+  config: any,
+  metadata: {
+    projectId?: string,
+    hostname?: string,
+    instanceId?: string
+  },
+  assertResults: (err: Error, tw: any) => void
+}
+
 nock.disableNetConnect();
 
 var PROJECT = 'fake-project';
@@ -81,7 +92,7 @@ describe('TraceWriter', function() {
     assert.equal(process.listeners('uncaughtException').length, 1);
   });
 
-  describe('writeSpan', function(done) {
+  describe('writeSpan', function() {
     it('should close spans, add defaultLabels and queue', function(done) {
       var writer = TraceWriter.create(fakeLogger, {
         projectId: PROJECT,
@@ -99,7 +110,7 @@ describe('TraceWriter', function() {
           var span = trace.spans[0];
           assert.strictEqual(span.name, 'fake span');
           assert.ok(span.closed_);
-          assert.strictEqual(spanData.labels_.fakeKey, 'value');
+          assert.strictEqual((spanData.labels_ as any).fakeKey, 'value');
           // TODO(ofrobots): check serviceContext labels as well.
           done();
         };
@@ -186,7 +197,7 @@ describe('TraceWriter', function() {
   });
 
   describe('initialize', function() {
-    var testCases = [
+    var testCases: TestCase[] = [
       {
         description: 'yield error if no projectId is available',
         config: {},

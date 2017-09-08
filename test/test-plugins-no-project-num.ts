@@ -36,10 +36,11 @@ describe('test-plugins-no-project-num', function(){
     before(function() {
       // Mute stderr to satiate appveyor
       write = process.stderr.write;
-      process.stderr.write = function(c, e, cb) {
+      process.stderr.write = function(c, e?, cb?) {
         if (cb) {
           cb();
         }
+        return true;
       };
     });
     after(function() {

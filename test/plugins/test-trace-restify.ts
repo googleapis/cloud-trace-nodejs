@@ -21,7 +21,7 @@ var assert = require('assert');
 var constants = require('../../src/constants'/*.js*/);
 var common = require('./common'/*.js*/);
 var semver = require('semver');
-var versions = {
+var versions: any = {
   restify4: './fixtures/restify4'
 };
 if (semver.satisfies(process.version, '<7')) {
@@ -50,11 +50,12 @@ describe('restify', function() {
 
         // Mute stderr to satiate appveyor
         write = process.stderr.write;
-        process.stderr.write = function(c, e, cb) {
+        process.stderr.write = function(c, e?, cb?) {
           assert(c.indexOf('DeprecationWarning') !== -1);
           if (cb) {
             cb();
           }
+          return true;
         };
       });
       after(function() {

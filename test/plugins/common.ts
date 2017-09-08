@@ -15,6 +15,15 @@
  */
 'use strict';
 
+import * as mocha from 'mocha';
+declare global {
+  namespace NodeJS {
+    export interface Global {
+      it: mocha.ITestDefinition;
+    }
+  }
+}
+
 var proxyquire  = require('proxyquire');
 // Monkeypatch gcp-metadata to not ask for retries at all.
 proxyquire('gcp-metadata', {
@@ -29,9 +38,9 @@ var cls = require('../../src/cls'/*.js*/);
 if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CONTEXT) {
   // Monkeypatch the monkeypatcher
   var oldIt = global.it;
-  global.it = function it(title, fn) {
+  global.it = Object.assign(function it(title, fn) {
     return oldIt.call(this, title, cls.createNamespace().bind(fn));
-  };
+  }, oldIt);
 }
 var tracePolicy = require('../../src/tracing-policy'/*.js*/);
 var TraceWriter = require('../../src/trace-writer'/*.js*/);
@@ -95,7 +104,7 @@ function getMatchingSpan(predicate) {
 }
 
 function getMatchingSpans(predicate) {
-  var list = [];
+  var list: any[] = [];
   getTraces().forEach(function(trace) {
     trace.spans.forEach(function(span) {
       if (predicate(span)) {

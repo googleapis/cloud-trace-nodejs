@@ -36,11 +36,12 @@ describe('test-trace-connect', function() {
     connect = require('./fixtures/connect3');
     // Mute stderr to satiate appveyor
     write = process.stderr.write;
-    process.stderr.write = function(c, e, cb) {
+    process.stderr.write = function(c, e?, cb?) {
       assert.equal(c, 1729);
       if (cb) {
         cb();
       }
+      return true;
     };
   });
 

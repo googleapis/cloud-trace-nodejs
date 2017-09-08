@@ -25,15 +25,14 @@ describe('should respect environment variables', function() {
   var logLevel;
 
   before(function() {
-    process.env.GCLOUD_TRACE_LOGLEVEL = 4;
+    process.env.GCLOUD_TRACE_LOGLEVEL = '4';
     // Wrap logger constructor so that the log level (string) is saved
     // in logLevel
     shimmer.wrap(gcloudCommon, 'logger', function(original) {
-      var wrapped = function(options) {
+      var wrapped = Object.assign(function(options) {
         logLevel = options.level;
         return original.apply(this, arguments);
-      };
-      wrapped.LEVELS = original.LEVELS;
+      }, original);
       return wrapped;
     });
   });
@@ -58,10 +57,10 @@ describe('should respect environment variables', function() {
   });
 
   it('should fix out of bounds log level', function() {
-    process.env.GCLOUD_TRACE_LOGLEVEL = -5;
+    process.env.GCLOUD_TRACE_LOGLEVEL = '-5';
     trace.start({forceNewAgent_: true});
     assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[0]);
-    process.env.GCLOUD_TRACE_LOGLEVEL = 300;
+    process.env.GCLOUD_TRACE_LOGLEVEL = '300';
     trace.start({forceNewAgent_: true});
     assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[5]);
   });

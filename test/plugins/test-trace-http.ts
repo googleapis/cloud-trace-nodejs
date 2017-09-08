@@ -270,7 +270,7 @@ describe('test-trace-http', function() {
               });
               assert.equal(spans.length, 5);
               // We need to check a property attached at the end of a span
-              var statusCodes = [];
+              var statusCodes: any = [];
               var labels = require('../../src/trace-labels'/*.js*/);
               for (var j = 0; j < spans.length; j++) {
                 var code = Number(spans[j].labels[

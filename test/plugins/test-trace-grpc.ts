@@ -229,7 +229,7 @@ function callServerStream(client, grpc, metadata, cb) {
 }
 
 function callBidi(client, grpc, metadata, cb) {
-  var args = [];
+  var args: any[] = [];
   if (Object.keys(metadata).length > 0) {
     var m = new grpc.Metadata();
     for (var key in metadata) {
@@ -259,7 +259,7 @@ Object.keys(versions).forEach(function(version) {
   var metadata;
   var server;
   var client;
-  var shouldTraceArgs = [];
+  var shouldTraceArgs: any[] = [];
   describe(version, function() {
     before(function() {
       // Set up to record invocations of shouldTrace
@@ -268,7 +268,7 @@ Object.keys(versions).forEach(function(version) {
           var result = original.apply(this, arguments);
           var shouldTrace = result.shouldTrace;
           result.shouldTrace = function() {
-            shouldTraceArgs.push([].slice.call(arguments, 0));
+            shouldTraceArgs.push(Array.prototype.slice.call(arguments, 0));
             return shouldTrace.apply(this, arguments);
           };
           return result;

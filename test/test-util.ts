@@ -65,7 +65,7 @@ describe('util.packageNameFromPath', function() {
 
 describe('util.findModuleVersion', function() {
   it('should correctly find package.json for userspace packages', function() {
-    var pjson = require('../package.json');
+    var pjson = require('../../package.json');
     var modulePath = util.findModulePath('glob', module);
     assert(semver.satisfies(util.findModuleVersion(modulePath, Module._load),
         pjson.devDependencies.glob));
@@ -79,7 +79,7 @@ describe('util.findModuleVersion', function() {
   it('should work with namespaces', function() {
     var modulePath = util.findModulePath('@google-cloud/common', module);
     var truePackage =
-      require('../node_modules/@google-cloud/common/package.json');
+      require('../../node_modules/@google-cloud/common/package.json');
     assert.equal(util.findModuleVersion(modulePath, Module._load), truePackage.version);
   });
 });

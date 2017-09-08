@@ -49,21 +49,23 @@ describe('tracewriter publishing', function() {
 
   it('should publish on unhandled exception', function(done) {
     var agent;
-    process.removeAllListeners('uncaughtException'); // Remove mocha handler
     var buf;
+    var listeners = process.listeners('uncaughtException');
+    process.removeAllListeners('uncaughtException');
     var scope = nock(uri)
         .intercept(path, 'PATCH', function(body) {
           assert.equal(JSON.stringify(body.traces), JSON.stringify(buf));
           return true;
         }).reply(200);
-    process.on('uncaughtException', function() {
+    process.once('uncaughtException', function() {
       setTimeout(function() {
-        var numListeners = process.listeners('uncaughtException').length;
         process.removeAllListeners('uncaughtException');
-        assert.equal(numListeners, 2);
+        listeners.forEach(function (l) {
+          process.addListener('uncaughtException', l)
+        });
         scope.done();
         done();
-      }, 20);
+      }, 200);
     });
     process.nextTick(function() {
       agent = trace.start({

@@ -25,13 +25,13 @@ var SpanData = require('../src/span-data'/*.js*/);
 var Trace = require('../src/trace'/*.js*/);
 var TraceWriter = require('../src/trace-writer'/*.js*/);
 
-function createRootSpanData(name, traceId, parentId) {
+function createRootSpanData(name, traceId?, parentId?, skipFrames?) {
   return new SpanData(
     new Trace(0, traceId),
     name,
     parentId,
     true,
-    1 // skipFrames; important for captured stack traces
+    skipFrames
   );
 }
 
