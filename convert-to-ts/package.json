@@ -1,0 +1,23 @@
+{
+  "name": "convert-to-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ts.js",
+  "scripts": {
+    "start": "ts-node ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/del": "^3.0.0",
+    "@types/glob": "^5.0.32",
+    "@types/mkdirp": "^0.5.1",
+    "@types/node": "^8.0.26",
+    "del": "^3.0.0",
+    "glob": "^7.1.2",
+    "mkdirp": "^0.5.1",
+    "ts-node": "^3.3.0",
+    "typescript": "^2.5.2"
+  }
+}
