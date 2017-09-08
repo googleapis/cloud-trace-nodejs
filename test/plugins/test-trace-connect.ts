@@ -15,10 +15,11 @@
  */
 'use strict';
 
-var traceLabels = require('../../src/trace-labels'/*.js*/);
+import { Constants } from '../../src/constants';
+import { TraceLabels } from '../../src/trace-labels';
+
 var http = require('http');
 var assert = require('assert');
-var constants = require('../../src/constants'/*.js*/);
 var common = require('./common'/*.js*/);
 
 var server;
@@ -104,10 +105,10 @@ describe('test-trace-connect', function() {
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
         var labels = common.getMatchingSpan(connectPredicate).labels;
-        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
-        assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
-        assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
-        assert(labels[traceLabels.HTTP_SOURCE_IP]);
+        assert.equal(labels[TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
+        assert.equal(labels[TraceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
+        assert.equal(labels[TraceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
+        assert(labels[TraceLabels.HTTP_SOURCE_IP]);
         done();
       });
     });
@@ -121,7 +122,7 @@ describe('test-trace-connect', function() {
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
         var labels = common.getMatchingSpan(connectPredicate).labels;
-        var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+        var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our middleware is on top of the stack
         assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
         done();
@@ -151,7 +152,7 @@ describe('test-trace-connect', function() {
     server = app.listen(common.serverPort, function() {
       http.get({port: common.serverPort}, function(res) {
         var labels = common.getMatchingSpan(connectPredicate).labels;
-        assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
+        assert.equal(labels[TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
         done();
       });
     });
@@ -164,16 +165,16 @@ describe('test-trace-connect', function() {
     });
     server = app.listen(common.serverPort, function() {
       var headers = {};
-      headers[constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
+      headers[Constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
       http.get({
         port: common.serverPort
       }, function(res) {
-        assert(!res.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+        assert(!res.headers[Constants.TRACE_CONTEXT_HEADER_NAME]);
         http.get({
           port: common.serverPort,
           headers: headers
         }, function(res) {
-          assert(res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+          assert(res.headers[Constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
           done();
         });
       });

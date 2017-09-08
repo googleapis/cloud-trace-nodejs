@@ -16,13 +16,14 @@
 
 'use strict';
 
+import { Constants } from '../src/constants';
+
 var assert = require('assert');
 var inspect = require('util').inspect;
 var Module = require('module');
 var semver = require('semver');
 var util = require('../src/util'/*.js*/);
 var path = require('path');
-var constants = require('../src/constants'/*.js*/);
 
 describe('util.truncate', function() {
   it('should truncate objects larger than size', function() {
@@ -35,7 +36,7 @@ describe('util.truncate', function() {
 
   it('should handle unicode characters', function() {
     var longName = Array(120).join('☃');
-    assert.strictEqual(util.truncate(longName, constants.TRACE_SERVICE_SPAN_NAME_LIMIT),
+    assert.strictEqual(util.truncate(longName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT),
       Array(42).join('☃') + '...');
   });
 });

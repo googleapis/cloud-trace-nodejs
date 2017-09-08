@@ -15,12 +15,13 @@
  */
 'use strict';
 
+import { Constants } from '../../src/constants';
+import { TraceLabels } from '../../src/trace-labels';
+
 var assert = require('assert');
 var cls = require('../../src/cls'/*.js*/);
 var util = require('../../src/util'/*.js*/);
-var constants = require('../../src/constants'/*.js*/);
 var shimmer = require('shimmer');
-var traceLabels = require('../../src/trace-labels'/*.js*/);
 var TracingPolicy = require('../../src/tracing-policy'/*.js*/);
 var common = require('./common'/*.js*/);
 
@@ -46,7 +47,7 @@ var checkMetadata;
 
 function checkServerMetadata(metadata) {
   if (checkMetadata) {
-    var traceContext = metadata.getMap()[constants.TRACE_CONTEXT_HEADER_NAME];
+    var traceContext = metadata.getMap()[Constants.TRACE_CONTEXT_HEADER_NAME];
     assert.ok(/[a-f0-9]{32}\/[0-9]+;o=1/.test(traceContext));
     var parsedContext = util.parseContextFromHeader(traceContext);
     var root = cls.getNamespace().get('root');
@@ -550,7 +551,7 @@ Object.keys(versions).forEach(function(version) {
           function getMethodName(predicate) {
             var trace = common.getMatchingSpan(predicate);
             var labels = trace.labels;
-            var stack = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+            var stack = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
             return stack.stack_frame[0].method_name;
           }
           assert.notStrictEqual(-1, getMethodName(grpcClientPredicate)

@@ -15,8 +15,9 @@
  */
 'use strict';
 
+import { TraceLabels } from '../../src/trace-labels';
+
 var common = require('./common'/*.js*/);
-var traceLabels = require('../../src/trace-labels'/*.js*/);
 var assert = require('assert');
 
 var RESULT_SIZE = 5;
@@ -104,7 +105,7 @@ describe('test-trace-mysql', function() {
           return span.name === 'mysql-query';
         });
         var labels = spans[0].labels;
-        var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+        var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our patch is on top of the stack
         assert(
           stackTrace.stack_frame[0].method_name.indexOf('createQuery_trace') !== -1);

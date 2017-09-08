@@ -15,12 +15,12 @@
  */
 'use strict';
 
-var common = require('./common'/*.js*/);
+import { Constants } from '../../src/constants';
+import { TraceLabels } from '../../src/trace-labels';
 
-var traceLabels = require('../../src/trace-labels'/*.js*/);
+var common = require('./common'/*.js*/);
 var http = require('http');
 var assert = require('assert');
-var constants = require('../../src/constants'/*.js*/);
 var semver = require('semver');
 
 var server;
@@ -218,10 +218,10 @@ describe('hapi', function() {
         server.start(function() {
           http.get({port: common.serverPort}, function(res) {
             var labels = common.getMatchingSpan(hapiPredicate).labels;
-            assert.equal(labels[traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
-            assert.equal(labels[traceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
-            assert.equal(labels[traceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
-            assert(labels[traceLabels.HTTP_SOURCE_IP]);
+            assert.equal(labels[TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '200');
+            assert.equal(labels[TraceLabels.HTTP_METHOD_LABEL_KEY], 'GET');
+            assert.equal(labels[TraceLabels.HTTP_URL_LABEL_KEY], 'http://localhost:9042/');
+            assert(labels[TraceLabels.HTTP_SOURCE_IP]);
             done();
           });
         });
@@ -240,7 +240,7 @@ describe('hapi', function() {
         server.start(function() {
           http.get({port: common.serverPort}, function(res) {
             var labels = common.getMatchingSpan(hapiPredicate).labels;
-            var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+            var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
             // Ensure that our middleware is on top of the stack
             assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
             done();
@@ -279,14 +279,14 @@ describe('hapi', function() {
         });
         server.start(function() {
           var headers = {};
-          headers[constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
+          headers[Constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
           http.get({port: common.serverPort}, function(res) {
-            assert(!res.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+            assert(!res.headers[Constants.TRACE_CONTEXT_HEADER_NAME]);
               http.get({
                 port: common.serverPort,
                 headers: headers
               }, function(res) {
-                assert(res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+                assert(res.headers[Constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
                 done();
               });
           });
@@ -327,9 +327,9 @@ describe('hapi', function() {
               assert.strictEqual(traces.length, 1);
               assert.strictEqual(traces[0].spans.length, 1);
               var span = traces[0].spans[0];
-              assert.strictEqual(span.labels[traceLabels.ERROR_DETAILS_NAME],
+              assert.strictEqual(span.labels[TraceLabels.ERROR_DETAILS_NAME],
                 'aborted');
-              assert.strictEqual(span.labels[traceLabels.ERROR_DETAILS_MESSAGE],
+              assert.strictEqual(span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
                 'client aborted the request');
               common.assertSpanDurationCorrect(span, common.serverWait);
               done();

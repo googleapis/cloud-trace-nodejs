@@ -94,11 +94,3 @@ export namespace TraceLabels {
    */
   export const AGENT_DATA = '/agent';
 };
-
-
-/**
- * Export TraceLabels.
- */
-module.exports = TraceLabels;
-
-export default {};

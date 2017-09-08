@@ -15,10 +15,11 @@
  */
 'use strict';
 
+import { Constants } from '../src/constants';
+
 var common = require('./plugins/common'/*.js*/);
 var http = require('http');
 var assert = require('assert');
-var constants = require('../src/constants'/*.js*/);
 
 var fakeTraceId = 'ffeeddccbbaa99887766554433221100';
 
@@ -53,7 +54,7 @@ describe('test-trace-header-context', function() {
       res.send(common.serverRes);
     });
     app.get('/self', function(req, res) {
-      assert(req.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+      assert(req.headers[Constants.TRACE_CONTEXT_HEADER_NAME]);
       res.send(common.serverRes);
       var traces = common.getTraces();
       assert.equal(traces.length, 2);
@@ -79,7 +80,7 @@ describe('test-trace-header-context', function() {
       res.send(common.serverRes);
     });
     app.get('/self', function(req, res) {
-      assert(req.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+      assert(req.headers[Constants.TRACE_CONTEXT_HEADER_NAME]);
       res.send(common.serverRes);
       var traces = common.getTraces();
       assert.equal(traces.length, 2);
@@ -107,10 +108,10 @@ describe('test-trace-header-context', function() {
     });
     app.get('/self', function(req, res) {
       assert.equal(
-        req.headers[constants.TRACE_CONTEXT_HEADER_NAME].slice(0, 6),
+        req.headers[Constants.TRACE_CONTEXT_HEADER_NAME].slice(0, 6),
         context.slice(0, 6));
       assert.equal(
-        req.headers[constants.TRACE_CONTEXT_HEADER_NAME].slice(8),
+        req.headers[Constants.TRACE_CONTEXT_HEADER_NAME].slice(8),
         ';o=1');
       res.send(common.serverRes);
       var traces = common.getTraces();
@@ -126,7 +127,7 @@ describe('test-trace-header-context', function() {
     });
     server = app.listen(common.serverPort, function() {
       var headers = {};
-      headers[constants.TRACE_CONTEXT_HEADER_NAME] = context;
+      headers[Constants.TRACE_CONTEXT_HEADER_NAME] = context;
       http.get({ port: common.serverPort, headers: headers });
     });
   });

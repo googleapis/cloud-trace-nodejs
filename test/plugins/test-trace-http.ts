@@ -15,11 +15,12 @@
  */
 'use strict';
 
+import { Constants } from '../../src/constants';
+import { TraceLabels } from '../../src/trace-labels';
+
 var common = require('./common'/*.js*/);
-var constants = require('../../src/constants'/*.js*/);
 var semver = require('semver');
 var stream = require('stream');
-var TraceLabels = require('../../src/trace-labels'/*.js*/);
 
 require('../..').start({ 
   projectId: '0',
@@ -94,7 +95,7 @@ describe('test-trace-http', function() {
     server.listen(common.serverPort, common.runInTransaction.bind(null,
       function(endTransaction) {
         var headers = {};
-        headers[constants.TRACE_API_HEADER_NAME] = 'yay';
+        headers[Constants.TRACE_CONTEXT_HEADER_NAME] = 'yay';
         http.get({port: common.serverPort, headers: headers});
         setTimeout(function() {
           endTransaction();
@@ -271,10 +272,9 @@ describe('test-trace-http', function() {
               assert.equal(spans.length, 5);
               // We need to check a property attached at the end of a span
               var statusCodes: any = [];
-              var labels = require('../../src/trace-labels'/*.js*/);
               for (var j = 0; j < spans.length; j++) {
                 var code = Number(spans[j].labels[
-                    labels.HTTP_RESPONSE_CODE_LABEL_KEY]);
+                    TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY]);
                 assert.equal(statusCodes.indexOf(code), -1);
                 statusCodes.push(code);
               }

@@ -15,13 +15,14 @@
  */
 'use strict';
 
+import { TraceLabels } from '../../src/trace-labels';
+
 // Prereqs:
 // Start docker daemon
 //   ex) docker -d
 // Run a mongo image binding the mongo port
 //   ex) docker run -p 27017:27017 -d mongo
 var common = require('./common'/*.js*/);
-var traceLabels = require('../../src/trace-labels'/*.js*/);
 
 var assert = require('assert');
 
@@ -147,7 +148,7 @@ describe('test-trace-mongoose', function() {
         assert(!err);
         var trace = common.getMatchingSpan(mongoPredicate.bind(null, 'mongo-cursor'));
         var labels = trace.labels;
-        var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+        var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our patch is on top of the stack
         assert(
           stackTrace.stack_frame[0].method_name.indexOf('next_trace') !== -1);

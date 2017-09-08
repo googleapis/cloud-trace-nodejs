@@ -43,9 +43,10 @@ declare global {
   }
 }
 
-var constants = require('./constants'/*.js*/);
+import { Constants } from './constants';
+import { TraceLabels } from './trace-labels';
+
 var TraceSpan = require('./trace-span'/*.js*/);
-var TraceLabels = require('./trace-labels'/*.js*/);
 var traceUtil = require('./util'/*.js*/);
 var util = require('util');
 var TraceWriter = require('./trace-writer'/*.js*/);
@@ -64,7 +65,7 @@ var uid = 1;
  */
 function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
   var spanId = uid++;
-  var spanName = traceUtil.truncate(name, constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
+  var spanName = traceUtil.truncate(name, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
   this.span = new TraceSpan(spanName, spanId, parentSpanId);
   this.trace = trace;
   this.isRoot = isRoot;
@@ -110,7 +111,7 @@ function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
     // config.maxLabelValueSize.
     this.span.setLabel(TraceLabels.STACK_TRACE_DETAILS_KEY,
       traceUtil.truncate(JSON.stringify({stack_frame: stackFrames}),
-        constants.TRACE_SERVICE_LABEL_VALUE_LIMIT));
+        Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT));
 
     Error.stackTraceLimit = origLimit;
     Error.prepareStackTrace = origPrepare;
@@ -122,7 +123,7 @@ SpanData.prototype.getTraceContext = function() {
 };
 
 SpanData.prototype.addLabel = function(key, value) {
-  var k = traceUtil.truncate(key, constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
+  var k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
   var string_val = typeof value === 'string' ? value : util.inspect(value);
   var v = traceUtil.truncate(string_val, TraceWriter.get().config().maximumLabelValueSize);
   this.span.setLabel(k, v);

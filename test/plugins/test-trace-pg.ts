@@ -15,8 +15,9 @@
  */
 'use strict';
 
+import { TraceLabels } from '../../src/trace-labels';
+
 var common = require('./common'/*.js*/);
-var traceLabels = require('../../src/trace-labels'/*.js*/);
 var assert = require('assert');
 
 describe('test-trace-pg', function() {
@@ -97,7 +98,7 @@ describe('test-trace-pg', function() {
           return span.name === 'pg-query';
         });
         var labels = span.labels;
-        var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+        var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
         // Ensure that our patch is on top of the stack
         assert(
           stackTrace.stack_frame[0].method_name.indexOf('query_trace') !== -1);

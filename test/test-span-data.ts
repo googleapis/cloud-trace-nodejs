@@ -16,10 +16,11 @@
 
 'use strict';
 
-var TraceLabels = require('../src/trace-labels'/*.js*/);
+import { Constants } from '../src/constants';
+import { TraceLabels } from '../src/trace-labels';
+
 var assert = require('assert');
 var cls = require('../src/cls'/*.js*/);
-var constants = require('../src/constants'/*.js*/);
 var common = require('./plugins/common'/*.js*/);
 var SpanData = require('../src/span-data'/*.js*/);
 var Trace = require('../src/trace'/*.js*/);
@@ -85,7 +86,7 @@ describe('SpanData', function() {
       var spanData = createRootSpanData(Array(200).join('a'), 1, 2);
       assert.strictEqual(
         spanData.span.name,
-        Array(constants.TRACE_SERVICE_SPAN_NAME_LIMIT - 2).join('a') + '...');
+        Array(Constants.TRACE_SERVICE_SPAN_NAME_LIMIT - 2).join('a') + '...');
     });
   });
 
@@ -95,7 +96,7 @@ describe('SpanData', function() {
       var longLabelKey = Array(200).join('a');
       spanData.addLabel(longLabelKey, 5);
       assert.strictEqual(
-        spanData.span.labels[Array(constants.TRACE_SERVICE_LABEL_KEY_LIMIT - 2).join('a') + '...'],
+        spanData.span.labels[Array(Constants.TRACE_SERVICE_LABEL_KEY_LIMIT - 2).join('a') + '...'],
         '5');
     });
   });
