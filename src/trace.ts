@@ -16,16 +16,17 @@
 
 'use strict';
 
-/**
- * Creates a trace object.
- * @constructor
- */
-function Trace(projectId, traceId) {
-  this.projectId = projectId;
-  this.traceId = traceId;
-  this.spans = [];
+import { TraceSpan } from './trace-span';
+
+export class Trace {
+  public readonly spans: TraceSpan[] = [];
+
+  /**
+   * Creates a trace object.
+   * @constructor
+   */
+  constructor(
+    public projectId: string,
+    public readonly traceId: string
+  ) {}
 }
-
-module.exports = Trace;
-
-export default {};

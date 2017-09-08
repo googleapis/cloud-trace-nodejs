@@ -44,9 +44,10 @@ declare global {
 }
 
 import { Constants } from './constants';
+import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
+import { TraceSpan } from './trace-span';
 
-var TraceSpan = require('./trace-span'/*.js*/);
 var traceUtil = require('./util'/*.js*/);
 var util = require('util');
 var TraceWriter = require('./trace-writer'/*.js*/);
@@ -63,7 +64,7 @@ var uid = 1;
  * @param {number} skipFrames the number of frames to remove from the top of the stack.
  * @constructor
  */
-function SpanData(trace, name, parentSpanId, isRoot, skipFrames) {
+function SpanData(trace: Trace, name, parentSpanId, isRoot, skipFrames) {
   var spanId = uid++;
   var spanName = traceUtil.truncate(name, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
   this.span = new TraceSpan(spanName, spanId, parentSpanId);

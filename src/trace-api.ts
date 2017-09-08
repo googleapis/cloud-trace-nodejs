@@ -17,12 +17,12 @@
 'use strict';
 
 import { Constants } from './constants';
+import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
 
 var cls = require('./cls'/*.js*/);
 var is = require('is');
 var util = require('./util'/*.js*/);
-var Trace = require('./trace'/*.js*/);
 var SpanData = require('./span-data'/*.js*/);
 var uuid = require('uuid');
 var TracingPolicy = require('./tracing-policy'/*.js*/);
@@ -172,7 +172,7 @@ TraceAgent.prototype.runInRootSpan = function(options, fn) {
     // Create a new root span, and invoke fn with it.
     var traceId = incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
     var parentId = incomingTraceContext.spanId || '0';
-    var rootContext = new SpanData(new Trace(0, traceId), /* Trace object */
+    var rootContext = new SpanData(new Trace('', traceId), /* Trace object */
       options.name, /* Span name */
       parentId, /* Parent's span ID */
       true, /* Is root span */

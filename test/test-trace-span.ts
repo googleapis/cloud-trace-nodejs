@@ -16,10 +16,10 @@
 
 'use strict';
 
+import { TraceSpan } from '../src/trace-span';
+
 var assert = require('assert');
 var tk = require('timekeeper');
-var TraceSpan = require('../src/trace-span'/*.js*/);
-
 
 describe('TraceSpan', function() {
   afterEach(function() {
