@@ -19,10 +19,10 @@
 import { Constants } from './constants';
 import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
+import * as util from './util';
 
 var cls = require('./cls'/*.js*/);
 var is = require('is');
-var util = require('./util'/*.js*/);
 var SpanData = require('./span-data'/*.js*/);
 var uuid = require('uuid');
 var TracingPolicy = require('./tracing-policy'/*.js*/);
@@ -267,7 +267,7 @@ TraceAgent.prototype.getResponseTraceContext = function(
   if (!traceContext) {
     return '';
   }
-  traceContext.options = traceContext.options & isTraced;
+  traceContext.options = (traceContext.options || 0) & isTraced;
   return util.generateTraceContext(traceContext);
 };
 

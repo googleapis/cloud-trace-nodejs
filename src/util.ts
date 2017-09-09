@@ -16,9 +16,19 @@
 
 'use strict';
 
-var Module = require('module');
-var fs = require('fs');
-var path = require('path');
+import * as fs from 'fs';
+import * as path from 'path';
+
+// TODO(kjin)
+// Module augmentation is implemented in this PR:
+// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/19612
+// Do this correctly when it's landed and released.
+import _Module = require('module');
+const Module: {
+  _resolveFilename(request: string, parent?: NodeModule): string;
+  _resolveLookupPaths(request: string, parent?: NodeModule): string;
+  _load(request: string, parent?: NodeModule, isMain?: boolean): any;
+} = _Module as any;
 
 /**
  * Truncates the provided `string` to be at most `length` bytes
@@ -27,28 +37,34 @@ var path = require('path');
  * avoid truncating the string potentially producing partial unicode
  * characters at the end.
  */
-function truncate(string, length) {
-  if (Buffer.byteLength(string, 'utf8') <= length) {
-    return string;
+export function truncate(str: string, length: number) {
+  if (Buffer.byteLength(str, 'utf8') <= length) {
+    return str;
   }
-  string = string.substr(0, length - 3);
-  while (Buffer.byteLength(string, 'utf8') > length - 3) {
-    string = string.substr(0, string.length - 1);
+  str = str.substr(0, length - 3);
+  while (Buffer.byteLength(str, 'utf8') > length - 3) {
+    str = str.substr(0, str.length - 1);
   }
-  return string + '...';
+  return str + '...';
 }
 
 // Includes support for npm '@org/name' packages
 // Regex: .*?node_modules(?!.*node_modules)\/(@[^\/]*\/[^\/]*|[^\/]*).*
 // Tests: https://regex101.com/r/lW2bE3/6
-var moduleRegex = new RegExp(
-  '.*?node_modules(?!.*node_modules)\\' + path.sep +
-  '(@[^\\' + path.sep +
-  ']*\\' + path.sep +
-  '[^\\' + path.sep +
-  ']*|[^\\' + path.sep +
+const moduleRegex = new RegExp([
+  '.*?node_modules(?!.*node_modules)\\',
+  '(@[^\\',
+  ']*\\',
+  '[^\\',
+  ']*|[^\\',
   ']*).*'
-);
+].join(path.sep));
+
+export interface TraceContext {
+  traceId: string;
+  spanId: string;
+  options?: number;
+};
 
 /**
  * Parse a cookie-style header string to extract traceId, spandId and options
@@ -61,19 +77,19 @@ var moduleRegex = new RegExp(
  * @return {?{traceId: string, spanId: string, options: number}}
  *         object with keys. null if there is a problem.
  */
-function parseContextFromHeader(str) {
+export function parseContextFromHeader(str: string): TraceContext | null {
   if (!str) {
     return null;
   }
-  var matches = str.match(/^([0-9a-fA-F]+)(?:\/([0-9]+))(?:;o=(.*))?/);
+  const matches = str.match(/^([0-9a-fA-F]+)(?:\/([0-9]+))(?:;o=(.*))?/);
   if (!matches || matches.length !== 4 || matches[0] !== str ||
-      (matches[2] && isNaN(matches[2]))) {
+      (matches[2] && isNaN(Number(matches[2])))) {
     return null;
   }
   return {
     traceId: matches[1],
     spanId: matches[2],
-    options: isNaN(matches[3]) ? undefined : Number(matches[3])
+    options: isNaN(Number(matches[3])) ? undefined : Number(matches[3])
   };
 }
 
@@ -85,13 +101,13 @@ function parseContextFromHeader(str) {
  *        An object with information sufficient for creating a serialized trace
  *        context.
  */
-function generateTraceContext(traceContext) {
+export function generateTraceContext(traceContext: TraceContext): string {
   if (!traceContext) {
     return '';
   }
-  var header = traceContext.traceId + '/' + traceContext.spanId;
+  let header = `${traceContext.traceId}/${traceContext.spanId}`;
   if (typeof traceContext.options !== 'undefined') {
-    header += (';o=' + traceContext.options);
+    header += `;o=${traceContext.options}`;
   }
   return header;
 }
@@ -103,8 +119,8 @@ function generateTraceContext(traceContext) {
  *
  * @param {string} path The full import path.
  */
-function packageNameFromPath(path) {
-  var matches = moduleRegex.exec(path);
+export function packageNameFromPath(path: string) {
+  const matches = moduleRegex.exec(path);
   return matches && matches.length > 1 ? matches[1] : null;
 }
 
@@ -115,11 +131,11 @@ function packageNameFromPath(path) {
  * @param {string} request The name of the module to be loaded.
  * @param {object} parent The module into which the requested module will be loaded.
  */
-function findModulePath(request, parent) {
-  var mainScriptDir = path.dirname(Module._resolveFilename(request, parent));
-  var resolvedModule = Module._resolveLookupPaths(request, parent);
-  var paths = resolvedModule[1];
-  for (var i = 0, PL = paths.length; i < PL; i++) {
+export function findModulePath(request: string, parent: NodeModule): string | null {
+  const mainScriptDir = path.dirname(Module._resolveFilename(request, parent));
+  const resolvedModule = Module._resolveLookupPaths(request, parent);
+  const paths = resolvedModule[1];
+  for (let i = 0, PL = paths.length; i < PL; i++) {
     if (mainScriptDir.indexOf(paths[i]) === 0) {
       return path.join(paths[i], request.replace('/', path.sep));
     }
@@ -134,23 +150,15 @@ function findModulePath(request, parent) {
  *    module being loaded. This may be null if we are loading an internal module
  *    such as http.
  */
-function findModuleVersion(modulePath, load) {
+export function findModuleVersion(modulePath: string | null, load: (path: string) => any): string {
+  if (!load) {
+    load = Module._load;
+  }
   if (modulePath) {
-    var pjson = path.join(modulePath, 'package.json');
+    const pjson = path.join(modulePath, 'package.json');
     if (fs.existsSync(pjson)) {
       return load(pjson).version;
     }
   }
   return process.version;
 }
-
-module.exports = {
-  truncate: truncate,
-  parseContextFromHeader: parseContextFromHeader,
-  generateTraceContext: generateTraceContext,
-  packageNameFromPath: packageNameFromPath,
-  findModulePath: findModulePath,
-  findModuleVersion: findModuleVersion
-};
-
-export default {};

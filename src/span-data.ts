@@ -47,8 +47,8 @@ import { Constants } from './constants';
 import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
 import { TraceSpan } from './trace-span';
+import * as traceUtil from './util';
 
-var traceUtil = require('./util'/*.js*/);
 var util = require('util');
 var TraceWriter = require('./trace-writer'/*.js*/);
 

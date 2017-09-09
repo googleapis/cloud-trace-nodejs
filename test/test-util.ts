@@ -17,12 +17,13 @@
 'use strict';
 
 import { Constants } from '../src/constants';
+import * as util from '../src/util';
 
 var assert = require('assert');
+var common = require('./plugins/common'/*.js*/);
 var inspect = require('util').inspect;
 var Module = require('module');
 var semver = require('semver');
-var util = require('../src/util'/*.js*/);
 var path = require('path');
 
 describe('util.truncate', function() {
@@ -88,9 +89,8 @@ describe('util.findModuleVersion', function() {
 describe('util.parseContextFromHeader', function() {
   describe('valid inputs', function() {
     it('should return expected values: 123456/667;o=1', function() {
-      var result = util.parseContextFromHeader(
-        '123456/667;o=1');
-      assert(result);
+      var result = common.notNull(util.parseContextFromHeader(
+        '123456/667;o=1'));
       assert.strictEqual(result.traceId, '123456');
       assert.strictEqual(result.spanId, '667');
       assert.strictEqual(result.options, 1);
@@ -98,18 +98,16 @@ describe('util.parseContextFromHeader', function() {
 
     it('should return expected values:' +
         '123456/123456123456123456123456123456123456;o=1', function() {
-      var result = util.parseContextFromHeader(
-        '123456/123456123456123456123456123456123456;o=1');
-      assert(result);
+      var result = common.notNull(util.parseContextFromHeader(
+        '123456/123456123456123456123456123456123456;o=1'));
       assert.strictEqual(result.traceId, '123456');
       assert.strictEqual(result.spanId, '123456123456123456123456123456123456');
       assert.strictEqual(result.options, 1);
     });
 
     it('should return expected values: 123456/667', function() {
-      var result = util.parseContextFromHeader(
-        '123456/667');
-      assert(result);
+      var result = common.notNull(util.parseContextFromHeader(
+        '123456/667'));
       assert.strictEqual(result.traceId, '123456');
       assert.strictEqual(result.spanId, '667');
       assert.strictEqual(result.options, undefined);
@@ -128,7 +126,7 @@ describe('util.parseContextFromHeader', function() {
       '123/o=1;456',
       '123/abc/o=1'
     ];
-    inputs.forEach(function(s) {
+    inputs.forEach(function(s: any) {
       it('should reject ' + s, function() {
         var result = util.parseContextFromHeader(s);
         assert.ok(!result);
@@ -153,14 +151,14 @@ describe('util.generateTraceContext', function() {
 
   inputs.forEach(function(s) {
     it('returns well-formatted trace context for ' + inspect(s), function() {
-      var context = util.generateTraceContext(s, true);
+      var context = util.generateTraceContext(s);
       var parsed = util.parseContextFromHeader(context);
       assert.deepEqual(parsed, s);
     });
   });
 
   it('returns an empty string if passed a falsy value', function() {
-    var context = util.generateTraceContext(null);
+    var context = util.generateTraceContext(null as any);
     assert.equal(context, '');
   });
 });

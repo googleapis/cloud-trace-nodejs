@@ -23,11 +23,12 @@ declare global {
   }
 }
 
+import * as util from './util';
+
 var Module = require('module');
 var shimmer = require('shimmer');
 var path = require('path');
 var semver = require('semver');
-var util = require('./util'/*.js*/);
 var TraceAgent = require('./trace-api'/*.js*/);
 
 var plugins = Object.create(null);

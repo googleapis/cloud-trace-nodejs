@@ -196,6 +196,16 @@ function hasContext() {
   return !!cls.getRootContext();
 }
 
+/**
+ * Converts a nullable object to one that's guaranteed to be non-null.
+ * Throws an assertion error if it is null.
+ * @param arg The object to check.
+ */
+function notNull<T>(arg: T | null) : T {
+  assert.notStrictEqual(arg, null);
+  return arg as T;
+}
+
 module.exports = {
   assertSpanDurationCorrect: assertSpanDurationCorrect,
   assertDurationCorrect: assertDurationCorrect,
@@ -215,7 +225,8 @@ module.exports = {
   serverRes: SERVER_RES,
   serverPort: SERVER_PORT,
   serverKey: SERVER_KEY,
-  serverCert: SERVER_CERT
+  serverCert: SERVER_CERT,
+  notNull
 };
 
 export default {};

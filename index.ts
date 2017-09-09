@@ -34,12 +34,12 @@ if (require('semver').satisfies(process.version, '<8') ||
 }
 
 import { Constants } from './src/constants';
+import * as traceUtil from './src/util';
 
 var path = require('path');
 var cls = require('./src/cls'/*.js*/);
 var common = require('@google-cloud/common');
 var extend = require('extend');
-var traceUtil = require('./src/util'/*.js*/);
 var TraceAgent = require('./src/trace-api'/*.js*/);
 var pluginLoader = require('./src/trace-plugin-loader'/*.js*/);
 var TraceWriter = require('./src/trace-writer'/*.js*/);
