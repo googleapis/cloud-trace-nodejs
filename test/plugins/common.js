@@ -26,7 +26,7 @@ var semver = require('semver');
 var logger = require('@google-cloud/common').logger;
 var trace = require('../..');
 var cls = require('../../src/cls.js');
-if (semver.satisfies(process.version, '>=8')) {
+if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CONTEXT) {
   // Monkeypatch the monkeypatcher
   var oldIt = global.it;
   global.it = function it(title, fn) {

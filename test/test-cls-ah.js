@@ -19,11 +19,9 @@ var assert = require('assert');
 var http = require('http');
 var semver = require('semver');
 
-if (semver.satisfies(process.version, '<8')) {
+if (semver.satisfies(process.version, '<8') || !process.env.GCLOUD_TRACE_NEW_CONTEXT) {
   console.log('Skipping cls-ah tests on node version without async hooks');
   return;
-} else {
-  assert.ok(process.env.GCLOUD_TRACE_NEW_CONTEXT);
 }
 
 var cls = require('../src/cls-ah.js');
