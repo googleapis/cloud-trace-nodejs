@@ -3,17 +3,18 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "build",
-    "lib": ["es2015", "es2015.generator"],
-    "target": "es2015"
+    "lib": ["es2015"],
+    "target": "es2015",
+    "module": "commonjs",
+    "allowUnreachableCode": true,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "noEmitOnError": false
   },
   "include": [
-    "src/*.ts",
+    "*.ts",
     "src/**/*.ts",
-    "test/*.ts",
     "test/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "test/**/*.d.ts"
   ]
 }

@@ -22,7 +22,7 @@ env:
   - CXX=g++-4.8 GCLOUD_TRACE_NEW_CONTEXT=1
 
 script:
-  - npm run coverage && npm run system-test
+  - npm run coverage && npm run system-test && npm run non-interference
 
 addons:
   apt:

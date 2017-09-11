@@ -21,8 +21,6 @@ install:
   - redis-64\tools\redis-server.exe --service-start
   # install modules
   - npm install
-  - ps: ForEach ($fix in Get-ChildItem -Directory test/plugins/fixtures/*) { cd $fix; npm install --silent }
-  - ps: cd ..\..\..\..
   - SET GCLOUD_PROJECT=0
   - SET GCLOUD_TRACE_NEW_CONTEXT=1
 
@@ -37,7 +35,7 @@ before_test:
 # Post-install test scripts.
 test_script:
   # run tests
-  - ps: npm run test
+  - npm run test
 
 # Don't actually build using MSBuild
 build: off
