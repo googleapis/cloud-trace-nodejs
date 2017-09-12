@@ -1,19 +1,35 @@
-# Change Log
+# Node.js Agent for Google Cloud Trace ChangeLog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+## 2017-09-12, Version 2.2.0 (Beta), @matthewloring
 
-<a name="2.1.3"></a>
-## [2.1.3](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/compare/v2.1.2...v2.1.3) (2017-08-01)
+### Notable changes
 
+**features**
+
+  * [[`0e15b6c95d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0e15b6c95d)] - **feat**: Async hooks based context tracking (#538) (Matthew Loring) [#538](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/538)
+  * [[`debc49331c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/debc49331c)] - **feat**: add public API for root span id (#542) (Ali Ijaz Sheikh) 
+  * [[`4496d3d6f0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4496d3d6f0)] - **feat**: Add GCLOUD_TRACE_CONFIG env config (#539) (Oleg Shalygin)
+
+## Commits
+
+* [[`6f9614a810`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6f9614a810)] - **test**: restore Function#length property in wrapped mocha test functions when using continuation-local-storage with node 8 (#553) (Kelvin Jin) [#553](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/553)
+* [[`e744614e6a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e744614e6a)] - **chore**: delete performance scripts (#551) (Kelvin Jin) [#551](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/551)
+* [[`68ec8d5e5f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/68ec8d5e5f)] - Trace API function for trace writer project ID (#548) (Dave Raffensperger) [#548](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/548)
+* [[`843e7280da`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/843e7280da)] - **docs**: rewrite gce guide (#549) (Kelvin Jin) [#549](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/549)
+* [[`715f8cfb84`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/715f8cfb84)] - **chore**: get rid of commitlint (#543) (Ali Ijaz Sheikh) 
+* [[`471902a438`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/471902a438)] - **fix**: Account for auth spans in system test (#547) (Matthew Loring) [#547](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/547)
+* [[`0e15b6c95d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0e15b6c95d)] - **feat**: Async hooks based context tracking (#538) (Matthew Loring) [#538](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/538)
+* [[`debc49331c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/debc49331c)] - **feat**: add public API for root span id (#542) (Ali Ijaz Sheikh) 
+* [[`a1012058bf`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a1012058bf)] - Avoid throwing on malformed version in package json (#546) (Matthew Loring) [#546](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/546)
+* [[`696cb8d6e4`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/696cb8d6e4)] - Fix http-e2e for node 8.4.0 (#541) (Matthew Loring) [#541](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/541)
+* [[`4496d3d6f0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4496d3d6f0)] - **feat**: Add GCLOUD_TRACE_CONFIG env config (#539) (Oleg Shalygin)
+
+## 2017-08-01, Version 2.1.3 (Beta), @kjin
 
 ### Bug Fixes
 
 * add explicit active flag in trace agent ([#533](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues/533)) ([b01f4b2](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b01f4b2))
 * don't warn about trace loading before itself on windows ([#534](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues/534)) ([7e1cc34](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7e1cc34))
-
-
-
-# Node.js Agent for Google Cloud Trace ChangeLog
 
 ## 2017-07-19, Version 2.1.2 (Beta), @kjin
 
