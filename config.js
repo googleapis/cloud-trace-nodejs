@@ -66,14 +66,12 @@ module.exports = {
     // See `bufferSize`.
     flushDelaySeconds: 30,
 
-    // If paths are present in this array, then these paths will be ignored before
-    // `samplingRate` based decisions are made. Paths must include a leading
-    // forward slash and be of the form:
-    //   /componentOne/componentTwo/...
-    // Paths can additionally be classified by regex in which case any path matching
-    // any provided regex will be ignored.
+    // If an incoming request path matches any of the regular expressions (via
+    // String.prototype.match) in this array, then this request will be ignored
+    // before `samplingRate` based decisions are made.
+    // Objects in this array should be RegExp objects or strings.
     // We ignore the health checker probes (/_ah/health) by default.
-    ignoreUrls: [ '/_ah/health' ],
+    ignoreUrls: [ '^/_ah/health' ],
 
     // An upper bound on the number of traces to gather each second. If set to 0,
     // sampling is disabled and all traces are recorded. Sampling rates greater

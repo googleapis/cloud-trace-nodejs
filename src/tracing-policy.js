@@ -39,8 +39,7 @@ function FilterPolicy(basePolicy, filterUrls) {
 
 FilterPolicy.prototype.matches = function(url) {
   return this.filterUrls.some(function(candidate) {
-    return (typeof candidate === 'string' && candidate === url) ||
-      url.match(candidate);
+    return url.match(candidate);
   });
 };
 

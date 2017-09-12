@@ -23,16 +23,19 @@ describe('FilterPolicy', function() {
   it('should not allow filtered urls', function() {
     var policy = tracingPolicy.createTracePolicy({
       samplingRate: 0,
-      ignoreUrls: ['/_ah/health', /\/book*/]
+      ignoreUrls: ['^/_ah/health', /^\/book*/, '/foo']
     });
     assert(!policy.shouldTrace(null, '/_ah/health'));
     assert(!policy.shouldTrace(null, '/book/test'));
+    assert(!policy.shouldTrace(null, '/foo'));
+    assert(!policy.shouldTrace(null, '/foo/bar'));
+    assert(!policy.shouldTrace(null, '/bar/foo'));
   });
 
   it('should allow non-filtered urls', function() {
     var policy = tracingPolicy.createTracePolicy({
       samplingRate: 0,
-      ignoreUrls: ['/_ah/health']
+      ignoreUrls: ['^/_ah/health', '^/$']
     });
     assert(policy.shouldTrace(null, '/_ah/background'));
   });
