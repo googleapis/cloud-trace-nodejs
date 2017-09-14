@@ -11,7 +11,7 @@ export default async function() {
     throw new Error('Environment insufficient for decrypting service account key');
   }
   
-  const path = 'node-team-test-d0b0be11c23d.json';
+  const filename = 'node-team-test-d0b0be11c23d.json';
 
   const decipher = createDecipheriv(
     'aes-256-cbc',
@@ -19,8 +19,8 @@ export default async function() {
     Buffer.from(iv, 'hex')
   );
 
-  const readStream = createReadStream(`${path}.enc`);
-  const writeStream = createWriteStream(path);
+  const readStream = createReadStream(`${filename}.enc`);
+  const writeStream = createWriteStream(filename);
 
   await new Promise((resolve, reject) => {
     readStream

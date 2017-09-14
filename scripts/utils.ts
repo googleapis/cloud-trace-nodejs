@@ -13,14 +13,15 @@ export const ncpP: (src: string, dest: string) => Promise<void> = pify(ncp);
 export const statP: (path: string) => Promise<Stats> = pify(stat);
 export const readFileP: (path: string, encoding?: string) => Promise<Buffer|string> = pify(readFile);
 
-export async function existsP(path: string): Promise<boolean> {
-  let exists = true;
-  try {
-    await statP(path);
-  } catch (e) {
-    exists = false;
-  }
-  return exists;
+export function nodule(nodule: string) {
+  return path.relative(BUILD_DIRECTORY, `node_modules/${nodule}`);
+}
+
+export function existsP(path: string): Promise<boolean> {
+  return statP(path).then(
+    () => Promise.resolve(true),
+    () => Promise.resolve(false)
+  );
 }
 
 function promisifyChildProcess(childProcess: ChildProcess): Promise<void> {

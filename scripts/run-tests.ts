@@ -1,9 +1,5 @@
 import * as path from 'path';
-import { BUILD_DIRECTORY, globP, forkP } from './utils';
-
-function nodule(nodule: string) {
-  return path.relative(BUILD_DIRECTORY, `node_modules/${nodule}`);
-}
+import { BUILD_DIRECTORY, nodule, globP, forkP } from './utils';
 
 export interface Options {
   globs: string[],
