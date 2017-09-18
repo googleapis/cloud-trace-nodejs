@@ -1,7 +1,7 @@
 import { createDecipheriv } from 'crypto';
 import { createReadStream, createWriteStream } from 'fs';
 
-export default async function() {
+export default function() {
   const {
     encrypted_18363a01ae87_key: key,
     encrypted_18363a01ae87_iv: iv,
@@ -22,7 +22,7 @@ export default async function() {
   const readStream = createReadStream(`${filename}.enc`);
   const writeStream = createWriteStream(filename);
 
-  await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     readStream
       .on('error', reject)
       .pipe(decipher)

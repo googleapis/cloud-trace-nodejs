@@ -3,9 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "build",
-    "lib": ["es2015"],
     "target": "es2015",
-    "module": "commonjs",
     "allowUnreachableCode": true,
     "noUnusedParameters": false,
     "noImplicitAny": false,

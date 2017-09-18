@@ -43,7 +43,7 @@ var TraceAgent = require('./src/trace-api'/*.js*/);
 var pluginLoader = require('./src/trace-plugin-loader'/*.js*/);
 var TraceWriter = require('./src/trace-writer'/*.js*/);
 
-var modulesLoadedBeforeTrace: any[] = [];
+var modulesLoadedBeforeTrace: string[] = [];
 
 var traceAgent = new TraceAgent('Custom Span API');
 
