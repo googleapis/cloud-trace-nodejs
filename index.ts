@@ -34,6 +34,7 @@ if (require('semver').satisfies(process.version, '<8') ||
 }
 
 import { Constants } from './src/constants';
+import { defaultConfig } from './config';
 import * as traceUtil from './src/util';
 
 var path = require('path');
@@ -82,7 +83,7 @@ function initConfig(projectConfig) {
   }
   // Configuration order of precedence:
   // Default < Environment Variable Set Configuration File < Project
-  var config = extend(true, {}, require('./config'/*.js*/), envSetConfig,
+  var config = extend(true, {}, defaultConfig, envSetConfig,
     projectConfig, envConfig);
 
   // Enforce the upper limit for the label value size.

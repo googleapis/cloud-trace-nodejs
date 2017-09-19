@@ -16,6 +16,8 @@
 
 'use strict';
 
+import { defaultConfig } from '../config';
+
 var assert = require('assert');
 var cls = require('../src/cls'/*.js*/);
 var common = require('./plugins/common'/*.js*/);
@@ -66,12 +68,12 @@ function assertAPISurface(traceAPI) {
 describe('Trace Interface', function() {
   before(function(done) {
     TraceWriter.create(logger,
-      Object.assign(require('../config'/*.js*/), {
+      Object.assign(defaultConfig, {
         projectId: '0'
       }), function(err) {
-      assert.ok(!err);
-      done();
-    });
+        assert.ok(!err);
+        done();
+      });
     cls.createNamespace();
   });
 
