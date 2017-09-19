@@ -16,7 +16,7 @@
 'use strict';
 
 var shimmer = require('shimmer');
-var util = require('../../src/util.js');
+var util = require('../../build/src/util.js');
 // Stub generateTraceContext so that it always returns the same thing.
 // This is because web framework unit tests check that similar/identical
 // incoming requests yield the same outgoing headers (for example, express
