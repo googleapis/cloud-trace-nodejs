@@ -1,14 +1,18 @@
 import * as path from 'path';
-import { BUILD_DIRECTORY, nodule, globP, forkP } from './utils';
+import { globP, forkP } from './utils';
 
 export interface Options {
   globs: string[],
+  rootDir: string,
   coverage?: boolean,
   timeout?: number
 }
 
 export default async function(options: Options) {
-  const { globs, coverage, timeout } = options;
+  const { globs, rootDir, coverage, timeout } = options;
+  function nodule(nodule: string) {
+    return path.relative(rootDir, `node_modules/${nodule}`);
+  }
   let testNum = 0;
   const files = ([] as string[])
     .concat(...await Promise.all(globs.map(glob => globP(glob))))
@@ -27,7 +31,7 @@ export default async function(options: Options) {
       ],
       '--require',
       'source-map-support/register',
-      path.relative(BUILD_DIRECTORY, file),
+      path.relative(rootDir, file),
       ...timeout ? [
         '--timeout',
         `${timeout}`
@@ -39,7 +43,7 @@ export default async function(options: Options) {
     await forkP(
       moduleAndArgs[0],
       moduleAndArgs.slice(1),
-      { cwd: BUILD_DIRECTORY }
+      { cwd: rootDir }
     );
   }
 }

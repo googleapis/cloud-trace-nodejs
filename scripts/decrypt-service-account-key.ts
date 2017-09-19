@@ -29,6 +29,6 @@ export default function() {
       .on('error', reject)
       .pipe(writeStream)
       .on('error', reject)
-      .on('end', resolve);
+      .on('finish', resolve);
   });
 }

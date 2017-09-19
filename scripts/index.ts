@@ -38,6 +38,7 @@ async function run(steps: string[]) {
             `${BUILD_DIRECTORY}/test/test-*.js`,
             `${BUILD_DIRECTORY}/test/plugins/test-*.js`
           ],
+          rootDir: BUILD_DIRECTORY,
           coverage: false,
           timeout: 4000
         });
@@ -48,6 +49,7 @@ async function run(steps: string[]) {
             `${BUILD_DIRECTORY}/test/test-*.js`,
             `${BUILD_DIRECTORY}/test/plugins/test-*.js`
           ],
+          rootDir: BUILD_DIRECTORY,
           coverage: true,
           timeout: 4000
         });
@@ -60,6 +62,7 @@ async function run(steps: string[]) {
             globs: [
               `system-test/*.js`,
             ],
+            rootDir: '.',
             coverage: false
           });
         }
