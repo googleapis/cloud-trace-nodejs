@@ -20,12 +20,12 @@ import { Constants } from './constants';
 import { SpanData } from './span-data';
 import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
+import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
 
 var cls = require('./cls'/*.js*/);
 var is = require('is');
 var uuid = require('uuid');
-var TracingPolicy = require('./tracing-policy'/*.js*/);
 var semver = require('semver');
 
 var ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;

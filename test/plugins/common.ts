@@ -26,6 +26,7 @@ declare global {
 
 import '../override-gcp-metadata';
 import { traceWriter } from '../../src/trace-writer';
+import * as TracingPolicy from '../../src/tracing-policy';
 
 var semver = require('semver');
 
@@ -39,7 +40,6 @@ if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CON
     return oldIt.call(this, title, cls.createNamespace().bind(fn));
   }, oldIt);
 }
-var tracePolicy = require('../../src/tracing-policy'/*.js*/);
 
 var assert = require('assert');
 var http = require('http');
@@ -58,7 +58,7 @@ shimmer.wrap(trace, 'start', function(original) {
       enhancedDatabaseReporting: false,
       ignoreTraceContext: false
     });
-    testTraceAgent.policy_ = new tracePolicy.TraceAllPolicy();
+    testTraceAgent.policy_ = new TracingPolicy.TraceAllPolicy();
     return result;
   };
 });

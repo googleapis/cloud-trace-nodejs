@@ -16,25 +16,26 @@
 
 'use strict';
 
+import * as TracingPolicy from '../src/tracing-policy';
+
 var assert = require('assert');
-var tracingPolicy = require('../src/tracing-policy'/*.js*/);
 
 describe('FilterPolicy', function() {
   it('should not allow filtered urls', function() {
-    var policy = tracingPolicy.createTracePolicy({
+    var policy = TracingPolicy.createTracePolicy({
       samplingRate: 0,
       ignoreUrls: ['/_ah/health', /\/book*/]
     });
-    assert(!policy.shouldTrace(null, '/_ah/health'));
-    assert(!policy.shouldTrace(null, '/book/test'));
+    assert(!policy.shouldTrace(0, '/_ah/health'));
+    assert(!policy.shouldTrace(0, '/book/test'));
   });
 
   it('should allow non-filtered urls', function() {
-    var policy = tracingPolicy.createTracePolicy({
+    var policy = TracingPolicy.createTracePolicy({
       samplingRate: 0,
       ignoreUrls: ['/_ah/health']
     });
-    assert(policy.shouldTrace(null, '/_ah/background'));
+    assert(policy.shouldTrace(0, '/_ah/background'));
   });
 });
 
@@ -42,7 +43,7 @@ describe('RateLimiterPolicy', function() {
   var tracesPerSecond = [10, 50, 150, 200, 500, 1000];
   tracesPerSecond.forEach(function(traceCount) {
     it('should throttle traces, ' + traceCount, function() {
-      var policy = tracingPolicy.createTracePolicy({samplingRate: traceCount});
+      var policy = TracingPolicy.createTracePolicy({samplingRate: traceCount});
       testAllowedTraces(policy, traceCount);
     });
   });
