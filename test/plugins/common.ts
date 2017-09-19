@@ -25,6 +25,7 @@ declare global {
 }
 
 import '../override-gcp-metadata';
+import * as cls from '../../src/cls';
 import { traceWriter } from '../../src/trace-writer';
 import * as TracingPolicy from '../../src/tracing-policy';
 
@@ -32,7 +33,6 @@ var semver = require('semver');
 
 var logger = require('@google-cloud/common').logger;
 var trace = require('../..');
-var cls = require('../../src/cls'/*.js*/);
 if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CONTEXT) {
   // Monkeypatch the monkeypatcher
   var oldIt = global.it;

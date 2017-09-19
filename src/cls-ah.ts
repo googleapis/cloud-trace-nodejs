@@ -16,72 +16,89 @@
 
 'use strict';
 
-const asyncHook = require('async_hooks');
+import * as asyncHook from 'async_hooks';
+import { Context, Func, Namespace as CLSNamespace } from 'continuation-local-storage';
 
 const wrappedSymbol = Symbol('context_wrapped');
 let contexts = {};
-let current = {};
+let current: Context = {};
 
 asyncHook.createHook({init, before, destroy}).enable();
 
-function Namespace() {}
-
-Namespace.prototype.get = function(k) {
-  return current[k];
-};
-
-Namespace.prototype.set = function(k, v) {
-  current[k] = v;
-};
-
-Namespace.prototype.run = function(fn) {
-  const oldContext = current;
-  current = {};
-  const res = fn();
-  current = oldContext;
-  return res;
-};
-
-Namespace.prototype.runAndReturn = Namespace.prototype.run;
-
-Namespace.prototype.bind = function(cb) {
-  if (cb[wrappedSymbol] || !current) {
-    return cb;
-  }
-  const boundContext = current;
-  const contextWrapper = function() {
-    const oldContext = current;
-    current = boundContext;
-    const res = cb.apply(this, arguments);
-    current = oldContext;
-    return res;
-  };
-  contextWrapper[wrappedSymbol] = true;
-  Object.defineProperty(contextWrapper, 'length', {
-    enumerable: false,
-    configurable: true,
-    writable: false,
-    value: cb.length
-  });
-  return contextWrapper;
-};
-
-const eventEmitterMethods =
+const EVENT_EMITTER_METHODS =
   [ 'addListener', 'on', 'once', 'prependListener', 'prependOncelistener' ];
 
-// This function is not technically needed and all tests currently pass without it
-// (after removing call sites). While it is not a complete solution, restoring
-// correct context before running every request/response event handler reduces
-// the number of situations in which userspace queuing will cause us to lose context.
-Namespace.prototype.bindEmitter = function(ee) {
-  var ns = this;
-  eventEmitterMethods.forEach(function(method) {
-    const oldMethod = ee[method];
-    ee[method] = function(e, f) { return oldMethod.call(this, e, ns.bind(f)); };
-  });
-};
+class Namespace implements CLSNamespace {
+  get name(): string {
+    throw new Error('Not implemented');
+  }
 
-var namespace = new Namespace();
+  get active(): Context {
+    throw new Error('Not implemented');
+  }
+
+  createContext(): Context {
+    throw new Error('Not implemented');
+  }
+
+  get(k: string) {
+    return current[k];
+  }
+
+  set<T>(k: string, v: T): T {
+    current[k] = v;
+    return v;
+  }
+
+  run<T>(fn: Func<T>): Context {
+    this.runAndReturn(fn);
+    return current;
+  }
+
+  runAndReturn<T>(fn: Func<T>): T {
+    const oldContext = current;
+    current = {};
+    const res = fn();
+    current = oldContext;
+    return res;
+  }
+
+  bind<T>(cb: Func<T>): Func<T> {
+    if (cb[wrappedSymbol] || !current) {
+      return cb;
+    }
+    const boundContext = current;
+    const contextWrapper = function() {
+      const oldContext = current;
+      current = boundContext;
+      const res = cb.apply(this, arguments);
+      current = oldContext;
+      return res;
+    };
+    contextWrapper[wrappedSymbol] = true;
+    Object.defineProperty(contextWrapper, 'length', {
+      enumerable: false,
+      configurable: true,
+      writable: false,
+      value: cb.length
+    });
+    return contextWrapper;
+  }
+  
+  // This function is not technically needed and all tests currently pass without it
+  // (after removing call sites). While it is not a complete solution, restoring
+  // correct context before running every request/response event handler reduces
+  // the number of situations in which userspace queuing will cause us to lose context.
+  bindEmitter(ee: NodeJS.EventEmitter): void {
+    const ns = this;
+    EVENT_EMITTER_METHODS.forEach(function(method) {
+      const oldMethod = ee[method];
+      ee[method] = function(e, f) { return oldMethod.call(this, e, ns.bind(f)); };
+    });
+  }
+}
+
+const namespace = new Namespace();
 
 // AsyncWrap Hooks
 
@@ -99,17 +116,19 @@ function destroy(uid) {
   delete contexts[uid];
 }
 
-module.exports = {
-  createNamespace: function() {
-    return namespace;
-  },
-
-  destroyNamespace: function() {
-    current = {};
-    contexts = {};
-  },
-
-  getNamespace: function() { return namespace; }
+export function createNamespace(): CLSNamespace {
+  return namespace;
 };
 
-export default {};
+export function destroyNamespace(): void {
+  current = {};
+  contexts = {};
+};
+
+export function getNamespace(): CLSNamespace {
+  return namespace;
+}
+
+export function reset(): void {
+  throw new Error('Not implemented');
+}

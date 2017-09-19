@@ -17,6 +17,7 @@
 'use strict';
 
 import './override-gcp-metadata';
+import * as cls from '../src/cls';
 import { Constants } from '../src/constants';
 import { SpanData } from '../src/span-data';
 import { Trace } from '../src/trace';
@@ -24,7 +25,6 @@ import { TraceLabels } from '../src/trace-labels';
 import { traceWriter } from '../src/trace-writer';
 
 var assert = require('assert');
-var cls = require('../src/cls'/*.js*/);
 var common = require('./plugins/common'/*.js*/);
 
 function createRootSpanData(name, traceId?, parentId?, skipFrames?) {

@@ -16,9 +16,10 @@
 
 'use strict';
 
+import * as cls from '../src/cls';
+
 var assert = require('assert');
 var nock = require('nock');
-var cls = require('../src/cls'/*.js*/);
 var common = require('./plugins/common'/*.js*/);
 var trace = require('..');
 

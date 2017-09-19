@@ -22,7 +22,7 @@ var semver = require('semver');
 if (semver.satisfies(process.version, '<8') || !process.env.GCLOUD_TRACE_NEW_CONTEXT) {
   console.log('Skipping cls-ah tests on node version without async hooks');
 } else {
-  var cls = require('../src/cls-ah'/*.js*/);
+  var cls = require('../src/cls-ah');
 
   describe('test-cls-ah', function() {
     it('should preserve request context', function(done) {

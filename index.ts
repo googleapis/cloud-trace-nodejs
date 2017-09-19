@@ -25,13 +25,13 @@ if (require('semver').satisfies(process.version, '<8') ||
   require('continuation-local-storage');
 }
 
+import * as cls from './src/cls';
 import { Constants } from './src/constants';
 import { defaultConfig } from './config';
 import { traceWriter } from './src/trace-writer';
 import * as traceUtil from './src/util';
 
 var path = require('path');
-var cls = require('./src/cls'/*.js*/);
 var common = require('@google-cloud/common');
 var extend = require('extend');
 var TraceAgent = require('./src/trace-api'/*.js*/);
