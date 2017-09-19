@@ -33,11 +33,12 @@ if (require('semver').satisfies(process.version, '<8') ||
   require('continuation-local-storage');
 }
 
+import { Constants } from './src/constants';
+
 var path = require('path');
 var cls = require('./src/cls'/*.js*/);
 var common = require('@google-cloud/common');
 var extend = require('extend');
-var constants = require('./src/constants'/*.js*/);
 var traceUtil = require('./src/util'/*.js*/);
 var TraceAgent = require('./src/trace-api'/*.js*/);
 var pluginLoader = require('./src/trace-plugin-loader'/*.js*/);
@@ -85,8 +86,8 @@ function initConfig(projectConfig) {
     projectConfig, envConfig);
 
   // Enforce the upper limit for the label value size.
-  if (config.maximumLabelValueSize > constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
-    config.maximumLabelValueSize = constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
+  if (config.maximumLabelValueSize > Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
+    config.maximumLabelValueSize = Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
   }
   // Clamp the logger level.
   if (config.logLevel < 0) {

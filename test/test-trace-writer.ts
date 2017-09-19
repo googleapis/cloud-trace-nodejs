@@ -16,6 +16,8 @@
 
 'use strict';
 
+import { TraceLabels } from '../src/trace-labels';
+
 // Loading this file patches gcpMetadata so requests don't time out.
 require('./plugins/common'/*.js*/);
 var assert = require('assert');
@@ -24,7 +26,6 @@ var nock = require('nock');
 var nocks = require('./nocks'/*.js*/);
 var os = require('os');
 var Service = require('@google-cloud/common').Service;
-var traceLabels = require('../src/trace-labels'/*.js*/);
 
 interface TestCase {
   description: string,
@@ -235,10 +236,10 @@ describe('TraceWriter', function() {
         assertResults: function(err, tw) {
           assert.ok(!err);
           // Having a hostname is reflected in whether these labels are set
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_NAME], 'bar');
           // Having an instanceId is reflected in whether this label is set
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], undefined);
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_INSTANCE_ID], undefined);
         }
       },
       {
@@ -251,10 +252,10 @@ describe('TraceWriter', function() {
         assertResults: function(err, tw) {
           assert.ok(!err);
           // Having a hostname is reflected in whether these labels are set
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], os.hostname());
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], os.hostname());
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_HOSTNAME], os.hostname());
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_NAME], os.hostname());
           // Having an instanceId is reflected in whether this label is set
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_INSTANCE_ID], 'baz');
         }
       },
       {
@@ -267,9 +268,9 @@ describe('TraceWriter', function() {
         },
         assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_NAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_INSTANCE_ID], 'baz');
         }
       },
       {
@@ -288,11 +289,11 @@ describe('TraceWriter', function() {
         },
         assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_HOSTNAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_NAME], 'barz');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GCE_INSTANCE_ID], 'baz');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_MODULE_VERSION], '1');
-          assert.strictEqual(tw.defaultLabels_[traceLabels.GAE_VERSION], 'barz:1.2');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_NAME], 'barz');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_INSTANCE_ID], 'baz');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_VERSION], '1');
+          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_VERSION], 'barz:1.2');
         }
       }
     ];

@@ -15,13 +15,14 @@
  */
 'use strict';
 
+import { TraceLabels } from '../../src/trace-labels';
+
 // Prereqs:
 // Start docker daemon
 //   ex) docker -d
 // Run a redis image binding the redis port
 //   ex) docker run -p 6379:6379 -d redis
 var common = require('./common'/*.js*/);
-var traceLabels = require('../../src/trace-labels'/*.js*/);
 
 var RESULT_SIZE = 5;
 
@@ -126,7 +127,7 @@ describe('redis', function() {
             endTransaction();
             var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
             var labels = trace.labels;
-            var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+            var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
             // Ensure that our patch is on top of the stack
             assert(
               stackTrace.stack_frame[0].method_name.indexOf('send_command_trace') !== -1);

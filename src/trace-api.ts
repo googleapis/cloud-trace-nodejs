@@ -15,10 +15,12 @@
  */
 
 'use strict';
+
+import { Constants } from './constants';
+import { TraceLabels } from './trace-labels';
+
 var cls = require('./cls'/*.js*/);
-var constants = require('./constants'/*.js*/);
 var is = require('is');
-var TraceLabels = require('./trace-labels'/*.js*/);
 var util = require('./util'/*.js*/);
 var Trace = require('./trace'/*.js*/);
 var SpanData = require('./span-data'/*.js*/);
@@ -161,7 +163,7 @@ TraceAgent.prototype.runInRootSpan = function(options, fn) {
     // policy disallows it.
     var locallyAllowed = that.policy_.shouldTrace(Date.now(), options.url || '');
     var remotelyAllowed = isNaN(incomingTraceContext.options) ||
-      (incomingTraceContext.options & constants.TRACE_OPTIONS_TRACE_ENABLED);
+      (incomingTraceContext.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
     if (!locallyAllowed || !remotelyAllowed) {
       cls.setRootContext(nullSpan);
       return fn(null);
@@ -298,7 +300,7 @@ TraceAgent.prototype.wrapEmitter = function(emitter) {
   this.namespace_.bindEmitter(emitter);
 };
 
-TraceAgent.prototype.constants = constants;
+TraceAgent.prototype.constants = Constants;
 
 TraceAgent.prototype.labels = TraceLabels;
 

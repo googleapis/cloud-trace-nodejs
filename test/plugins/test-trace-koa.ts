@@ -15,11 +15,12 @@
  */
 'use strict';
 
+import { Constants } from '../../src/constants';
+import { TraceLabels } from '../../src/trace-labels';
+
 var common = require('./common'/*.js*/);
 var http = require('http');
 var assert = require('assert');
-var constants = require('../../src/constants'/*.js*/);
-var traceLabels = require('../../src/trace-labels'/*.js*/);
 var semver = require('semver');
 var appBuilders: any = {
   koa1: buildKoa1App,
@@ -65,10 +66,10 @@ describe('koa', function() {
             res.on('end', function() {
               assert.equal(common.serverRes, result);
               var expectedKeys = [
-                traceLabels.HTTP_METHOD_LABEL_KEY,
-                traceLabels.HTTP_URL_LABEL_KEY,
-                traceLabels.HTTP_SOURCE_IP,
-                traceLabels.HTTP_RESPONSE_CODE_LABEL_KEY
+                TraceLabels.HTTP_METHOD_LABEL_KEY,
+                TraceLabels.HTTP_URL_LABEL_KEY,
+                TraceLabels.HTTP_SOURCE_IP,
+                TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY
               ];
               var span = common.getMatchingSpan(koaPredicate);
               expectedKeys.forEach(function(key) {
@@ -85,7 +86,7 @@ describe('koa', function() {
         server = app.listen(common.serverPort, function() {
           http.get({port: common.serverPort}, function(res) {
             var labels = common.getMatchingSpan(koaPredicate).labels;
-            var stackTrace = JSON.parse(labels[traceLabels.STACK_TRACE_DETAILS_KEY]);
+            var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
             // Ensure that our middleware is on top of the stack
             assert.equal(stackTrace.stack_frame[0].method_name, 'middleware');
             done();
@@ -108,14 +109,14 @@ describe('koa', function() {
         var app = buildKoaApp();
         server = app.listen(common.serverPort, function() {
           var headers = {};
-          headers[constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
+          headers[Constants.TRACE_CONTEXT_HEADER_NAME] = '123456/1;o=1';
           http.get({port: common.serverPort}, function(res) {
-            assert(!res.headers[constants.TRACE_CONTEXT_HEADER_NAME]);
+            assert(!res.headers[Constants.TRACE_CONTEXT_HEADER_NAME]);
             http.get({
               port: common.serverPort,
               headers: headers
             }, function(res) {
-              assert(res.headers[constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
+              assert(res.headers[Constants.TRACE_CONTEXT_HEADER_NAME].indexOf(';o=1') !== -1);
               done();
             });
           });
@@ -155,9 +156,9 @@ describe('koa', function() {
           assert.strictEqual(traces.length, 1);
           assert.strictEqual(traces[0].spans.length, 1);
           var span = traces[0].spans[0];
-          assert.strictEqual(span.labels[traceLabels.ERROR_DETAILS_NAME],
+          assert.strictEqual(span.labels[TraceLabels.ERROR_DETAILS_NAME],
             'aborted');
-          assert.strictEqual(span.labels[traceLabels.ERROR_DETAILS_MESSAGE],
+          assert.strictEqual(span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
             'client aborted the request');
           common.assertSpanDurationCorrect(span, common.serverWait / 2);
           done();

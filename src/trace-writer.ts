@@ -16,17 +16,18 @@
 
 'use strict';
 
+import { Constants } from './constants';
+import { TraceLabels } from './trace-labels';
+
 var common = require('@google-cloud/common');
 var gcpMetadata = require('gcp-metadata');
 var util = require('util');
-var traceLabels = require('./trace-labels'/*.js*/);
 var pjson = require('../../package.json');
-var constants = require('./constants'/*.js*/);
 
 var onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
 
 var headers = {};
-headers[constants.TRACE_AGENT_REQUEST_HEADER] = 1;
+headers[Constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
 /* @const {Array<string>} list of scopes needed to operate with the trace API */
 var SCOPES = ['https://www.googleapis.com/auth/trace.append'];
@@ -114,17 +115,17 @@ TraceWriter.prototype.initialize = function(cb) {
   that.getHostname(function(hostname) {
     that.getInstanceId(function(instanceId) {
       var labels = {};
-      labels[traceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
-      labels[traceLabels.GCE_HOSTNAME] = hostname;
+      labels[TraceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
+      labels[TraceLabels.GCE_HOSTNAME] = hostname;
       if (instanceId) {
-        labels[traceLabels.GCE_INSTANCE_ID] = instanceId;
+        labels[TraceLabels.GCE_INSTANCE_ID] = instanceId;
       }
       var moduleName = that.config_.serviceContext.service || hostname;
-      labels[traceLabels.GAE_MODULE_NAME] = moduleName;
+      labels[TraceLabels.GAE_MODULE_NAME] = moduleName;
 
       var moduleVersion = that.config_.serviceContext.version;
       if (moduleVersion) {
-        labels[traceLabels.GAE_MODULE_VERSION] = moduleVersion;
+        labels[TraceLabels.GAE_MODULE_VERSION] = moduleVersion;
         var minorVersion = that.config_.serviceContext.minorVersion;
         if (minorVersion) {
           var versionLabel = '';
@@ -132,7 +133,7 @@ TraceWriter.prototype.initialize = function(cb) {
             versionLabel = moduleName + ':';
           }
           versionLabel += moduleVersion + '.' + minorVersion;
-          labels[traceLabels.GAE_VERSION] = versionLabel;
+          labels[TraceLabels.GAE_VERSION] = versionLabel;
         }
       }
       Object.freeze(labels);
