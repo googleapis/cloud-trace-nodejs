@@ -17,6 +17,7 @@
 'use strict';
 
 import { Constants } from './constants';
+import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
 
 var common = require('@google-cloud/common');
@@ -242,7 +243,7 @@ TraceWriter.prototype.writeSpan = function(spanData) {
  * @private
  * @param {Trace} trace The trace to be queued.
  */
-TraceWriter.prototype.queueTrace_ = function(trace) {
+TraceWriter.prototype.queueTrace_ = function(trace: Trace) {
   var that = this;
 
   that.getProjectId(function(err, project) {

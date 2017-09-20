@@ -16,8 +16,9 @@
 
 'use strict';
 
+import { Trace } from '../src/trace';
+
 var assert = require('assert');
-var Trace = require('../src/trace'/*.js*/);
 
 
 describe('Trace', function() {

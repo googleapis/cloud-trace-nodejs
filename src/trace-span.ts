@@ -16,51 +16,52 @@
 
 'use strict';
 
-/**
- * Creates a trace span object.
- * @constructor
- */
-function TraceSpan(name, spanId, parentSpanId) {
-  this.name = name;
-  this.parentSpanId = parentSpanId;
-  this.spanId = spanId;
-  this.kind = 'RPC_CLIENT';
-  this.labels = {};
-  this.startTime = (new Date()).toISOString();
-  this.endTime = '';
+export interface TraceSpanLabels {
+  [propName: string]: string;
 }
 
-
 /**
- * Sets or updates a label value.
- * @param {string} key The label key to set.
- * @param {string} value The new value of the label.
+ * Describes a trace span.
  */
-TraceSpan.prototype.setLabel = function(key, value) {
-  this.labels[key] = value;
-};
+export class TraceSpan {
+  public readonly labels: TraceSpanLabels = {};
+  public readonly startTime: string;
+  public endTime: string = '';
+  public kind: string = 'RPC_CLIENT';
 
+  /**
+   * Creates a trace span object.
+   * @constructor
+   */
+  constructor(
+    public readonly name: string,
+    public readonly spanId: number,
+    public readonly parentSpanId: number
+  ) {
+    this.startTime = (new Date()).toISOString();
+  }
 
-/**
- * Closes the span, which just means assigning an end time.
- */
-TraceSpan.prototype.close = function() {
-  this.endTime = (new Date()).toISOString();
-};
+  /**
+   * Sets or updates a label value.
+   * @param {string} key The label key to set.
+   * @param {string} value The new value of the label.
+   */
+  setLabel(key: string, value: string): void {
+    this.labels[key] = value;
+  }
 
+  /**
+   * Closes the span, which just means assigning an end time.
+   */
+  close(): void {
+    this.endTime = (new Date()).toISOString();
+  }
 
-/**
- * Checks whether or not this span has been closed.
- * @returns {boolean} True if the span is closed, false otherwise.
- */
-TraceSpan.prototype.isClosed = function() {
-  return !!this.endTime;
-};
-
-
-/**
- * Export TraceSpan.
- */
-module.exports = TraceSpan;
-
-export default {};
+  /**
+   * Checks whether or not this span has been closed.
+   * @returns {boolean} True if the span is closed, false otherwise.
+   */
+  isClosed(): boolean {
+    return this.endTime !== '';
+  }
+}

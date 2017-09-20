@@ -17,18 +17,18 @@
 'use strict';
 
 import { Constants } from '../src/constants';
+import { Trace } from '../src/trace';
 import { TraceLabels } from '../src/trace-labels';
 
 var assert = require('assert');
 var cls = require('../src/cls'/*.js*/);
 var common = require('./plugins/common'/*.js*/);
 var SpanData = require('../src/span-data'/*.js*/);
-var Trace = require('../src/trace'/*.js*/);
 var TraceWriter = require('../src/trace-writer'/*.js*/);
 
 function createRootSpanData(name, traceId?, parentId?, skipFrames?) {
   return new SpanData(
-    new Trace(0, traceId),
+    new Trace('', traceId),
     name,
     parentId,
     true,
