@@ -129,7 +129,7 @@ export function packageNameFromPath(path: string) {
  * @param request The name of the module to be loaded.
  * @param parent The module into which the requested module will be loaded.
  */
-export function findModulePath(request: string, parent: NodeModule): string | null {
+export function findModulePath(request: string, parent?: NodeModule): string {
   const mainScriptDir = path.dirname(Module._resolveFilename(request, parent));
   const resolvedModule = Module._resolveLookupPaths(request, parent);
   const paths = resolvedModule[1];
@@ -138,21 +138,21 @@ export function findModulePath(request: string, parent: NodeModule): string | nu
       return path.join(paths[i], request.replace('/', path.sep));
     }
   }
-  return null;
+  return '';
 }
 
 /**
  * Determines the version of the module located at `modulePath`.
  *
  * @param modulePath The absolute path to the root directory of the
- *    module being loaded. This may be null if we are loading an internal module
- *    such as http.
+ *    module being loaded. This may be an empty string if we are loading an
+ *    internal module such as http.
  */
-export function findModuleVersion(modulePath: string | null, load: (path: string) => any): string {
+export function findModuleVersion(modulePath: string, load: (path: string) => any): string {
   if (!load) {
     load = Module._load;
   }
-  if (modulePath) {
+  if (modulePath !== '') {
     const pjson = path.join(modulePath, 'package.json');
     if (fs.existsSync(pjson)) {
       return load(pjson).version;

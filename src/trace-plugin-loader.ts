@@ -15,26 +15,106 @@
  */
 'use strict';
 
+// TODO(kjin)
+// Module augmentation is implemented in this PR:
+// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/19612
+// Do this correctly when it's landed and released.
+import _Module = require('module');
+const Module: {
+  _resolveFilename(request: string, parent?: NodeModule): string;
+  _load(request: string, parent?: NodeModule, isMain?: boolean): any;
+} = _Module as any;
+
+import { Logger } from '@google-cloud/common';
+import * as path from 'path';
+import * as semver from 'semver';
+import * as shimmer from 'shimmer';
 import * as util from './util';
-import { TraceAgent } from './trace-api';
+import { TraceAgent, TraceAgentConfig } from './trace-api';
 
-var Module = require('module');
-var shimmer = require('shimmer');
-var path = require('path');
-var semver = require('semver');
+/**
+ * An interface representing config options read by the plugin loader, which includes
+ * TraceAgent configuration as well.
+ */
+export interface PluginLoaderConfig extends TraceAgentConfig {
+  plugins: {
+    [pluginName: string]: string;
+  };
+}
+interface InternalPatch<T> {
+  file: string;
+  module?: T;
+  patch: (module: T, agent: TraceAgent) => void;
+  unpatch?: (module: T) => void;
+}
 
-var plugins = Object.create(null);
-var intercepts = Object.create(null);
-var activated = false;
+interface InternalIntercept<T> {
+  file: string;
+  module?: T;
+  intercept: (module: T, agent: TraceAgent) => T;
+}
 
-var logger_;
+interface InternalPlugin {
+  file: string;
+  patches: {
+    [patchName: string]: {
+      [file: string]: InternalPatch<any> | InternalIntercept<any>;
+    }
+  };
+  agent: TraceAgent;
+}
 
-function checkLoadedModules() {
-  for (var moduleName in plugins) {
+interface PluginStore {
+  [pluginName: string]: InternalPlugin;
+}
+
+export interface Patch {
+  file?: string;
+  versions?: string;
+  patch: (module: any, agent: TraceAgent) => void;
+  unpatch?: (module: any) => void;
+}
+
+export interface Intercept {
+  file?: string;
+  versions?: string;
+  intercept: <T>(module: T, agent: TraceAgent) => T;
+}
+
+export type Plugin = (Patch | Intercept)[];
+
+// type guards
+
+function isPatch(obj: Patch | Intercept): obj is Patch {
+  return !!(obj as Patch).patch;
+}
+
+function isIntercept(obj: Patch | Intercept): obj is Intercept {
+  return !!(obj as Intercept).intercept;
+}
+
+function isInternalPatch<T>(
+    obj: InternalPatch<T> | InternalIntercept<T>): obj is InternalPatch<T> {
+  return !!(obj as InternalPatch<T>).patch;
+}
+
+function isInternalIntercept<T>(
+    obj: InternalPatch<T> | InternalIntercept<T>): obj is InternalIntercept<T> {
+  return !!(obj as InternalIntercept<T>).intercept;
+}
+
+let plugins: PluginStore = Object.create(null);
+let intercepts = Object.create(null);
+let activated = false;
+
+let logger_: Logger;
+
+function checkLoadedModules(): void {
+  for (const moduleName in plugins) {
     // \\ is benign on unix and escapes \\ on windows
-    var regex = new RegExp('node_modules\\' + path.sep + moduleName +
+    const regex = new RegExp('node_modules\\' + path.sep + moduleName +
       '\\' + path.sep);
-    for (var file in require.cache) {
+    for (const file in require.cache) {
       if (file.match(regex)) {
         logger_.error(moduleName + ' tracing might not work as ' + file +
             ' was loaded before the trace agent was initialized.');
@@ -43,7 +123,7 @@ function checkLoadedModules() {
     }
   }
   if (process._preload_modules && process._preload_modules.length > 0) {
-    var first = process._preload_modules[0];
+    const first = process._preload_modules[0];
     if (first !== '@google-cloud/trace-agent') {
       logger_.error('Tracing might not work as ' + first +
             ' was loaded with --require before the trace agent was initialized.');
@@ -51,7 +131,7 @@ function checkLoadedModules() {
   }
 }
 
-function checkPatch(patch) {
+function checkPatch(patch: any) {
   if (!patch.patch && !patch.intercept) {
     throw new Error('Plugin for ' + patch.file + ' doesn\'t patch ' +
       'anything.');
@@ -67,7 +147,7 @@ function checkPatch(patch) {
   }
 }
 
-function activate(logger, config) {
+export function activate(logger: Logger, config: PluginLoaderConfig): void {
   if (activated) {
     logger_.error('Plugins activated more than once.');
     return;
@@ -76,12 +156,12 @@ function activate(logger, config) {
 
   logger_ = logger;
 
-  var pluginConfig = config.plugins;
-  for (var moduleName in pluginConfig) {
+  const pluginConfig = config.plugins;
+  for (const moduleName in pluginConfig) {
     if (!pluginConfig[moduleName]) {
       continue;
     }
-    var agent = new TraceAgent(moduleName);
+    const agent: TraceAgent = new TraceAgent(moduleName);
     agent.enable(logger_, config);
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
@@ -93,24 +173,33 @@ function activate(logger, config) {
   checkLoadedModules();
 
   // hook into Module._load so that we can hook into userspace frameworks
-  shimmer.wrap(Module, '_load', function(originalModuleLoad) {
-    function loadAndPatch(instrumentation, moduleRoot, version) {
-      var patchSet = instrumentation.patches[moduleRoot];
+  shimmer.wrap(Module, '_load', (originalModuleLoad: typeof Module._load): typeof Module._load => {
+    function loadAndPatch(instrumentation: InternalPlugin, moduleRoot: string, version: string): any {
+      let patchSet = instrumentation.patches[moduleRoot];
       if (!patchSet) {
         // Load the plugin object
-        var plugin = originalModuleLoad(instrumentation.file, module, false);
+        const plugin: Plugin = originalModuleLoad(instrumentation.file, module, false);
         patchSet = {};
         if (semver.valid(version)) {
-          plugin.forEach(function(patch) {
+          plugin.forEach((patch) => {
             if (!patch.versions || semver.satisfies(version, patch.versions)) {
-              var file = patch.file || '';
-              patchSet[file] = {
-                file: file,
-                patch: patch.patch,
-                unpatch: patch.unpatch,
-                intercept: patch.intercept
-              };
-              checkPatch(patchSet[file]);
+              const file = patch.file || '';
+              if (isPatch(patch)) {
+                patchSet[file] = {
+                  file: file,
+                  patch: patch.patch,
+                  unpatch: patch.unpatch
+                };
+              }
+              if (isIntercept(patch)) {
+                patchSet[file] = {
+                  file: file,
+                  intercept: patch.intercept
+                };
+              }
+              // The conditionals exhaustively cover types for the patch object,
+              // but throw an error in JavaScript anyway
+              checkPatch(patch);
             }
           });
         }
@@ -121,51 +210,51 @@ function activate(logger, config) {
         instrumentation.patches[moduleRoot] = patchSet;
       }
 
-      for (var file in patchSet) {
-        var patch = patchSet[file];
-        var loadPath = moduleRoot ? path.join(moduleRoot, patch.file) : patch.file;
+      for (const file in patchSet) {
+        const patch = patchSet[file];
+        const loadPath = moduleRoot ? path.join(moduleRoot, patch.file) : patch.file;
         if (!patch.module) {
           patch.module = originalModuleLoad(loadPath, module, false);
         }
-        if (patch.patch) {
+        if (isInternalPatch(patch)) {
           patch.patch(patch.module, instrumentation.agent);
         }
-        if (patch.intercept) {
+        if (isInternalIntercept(patch)) {
           patch.module = patch.intercept(patch.module, instrumentation.agent);
           intercepts[loadPath] = {
             interceptedValue: patch.module
           };
         }
       }
-      var rootPatch = patchSet[''];
-      if (rootPatch && rootPatch.intercept) {
+      const rootPatch = patchSet[''];
+      if (rootPatch && isInternalIntercept(rootPatch)) {
         return rootPatch.module;
       } else {
         return null;
       }
     }
 
-    function moduleAlreadyPatched(instrumentation, moduleRoot, version) {
+    function moduleAlreadyPatched(instrumentation: InternalPlugin, moduleRoot: string) {
       return instrumentation.patches[moduleRoot];
     }
 
     // Future requires get patched as they get loaded.
-    return function Module_load(request, parent, isMain) {
-      var instrumentation = plugins[request];
+    return function Module_load(request: string, parent?: NodeModule, isMain?: boolean): any {
+      const instrumentation = plugins[request];
       if (instrumentation) {
-        var moduleRoot = util.findModulePath(request, parent);
-        var moduleVersion = util.findModuleVersion(moduleRoot, originalModuleLoad);
-        if (moduleAlreadyPatched(instrumentation, moduleRoot, moduleVersion)) {
+        const moduleRoot = util.findModulePath(request, parent);
+        const moduleVersion = util.findModuleVersion(moduleRoot, originalModuleLoad);
+        if (moduleAlreadyPatched(instrumentation, moduleRoot)) {
           return originalModuleLoad.apply(this, arguments);
         }
         logger_.info('Patching ' + request + ' at version ' + moduleVersion);
-        var patchedRoot = loadAndPatch(instrumentation, moduleRoot,
+        const patchedRoot = loadAndPatch(instrumentation, moduleRoot,
           moduleVersion);
         if (patchedRoot !== null) {
           return patchedRoot;
         }
       } else {
-        var modulePath = Module._resolveFilename(request, parent).replace('/', path.sep);
+        const modulePath = Module._resolveFilename(request, parent).replace('/', path.sep);
         if (intercepts[modulePath]) {
           return intercepts[modulePath].interceptedValue;
         }
@@ -175,17 +264,17 @@ function activate(logger, config) {
   });
 }
 
-function deactivate() {
+export function deactivate(): void {
   if (activated) {
     activated = false;
-    for (var moduleName in plugins) {
-      var instrumentation = plugins[moduleName];
+    for (const moduleName in plugins) {
+      const instrumentation = plugins[moduleName];
       instrumentation.agent.disable();
-      for (var moduleRoot in instrumentation.patches) {
-        var patchSet = instrumentation.patches[moduleRoot];
-        for (var file in patchSet) {
-          var patch = patchSet[file];
-          if (patch.unpatch !== undefined) {
+      for (const moduleRoot in instrumentation.patches) {
+        const patchSet = instrumentation.patches[moduleRoot];
+        for (const file in patchSet) {
+          const patch = patchSet[file];
+          if (isInternalPatch(patch) && patch.unpatch !== undefined) {
             logger_.info('Unpatching ' + moduleName);
             patch.unpatch(patch.module);
           }
@@ -199,10 +288,3 @@ function deactivate() {
     shimmer.unwrap(Module, '_load');
   }
 }
-
-module.exports = {
-  activate: activate,
-  deactivate: deactivate
-};
-
-export default {};
