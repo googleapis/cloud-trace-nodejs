@@ -60,7 +60,7 @@ export class SpanData {
   constructor(
     readonly trace: Trace,
     name: string,
-    parentSpanId: number,
+    parentSpanId: number | string,
     private readonly isRoot: boolean,
     skipFrames: number
   ) {

@@ -36,7 +36,7 @@ export class TraceSpan {
   constructor(
     public readonly name: string,
     public readonly spanId: number,
-    public readonly parentSpanId: number
+    public readonly parentSpanId: number | string
   ) {
     this.startTime = (new Date()).toISOString();
   }

@@ -16,12 +16,12 @@
 'use strict';
 
 import * as util from './util';
+import { TraceAgent } from './trace-api';
 
 var Module = require('module');
 var shimmer = require('shimmer');
 var path = require('path');
 var semver = require('semver');
-var TraceAgent = require('./trace-api'/*.js*/);
 
 var plugins = Object.create(null);
 var intercepts = Object.create(null);

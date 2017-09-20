@@ -72,13 +72,13 @@ export class TraceNonePolicy implements TracePolicy {
   }
 }
 
-export interface TracePolicyOptions {
+export interface TracePolicyConfig {
   samplingRate: number;
   ignoreUrls?: (string | RegExp)[];
 }
 
 // TODO(kjin): This could be a class as well.
-export function createTracePolicy(config: TracePolicyOptions): TracePolicy {
+export function createTracePolicy(config: TracePolicyConfig): TracePolicy {
   let basePolicy;
   if (config.samplingRate < 1) {
     basePolicy = new TraceAllPolicy();

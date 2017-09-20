@@ -19,6 +19,7 @@
 import './override-gcp-metadata';
 import * as cls from '../src/cls';
 import { defaultConfig } from '../config';
+import { TraceAgent } from '../src/trace-api';
 import { traceWriter } from '../src/trace-writer';
 import * as TracingPolicy from '../src/tracing-policy';
 
@@ -27,7 +28,6 @@ var common = require('./plugins/common'/*.js*/);
 var EventEmitter = require('events');
 var nock = require('nock');
 var request = require('request');
-var TraceAgent = require('../src/trace-api'/*.js*/);
 
 var logger = require('@google-cloud/common').logger();
 
@@ -120,8 +120,9 @@ describe('Trace Interface', function() {
 
     it('should produce real child spans', function(done) {
       var traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({name: 'root'}, function(root) {
-        var child = traceAPI.createChildSpan({name: 'sub'});
+      traceAPI.runInRootSpan({name: 'root'}, function(root_) {
+        var root = common.notNull(root_);
+        var child = common.notNull(traceAPI.createChildSpan({name: 'sub'}));
         setTimeout(function() {
           child.addLabel('key', 'val');
           child.endSpan();
@@ -141,9 +142,10 @@ describe('Trace Interface', function() {
 
     it('should produce real root spans runInRootSpan', function(done) {
       var traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
+      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan_) {
+        var rootSpan = common.notNull(rootSpan_);
         rootSpan.addLabel('key', 'val');
-        var childSpan = traceAPI.createChildSpan({name: 'sub'});
+        var childSpan = common.notNull(traceAPI.createChildSpan({name: 'sub'}));
         setTimeout(function() {
           childSpan.endSpan();
           rootSpan.endSpan();
@@ -162,7 +164,8 @@ describe('Trace Interface', function() {
 
     it('should not allow nested root spans', function(done) {
       var traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1) {
+      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1_) {
+        var rootSpan1 = common.notNull(rootSpan1_);
         setTimeout(function() {
           traceAPI.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
             assert.strictEqual(rootSpan2, null);
@@ -185,7 +188,8 @@ describe('Trace Interface', function() {
 
     it('should return the appropriate trace id', function() {
       var traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
+      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan_) {
+        var rootSpan = common.notNull(rootSpan_);
         var id = traceAPI.getCurrentContextId();
         assert.strictEqual(id, rootSpan.trace.traceId);
       });
@@ -199,8 +203,9 @@ describe('Trace Interface', function() {
 
     it('should add labels to spans', function() {
       var traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(root) {
-        var child = traceAPI.createChildSpan({name: 'sub'});
+      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(root_) {
+        var root = common.notNull(root_);
+        var child = common.notNull(traceAPI.createChildSpan({name: 'sub'}));
         child.addLabel('test1', 'value');
         child.endSpan();
         assert.equal(child.span.name, 'sub');
@@ -226,7 +231,8 @@ describe('Trace Interface', function() {
       traceAPI.runInRootSpan({name: 'root1', url: url}, function(rootSpan) {
         assert.strictEqual(rootSpan, null);
       });
-      traceAPI.runInRootSpan({name: 'root2', url: 'alternativeUrl'}, function(rootSpan) {
+      traceAPI.runInRootSpan({name: 'root2', url: 'alternativeUrl'}, function(rootSpan_) {
+        var rootSpan = common.notNull(rootSpan_);
         assert.strictEqual(rootSpan.span.name, 'root2');
       });
     });
