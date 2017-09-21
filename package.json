@@ -41,7 +41,7 @@
     "express": "^4.15.2",
     "glob": "^7.0.3",
     "google-auto-auth": "^0.7.0",
-    "got": "^5.7.1",
+    "got": "^7.1.0",
     "gts": "latest",
     "istanbul": "^0.4.2",
     "jshint": "^2.9.1",
@@ -54,8 +54,8 @@
     "request": "^2.81.0",
     "source-map-support": "^0.4.16",
     "standard-version": "^4.2.0",
-    "timekeeper": "^1.0.0",
-    "tmp": "0.0.31",
+    "timekeeper": "^2.0.0",
+    "tmp": "0.0.33",
     "typescript": "^2.5.2"
   },
   "dependencies": {
