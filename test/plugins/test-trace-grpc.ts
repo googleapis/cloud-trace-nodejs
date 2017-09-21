@@ -17,10 +17,10 @@
 
 import { Constants } from '../../src/constants';
 import { TraceLabels } from '../../src/trace-labels';
+import * as util from '../../src/util';
+import * as assert from 'assert';
 
-var assert = require('assert');
 var cls = require('../../src/cls'/*.js*/);
-var util = require('../../src/util'/*.js*/);
 var shimmer = require('shimmer');
 var TracingPolicy = require('../../src/tracing-policy'/*.js*/);
 var common = require('./common'/*.js*/);
@@ -50,8 +50,9 @@ function checkServerMetadata(metadata) {
     var traceContext = metadata.getMap()[Constants.TRACE_CONTEXT_HEADER_NAME];
     assert.ok(/[a-f0-9]{32}\/[0-9]+;o=1/.test(traceContext));
     var parsedContext = util.parseContextFromHeader(traceContext);
+    assert.ok(parsedContext);
     var root = cls.getNamespace().get('root');
-    assert.strictEqual(root.span.parentSpanId, parsedContext.spanId);
+    assert.strictEqual(root.span.parentSpanId, common.notNull(parsedContext).spanId);
   }
 }
 

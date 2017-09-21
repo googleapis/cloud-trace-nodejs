@@ -76,7 +76,7 @@ describe('Trace Plugin Loader', function() {
 
     // proxyquire the plugin loader with stubbed module utility methods
     pluginLoader = proxyquire('../src/trace-plugin-loader'/*.js*/, {
-      './util'/*.js*/: {
+      './util': {
         findModulePath: function(request) {
           return request.replace('/', path.sep);
         },
