@@ -43,18 +43,18 @@ interface StackFrame {
 }
 
 // Auto-incrementing integer
-let uid: number = 1;
+let uid = 1;
 
 export class SpanData {
   public readonly span: TraceSpan;
 
   /**
    * Creates a trace context object.
-   * @param {Trace} trace The object holding the spans comprising this trace.
-   * @param {string} name The name of the span.
-   * @param {number} parentSpanId The id of the parent span, 0 for root spans.
-   * @param {boolean} isRoot Whether this is a root span.
-   * @param {number} skipFrames the number of frames to remove from the top of the stack.
+   * @param trace The object holding the spans comprising this trace.
+   * @param name The name of the span.
+   * @param parentSpanId The id of the parent span, 0 for root spans.
+   * @param isRoot Whether this is a root span.
+   * @param skipFrames the number of frames to remove from the top of the stack.
    * @constructor
    */
   constructor(

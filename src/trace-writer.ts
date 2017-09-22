@@ -55,7 +55,7 @@ export interface LabelObject {
  * A class representing a service that publishes traces in the background.
  */
 export class TraceWriter extends common.Service {
-  // TODO(kjin): Make this private (it's public for testing)
+  // TODO(kjin): Make public members private (they're public for testing)
   private logger_: common.Logger;
   private config_: TraceWriterOptions;
   /** Stringified traces to be published */
@@ -69,8 +69,8 @@ export class TraceWriter extends common.Service {
 
   /**
    * Constructs a new TraceWriter instance.
-   * @param {!Logger} logger The Trace Agent's logger object.
-   * @param {Object} config A config object containing information about
+   * @param logger The Trace Agent's logger object.
+   * @param config A config object containing information about
    *   authorization credentials.
    * @constructor
    */
@@ -239,7 +239,7 @@ export class TraceWriter extends common.Service {
    * Ensures that all sub spans of the provided spanData are
    * closed and then queues the span data to be published.
    *
-   * @param {SpanData} spanData The trace to be queued.
+   * @param spanData The trace to be queued.
    */
   writeSpan(spanData: SpanData) {
     for (const span of spanData.trace.spans) {
@@ -261,7 +261,7 @@ export class TraceWriter extends common.Service {
    * Buffers the provided trace to be published.
    *
    * @private
-   * @param {Trace} trace The trace to be queued.
+   * @param trace The trace to be queued.
    */
   queueTrace_(trace: Trace) {
     this.getProjectId((err, projectId?) => {
@@ -316,7 +316,7 @@ export class TraceWriter extends common.Service {
   /**
    * Publishes flushed traces to the network.
    * 
-   * @param {string} json The stringified json representation of the queued traces.
+   * @param json The stringified json representation of the queued traces.
    */
   publish_(json: string) {
     const uri = `https://cloudtrace.googleapis.com/v1/projects/${this.config_.projectId}/traces`;

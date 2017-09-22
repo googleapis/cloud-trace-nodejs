@@ -43,8 +43,8 @@ export class TraceSpan {
 
   /**
    * Sets or updates a label value.
-   * @param {string} key The label key to set.
-   * @param {string} value The new value of the label.
+   * @param key The label key to set.
+   * @param value The new value of the label.
    */
   setLabel(key: string, value: string): void {
     this.labels[key] = value;
@@ -59,7 +59,7 @@ export class TraceSpan {
 
   /**
    * Checks whether or not this span has been closed.
-   * @returns {boolean} True if the span is closed, false otherwise.
+   * @returns True if the span is closed, false otherwise.
    */
   isClosed(): boolean {
     return this.endTime !== '';
