@@ -19,78 +19,74 @@
 /**
  * Well-known trace span label values.
  */
-export namespace TraceLabels {
+export const TraceLabels = {
   /**
-   * @type {string} The well-known label for http status code.
+   * The well-known label for http status code.
    */
-  export const HTTP_RESPONSE_CODE_LABEL_KEY = '/http/status_code';
+  HTTP_RESPONSE_CODE_LABEL_KEY: '/http/status_code',
 
   /**
-   * @type {string} The well-known label for http request url.
+   * The well-known label for http request url.
    */
-  export const HTTP_URL_LABEL_KEY = '/http/url';
+  HTTP_URL_LABEL_KEY: '/http/url',
 
   /**
-   * @type {string} The well-known label for http method.
+   * The well-known label for http method.
    */
-  export const HTTP_METHOD_LABEL_KEY = '/http/method';
+  HTTP_METHOD_LABEL_KEY: '/http/method',
 
   /**
-   * @type {string} The well-known label for http response size.
+   * The well-known label for http response size.
    */
-  export const HTTP_RESPONSE_SIZE_LABEL_KEY = '/http/response/size';
+  HTTP_RESPONSE_SIZE_LABEL_KEY: '/http/response/size',
 
   /**
-   * @type {string} The well-known label for stack-traces
+   * The well-known label for stack-traces
    */
-  export const STACK_TRACE_DETAILS_KEY = '/stacktrace';
+  STACK_TRACE_DETAILS_KEY: '/stacktrace',
 
   /**
-   * @type {string} The well-known label for network error name.
+   * The well-known label for network error name.
    */
-  export const ERROR_DETAILS_NAME = '/error/name';
+  ERROR_DETAILS_NAME: '/error/name',
 
   /**
-   * @type {string} The well-known label for network error message.
+   * The well-known label for network error message.
    */
-  export const ERROR_DETAILS_MESSAGE = '/error/message';
+  ERROR_DETAILS_MESSAGE: '/error/message',
 
   /**
-   * @type {string} The well-known label for the app version on AppEngine.
+   * The well-known label for the app version on AppEngine.
    */
-  export const GAE_VERSION = 'g.co/gae/app/version';
+  GAE_VERSION: 'g.co/gae/app/version',
 
   /**
    * @type {string} The well-known label for the module name on AppEngine.
    */
-  export const GAE_MODULE_NAME = 'g.co/gae/app/module';
+  GAE_MODULE_NAME: 'g.co/gae/app/module',
 
   /**
-   * @type {string} The well-known label for the module version on AppEngine.
+   * The well-known label for the module version on AppEngine.
    */
-  export const GAE_MODULE_VERSION = 'g.co/gae/app/module_version';
+  GAE_MODULE_VERSION: 'g.co/gae/app/module_version',
 
   /**
-   * @type {string} The label for GCE instance id. This is not a label
-   *   recognized by the trace API.
+   * The label for GCE instance id. This is not a label recognized by the trace API.
    */
-  export const GCE_INSTANCE_ID = 'g.co/gce/instanceid';
+  GCE_INSTANCE_ID: 'g.co/gce/instanceid',
 
   /**
-   * @type {string} The label for GCE hostname. This is not a label
-   *   recognized by the trace API.
+   * The label for GCE hostname. This is not a label recognized by the trace API.
    */
-  export const GCE_HOSTNAME = 'g.co/gce/hostname';
+  GCE_HOSTNAME: 'g.co/gce/hostname',
 
   /**
-   * @type {string} The label for http request source ip. This is not a
-   *   label recognized by the trace API.
+   * The label for http request source ip. This is not a label recognized by the trace API.
    */
-  export const HTTP_SOURCE_IP = '/http/source/ip';
+  HTTP_SOURCE_IP: '/http/source/ip',
 
   /**
-   * @type {string} The well-known label for agent metadata.
-   *   Values should have the form "<name> <version>".
+   * The well-known label for agent metadata. Values should have the form "<name> <version>".
    */
-  export const AGENT_DATA = '/agent';
+  AGENT_DATA: '/agent'
 };

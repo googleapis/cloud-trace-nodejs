@@ -16,23 +16,23 @@
 
 'use strict';
 
-export namespace Constants {
-  /** @const {string} header that carries trace context across Google infrastructure. */
-  export const TRACE_CONTEXT_HEADER_NAME = 'x-cloud-trace-context';
+export const Constants = {
+  /** Header that carries trace context across Google infrastructure. */
+  TRACE_CONTEXT_HEADER_NAME: 'x-cloud-trace-context',
 
-  /** @const {string} header that is used to identify outgoing http made by the agent. */
-  export const TRACE_AGENT_REQUEST_HEADER = 'x-cloud-trace-agent-request';
+  /** Header that is used to identify outgoing http made by the agent. */
+  TRACE_AGENT_REQUEST_HEADER: 'x-cloud-trace-agent-request',
 
-  /** @const {number} bitmask to determine whether trace is enabled in trace options. */
-  export const TRACE_OPTIONS_TRACE_ENABLED = 1 << 0;
+  /** Bitmask to determine whether trace is enabled in trace options. */
+  TRACE_OPTIONS_TRACE_ENABLED: 1 << 0,
 
   /** See: cloud.google.com/trace/api/reference/rest/v1/projects.traces for limits. */
   /** Maximum size of a span name in bytes. */
-  export const TRACE_SERVICE_SPAN_NAME_LIMIT = 127;
+  TRACE_SERVICE_SPAN_NAME_LIMIT: 127,
 
   /** Maximum size of a label key in bytes. */
-  export const TRACE_SERVICE_LABEL_KEY_LIMIT = 127;
+  TRACE_SERVICE_LABEL_KEY_LIMIT: 127,
 
   /** Maximum size of a label value in bytes. */
-  export const TRACE_SERVICE_LABEL_VALUE_LIMIT = 16 * 1024 - 1;
+  TRACE_SERVICE_LABEL_VALUE_LIMIT: 16 * 1024 - 1
 };
