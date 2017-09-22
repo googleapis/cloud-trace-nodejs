@@ -16,14 +16,6 @@
 
 'use strict';
 
-declare global {
-  namespace NodeJS {
-    export interface Global {
-      _google_trace_agent: any;
-    }
-  }
-}
-
 var filesLoadedBeforeTrace = Object.keys(require.cache);
 
 // Load continuation-local-storage first to ensure the core async APIs get

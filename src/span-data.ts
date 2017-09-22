@@ -16,33 +16,6 @@
 
 'use strict';
 
-declare global {
-  interface CallSite {
-    getThis: () => any | undefined;
-    getTypeName: () => string;
-    getFunction: () => Function | undefined;
-    getFunctionName: () => string;
-    getMethodName: () => string;
-    getFileName: () => string | undefined;
-    getLineNumber: () => number | undefined;
-    getColumnNumber: () => number | undefined;
-    getEvalOrigin: () => CallSite | undefined;
-    isToplevel: () => boolean;
-    isEval: () => boolean;
-    isNative: () => boolean;
-    isConstructor: () => boolean;
-  }
-
-  interface ErrorConstructor {
-    prepareStackTrace?: (
-      error: Error,
-      structuredStackTrace: CallSite[]
-    ) => CallSite[] | string;
-    captureStackTrace(targetObject: Object, constructorOpt?: Function): void;
-    stackTraceLimit: number;
-  }
-}
-
 import { Constants } from './constants';
 import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';

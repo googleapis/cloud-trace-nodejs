@@ -1,5 +1,39 @@
 // TODO(kjin): Unify these definitions with those of the Debugger Agent.
 
+declare namespace NodeJS {
+  export interface Global {
+    _google_trace_agent: any;
+  }
+  export interface Process {
+    _preload_modules: string[];
+  }
+}
+
+interface CallSite {
+  getThis: () => any | undefined;
+  getTypeName: () => string;
+  getFunction: () => Function | undefined;
+  getFunctionName: () => string;
+  getMethodName: () => string;
+  getFileName: () => string | undefined;
+  getLineNumber: () => number | undefined;
+  getColumnNumber: () => number | undefined;
+  getEvalOrigin: () => CallSite | undefined;
+  isToplevel: () => boolean;
+  isEval: () => boolean;
+  isNative: () => boolean;
+  isConstructor: () => boolean;
+}
+
+interface ErrorConstructor {
+  prepareStackTrace?: (
+    error: Error,
+    structuredStackTrace: CallSite[]
+  ) => CallSite[] | string;
+  captureStackTrace(targetObject: Object, constructorOpt?: Function): void;
+  stackTraceLimit: number;
+}
+
 declare module 'gcp-metadata' {
   import * as http from 'http';
 
