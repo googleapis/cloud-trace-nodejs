@@ -73,9 +73,8 @@ export interface TraceContext {
  * note that we ignore trailing garbage if there is more than one '='
  * Returns null if traceId or spanId could not be found.
  *
- * @param {string} str string representation of the trace headers
- * @return {?{traceId: string, spanId: string, options: number}}
- *         object with keys. null if there is a problem.
+ * @param str string representation of the trace headers
+ * @return object with keys. null if there is a problem.
  */
 export function parseContextFromHeader(str: string): TraceContext | null {
   if (!str) {
@@ -97,9 +96,8 @@ export function parseContextFromHeader(str: string): TraceContext | null {
  * Generates a trace context header value that can be used
  * to follow the associated request through other Google services.
  *
- * @param {?{traceId: string, spanId: string, options: number}} traceContext
- *        An object with information sufficient for creating a serialized trace
- *        context.
+ * @param traceContext An object with information sufficient for creating a
+ *        serialized trace context.
  */
 export function generateTraceContext(traceContext: TraceContext): string {
   if (!traceContext) {
@@ -117,7 +115,7 @@ export function generateTraceContext(traceContext: TraceContext): string {
  * For example:
  *   './node_modules/bar/index/foo.js' => 'bar'
  *
- * @param {string} path The full import path.
+ * @param path The full import path.
  */
 export function packageNameFromPath(path: string) {
   const matches = moduleRegex.exec(path);
@@ -128,8 +126,8 @@ export function packageNameFromPath(path: string) {
  * Determines the path at which the requested module will be loaded given
  * the provided parent module.
  *
- * @param {string} request The name of the module to be loaded.
- * @param {object} parent The module into which the requested module will be loaded.
+ * @param request The name of the module to be loaded.
+ * @param parent The module into which the requested module will be loaded.
  */
 export function findModulePath(request: string, parent: NodeModule): string | null {
   const mainScriptDir = path.dirname(Module._resolveFilename(request, parent));
@@ -146,7 +144,7 @@ export function findModulePath(request: string, parent: NodeModule): string | nu
 /**
  * Determines the version of the module located at `modulePath`.
  *
- * @param {?string} modulePath The absolute path to the root directory of the
+ * @param modulePath The absolute path to the root directory of the
  *    module being loaded. This may be null if we are loading an internal module
  *    such as http.
  */
