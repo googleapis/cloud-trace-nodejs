@@ -16,14 +16,6 @@
 
 'use strict';
 
-declare global {
-  namespace NodeJS {
-    export interface Global {
-      _google_trace_agent: any;
-    }
-  }
-}
-
 var filesLoadedBeforeTrace = Object.keys(require.cache);
 
 // Load continuation-local-storage first to ensure the core async APIs get
@@ -34,6 +26,8 @@ if (require('semver').satisfies(process.version, '<8') ||
 }
 
 import { Constants } from './src/constants';
+import { defaultConfig } from './config';
+import { traceWriter } from './src/trace-writer';
 import * as traceUtil from './src/util';
 
 var path = require('path');
@@ -42,7 +36,6 @@ var common = require('@google-cloud/common');
 var extend = require('extend');
 var TraceAgent = require('./src/trace-api'/*.js*/);
 var pluginLoader = require('./src/trace-plugin-loader'/*.js*/);
-var TraceWriter = require('./src/trace-writer'/*.js*/);
 
 var modulesLoadedBeforeTrace: string[] = [];
 
@@ -82,7 +75,7 @@ function initConfig(projectConfig) {
   }
   // Configuration order of precedence:
   // Default < Environment Variable Set Configuration File < Project
-  var config = extend(true, {}, require('./config'/*.js*/), envSetConfig,
+  var config = extend(true, {}, defaultConfig, envSetConfig,
     projectConfig, envConfig);
 
   // Enforce the upper limit for the label value size.
@@ -105,7 +98,7 @@ function initConfig(projectConfig) {
  */
 function stop() {
   if (traceAgent && traceAgent.isActive()) {
-    TraceWriter.get().stop();
+    traceWriter.get().stop();
     traceAgent.disable();
     pluginLoader.deactivate();
     cls.destroyNamespace();
@@ -151,7 +144,7 @@ function start(projectConfig) {
   }
   // CLS namespace for context propagation
   cls.createNamespace();
-  TraceWriter.create(logger, config, function(err) {
+  traceWriter.create(logger, config, function(err) {
     if (err) {
       stop();
     }

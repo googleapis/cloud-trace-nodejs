@@ -16,129 +16,13 @@
 
 'use strict';
 
-declare global {
-  interface CallSite {
-    getThis: (...args: any[]) => any;
-    getTypeName: (...args: any[]) => any;
-    getFunction: (...args: any[]) => any;
-    getFunctionName: (...args: any[]) => any;
-    getMethodName: (...args: any[]) => any;
-    getFileName: (...args: any[]) => any;
-    getLineNumber: (...args: any[]) => any;
-    getColumnNumber: (...args: any[]) => any;
-    getEvalOrigin: (...args: any[]) => any;
-    isToplevel: (...args: any[]) => any;
-    isEval: (...args: any[]) => any;
-    isNative: (...args: any[]) => any;
-    isConstructor: (...args: any[]) => any;
-  }
-
-  interface ErrorConstructor {
-    prepareStackTrace?: (
-      error: Error,
-      structuredStackTrace: CallSite[]
-    ) => CallSite[] | string;
-    captureStackTrace(targetObject: Object, constructorOpt?: Function): void;
-    stackTraceLimit: number;
-  }
-}
-
 import { Constants } from './constants';
 import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
 import { TraceSpan } from './trace-span';
+import { traceWriter } from './trace-writer';
 import * as traceUtil from './util';
-
-var util = require('util');
-var TraceWriter = require('./trace-writer'/*.js*/);
-
-// Auto-incrementing integer
-var uid = 1;
-
-/**
- * Creates a trace context object.
- * @param {Trace} trace The object holding the spans comprising this trace.
- * @param {string} name The name of the span.
- * @param {number} parentSpanId The id of the parent span, 0 for root spans.
- * @param {boolean} isRoot Whether this is a root span.
- * @param {number} skipFrames the number of frames to remove from the top of the stack.
- * @constructor
- */
-function SpanData(trace: Trace, name, parentSpanId, isRoot, skipFrames) {
-  var spanId = uid++;
-  var spanName = traceUtil.truncate(name, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
-  this.span = new TraceSpan(spanName, spanId, parentSpanId);
-  this.trace = trace;
-  this.isRoot = isRoot;
-  this.serializedTraceContext = traceUtil.generateTraceContext({
-    traceId: this.trace.traceId,
-    spanId: this.span.spanId,
-    options: 1 // always traced
-  });
-  trace.spans.push(this.span);
-  if (TraceWriter.get().config().stackTraceLimit > 0) {
-    // This is a mechanism to get the structured stack trace out of V8.
-    // prepareStackTrace is called the first time the Error#stack property is
-    // accessed. The original behavior is to format the stack as an exception
-    // throw, which is not what we like. We customize it.
-    //
-    // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
-    //
-    var origLimit = Error.stackTraceLimit;
-    Error.stackTraceLimit = TraceWriter.get().config().stackTraceLimit + skipFrames;
-
-    var origPrepare = Error.prepareStackTrace;
-    Error.prepareStackTrace = function(error, structured) {
-      return structured;
-    };
-    var e: { stack?: any } = {};
-    Error.captureStackTrace(e, SpanData);
-
-    var stackFrames: any[] = [];
-    e.stack.forEach(function(callSite, i) {
-      if (i < skipFrames) {
-        return;
-      }
-      var functionName = callSite.getFunctionName();
-      var methodName = callSite.getMethodName();
-      var name = (methodName && functionName) ?
-        functionName + ' [as ' + methodName + ']' :
-        functionName || methodName || '<anonymous function>';
-      stackFrames.push(new StackFrame(undefined, name,
-        callSite.getFileName(), callSite.getLineNumber(),
-        callSite.getColumnNumber()));
-    });
-    // Set the label on the trace span directly to bypass truncation to
-    // config.maxLabelValueSize.
-    this.span.setLabel(TraceLabels.STACK_TRACE_DETAILS_KEY,
-      traceUtil.truncate(JSON.stringify({stack_frame: stackFrames}),
-        Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT));
-
-    Error.stackTraceLimit = origLimit;
-    Error.prepareStackTrace = origPrepare;
-  }
-}
-
-SpanData.prototype.getTraceContext = function() {
-  return this.serializedTraceContext;
-};
-
-SpanData.prototype.addLabel = function(key, value) {
-  var k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
-  var string_val = typeof value === 'string' ? value : util.inspect(value);
-  var v = traceUtil.truncate(string_val, TraceWriter.get().config().maximumLabelValueSize);
-  this.span.setLabel(k, v);
-};
-
-/**
- * Closes the span.
- */
-SpanData.prototype.endSpan = function() {
-  this.span.close();
-  if (this.isRoot) {
-    TraceWriter.get().writeSpan(this);
-  }
-};
+import * as util from 'util';
 
 /**
  * Trace API expects stack frames to be a JSON string with the following
@@ -149,35 +33,110 @@ SpanData.prototype.endSpan = function() {
  *
  * While the API doesn't expect a columnNumber at this point, it does accept,
  * and ignore it.
- *
- * @param {string|undefined} className
- * @param {string|undefined} methodName
- * @param {string|undefined} fileName
- * @param {number|undefined} lineNumber
- * @param {number|undefined} columnNumber
- * @constructor @private
  */
-function StackFrame(className, methodName, fileName, lineNumber, columnNumber) {
-  if (className) {
-    this.class_name = className;
-  }
-  if (methodName) {
-    this.method_name = methodName;
-  }
-  if (fileName) {
-    this.file_name = fileName;
-  }
-  if (typeof lineNumber === 'number') {
-    this.line_number = lineNumber;
-  }
-  if (typeof columnNumber === 'number') {
-    this.column_number = columnNumber;
-  }
+interface StackFrame {
+  class_name?: string,
+  method_name?: string,
+  file_name?: string,
+  line_number?: number,
+  column_number?: number
 }
 
-/**
- * Export SpanData.
- */
-module.exports = SpanData;
+// Auto-incrementing integer
+let uid: number = 1;
 
-export default {};
+export class SpanData {
+  public readonly span: TraceSpan;
+
+  /**
+   * Creates a trace context object.
+   * @param {Trace} trace The object holding the spans comprising this trace.
+   * @param {string} name The name of the span.
+   * @param {number} parentSpanId The id of the parent span, 0 for root spans.
+   * @param {boolean} isRoot Whether this is a root span.
+   * @param {number} skipFrames the number of frames to remove from the top of the stack.
+   * @constructor
+   */
+  constructor(
+    readonly trace: Trace,
+    name: string,
+    parentSpanId: number,
+    private readonly isRoot: boolean,
+    skipFrames: number
+  ) {
+    const spanId = uid++;
+    const spanName = traceUtil.truncate(name, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
+    this.span = new TraceSpan(spanName, spanId, parentSpanId);
+    trace.spans.push(this.span);
+    if (traceWriter.get().config().stackTraceLimit > 0) {
+      // This is a mechanism to get the structured stack trace out of V8.
+      // prepareStackTrace is called the first time the Error#stack property is
+      // accessed. The original behavior is to format the stack as an exception
+      // throw, which is not what we like. We customize it.
+      //
+      // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
+      //
+      const origLimit = Error.stackTraceLimit;
+      Error.stackTraceLimit = traceWriter.get().config().stackTraceLimit + skipFrames;
+  
+      const origPrepare = Error.prepareStackTrace;
+      Error.prepareStackTrace = function(error: Error, structured: CallSite[]): CallSite[] {
+        return structured;
+      };
+      const e: { stack?: CallSite[] } = {};
+      Error.captureStackTrace(e, SpanData);
+  
+      const stackFrames: StackFrame[] = [];
+      if (e.stack) {
+        e.stack.forEach(function(callSite, i) {
+          if (i < skipFrames) {
+            return;
+          }
+          const functionName = callSite.getFunctionName();
+          const methodName = callSite.getMethodName();
+          const name = (methodName && functionName) ?
+            functionName + ' [as ' + methodName + ']' :
+            functionName || methodName || '<anonymous function>';
+          const stackFrame: StackFrame = {
+            method_name: name,
+            file_name: callSite.getFileName() || undefined,
+            line_number: callSite.getLineNumber() || undefined,
+            column_number: callSite.getColumnNumber() || undefined
+          };
+          // TODO(kjin): Check if callSite getters actually return null or undefined.
+          // Docs say undefined but we guard it here just in case.
+          stackFrames.push(stackFrame);
+        });
+        // Set the label on the trace span directly to bypass truncation to
+        // config.maxLabelValueSize.
+        this.span.setLabel(TraceLabels.STACK_TRACE_DETAILS_KEY,
+          traceUtil.truncate(JSON.stringify({stack_frame: stackFrames}),
+            Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT));
+      }
+      Error.stackTraceLimit = origLimit;
+      Error.prepareStackTrace = origPrepare;
+    }
+  }
+
+  getTraceContext() {
+    return traceUtil.generateTraceContext({
+      traceId: this.trace.traceId.toString(),
+      spanId: this.span.spanId.toString(),
+      options: 1 // always traced
+    });
+  }
+
+  addLabel(key: string, value: any) {
+    const k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
+    const string_val = typeof value === 'string' ? value : util.inspect(value);
+    const v = traceUtil.truncate(string_val, traceWriter.get().config().maximumLabelValueSize);
+    this.span.setLabel(k, v);
+  }
+
+  endSpan() {
+    this.span.close();
+    if (this.isRoot) {
+      traceWriter.get().writeSpan(this);
+    }
+  }
+}

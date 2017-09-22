@@ -16,7 +16,8 @@
 
 'use strict';
 
-require('./plugins/common'/*.js*/);
+import './override-gcp-metadata';
+
 var assert = require('assert');
 var http = require('http');
 var nock = require('nock');

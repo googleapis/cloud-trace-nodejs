@@ -17,21 +17,21 @@
 'use strict';
 
 import { Constants } from '../src/constants';
+import { traceWriter } from '../src/trace-writer';
 
 var assert = require('assert');
 var trace = require('..');
-var TraceWriter = require('../src/trace-writer'/*.js*/);
 
 describe('maximumLabelValueSize configuration', function() {
   it('should not allow values above server maximum', function() {
     trace.start({forceNewAgent_: true, maximumLabelValueSize: 1000000});
-    var valueMax = TraceWriter.get().config_.maximumLabelValueSize;
+    var valueMax = traceWriter.get().config().maximumLabelValueSize;
     assert.strictEqual(valueMax, Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
   });
 
   it('should not modify values below server maximum', function() {
     trace.start({forceNewAgent_: true, maximumLabelValueSize: 10});
-    var valueMax = TraceWriter.get().config_.maximumLabelValueSize;
+    var valueMax = traceWriter.get().config().maximumLabelValueSize;
     assert.strictEqual(valueMax, 10);
   });
 });

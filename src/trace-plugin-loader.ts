@@ -15,14 +15,6 @@
  */
 'use strict';
 
-declare global {
-  namespace NodeJS {
-    export interface Process {
-      _preload_modules: string[];
-    }
-  }
-}
-
 import * as util from './util';
 
 var Module = require('module');

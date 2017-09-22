@@ -16,16 +16,22 @@
 
 'use strict';
 
+import './override-gcp-metadata';
+import { defaultConfig } from '../config';
+import { traceWriter } from '../src/trace-writer';
+
 var assert = require('assert');
 var cls = require('../src/cls'/*.js*/);
 var common = require('./plugins/common'/*.js*/);
 var EventEmitter = require('events');
+var nock = require('nock');
 var request = require('request');
 var TraceAgent = require('../src/trace-api'/*.js*/);
 var TracingPolicy = require('../src/tracing-policy'/*.js*/);
-var TraceWriter = require('../src/trace-writer'/*.js*/);
 
 var logger = require('@google-cloud/common').logger();
+
+nock.disableNetConnect();
 
 function createTraceAgent(policy?, config?) {
   var result = new TraceAgent('test');
@@ -65,13 +71,14 @@ function assertAPISurface(traceAPI) {
 
 describe('Trace Interface', function() {
   before(function(done) {
-    TraceWriter.create(logger,
-      Object.assign(require('../config'/*.js*/), {
-        projectId: '0'
+    traceWriter.create(logger,
+      Object.assign(defaultConfig, {
+        projectId: '0',
+        forceNewAgent_: false
       }), function(err) {
-      assert.ok(!err);
-      done();
-    });
+        assert.ok(!err);
+        done();
+      });
     cls.createNamespace();
   });
 
@@ -103,7 +110,7 @@ describe('Trace Interface', function() {
 
   describe('behavior when initialized', function() {
     before(function() {
-      TraceWriter.get().request = request;
+      traceWriter.get().request = request;
       common.avoidTraceWriterAuth();
     });
 

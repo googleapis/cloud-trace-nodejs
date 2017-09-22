@@ -24,11 +24,8 @@ declare global {
   }
 }
 
-var proxyquire  = require('proxyquire');
-// Monkeypatch gcp-metadata to not ask for retries at all.
-proxyquire('gcp-metadata', {
-  'retry-request': require('request')
-});
+import '../override-gcp-metadata';
+import { traceWriter } from '../../src/trace-writer';
 
 var semver = require('semver');
 
@@ -43,7 +40,6 @@ if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CON
   }, oldIt);
 }
 var tracePolicy = require('../../src/tracing-policy'/*.js*/);
-var TraceWriter = require('../../src/trace-writer'/*.js*/);
 
 var assert = require('assert');
 var http = require('http');
@@ -89,11 +85,11 @@ function replaceWarnLogger(fn) {
  * Cleans the tracer state between test runs.
  */
 function cleanTraces() {
-  TraceWriter.get().buffer_ = [];
+  traceWriter.get().buffer_ = [];
 }
 
 function getTraces() {
-  return TraceWriter.get().buffer_.map(JSON.parse);
+  return traceWriter.get().buffer_.map(buffer => JSON.parse(buffer));
 }
 
 function getMatchingSpan(predicate) {
@@ -185,11 +181,11 @@ function createChildSpan(cb, duration) {
 }
 
 function installNoopTraceWriter() {
-  TraceWriter.get().writeSpan = function() {};
+  traceWriter.get().writeSpan = function() {};
 }
 
 function avoidTraceWriterAuth() {
-  TraceWriter.get().request = request;
+  traceWriter.get().request = request;
 }
 
 function hasContext() {

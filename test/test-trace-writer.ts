@@ -16,16 +16,20 @@
 
 'use strict';
 
-import { TraceLabels } from '../src/trace-labels';
-
 // Loading this file patches gcpMetadata so requests don't time out.
-require('./plugins/common'/*.js*/);
+import './override-gcp-metadata';
+import { SpanData } from '../src/span-data';
+import { TraceLabels } from '../src/trace-labels';
+import { traceWriter, TraceWriter, TraceWriterOptions } from '../src/trace-writer';
+
 var assert = require('assert');
 var fakeCredentials = require('./fixtures/gcloud-credentials.json');
 var nock = require('nock');
 var nocks = require('./nocks'/*.js*/);
 var os = require('os');
 var Service = require('@google-cloud/common').Service;
+
+type createTraceWriterOptions = TraceWriterOptions & { forceNewAgent_: boolean };
 
 interface TestCase {
   description: string,
@@ -35,7 +39,7 @@ interface TestCase {
     hostname?: string,
     instanceId?: string
   },
-  assertResults: (err: Error, tw: any) => void
+  assertResults: (err?: Error | null, tw?: any) => void
 }
 
 nock.disableNetConnect();
@@ -44,13 +48,14 @@ var PROJECT = 'fake-project';
 var DEFAULT_DELAY = 200;
 
 var fakeLogger = {
-  warn: function() {},
-  info: function() {},
-  error: function() {},
-  debug: function() {}
+  warn: () => {},
+  info: () => {},
+  error: () => {},
+  debug: () => {},
+  silly: () => {}
 };
 
-function createFakeSpan(name) {
+function createFakeSpan(name): SpanData {
   // creates a fake span.
   return {
     trace: {
@@ -66,42 +71,40 @@ function createFakeSpan(name) {
       ]
     },
     labels_: {},
-    addLabel: function(k, v) { this.labels_[k] = v; },
-  };
+    addLabel: function(k, v) { this.labels_[k] = v; }
+  } as any as SpanData;
 }
 
 describe('TraceWriter', function() {
-  var TraceWriter = require('../src/trace-writer'/*.js*/);
-
   it('should be a Service instance', function() {
-    var writer = TraceWriter.create(fakeLogger, {
+    var writer = traceWriter.create(fakeLogger, {
       projectId: 'fake project',
       serviceContext: {},
       onUncaughtException: 'ignore',
       forceNewAgent_: true
-    });
+    } as createTraceWriterOptions);
     assert.ok(writer instanceof Service);
   });
   
   it('should not attach exception handler with ignore option', function() {
-    TraceWriter.create(fakeLogger, {
+    traceWriter.create(fakeLogger, {
       projectId: '0',
       onUncaughtException: 'ignore',
       forceNewAgent_: true
-    });
+    } as createTraceWriterOptions);
     // Mocha attaches 1 exception handler
     assert.equal(process.listeners('uncaughtException').length, 1);
   });
 
   describe('writeSpan', function() {
     it('should close spans, add defaultLabels and queue', function(done) {
-      var writer = TraceWriter.create(fakeLogger, {
+      var writer = traceWriter.create(fakeLogger, {
         projectId: PROJECT,
         bufferSize: 4,
         serviceContext: {},
         onUncaughtException: 'ignore',
         forceNewAgent_: true
-      }, function() {
+      } as createTraceWriterOptions, function() {
         var spanData = createFakeSpan('fake span');
         writer.defaultLabels_ = {
           fakeKey: 'value'
@@ -110,8 +113,8 @@ describe('TraceWriter', function() {
           assert.ok(trace && trace.spans && trace.spans[0]);
           var span = trace.spans[0];
           assert.strictEqual(span.name, 'fake span');
-          assert.ok(span.closed_);
-          assert.strictEqual((spanData.labels_ as any).fakeKey, 'value');
+          assert.ok((span as any).closed_);
+          assert.strictEqual(((spanData as any).labels_ as any).fakeKey, 'value');
           // TODO(ofrobots): check serviceContext labels as well.
           done();
         };
@@ -125,14 +128,14 @@ describe('TraceWriter', function() {
       nocks.oauth2();
       var scope = nocks.patchTraces(PROJECT);
 
-      var writer = TraceWriter.create(fakeLogger, {
+      var writer = traceWriter.create(fakeLogger, {
         projectId: PROJECT,
         credentials: fakeCredentials,
         serviceContext: {},
         onUncaughtException: 'ignore',
         forceNewAgent_: true
-      });
-      writer.publish_(PROJECT, '{"valid": "json"}');
+      } as createTraceWriterOptions);
+      writer.publish_('{"valid": "json"}');
       setTimeout(function() {
         assert.ok(scope.isDone());
         done();
@@ -145,14 +148,14 @@ describe('TraceWriter', function() {
       var scope = nocks.patchTraces(PROJECT, null, 'Simulated Network Error',
                                     true /* withError */);
 
-      var writer = TraceWriter.create(fakeLogger, {
+      var writer = traceWriter.create(fakeLogger, {
         projectId: PROJECT,
         credentials: fakeCredentials,
         serviceContext: {},
         onUncaughtException: 'ignore',
         forceNewAgent_: true
-      });
-      writer.publish_(PROJECT, JSON.stringify(MESSAGE));
+      } as createTraceWriterOptions);
+      writer.publish_(JSON.stringify(MESSAGE));
       setTimeout(function() {
         assert.ok(scope.isDone());
         assert.equal(writer.buffer_.length, 0);
@@ -163,14 +166,14 @@ describe('TraceWriter', function() {
 
   describe('publishing', function() {
     it('should publish when the queue fills', function(done) {
-      var writer = TraceWriter.create(fakeLogger, {
+      var writer = traceWriter.create(fakeLogger, {
         projectId: PROJECT,
         bufferSize: 4,
         flushDelaySeconds: 3600,
         serviceContext: {},
         onUncaughtException: 'ignore',
         forceNewAgent_: true
-      });
+      } as createTraceWriterOptions);
       writer.publish_ = function() { done(); };
       for (var i = 0; i < 4; i++) {
         writer.writeSpan(createFakeSpan(i));
@@ -179,13 +182,13 @@ describe('TraceWriter', function() {
 
     it('should publish after timeout', function(done) {
       var published = false;
-      var writer = TraceWriter.create(fakeLogger, {
+      var writer = traceWriter.create(fakeLogger, {
         projectId: PROJECT,
         flushDelaySeconds: 0.01,
         serviceContext: {},
         onUncaughtException: 'ignore',
         forceNewAgent_: true
-      });
+      } as createTraceWriterOptions);
       writer.publish_ = function() { published = true; };
       writer.initialize(function() {
         writer.writeSpan(createFakeSpan('fake span'));
@@ -318,12 +321,12 @@ describe('TraceWriter', function() {
           nocks.instanceId(function() { return testCase.metadata.instanceId; });
         }
 
-        TraceWriter.create(fakeLogger, Object.assign({
+        traceWriter.create(fakeLogger, Object.assign({
           forceNewAgent_: true,
           onUncaughtException: 'ignore',
           serviceContext: {}
         }, testCase.config), function(err) {
-          testCase.assertResults(err, TraceWriter.get());
+          testCase.assertResults(err, traceWriter.get());
           done();
         });
       });

@@ -16,15 +16,16 @@
 
 'use strict';
 
+import './override-gcp-metadata';
 import { Constants } from '../src/constants';
+import { SpanData } from '../src/span-data';
 import { Trace } from '../src/trace';
 import { TraceLabels } from '../src/trace-labels';
+import { traceWriter } from '../src/trace-writer';
 
 var assert = require('assert');
 var cls = require('../src/cls'/*.js*/);
 var common = require('./plugins/common'/*.js*/);
-var SpanData = require('../src/span-data'/*.js*/);
-var TraceWriter = require('../src/trace-writer'/*.js*/);
 
 function createRootSpanData(name, traceId?, parentId?, skipFrames?) {
   return new SpanData(
@@ -107,7 +108,7 @@ describe('SpanData', function() {
       var longLabelVal = Array(16550).join('a');
       spanData.addLabel('a', longLabelVal);
       assert.strictEqual(spanData.span.labels.a,
-        Array(TraceWriter.get().config_.maximumLabelValueSize - 2).join('a') +
+        Array(traceWriter.get().config().maximumLabelValueSize - 2).join('a') +
           '...');
     });
   });
@@ -124,7 +125,7 @@ describe('SpanData', function() {
   });
 
   it('captures stack traces', function() {
-    TraceWriter.get().config_.stackTraceLimit = 25;
+    traceWriter.get().config().stackTraceLimit = 25;
     cls.getNamespace().run(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
       assert.ok(!spanData.span.isClosed());
@@ -140,7 +141,7 @@ describe('SpanData', function() {
   });
 
   it('does not limit stack trace', function() {
-    TraceWriter.get().config_.maximumLabelValueSize = 10;
+    traceWriter.get().config().maximumLabelValueSize = 10;
     cls.getNamespace().run(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
       spanData.endSpan();
