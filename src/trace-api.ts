@@ -196,7 +196,8 @@ TraceAgent.prototype.getCurrentContextId = function() {
   if (!rootSpan || rootSpan === nullSpan) {
     return null;
   }
-  return rootSpan.trace.traceId;
+  // TODO: When converting this file to TS, remove this cast.
+  return (rootSpan as SpanData).trace.traceId;
 };
 
 /**
@@ -220,7 +221,8 @@ TraceAgent.prototype.getWriterProjectId = function() {
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
 TraceAgent.prototype.createChildSpan = function(options) {
-  var rootSpan = cls.getRootContext();
+  // TODO: When this file is converted to TS, remove this cast.
+  var rootSpan = cls.getRootContext() as SpanData | null;
   if (!rootSpan) {
     // Context was lost.
     this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +

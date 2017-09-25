@@ -28,7 +28,7 @@ asyncHook.createHook({init, before, destroy}).enable();
 const EVENT_EMITTER_METHODS =
   [ 'addListener', 'on', 'once', 'prependListener', 'prependOncelistener' ];
 
-class Namespace implements CLSNamespace {
+class AsyncHooksNamespace implements CLSNamespace {
   get name(): string {
     throw new Error('Not implemented');
   }
@@ -98,7 +98,7 @@ class Namespace implements CLSNamespace {
   }
 }
 
-const namespace = new Namespace();
+const namespace = new AsyncHooksNamespace();
 
 // AsyncWrap Hooks
 

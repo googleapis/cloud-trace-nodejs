@@ -17,7 +17,10 @@
 'use strict';
 
 import * as semver from 'semver';
+import { SpanData } from './span-data';
 import * as CLS from 'continuation-local-storage';
+
+export type RootContext = SpanData | {} /* null span */ | null;
 
 const cls: typeof CLS = semver.satisfies(process.version, '>=8') &&
   process.env.GCLOUD_TRACE_NEW_CONTEXT ? require('./cls-ah')
@@ -37,7 +40,7 @@ export function getNamespace(): CLS.Namespace {
   return cls.getNamespace(TRACE_NAMESPACE);
 }
 
-export function getRootContext(): any {
+export function getRootContext(): RootContext {
   // First getNamespace check is necessary in case any
   // patched closures escaped before the agent was stopped and the
   // namespace was destroyed.
@@ -47,6 +50,6 @@ export function getRootContext(): any {
   return null;
 }
 
-export function setRootContext(rootContext: any): void {
+export function setRootContext(rootContext: RootContext): void {
   getNamespace().set('root', rootContext);
 }

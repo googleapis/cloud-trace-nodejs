@@ -17,11 +17,11 @@
 /**
  * An object that determines whether a request should be traced.
  */
-export interface Policy {
+export interface TracePolicy {
   shouldTrace(dateMillis: number, url: string): boolean;
 }
 
-export class RateLimiterPolicy implements Policy {
+export class RateLimiterPolicy implements TracePolicy {
   private traceWindow: number;
   private nextTraceStart: number;
 
@@ -42,9 +42,9 @@ export class RateLimiterPolicy implements Policy {
   }
 }
 
-export class FilterPolicy implements Policy {
+export class FilterPolicy implements TracePolicy {
   constructor(
-    private basePolicy: Policy,
+    private basePolicy: TracePolicy,
     private filterUrls: (string | RegExp)[]
   ) {}
 
@@ -60,13 +60,13 @@ export class FilterPolicy implements Policy {
   }
 }
 
-export class TraceAllPolicy implements Policy {
+export class TraceAllPolicy implements TracePolicy {
   shouldTrace() {
     return true;
   }
 }
 
-export class TraceNonePolicy implements Policy {
+export class TraceNonePolicy implements TracePolicy {
   shouldTrace() {
     return false;
   }
@@ -78,7 +78,7 @@ export interface TracePolicyOptions {
 }
 
 // TODO(kjin): This could be a class as well.
-export function createTracePolicy(config: TracePolicyOptions): Policy {
+export function createTracePolicy(config: TracePolicyOptions): TracePolicy {
   let basePolicy;
   if (config.samplingRate < 1) {
     basePolicy = new TraceAllPolicy();
