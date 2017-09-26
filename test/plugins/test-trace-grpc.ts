@@ -15,14 +15,14 @@
  */
 'use strict';
 
+import * as cls from '../../src/cls';
 import { Constants } from '../../src/constants';
 import { TraceLabels } from '../../src/trace-labels';
+import * as TracingPolicy from '../../src/tracing-policy';
 import * as util from '../../src/util';
 import * as assert from 'assert';
 
-var cls = require('../../src/cls'/*.js*/);
 var shimmer = require('shimmer');
-var TracingPolicy = require('../../src/tracing-policy'/*.js*/);
 var common = require('./common'/*.js*/);
 
 var versions = {

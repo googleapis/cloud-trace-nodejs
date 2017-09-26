@@ -17,17 +17,17 @@
 'use strict';
 
 import './override-gcp-metadata';
+import * as cls from '../src/cls';
 import { defaultConfig } from '../config';
 import { traceWriter } from '../src/trace-writer';
+import * as TracingPolicy from '../src/tracing-policy';
 
 var assert = require('assert');
-var cls = require('../src/cls'/*.js*/);
 var common = require('./plugins/common'/*.js*/);
 var EventEmitter = require('events');
 var nock = require('nock');
 var request = require('request');
 var TraceAgent = require('../src/trace-api'/*.js*/);
-var TracingPolicy = require('../src/tracing-policy'/*.js*/);
 
 var logger = require('@google-cloud/common').logger();
 

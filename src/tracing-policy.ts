@@ -14,65 +14,80 @@
  * limitations under the License.
  */
 
-'use strict';
-
-function RateLimiterPolicy(samplesPerSecond) {
-  if (samplesPerSecond > 1000) {
-    samplesPerSecond = 1000;
-  }
-  this.traceWindow = 1000 / samplesPerSecond;
-  this.nextTraceStart = Date.now();
+/**
+ * An object that determines whether a request should be traced.
+ */
+export interface TracePolicy {
+  shouldTrace(dateMillis: number, url: string): boolean;
 }
 
-RateLimiterPolicy.prototype.shouldTrace = function(dateMillis) {
-  if (dateMillis < this.nextTraceStart) {
+export class RateLimiterPolicy implements TracePolicy {
+  private traceWindow: number;
+  private nextTraceStart: number;
+
+  constructor(samplesPerSecond: number) {
+    if (samplesPerSecond > 1000) {
+      samplesPerSecond = 1000;
+    }
+    this.traceWindow = 1000 / samplesPerSecond;
+    this.nextTraceStart = Date.now();
+  }
+
+  shouldTrace(dateMillis: number): boolean {
+    if (dateMillis < this.nextTraceStart) {
+      return false;
+    }
+    this.nextTraceStart = dateMillis + this.traceWindow;
+    return true;
+  }
+}
+
+export class FilterPolicy implements TracePolicy {
+  constructor(
+    private basePolicy: TracePolicy,
+    private filterUrls: (string | RegExp)[]
+  ) {}
+
+  private matches(url: string) {
+    return this.filterUrls.some((candidate) => {
+      return (typeof candidate === 'string' && candidate === url) ||
+        !!url.match(candidate);
+    });
+  }
+
+  shouldTrace(dateMillis: number, url: string) {
+    return !this.matches(url) && this.basePolicy.shouldTrace(dateMillis, url);
+  }
+}
+
+export class TraceAllPolicy implements TracePolicy {
+  shouldTrace() {
+    return true;
+  }
+}
+
+export class TraceNonePolicy implements TracePolicy {
+  shouldTrace() {
     return false;
   }
-  this.nextTraceStart = dateMillis + this.traceWindow;
-  return true;
-};
-
-function FilterPolicy(basePolicy, filterUrls) {
-  this.basePolicy = basePolicy;
-  this.filterUrls = filterUrls;
 }
 
-FilterPolicy.prototype.matches = function(url) {
-  return this.filterUrls.some(function(candidate) {
-    return (typeof candidate === 'string' && candidate === url) ||
-      url.match(candidate);
-  });
-};
+export interface TracePolicyOptions {
+  samplingRate: number;
+  ignoreUrls?: (string | RegExp)[];
+}
 
-FilterPolicy.prototype.shouldTrace = function(dataMillis, url) {
-  return !this.matches(url) && this.basePolicy.shouldTrace(dataMillis, url);
-};
-
-function TraceAllPolicy() {}
-
-TraceAllPolicy.prototype.shouldTrace = function() { return true; };
-
-function TraceNonePolicy() {}
-
-TraceNonePolicy.prototype.shouldTrace = function() { return false; };
-
-module.exports = {
-  TraceAllPolicy: TraceAllPolicy,
-  TraceNonePolicy: TraceNonePolicy,
-  FilterPolicy: FilterPolicy,
-  createTracePolicy: function(config) {
-    var basePolicy;
-    if (config.samplingRate < 1) {
-      basePolicy = new TraceAllPolicy();
-    } else {
-      basePolicy = new RateLimiterPolicy(config.samplingRate);
-    }
-    if (config.ignoreUrls && config.ignoreUrls.length > 0) {
-      return new FilterPolicy(basePolicy, config.ignoreUrls);
-    } else {
-      return basePolicy;
-    }
+// TODO(kjin): This could be a class as well.
+export function createTracePolicy(config: TracePolicyOptions): TracePolicy {
+  let basePolicy;
+  if (config.samplingRate < 1) {
+    basePolicy = new TraceAllPolicy();
+  } else {
+    basePolicy = new RateLimiterPolicy(config.samplingRate);
   }
-};
-
-export default {};
+  if (config.ignoreUrls && config.ignoreUrls.length > 0) {
+    return new FilterPolicy(basePolicy, config.ignoreUrls);
+  } else {
+    return basePolicy;
+  }
+}

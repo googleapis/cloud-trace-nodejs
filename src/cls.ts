@@ -16,47 +16,40 @@
 
 'use strict';
 
-var semver = require('semver');
-var cls = semver.satisfies(process.version, '>=8') &&
-          process.env.GCLOUD_TRACE_NEW_CONTEXT ?
-            require('./cls-ah'/*.js*/) : require('continuation-local-storage');
+import * as semver from 'semver';
+import { SpanData } from './span-data';
+import * as CLS from 'continuation-local-storage';
 
-/** @const {string} */
-var TRACE_NAMESPACE = 'com.google.cloud.trace';
+export type RootContext = SpanData | {} /* null span */ | null;
 
-function createNamespace() {
+const cls: typeof CLS = semver.satisfies(process.version, '>=8') &&
+  process.env.GCLOUD_TRACE_NEW_CONTEXT ? require('./cls-ah')
+                                       : require('continuation-local-storage');
+
+const TRACE_NAMESPACE = 'com.google.cloud.trace';
+
+export function createNamespace(): CLS.Namespace {
   return cls.createNamespace(TRACE_NAMESPACE);
 }
 
-function destroyNamespace() {
+export function destroyNamespace(): void {
   cls.destroyNamespace(TRACE_NAMESPACE);
 }
 
-function getNamespace() {
+export function getNamespace(): CLS.Namespace {
   return cls.getNamespace(TRACE_NAMESPACE);
 }
 
-module.exports = {
-  createNamespace: createNamespace,
-
-  destroyNamespace: destroyNamespace,
-
-  getNamespace: getNamespace,
-
-  getRootContext: function getRootContext() {
-    // First getNamespace check is necessary in case any
-    // patched closures escaped before the agent was stopped and the
-    // namespace was destroyed.
-    if (getNamespace() && getNamespace().get('root')) {
-      return getNamespace().get('root');
-    }
-    return null;
-  },
-
-  setRootContext: function setRootContext(rootContext) {
-    getNamespace().set('root', rootContext);
+export function getRootContext(): RootContext {
+  // First getNamespace check is necessary in case any
+  // patched closures escaped before the agent was stopped and the
+  // namespace was destroyed.
+  if (getNamespace() && getNamespace().get('root')) {
+    return getNamespace().get('root');
   }
-};
+  return null;
+}
 
-
-export default {};
+export function setRootContext(rootContext: RootContext): void {
+  getNamespace().set('root', rootContext);
+}

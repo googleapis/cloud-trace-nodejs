@@ -16,16 +16,16 @@
 
 'use strict';
 
+import * as cls from './cls';
 import { Constants } from './constants';
 import { SpanData } from './span-data';
 import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
+import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
 
-var cls = require('./cls'/*.js*/);
 var is = require('is');
 var uuid = require('uuid');
-var TracingPolicy = require('./tracing-policy'/*.js*/);
 var semver = require('semver');
 
 var ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
@@ -196,7 +196,8 @@ TraceAgent.prototype.getCurrentContextId = function() {
   if (!rootSpan || rootSpan === nullSpan) {
     return null;
   }
-  return rootSpan.trace.traceId;
+  // TODO: When converting this file to TS, remove this cast.
+  return (rootSpan as SpanData).trace.traceId;
 };
 
 /**
@@ -220,7 +221,8 @@ TraceAgent.prototype.getWriterProjectId = function() {
  * @returns A new ChildSpan object, or null if there is no active root span.
  */
 TraceAgent.prototype.createChildSpan = function(options) {
-  var rootSpan = cls.getRootContext();
+  // TODO: When this file is converted to TS, remove this cast.
+  var rootSpan = cls.getRootContext() as SpanData | null;
   if (!rootSpan) {
     // Context was lost.
     this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
