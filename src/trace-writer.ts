@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import common = require('@google-cloud/common');
+import * as common from '@google-cloud/common';
 import { Constants } from './constants';
 import * as gcpMetadata from 'gcp-metadata';
 import { OutgoingHttpHeaders } from 'http';
@@ -80,9 +80,7 @@ export class TraceWriter extends common.Service {
       projectIdRequired: false,
       baseUrl: 'https://cloudtrace.googleapis.com/v1',
       scopes: SCOPES
-    }, config || {});
-
-    config = config || {};
+    }, config);
   
     this.logger_ = logger;
     this.config_ = config;
@@ -293,7 +291,10 @@ export class TraceWriter extends common.Service {
   
     // Do it again after delay
     if (this.isActive) {
-      setTimeout(this.scheduleFlush_.bind(this),
+      // 'global.setTimeout' avoids TS2339 on this line.
+      // It helps disambiguate the Node runtime setTimeout function from
+      // WindowOrWorkerGlobalScope.setTimeout, which returns an integer.
+      global.setTimeout(this.scheduleFlush_.bind(this),
         this.config_.flushDelaySeconds * 1000).unref();
     }
   };

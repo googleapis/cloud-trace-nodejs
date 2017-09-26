@@ -223,7 +223,7 @@ export class TraceAgent implements TraceAgentInterface {
           options.name, rootSpan.span.name);
       }
       // Create a new child span and return it.
-      options = options || {};
+      options = options || { name: '' };
       const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
       const childContext = new SpanData(rootSpan.trace, /* Trace object */
         options.name, /* Span name */

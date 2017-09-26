@@ -95,7 +95,7 @@ declare module '@google-cloud/common' {
         err: Error | null,
         body: any,
         response: request.RequestResponse
-      ) => void);
+      ) => void): void;
   }
 
   export interface ServiceConfig {

@@ -214,7 +214,7 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
     }
 
     // Future requires get patched as they get loaded.
-    return function Module_load(request: string, parent?: NodeModule, isMain?: boolean): any {
+    return function Module_load(this: any, request: string, parent?: NodeModule, isMain?: boolean): any {
       const instrumentation = plugins[request];
       if (instrumentation) {
         const moduleRoot = util.findModulePath(request, parent);
