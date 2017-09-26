@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-'use strict';
-
-var filesLoadedBeforeTrace = Object.keys(require.cache);
+const filesLoadedBeforeTrace = Object.keys(require.cache);
 
 // Load continuation-local-storage first to ensure the core async APIs get
 // patched before any user-land modules get loaded.
@@ -26,41 +24,58 @@ if (require('semver').satisfies(process.version, '<8') ||
 }
 
 import * as cls from './src/cls';
+import * as common from '@google-cloud/common';
 import { Constants } from './src/constants';
-import { defaultConfig } from './config';
-import { TraceAgent } from './src/trace-api';
+import { Config, defaultConfig } from './config';
+import * as extend from 'extend';
+import * as path from 'path';
+import { PluginLoaderConfig } from './src/trace-plugin-loader';
 import * as pluginLoader from './src/trace-plugin-loader';
-import { traceWriter } from './src/trace-writer';
+import { TraceAgent } from './src/trace-api';
+import { traceWriter, TraceWriterSingletonConfig } from './src/trace-writer';
 import * as traceUtil from './src/util';
 
-var path = require('path');
-var common = require('@google-cloud/common');
-var extend = require('extend');
+export { Config };
+export {
+  Plugin,
+  Patch as PluginPatch,
+  Intercept as PluginIntercept,
+  Instrumentation as PluginInstrumentation
+} from './src/trace-plugin-loader';
 
-var modulesLoadedBeforeTrace: string[] = [];
+const modulesLoadedBeforeTrace: string[] = [];
 
-var traceAgent = new TraceAgent('Custom Span API');
+const traceAgent = new TraceAgent('Custom Span API');
 
-var traceModuleName = path.join('@google-cloud', 'trace-agent');
-for (var i = 0; i < filesLoadedBeforeTrace.length; i++) {
-  var moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
+const traceModuleName = path.join('@google-cloud', 'trace-agent');
+for (let i = 0; i < filesLoadedBeforeTrace.length; i++) {
+  const moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
   if (moduleName && moduleName !== traceModuleName &&
       modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
     modulesLoadedBeforeTrace.push(moduleName);
   }
 }
 
+interface TopLevelConfig {
+  enabled: boolean;
+  logLevel: number;
+  forceNewAgent_: boolean;
+}
+
+// TraceWriterSingletonConfig = TraceWriterConfig & { forceNewAgent_: boolean }
+// PluginLoaderConfig extends TraceAgentConfig
+type NormalizedConfig = TraceWriterSingletonConfig & PluginLoaderConfig & TopLevelConfig;
+
 /**
  * Normalizes the user-provided configuration object by adding default values
  * and overriding with env variables when they are provided.
- * @param {*} projectConfig The user-provided configuration object. It will not
+ * @param projectConfig The user-provided configuration object. It will not
  * be modified.
  * @return A normalized configuration object.
  */
-function initConfig(projectConfig) {
-
-  var envConfig = {
-    logLevel: process.env.GCLOUD_TRACE_LOGLEVEL,
+function initConfig(projectConfig: Config): NormalizedConfig {
+  const envConfig = {
+    logLevel: parseInt(process.env.GCLOUD_TRACE_LOGLEVEL || '') || undefined,
     projectId: process.env.GCLOUD_PROJECT,
     serviceContext: {
       service: process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME,
@@ -69,13 +84,13 @@ function initConfig(projectConfig) {
     }
   };
 
-  var envSetConfig = {};
+  let envSetConfig: Config = {};
   if (process.env.hasOwnProperty('GCLOUD_TRACE_CONFIG')) {
-    envSetConfig = require(path.resolve(process.env.GCLOUD_TRACE_CONFIG));
+    envSetConfig = require(path.resolve(process.env.GCLOUD_TRACE_CONFIG)) as Config;
   }
   // Configuration order of precedence:
   // Default < Environment Variable Set Configuration File < Project
-  var config = extend(true, {}, defaultConfig, envSetConfig,
+  const config = extend(true, { forceNewAgent_: false }, defaultConfig, envSetConfig,
     projectConfig, envConfig);
 
   // Enforce the upper limit for the label value size.
@@ -109,7 +124,7 @@ function stop() {
  * Start the Trace agent that will make your application available for
  * tracing with Stackdriver Trace.
  *
- * @param {object=} config - Trace configuration
+ * @param config - Trace configuration
  *
  * @resource [Introductory video]{@link
  * https://www.youtube.com/watch?v=NCFDqeo7AeY}
@@ -117,8 +132,8 @@ function stop() {
  * @example
  * trace.start();
  */
-function start(projectConfig) {
-  var config = initConfig(projectConfig);
+export function start(projectConfig?: Config): TraceAgent {
+  const config: NormalizedConfig = initConfig(projectConfig || {});
 
   if (traceAgent.isActive() && !config.forceNewAgent_) { // already started.
     throw new Error('Cannot call start on an already started agent.');
@@ -132,7 +147,7 @@ function start(projectConfig) {
     return traceAgent;
   }
 
-  var logger = common.logger({
+  const logger = common.logger({
     level: common.logger.LEVELS[config.logLevel],
     tag: '@google-cloud/trace-agent'
   });
@@ -144,7 +159,7 @@ function start(projectConfig) {
   }
   // CLS namespace for context propagation
   cls.createNamespace();
-  traceWriter.create(logger, config, function(err) {
+  traceWriter.create(logger, config, (err) => {
     if (err) {
       stop();
     }
@@ -167,18 +182,11 @@ function start(projectConfig) {
   return traceAgent;
 }
 
-function get() {
+export function get() {
   return traceAgent;
 }
 
-module.exports = {
-  start: start,
-  get: get
-};
-
 // If the module was --require'd from the command line, start the agent.
 if (module.parent && module.parent.id === 'internal/preload') {
-  module.exports.start();
+  start();
 }
-
-export default {};

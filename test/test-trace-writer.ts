@@ -20,7 +20,7 @@
 import './override-gcp-metadata';
 import { SpanData } from '../src/span-data';
 import { TraceLabels } from '../src/trace-labels';
-import { traceWriter, TraceWriter, TraceWriterOptions } from '../src/trace-writer';
+import { traceWriter, TraceWriter, TraceWriterConfig } from '../src/trace-writer';
 
 var assert = require('assert');
 var fakeCredentials = require('./fixtures/gcloud-credentials.json');
@@ -29,7 +29,7 @@ var nocks = require('./nocks'/*.js*/);
 var os = require('os');
 var Service = require('@google-cloud/common').Service;
 
-type createTraceWriterOptions = TraceWriterOptions & { forceNewAgent_: boolean };
+type createTraceWriterOptions = TraceWriterConfig & { forceNewAgent_: boolean };
 
 interface TestCase {
   description: string,

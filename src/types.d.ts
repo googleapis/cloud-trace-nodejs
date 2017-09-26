@@ -76,6 +76,10 @@ declare module '@google-cloud/common' {
   
   export function logger(options?: LoggerOptions | string): Logger;
 
+  export namespace logger {
+    export const LEVELS: string[];
+  }
+
   export class Service {
     constructor(config: Service.ServiceConfig, options: Service.AuthenticationConfig);
     request(options: request.Options,
@@ -104,6 +108,19 @@ declare module '@google-cloud/common' {
       };
     }
   }
+}
+
+// There is a @types/extend, but it's not expressive enough.
+declare module 'extend' {
+  function extend<T, U>(deep: boolean, target: T, source: U): T & U;
+  function extend<T, U, V>(deep: boolean, target: T, source1: U, source2: V): T & U & V;
+  function extend<T, U, V, W>(deep: boolean, target: T, source1: U, source2: V,
+    source3: W): T & U & V & W;
+  function extend<T, U, V, W, X>(deep: boolean, target: T, source1: U, source2: V,
+    source3: W, source4: X): T & U & V & W & X;
+  function extend<T>(deep: boolean, target: T, ...sources: any[]): any;
+  namespace extend {} // Prevents TS2497
+  export = extend;
 }
 
 declare module 'shimmer' {
