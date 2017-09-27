@@ -29,7 +29,7 @@ describe('TraceSpan', function() {
   it('has correct default values', function() {
     var time = new Date();
     tk.freeze(time);
-    var span = new TraceSpan('name', 1, 2);
+    var span = new TraceSpan('name', '1', '2');
     assert.equal(span.startTime, time.toISOString());
     assert.equal(span.spanId, 1);
     assert.equal(span.parentSpanId, 2);
@@ -38,13 +38,13 @@ describe('TraceSpan', function() {
   });
 
   it('adds labels', function() {
-    var span = new TraceSpan('name', 1, 0);
+    var span = new TraceSpan('name', '1', '0');
     span.setLabel('a', 'b');
     assert.equal(span.labels.a, 'b');
   });
 
   it('closes', function() {
-    var span = new TraceSpan('name', 1, 0);
+    var span = new TraceSpan('name', '1', '0');
     assert.equal(span.endTime, '');
     var time = new Date();
     tk.freeze(time);

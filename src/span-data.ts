@@ -60,11 +60,11 @@ export class SpanData {
   constructor(
     readonly trace: Trace,
     name: string,
-    parentSpanId: number | string,
+    parentSpanId: string,
     private readonly isRoot: boolean,
     skipFrames: number
   ) {
-    const spanId = uid++;
+    const spanId = '' + (uid++);
     const spanName = traceUtil.truncate(name, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
     this.span = new TraceSpan(spanName, spanId, parentSpanId);
     trace.spans.push(this.span);
