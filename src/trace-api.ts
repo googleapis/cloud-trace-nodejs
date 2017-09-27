@@ -66,6 +66,12 @@ export interface RootSpanOptions extends SpanOptions {
   traceContext?: string;
 }
 
+interface IncomingTraceContext {
+  traceId?: string,
+  spanId?: string,
+  options?: number
+};
+
 /**
  * Type guard that returns whether an object is a string or not.
  */
@@ -158,11 +164,7 @@ export class TraceAgent {
    * to have an enhanced level of reporting enabled.
    */
   enhancedDatabaseReportingEnabled(): boolean {
-    if (this.config_) {
-      return this.config_.enhancedDatabaseReporting;
-    } else {
-      return false;
-    }
+    return !!this.config_ && this.config_.enhancedDatabaseReporting;
   };
 
   /**
@@ -194,11 +196,7 @@ export class TraceAgent {
 
     return namespace.runAndReturn(() => {
       // Attempt to read incoming trace context.
-      let incomingTraceContext: {
-        traceId?: string,
-        spanId?: string,
-        options?: number
-      } = {};
+      let incomingTraceContext: IncomingTraceContext = {};
       if (isString(options.traceContext) && !this.config_.ignoreContextHeader) {
         const parsedContext = util.parseContextFromHeader(options.traceContext);
         if (parsedContext) {
@@ -243,7 +241,7 @@ export class TraceAgent {
       return null;
     }
 
-    const rootSpan: cls.RootContext = cls.getRootContext();
+    const rootSpan = cls.getRootContext();
     if (!isSpanData(rootSpan)) {
       return null;
     }
@@ -275,7 +273,7 @@ export class TraceAgent {
       return null;
     }
     
-    const rootSpan: cls.RootContext = cls.getRootContext();
+    const rootSpan = cls.getRootContext();
     if (!rootSpan) {
       // Context was lost.
       this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
