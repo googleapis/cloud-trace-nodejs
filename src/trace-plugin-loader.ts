@@ -81,7 +81,9 @@ export interface Intercept {
   intercept: <T>(module: T, agent: TraceAgent) => T;
 }
 
-export type Plugin = (Patch | Intercept)[];
+export type Instrumentation = Patch | Intercept;
+
+export type Plugin = Array<Instrumentation>;
 
 // type guards
 
