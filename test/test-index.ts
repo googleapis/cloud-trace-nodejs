@@ -17,31 +17,32 @@
 'use strict';
 
 import './override-gcp-metadata';
+import { TraceAgent } from '../src/trace-api';
 
 var assert = require('assert');
 var nock = require('nock');
 var nocks = require('./nocks'/*.js*/);
 var trace = require('..');
-var TraceAgent = require('../src/trace-api'/*.js*/);
 
-var disabledAgent = trace.get();
+var disabledAgent: TraceAgent = trace.get();
 
 describe('index.js', function() {
   it('should get a disabled agent with `Trace.get`', function() {
     assert.ok(!disabledAgent.isActive()); // ensure it's disabled first
-    [
-      'enhancedDatabaseReportingEnabled',
-      'runInRootSpan',
-      'createChildSpan',
-      'getResponseTraceContext',
-      'wrap',
-      'wrapEmitter'
-    ].forEach(function(fn) {
-      assert.strictEqual(typeof disabledAgent[fn], 'function');
-      assert.notStrictEqual(disabledAgent[fn], TraceAgent.prototype[fn]);
+    let ranInRootSpan = false;
+    disabledAgent.runInRootSpan({ name: '' }, (span) => {
+      assert.strictEqual(span, null);
+      ranInRootSpan = true;
     });
-    assert.ok(disabledAgent.constants);
-    assert.ok(disabledAgent.labels);
+    assert.ok(ranInRootSpan);
+    assert.strictEqual(disabledAgent.enhancedDatabaseReportingEnabled(), false);
+    assert.strictEqual(disabledAgent.getCurrentContextId(), null);
+    assert.strictEqual(disabledAgent.getWriterProjectId(), null);
+    assert.strictEqual(disabledAgent.createChildSpan({ name: '' }), null);
+    assert.strictEqual(disabledAgent.getResponseTraceContext('', false), '');
+    const fn = () => {};
+    assert.strictEqual(disabledAgent.wrap(fn), fn);
+    // TODO(kjin): Figure out how to test wrapEmitter
   });
 
   describe('in valid environment', function() {

@@ -26,6 +26,7 @@ declare global {
 
 import '../override-gcp-metadata';
 import * as cls from '../../src/cls';
+import { TraceAgent } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import * as TracingPolicy from '../../src/tracing-policy';
 
@@ -48,15 +49,15 @@ var path = require('path');
 var request = require('request');
 var shimmer = require('shimmer');
 
-var TraceAgent = require('../../src/trace-api'/*.js*/);
-var testTraceAgent;
+var testTraceAgent: TraceAgent;
 shimmer.wrap(trace, 'start', function(original) {
   return function() {
     var result = original.apply(this, arguments);
     testTraceAgent = new TraceAgent('test');
     testTraceAgent.enable(logger(), {
       enhancedDatabaseReporting: false,
-      ignoreTraceContext: false
+      ignoreContextHeader: false,
+      samplingRate: 0
     });
     testTraceAgent.policy_ = new TracingPolicy.TraceAllPolicy();
     return result;
@@ -154,9 +155,8 @@ function doRequest(method, done, tracePredicate, path) {
 
 function runInTransaction(fn) {
   testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
-    assert.ok(span);
     fn(function() {
-      span.endSpan();
+      notNull(span).endSpan();
     });
   });
 }
@@ -167,15 +167,15 @@ function runInTransaction(fn) {
 // right away and cancels callback from being called after the duration.
 function createChildSpan(cb, duration) {
   var span = testTraceAgent.createChildSpan({ name: 'inner' });
-  assert(span);
+  assert.ok(span);
   var t = setTimeout(function() {
-    span.endSpan();
+    notNull(span).endSpan();
     if (cb) {
       cb();
     }
   }, duration);
   return function() {
-    span.endSpan();
+    notNull(span).endSpan();
     clearTimeout(t);
   };
 }
