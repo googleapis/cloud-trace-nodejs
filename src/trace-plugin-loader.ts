@@ -62,21 +62,20 @@ export type Plugin = Array<Instrumentation<any>>;
 interface InternalPatch<T> extends Patch<T> {
   file: string;
   module?: T;
-  patch: (module: T, agent: TraceAgent) => void;
-  unpatch?: (module: T) => void;
 }
 
 interface InternalIntercept<T> extends Intercept<T> {
   file: string;
   module?: T;
-  intercept: (module: T, agent: TraceAgent) => T;
 }
+
+type InternalInstrumentation<T> = InternalPatch<T> | InternalIntercept<T>;
 
 interface InternalPlugin {
   file: string;
   patches: {
     [patchName: string]: {
-      [file: string]: InternalPatch<any> | InternalIntercept<any>;
+      [file: string]: InternalInstrumentation<any>;
     }
   };
   agent: TraceAgent;
@@ -88,26 +87,24 @@ interface PluginStore {
 
 // type guards
 
-function isPatch<T>(obj: Patch<T> | Intercept<T>): obj is Patch<T> {
+function isPatch<T>(obj: Instrumentation<T>): obj is Patch<T> {
   return !!(obj as Patch<T>).patch;
 }
 
-function isIntercept<T>(obj: Patch<T> | Intercept<T>): obj is Intercept<T> {
+function isIntercept<T>(obj: Instrumentation<T>): obj is Intercept<T> {
   return !!(obj as Intercept<T>).intercept;
 }
 
-function isInternalPatch<T>(
-    obj: InternalPatch<T> | InternalIntercept<T>): obj is InternalPatch<T> {
+function isInternalPatch<T>(obj: InternalInstrumentation<T>): obj is InternalPatch<T> {
   return !!(obj as InternalPatch<T>).patch;
 }
 
-function isInternalIntercept<T>(
-    obj: InternalPatch<T> | InternalIntercept<T>): obj is InternalIntercept<T> {
+function isInternalIntercept<T>(obj: InternalInstrumentation<T>): obj is InternalIntercept<T> {
   return !!(obj as InternalIntercept<T>).intercept;
 }
 
 let plugins: PluginStore = Object.create(null);
-let intercepts = Object.create(null);
+let intercepts: { [moduleName: string]: { interceptedValue: any } } = Object.create(null);
 let activated = false;
 
 let logger_: Logger;
@@ -134,17 +131,17 @@ function checkLoadedModules(): void {
   }
 }
 
-function checkPatch(patch: any) {
-  if (!patch.patch && !patch.intercept) {
+function checkPatch<T>(patch: Instrumentation<T>) {
+  if (!(patch as Patch<T>).patch && !(patch as Intercept<T>).intercept) {
     throw new Error('Plugin for ' + patch.file + ' doesn\'t patch ' +
       'anything.');
-  } else if (patch.patch && patch.intercept) {
+  } else if ((patch as Patch<T>).patch && (patch as Intercept<T>).intercept) {
     throw new Error('Plugin for ' + patch.file + ' has ' +
       'both intercept and patch functions.');
-  } else if (patch.unpatch && patch.intercept) {
+  } else if ((patch as Patch<T>).unpatch && (patch as Intercept<T>).intercept) {
     logger_.warn('Plugin for ' + patch.file + ': unpatch is not compatible ' +
       'with intercept.');
-  } else if (patch.patch && !patch.unpatch) {
+  } else if ((patch as Patch<T>).patch && !(patch as Patch<T>).unpatch) {
     logger_.warn('Plugin for ' + patch.file + ': patch method given without ' +
       'accompanying unpatch.');
   }
@@ -164,7 +161,7 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
     if (!pluginConfig[moduleName]) {
       continue;
     }
-    const agent: TraceAgent = new TraceAgent(moduleName);
+    const agent = new TraceAgent(moduleName);
     agent.enable(logger_, config);
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
