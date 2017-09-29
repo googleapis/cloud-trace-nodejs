@@ -41,14 +41,32 @@ export interface PluginLoaderConfig extends TraceAgentConfig {
     [pluginName: string]: string;
   };
 }
-interface InternalPatch<T> {
+
+export interface Patch<T> {
+  file?: string;
+  versions?: string;
+  patch: (module: T, agent: TraceAgent) => void;
+  unpatch?: (module: T) => void;
+}
+
+export interface Intercept<T> {
+  file?: string;
+  versions?: string;
+  intercept: (module: T, agent: TraceAgent) => T;
+}
+
+export type Instrumentation<T> = Patch<T> | Intercept<T>;
+
+export type Plugin = Array<Instrumentation<any>>;
+
+interface InternalPatch<T> extends Patch<T> {
   file: string;
   module?: T;
   patch: (module: T, agent: TraceAgent) => void;
   unpatch?: (module: T) => void;
 }
 
-interface InternalIntercept<T> {
+interface InternalIntercept<T> extends Intercept<T> {
   file: string;
   module?: T;
   intercept: (module: T, agent: TraceAgent) => T;
@@ -68,31 +86,14 @@ interface PluginStore {
   [pluginName: string]: InternalPlugin;
 }
 
-export interface Patch {
-  file?: string;
-  versions?: string;
-  patch: (module: any, agent: TraceAgent) => void;
-  unpatch?: (module: any) => void;
-}
-
-export interface Intercept {
-  file?: string;
-  versions?: string;
-  intercept: <T>(module: T, agent: TraceAgent) => T;
-}
-
-export type Instrumentation = Patch | Intercept;
-
-export type Plugin = Array<Instrumentation>;
-
 // type guards
 
-function isPatch(obj: Patch | Intercept): obj is Patch {
-  return !!(obj as Patch).patch;
+function isPatch<T>(obj: Patch<T> | Intercept<T>): obj is Patch<T> {
+  return !!(obj as Patch<T>).patch;
 }
 
-function isIntercept(obj: Patch | Intercept): obj is Intercept {
-  return !!(obj as Intercept).intercept;
+function isIntercept<T>(obj: Patch<T> | Intercept<T>): obj is Intercept<T> {
+  return !!(obj as Intercept<T>).intercept;
 }
 
 function isInternalPatch<T>(
