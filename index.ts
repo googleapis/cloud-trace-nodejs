@@ -29,13 +29,13 @@ import * as cls from './src/cls';
 import { Constants } from './src/constants';
 import { defaultConfig } from './config';
 import { TraceAgent } from './src/trace-api';
+import * as pluginLoader from './src/trace-plugin-loader';
 import { traceWriter } from './src/trace-writer';
 import * as traceUtil from './src/util';
 
 var path = require('path');
 var common = require('@google-cloud/common');
 var extend = require('extend');
-var pluginLoader = require('./src/trace-plugin-loader'/*.js*/);
 
 var modulesLoadedBeforeTrace: string[] = [];
 
