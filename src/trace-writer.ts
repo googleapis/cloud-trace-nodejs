@@ -33,7 +33,7 @@ headers[Constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 /* A list of scopes needed to operate with the trace API */
 const SCOPES: string[] = ['https://www.googleapis.com/auth/trace.append'];
 
-export interface TraceWriterConfig extends common.Service.AuthenticationConfig {
+export interface TraceWriterConfig extends common.ServiceAuthenticationConfig {
   projectId?: string;
   onUncaughtException: string;
   bufferSize: number;

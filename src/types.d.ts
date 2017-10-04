@@ -73,15 +73,14 @@ declare module '@google-cloud/common' {
     levels?: string[];
     tag?: string;
   }
-  
-  export function logger(options?: LoggerOptions | string): Logger;
 
-  export namespace logger {
-    export const LEVELS: string[];
-  }
+  export const logger: {
+    (options?: LoggerOptions | string): Logger;
+    LEVELS: string[];
+  };
 
   export class Service {
-    constructor(config: Service.ServiceConfig, options: Service.AuthenticationConfig);
+    constructor(config: ServiceConfig, options: ServiceAuthenticationConfig);
     request(options: request.Options,
       cb: (
         err: Error | null,
@@ -90,27 +89,25 @@ declare module '@google-cloud/common' {
       ) => void);
   }
 
-  export namespace Service {
-    export interface ServiceConfig {
-      packageJson?: any;
-      projectIdRequired?: false;
-      baseUrl?: string;
-      scopes?: string[];
-    }
-    
-    export interface AuthenticationConfig {
-      projectId?: string;
-      keyFilename?: string;
-      email?: string;
-      credentials?: {
-        client_email?: string;
-        private_key?: string;
-      };
-    }
+  export interface ServiceConfig {
+    packageJson?: any;
+    projectIdRequired?: false;
+    baseUrl?: string;
+    scopes?: string[];
+  }
+  
+  export interface ServiceAuthenticationConfig {
+    projectId?: string;
+    keyFilename?: string;
+    email?: string;
+    credentials?: {
+      client_email?: string;
+      private_key?: string;
+    };
   }
 }
 
-// There is a @types/extend, but it's not expressive enough.
+// Remove when https://github.com/DefinitelyTyped/DefinitelyTyped/pull/20266 lands
 declare module 'extend' {
   function extend<T, U>(deep: boolean, target: T, source: U): T & U;
   function extend<T, U, V>(deep: boolean, target: T, source1: U, source2: V): T & U & V;
@@ -130,26 +127,23 @@ declare module 'shimmer' {
     }
   }
 
-  namespace shimmer {
-    export function wrap<T extends Function>(
+  const shimmer: {
+    (options: { logger?: (msg: string) => void }): void;
+    wrap: <T extends Function>(
       nodule: Object,
       name: string,
       wrapper: (original: T) => T
-    ): void;
-  
-    export function massWrap<T extends Function>(
+    ) => void;
+    massWrap: <T extends Function>(
       nodules: Object[],
       names: string[],
       wrapper: (original: T) => T
-    ): void;
-    
-    export function unwrap<T extends Function>(
+    ) => void;
+    unwrap: <T extends Function>(
       nodule: Object,
       name: string
-    ): void;
+    ) => void;
   }
-
-  function shimmer(options: { logger?: (msg: string) => void }): void;
 
   export = shimmer;
 }
