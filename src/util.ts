@@ -17,18 +17,8 @@
 'use strict';
 
 import * as fs from 'fs';
+import Module = require('module');
 import * as path from 'path';
-
-// TODO(kjin)
-// Module augmentation is implemented in this PR:
-// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/19612
-// Do this correctly when it's landed and released.
-import _Module = require('module');
-const Module: {
-  _resolveFilename(request: string, parent?: NodeModule): string;
-  _resolveLookupPaths(request: string, parent?: NodeModule): string;
-  _load(request: string, parent?: NodeModule, isMain?: boolean): any;
-} = _Module as any;
 
 /**
  * Truncates the provided `string` to be at most `length` bytes
