@@ -29,19 +29,14 @@ import { Constants } from './src/constants';
 import { Config, defaultConfig } from './config';
 import * as extend from 'extend';
 import * as path from 'path';
+import * as PluginAPI from './src/plugin-interfaces';
 import { PluginLoaderConfig } from './src/trace-plugin-loader';
 import * as pluginLoader from './src/trace-plugin-loader';
 import { TraceAgent } from './src/trace-api';
 import { traceWriter, TraceWriterSingletonConfig } from './src/trace-writer';
 import * as traceUtil from './src/util';
 
-export { Config };
-export {
-  Plugin,
-  Patch as PluginPatch,
-  Intercept as PluginIntercept,
-  Instrumentation as PluginInstrumentation
-} from './src/trace-plugin-loader';
+export { Config, PluginAPI };
 
 const modulesLoadedBeforeTrace: string[] = [];
 
