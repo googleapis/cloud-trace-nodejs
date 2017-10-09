@@ -20,7 +20,7 @@ import { Logger } from '@google-cloud/common';
 import * as cls from './cls';
 import { Constants } from './constants';
 import * as is from 'is';
-import { Func, SpanOptions, RootSpanOptions, TraceAgent as ITraceAgent } from './plugin-interfaces';
+import { Func, SpanOptions, RootSpanOptions, TraceAgent as TraceAgentInterface } from './plugin-interfaces';
 import * as semver from 'semver';
 import { SpanData } from './span-data';
 import { Trace } from './trace';
@@ -71,7 +71,7 @@ const ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
  * TraceAgent exposes a number of methods to create trace spans and propagate
  * trace context across asynchronous boundaries.
  */
-export class TraceAgent implements ITraceAgent {
+export class TraceAgent implements TraceAgentInterface {
   public readonly constants = Constants;
   public readonly labels = TraceLabels;
 
