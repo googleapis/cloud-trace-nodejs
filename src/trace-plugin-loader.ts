@@ -31,7 +31,7 @@ import * as semver from 'semver';
 import * as shimmer from 'shimmer';
 import * as util from './util';
 import { TraceAgent, TraceAgentConfig } from './trace-api';
-import { Patch, Intercept, Instrumentation, Plugin } from './plugin-interfaces';
+import { Patch, Intercept, Instrumentation, Plugin } from './plugin-types';
 
 /**
  * An interface representing config options read by the plugin loader, which includes

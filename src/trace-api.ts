@@ -20,7 +20,7 @@ import { Logger } from '@google-cloud/common';
 import * as cls from './cls';
 import { Constants } from './constants';
 import * as is from 'is';
-import { Func, SpanOptions, RootSpanOptions, TraceAgent as TraceAgentInterface } from './plugin-interfaces';
+import { Func, SpanOptions, RootSpanOptions, TraceAgent as TraceAgentInterface } from './plugin-types';
 import * as semver from 'semver';
 import { SpanData } from './span-data';
 import { Trace } from './trace';

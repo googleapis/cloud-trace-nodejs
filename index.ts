@@ -29,14 +29,14 @@ import { Constants } from './src/constants';
 import { Config, defaultConfig } from './config';
 import * as extend from 'extend';
 import * as path from 'path';
-import * as PluginAPI from './src/plugin-interfaces';
+import * as PluginTypes from './src/plugin-types';
 import { PluginLoaderConfig } from './src/trace-plugin-loader';
 import * as pluginLoader from './src/trace-plugin-loader';
 import { TraceAgent } from './src/trace-api';
 import { traceWriter, TraceWriterSingletonConfig } from './src/trace-writer';
 import * as traceUtil from './src/util';
 
-export { Config, PluginAPI };
+export { Config, PluginTypes };
 
 const modulesLoadedBeforeTrace: string[] = [];
 
