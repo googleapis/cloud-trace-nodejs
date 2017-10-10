@@ -18,7 +18,7 @@
 
 var shimmer = require('shimmer');
 
-var SUPPORTED_VERSIONS = '<=4.x';
+var SUPPORTED_VERSIONS = '<=6.x';
 
 function unpatchRestify(restify) {
   shimmer.unwrap(restify, 'createServer');

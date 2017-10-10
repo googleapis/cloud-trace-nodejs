@@ -23,7 +23,9 @@ var assert = require('assert');
 var common = require('./common'/*.js*/);
 var semver = require('semver');
 var versions: any = {
-  restify4: './fixtures/restify4'
+  restify4: './fixtures/restify4',
+  restify5: './fixtures/restify5',
+  restify6: './fixtures/restify6'
 };
 if (semver.satisfies(process.version, '<7')) {
   versions.restify3 = './fixtures/restify3';

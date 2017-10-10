@@ -1,0 +1,8 @@
+{
+  "name": "restify5",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "restify": "^5.2.0"
+  }
+}
