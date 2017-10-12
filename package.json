@@ -66,7 +66,7 @@
   },
   "dependencies": {
     "@google-cloud/common": "^0.13.2",
-    "continuation-local-storage": "^3.1.4",
+    "continuation-local-storage": "^3.2.0",
     "extend": "^3.0.0",
     "gcp-metadata": "^0.2.0",
     "is": "^3.2.0",
