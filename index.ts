@@ -84,7 +84,10 @@ function initConfig(projectConfig: Config): NormalizedConfig {
     envSetConfig = require(path.resolve(process.env.GCLOUD_TRACE_CONFIG)) as Config;
   }
   // Configuration order of precedence:
-  // Default < Environment Variable Set Configuration File < Project
+  // 1. Environment Variables
+  // 2. Project Config
+  // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
+  // 4. Default Config (as specified in './config')
   const config = extend(true, { forceNewAgent_: false }, defaultConfig, envSetConfig,
     projectConfig, envConfig);
 
