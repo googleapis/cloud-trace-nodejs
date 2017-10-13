@@ -20,6 +20,7 @@ import { Logger } from '@google-cloud/common';
 import * as cls from './cls';
 import { Constants } from './constants';
 import * as is from 'is';
+import { Func, SpanOptions, RootSpanOptions, TraceAgent as TraceAgentInterface } from './plugin-types';
 import * as semver from 'semver';
 import { SpanData } from './span-data';
 import { Trace } from './trace';
@@ -36,34 +37,6 @@ export interface TraceAgentConfig extends TracingPolicy.TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
   projectId?: string;
-}
-
-/**
- * An interface that describes the available options for creating a span in
- * general.
- */
-export interface SpanOptions {
-  /* The name to apply to the span. */
-  name: string;
-  /**
-   * The number of stack frames to skip when collecting call stack information
-   * for the span, starting from the top; this should be set to avoid including
-   * frames in the plugin. Defaults to 0.
-   */
-  skipFrames?: number;
-}
-
-/**
- * An interface that describes the available options for creating root spans.
- */
-export interface RootSpanOptions extends SpanOptions {
-  /* A URL associated with the root span, if applicable. */
-  url?: string;
-  /**
-   * The serialized form of an object that contains information about an existing
-   * trace context.
-   */
-  traceContext?: string;
 }
 
 interface IncomingTraceContext {
@@ -98,7 +71,7 @@ const ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
  * TraceAgent exposes a number of methods to create trace spans and propagate
  * trace context across asynchronous boundaries.
  */
-export class TraceAgent {
+export class TraceAgent implements TraceAgentInterface {
   public readonly constants = Constants;
   public readonly labels = TraceLabels;
 
@@ -157,29 +130,10 @@ export class TraceAgent {
     return !!this.namespace_;
   };
 
-  /**
-   * Gets the value of enhancedDatabaseReporting in the trace agent's
-   * configuration object.
-   * @returns A boolean value indicating whether the trace agent was configured
-   * to have an enhanced level of reporting enabled.
-   */
   enhancedDatabaseReportingEnabled(): boolean {
     return !!this.config_ && this.config_.enhancedDatabaseReporting;
   };
 
-  /**
-   * Runs the given function in a root span corresponding to an incoming request,
-   * possibly passing it an object that exposes an interface for adding labels
-   * and closing the span.
-   * @param options An object that specifies options for how the root
-   * span is created and propogated.
-   * @param fn A function that will be called exactly
-   * once. If the incoming request should be traced, a root span will be created,
-   * and this function will be called with a RootSpan object exposing functions
-   * operating on the root span; otherwise, it will be called with null as an
-   * argument.
-   * @returns The return value of calling fn.
-   */
   runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData | null) => T): T {
     if (!this.isActive()) {
       return fn(null);
@@ -228,14 +182,6 @@ export class TraceAgent {
     });
   };
 
-  /**
-   * Returns a unique identifier for the currently active context. This can be
-   * used to uniquely identify the current root span. If there is no current,
-   * context, or if we have lost context, this will return null. The structure and
-   * the length of the returned string should be treated opaquely - the only
-   * guarantee is that the value would unique for every root span.
-   * @returns an id for the current context, or null if there is none
-   */
   getCurrentContextId(): string | null {
     if (!this.isActive()) {
       return null;
@@ -248,11 +194,6 @@ export class TraceAgent {
     return rootSpan.trace.traceId;
   };
 
-  /**
-   * Returns the projectId that was either configured or auto-discovered by the
-   * TraceWriter. Note that the auto-discovery is done asynchronously, so this
-   * may return falsey until the projectId auto-discovery completes.
-   */
   getWriterProjectId(): string | null {
     if (this.config_) {
       return this.config_.projectId || null;
@@ -261,14 +202,7 @@ export class TraceAgent {
     }
   };
 
-  /**
-   * Creates and returns a new ChildSpan object nested within the root span. If
-   * there is no current RootSpan object, this function returns null.
-   * @param options An object that specifies options for how the child
-   * span is created and propagated.
-   * @returns A new SpanData object, or null if there is no active root span.
-   */
-  createChildSpan(options: SpanOptions) {
+  createChildSpan(options: SpanOptions): SpanData | null {
     if (!this.isActive()) {
       return null;
     }
@@ -300,22 +234,8 @@ export class TraceAgent {
     }
   };
 
-  /**
-   * Generates a stringified trace context that should be set as the trace context
-   * header in a response to an incoming web request. This value is based on
-   * the trace context header value in the corresponding incoming request, as well
-   * as the result from the local trace policy on whether this request will be
-   * traced or not.
-   * @param incomingTraceContext The trace context that was attached to
-   * the incoming web request, or null if the incoming request didn't have one.
-   * @param isTraced Whether the incoming was traced. This is determined
-   * by the local tracing policy.
-   * @returns If the response should contain the trace context within its
-   * header, the string to be set as this header's value. Otherwise, an empty
-   * string.
-   */
-  getResponseTraceContext(incomingTraceContext: string, isTraced: boolean): string {
-    if (!this.isActive()) {
+  getResponseTraceContext(incomingTraceContext: string | null, isTraced: boolean): string {
+    if (!this.isActive() || !incomingTraceContext) {
       return '';
     }
 
@@ -327,13 +247,7 @@ export class TraceAgent {
     return util.generateTraceContext(traceContext);
   };
 
-  /**
-   * Binds the trace context to the given function.
-   * This is necessary in order to create child spans correctly in functions
-   * that are called asynchronously (for example, in a network response handler).
-   * @param fn A function to which to bind the trace context.
-   */
-  wrap<T>(fn: cls.Func<T>): cls.Func<T> {
+  wrap<T>(fn: Func<T>): Func<T> {
     if (!this.isActive()) {
       return fn;
     }
@@ -343,12 +257,6 @@ export class TraceAgent {
     return namespace.bind<T>(fn);
   };
 
-  /**
-   * Binds the trace context to the given event emitter.
-   * This is necessary in order to create child spans correctly in event handlers.
-   * @param emitter An event emitter whose handlers should have
-   * the trace context binded to them.
-   */
   wrapEmitter(emitter: NodeJS.EventEmitter): void {
     if (!this.isActive()) {
       return;

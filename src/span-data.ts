@@ -17,6 +17,7 @@
 'use strict';
 
 import { Constants } from './constants';
+import { SpanData as SpanDataInterface } from './plugin-types';
 import { Trace } from './trace';
 import { TraceLabels } from './trace-labels';
 import { TraceSpan } from './trace-span';
@@ -45,7 +46,7 @@ interface StackFrame {
 // Auto-incrementing integer
 let uid = 1;
 
-export class SpanData {
+export class SpanData implements SpanDataInterface {
   public readonly span: TraceSpan;
 
   /**

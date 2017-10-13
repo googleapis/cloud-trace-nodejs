@@ -33,8 +33,8 @@ headers[Constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 /* A list of scopes needed to operate with the trace API */
 const SCOPES: string[] = ['https://www.googleapis.com/auth/trace.append'];
 
-export interface TraceWriterOptions extends common.Service.AuthenticationConfig {
-  projectId: string;
+export interface TraceWriterConfig extends common.ServiceAuthenticationConfig {
+  projectId?: string;
   onUncaughtException: string;
   bufferSize: number;
   flushDelaySeconds: number;
@@ -57,7 +57,7 @@ export interface LabelObject {
 export class TraceWriter extends common.Service {
   // TODO(kjin): Make public members private (they're public for testing)
   private logger_: common.Logger;
-  private config_: TraceWriterOptions;
+  private config_: TraceWriterConfig;
   /** Stringified traces to be published */
   public buffer_: string[];
   /** Default labels to be attached to written spans */
@@ -74,7 +74,7 @@ export class TraceWriter extends common.Service {
    *   authorization credentials.
    * @constructor
    */
-  constructor(logger: common.Logger, config: TraceWriterOptions) {
+  constructor(logger: common.Logger, config: TraceWriterConfig) {
     super({
       packageJson: pjson,
       projectIdRequired: false,
@@ -169,7 +169,7 @@ export class TraceWriter extends common.Service {
     });
   };
   
-  config(): TraceWriterOptions {
+  config(): TraceWriterConfig {
     return this.config_;
   };
   
@@ -339,15 +339,16 @@ export class TraceWriter extends common.Service {
   };
 }
 
+export type TraceWriterSingletonConfig = TraceWriterConfig & {
+  forceNewAgent_: boolean;
+};
+
 // Singleton
 let singleton: TraceWriter;
 
 export const traceWriter = {
-  create(
-    logger: common.Logger,
-    config: TraceWriterOptions & { forceNewAgent_: boolean },
-    cb?: (err?: Error) => void
-  ): TraceWriter {
+  create(logger: common.Logger, config: TraceWriterSingletonConfig, cb?: (err?: Error) => void)
+      : TraceWriter {
     if (!cb) {
       cb = () => {};
     }

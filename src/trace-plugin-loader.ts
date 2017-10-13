@@ -22,6 +22,7 @@ import * as semver from 'semver';
 import * as shimmer from 'shimmer';
 import * as util from './util';
 import { TraceAgent, TraceAgentConfig } from './trace-api';
+import { Patch, Intercept, Instrumentation, Plugin } from './plugin-types';
 
 /**
  * An interface representing config options read by the plugin loader, which includes
@@ -32,23 +33,6 @@ export interface PluginLoaderConfig extends TraceAgentConfig {
     [pluginName: string]: string;
   };
 }
-
-export interface Patch<T> {
-  file?: string;
-  versions?: string;
-  patch: (module: T, agent: TraceAgent) => void;
-  unpatch?: (module: T) => void;
-}
-
-export interface Intercept<T> {
-  file?: string;
-  versions?: string;
-  intercept: (module: T, agent: TraceAgent) => T;
-}
-
-export type Instrumentation<T> = Patch<T> | Intercept<T>;
-
-export type Plugin = Array<Instrumentation<any>>;
 
 interface InternalPatch<T> extends Patch<T> {
   file: string;
