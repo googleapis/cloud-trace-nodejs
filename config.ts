@@ -75,18 +75,18 @@ export interface Config {
 
   // Specifies the behavior of the trace agent in the case of an uncaught exception.
   // Possible values are:
-  //   `ignore`: Take no action. The process may terminate before all the
-  //            traces currently buffered have been flushed to the network.
-  //   `flush`: Handle the uncaught exception and attempt to publish the traces to
-  //            the API. Note that if you have other uncaught exception handlers in your
+  //   `ignore` Take no action. The process may terminate before all the traces
+  //            currently buffered have been flushed to the network.
+  //   `flush`: Handle the uncaught exception and attempt to publish the traces
+  //            to the API. Note that if you have other uncaught exception handlers in your
   //            application, they may choose to terminate the process before the
   //            buffer has been flushed to the network. Also, if you have no
   //            other terminating uncaught exception handlers in your application, the
   //            error will get swallowed and the application will keep on running. You
   //            should use this option if you have other uncaught exception handlers
   //            that you want to be responsible for terminating the application.
-  //   `flushAndExit`: Handle the uncaught exception, make a best effort attempt to
-  //            publish the traces to the API, and then terminate the application after
+  //   `flushAndExit`: Handle the uncaught exception, make a best effort attempt
+  //            to publish the traces to the API, and then terminate the application after
   //            a delay. Note that the presence of other uncaught exception handlers may
   //            choose to terminate the application before the buffer has been flushed to
   //            the network.

@@ -17,6 +17,7 @@
 'use strict';
 
 // TODO(kjin): Once tests are fully converted, undercase the name of this variable.
+/** Constant values. */
 // tslint:disable-next-line:variable-name
 export const Constants = {
   /** Header that carries trace context across Google infrastructure. */
@@ -28,8 +29,11 @@ export const Constants = {
   /** Bitmask to determine whether trace is enabled in trace options. */
   TRACE_OPTIONS_TRACE_ENABLED: 1 << 0,
 
-  /** See: cloud.google.com/trace/api/reference/rest/v1/projects.traces for limits. */
-  /** Maximum size of a span name in bytes. */
+  /**
+   * Maximum size of a span name in bytes.
+   * See: cloud.google.com/trace/api/reference/rest/v1/projects.traces for
+   * limits.
+   */
   TRACE_SERVICE_SPAN_NAME_LIMIT: 127,
 
   /** Maximum size of a label key in bytes. */
