@@ -16,9 +16,11 @@
 
 'use strict';
 
+// TODO(kjin): Once tests are fully converted, undercase the name of this variable.
 /**
  * Well-known trace span label values.
  */
+// tslint:disable-next-line:variable-name
 export const TraceLabels = {
   /**
    * The well-known label for http status code.

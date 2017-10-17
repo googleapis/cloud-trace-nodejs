@@ -70,7 +70,7 @@ type NormalizedConfig = TraceWriterSingletonConfig & PluginLoaderConfig & TopLev
  */
 function initConfig(projectConfig: Config): NormalizedConfig {
   const envConfig = {
-    logLevel: parseInt(process.env.GCLOUD_TRACE_LOGLEVEL || '') || undefined,
+    logLevel: Number(process.env.GCLOUD_TRACE_LOGLEVEL) || undefined,
     projectId: process.env.GCLOUD_PROJECT,
     serviceContext: {
       service: process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME,

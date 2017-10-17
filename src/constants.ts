@@ -16,6 +16,8 @@
 
 'use strict';
 
+// TODO(kjin): Once tests are fully converted, undercase the name of this variable.
+// tslint:disable-next-line:variable-name
 export const Constants = {
   /** Header that carries trace context across Google infrastructure. */
   TRACE_CONTEXT_HEADER_NAME: 'x-cloud-trace-context',

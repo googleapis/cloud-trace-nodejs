@@ -75,19 +75,20 @@ export class TraceAgent implements TraceAgentInterface {
   public readonly constants = Constants;
   public readonly labels = TraceLabels;
 
-  private pluginName_: string;
-  private logger_: Logger;
-  private config_: TraceAgentConfig;
+  private pluginName: string;
+  private logger: Logger;
+  private config: TraceAgentConfig;
   // TODO(kjin): Make this private.
+  // tslint:disable-next-line:variable-name
   public policy_: TracingPolicy.TracePolicy;
-  private namespace_: cls.Namespace | null;
+  private namespace: cls.Namespace | null;
 
   /**
    * Constructs a new TraceAgent instance.
    * @param name A string identifying this TraceAgent instance in logs.
    */
   constructor(name: string) {
-    this.pluginName_ = name;
+    this.pluginName = name;
     this.disable(); // disable immediately
   }
 
@@ -100,10 +101,10 @@ export class TraceAgent implements TraceAgentInterface {
    * @private
    */
   enable(logger: Logger, config: TraceAgentConfig) {
-    this.logger_ = logger;
-    this.config_ = config;
+    this.logger = logger;
+    this.config = config;
     this.policy_ = TracingPolicy.createTracePolicy(config);
-    this.namespace_ = cls.getNamespace();
+    this.namespace = cls.getNamespace();
   }
 
   /**
@@ -117,7 +118,7 @@ export class TraceAgent implements TraceAgentInterface {
     // they are already instantiated or the plugin doesn't unpatch them) to
     // short-circuit out of trace generation logic.
     this.policy_ = new TracingPolicy.TraceNonePolicy();
-    this.namespace_ = null;
+    this.namespace = null;
   }
 
   /**
@@ -127,11 +128,11 @@ export class TraceAgent implements TraceAgentInterface {
    * @private
    */
   isActive(): boolean {
-    return !!this.namespace_;
+    return !!this.namespace;
   }
 
   enhancedDatabaseReportingEnabled(): boolean {
-    return !!this.config_ && this.config_.enhancedDatabaseReporting;
+    return !!this.config && this.config.enhancedDatabaseReporting;
   }
 
   runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData | null) => T): T {
@@ -140,18 +141,18 @@ export class TraceAgent implements TraceAgentInterface {
     }
 
     // This is safe because isActive checks the value of this.namespace_.
-    const namespace = this.namespace_ as cls.Namespace;
+    const namespace = this.namespace as cls.Namespace;
     // TODO validate options
     // Don't create a root span if we are already in a root span
     if (cls.getRootContext()) {
-      this.logger_.warn(this.pluginName_ + ': Cannot create nested root spans.');
+      this.logger.warn(this.pluginName + ': Cannot create nested root spans.');
       return fn(null);
     }
 
     return namespace.runAndReturn(() => {
       // Attempt to read incoming trace context.
       let incomingTraceContext: IncomingTraceContext = {};
-      if (isString(options.traceContext) && !this.config_.ignoreContextHeader) {
+      if (isString(options.traceContext) && !this.config.ignoreContextHeader) {
         const parsedContext = util.parseContextFromHeader(options.traceContext);
         if (parsedContext) {
           incomingTraceContext = parsedContext;
@@ -195,8 +196,8 @@ export class TraceAgent implements TraceAgentInterface {
   }
 
   getWriterProjectId(): string | null {
-    if (this.config_) {
-      return this.config_.projectId || null;
+    if (this.config) {
+      return this.config.projectId || null;
     } else {
       return null;
     }
@@ -210,7 +211,7 @@ export class TraceAgent implements TraceAgentInterface {
     const rootSpan = cls.getRootContext();
     if (!rootSpan) {
       // Context was lost.
-      this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
+      this.logger.warn(this.pluginName + ': Attempted to create child span ' +
         'without root');
       return null;
     } else if (!isSpanData(rootSpan)) {
@@ -219,7 +220,7 @@ export class TraceAgent implements TraceAgentInterface {
       return null;
     } else {
       if (rootSpan.span.isClosed()) {
-        this.logger_.warn(this.pluginName_ + ': creating child for an already closed span',
+        this.logger.warn(this.pluginName + ': creating child for an already closed span',
           options.name, rootSpan.span.name);
       }
       // Create a new child span and return it.
@@ -253,7 +254,7 @@ export class TraceAgent implements TraceAgentInterface {
     }
 
     // This is safe because isActive checks the value of this.namespace_.
-    const namespace = this.namespace_ as cls.Namespace;
+    const namespace = this.namespace as cls.Namespace;
     return namespace.bind<T>(fn);
   }
 
@@ -263,7 +264,7 @@ export class TraceAgent implements TraceAgentInterface {
     }
 
     // This is safe because isActive checks the value of this.namespace_.
-    const namespace = this.namespace_ as cls.Namespace;
+    const namespace = this.namespace as cls.Namespace;
     namespace.bindEmitter(emitter);
   }
 }

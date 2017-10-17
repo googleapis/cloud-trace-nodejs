@@ -52,7 +52,7 @@ export class SpanData implements SpanDataInterface {
   /**
    * Creates a trace context object.
    * @param trace The object holding the spans comprising this trace.
-   * @param name The name of the span.
+   * @param spanName The name of the span.
    * @param parentSpanId The id of the parent span, 0 for root spans.
    * @param isRoot Whether this is a root span.
    * @param skipFrames the number of frames to remove from the top of the stack.
@@ -60,16 +60,16 @@ export class SpanData implements SpanDataInterface {
    */
   constructor(
     readonly trace: Trace,
-    name: string,
+    spanName: string,
     parentSpanId: string,
     private readonly isRoot: boolean,
     skipFrames: number
   ) {
     const spanId = '' + (uid++);
-    const spanName = traceUtil.truncate(name, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
+    spanName = traceUtil.truncate(spanName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
     this.span = new TraceSpan(spanName, spanId, parentSpanId);
     trace.spans.push(this.span);
-    if (traceWriter.get().config().stackTraceLimit > 0) {
+    if (traceWriter.get().getConfig().stackTraceLimit > 0) {
       // This is a mechanism to get the structured stack trace out of V8.
       // prepareStackTrace is called the first time the Error#stack property is
       // accessed. The original behavior is to format the stack as an exception
@@ -78,7 +78,7 @@ export class SpanData implements SpanDataInterface {
       // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
       //
       const origLimit = Error.stackTraceLimit;
-      Error.stackTraceLimit = traceWriter.get().config().stackTraceLimit + skipFrames;
+      Error.stackTraceLimit = traceWriter.get().getConfig().stackTraceLimit + skipFrames;
 
       const origPrepare = Error.prepareStackTrace;
       Error.prepareStackTrace = function(error: Error, structured: CallSite[]): CallSite[] {
@@ -129,8 +129,8 @@ export class SpanData implements SpanDataInterface {
 
   addLabel(key: string, value: any) {
     const k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
-    const string_val = typeof value === 'string' ? value : util.inspect(value);
-    const v = traceUtil.truncate(string_val, traceWriter.get().config().maximumLabelValueSize);
+    const stringValue = typeof value === 'string' ? value : util.inspect(value);
+    const v = traceUtil.truncate(stringValue, traceWriter.get().getConfig().maximumLabelValueSize);
     this.span.setLabel(k, v);
   }
 

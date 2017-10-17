@@ -107,8 +107,8 @@ export function generateTraceContext(traceContext: TraceContext): string {
  *
  * @param path The full import path.
  */
-export function packageNameFromPath(path: string) {
-  const matches = moduleRegex.exec(path);
+export function packageNameFromPath(importPath: string) {
+  const matches = moduleRegex.exec(importPath);
   return matches && matches.length > 1 ? matches[1] : null;
 }
 

@@ -81,15 +81,16 @@ function isInternalIntercept<T>(obj: InternalInstrumentation<T>): obj is Interna
 let plugins: PluginStore = Object.create(null);
 let intercepts: { [moduleName: string]: { interceptedValue: any } } = Object.create(null);
 let activated = false;
-
+// TODO(kjin): Make plugin loader a singleton, so we can avoid shadowing.
+// tslint:disable-next-line:variable-name
 let logger_: Logger;
 
 function checkLoadedModules(): void {
-  for (const moduleName in plugins) {
+  for (const moduleName of Object.keys(plugins)) {
     // \\ is benign on unix and escapes \\ on windows
     const regex = new RegExp('node_modules\\' + path.sep + moduleName +
       '\\' + path.sep);
-    for (const file in require.cache) {
+    for (const file of Object.keys(require.cache)) {
       if (file.match(regex)) {
         logger_.error(moduleName + ' tracing might not work as ' + file +
             ' was loaded before the trace agent was initialized.');
@@ -124,7 +125,7 @@ function checkPatch<T>(patch: Instrumentation<T>) {
 
 export function activate(logger: Logger, config: PluginLoaderConfig): void {
   if (activated) {
-    logger_.error('Plugins activated more than once.');
+    logger.error('Plugins activated more than once.');
     return;
   }
   activated = true;
@@ -132,12 +133,12 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
   logger_ = logger;
 
   const pluginConfig = config.plugins;
-  for (const moduleName in pluginConfig) {
+  for (const moduleName of Object.keys(pluginConfig)) {
     if (!pluginConfig[moduleName]) {
       continue;
     }
     const agent = new TraceAgent(moduleName);
-    agent.enable(logger_, config);
+    agent.enable(logger, config);
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
       patches: {},
@@ -179,13 +180,13 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
           });
         }
         if (Object.keys(patchSet).length === 0) {
-          logger_.warn(moduleRoot + ': version ' + version + ' not supported ' +
+          logger.warn(moduleRoot + ': version ' + version + ' not supported ' +
             'by plugin.');
         }
         instrumentation.patches[moduleRoot] = patchSet;
       }
 
-      for (const file in patchSet) {
+      for (const file of Object.keys(patchSet)) {
         const patch = patchSet[file];
         const loadPath = moduleRoot ? path.join(moduleRoot, patch.file) : patch.file;
         if (!patch.module) {
@@ -222,7 +223,7 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
         if (moduleAlreadyPatched(instrumentation, moduleRoot)) {
           return originalModuleLoad.apply(this, arguments);
         }
-        logger_.info('Patching ' + request + ' at version ' + moduleVersion);
+        logger.info('Patching ' + request + ' at version ' + moduleVersion);
         const patchedRoot = loadAndPatch(instrumentation, moduleRoot,
           moduleVersion);
         if (patchedRoot !== null) {
@@ -242,12 +243,12 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
 export function deactivate(): void {
   if (activated) {
     activated = false;
-    for (const moduleName in plugins) {
+    for (const moduleName of Object.keys(plugins)) {
       const instrumentation = plugins[moduleName];
       instrumentation.agent.disable();
-      for (const moduleRoot in instrumentation.patches) {
+      for (const moduleRoot of Object.keys(instrumentation.patches)) {
         const patchSet = instrumentation.patches[moduleRoot];
-        for (const file in patchSet) {
+        for (const file of Object.keys(patchSet)) {
           const patch = patchSet[file];
           if (isInternalPatch(patch) && patch.unpatch !== undefined) {
             logger_.info('Unpatching ' + moduleName);
