@@ -13,7 +13,9 @@
     "bump": "./bin/run-bump.sh",
     "check": "gts check",
     "clean": "gts clean",
-    "compile": "tsc -p .",
+    "compile-all": "tsc -p ./tsconfig.full.json",
+    "compile-strict": "tsc -p .",
+    "compile": "node ./build/scripts npm-compile-all npm-compile-strict",
     "fix": "gts fix",
     "postinstall": "tsc -p scripts",
     "prepare": "npm run compile"
