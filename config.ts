@@ -55,7 +55,7 @@ export interface Config {
 
   // URLs that partially match any regex in ignoreUrls will not be traced.
   // In addition, URLs that are _exact matches_ of strings in ignoreUrls will
-  // also not be traced.
+  // also not be traced (this is deprecated behavior and will be removed in v3).
   // URLs should be expected to be in the form of:
   //   /componentOne/componentTwo...
   // For example, having an ignoreUrls value of ['/'] will ignore all URLs,
