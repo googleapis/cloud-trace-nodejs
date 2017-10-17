@@ -5,21 +5,32 @@
   "main": "build/index.js",
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
-    "test": "node ./build/scripts npm-check npm-compile init-test-fixtures run-unit-tests",
-    "non-interference": "node ./build/scripts npm-compile test-non-interference",
-    "system-test": "node ./build/scripts npm-compile decrypt-service-account-key run-system-tests",
+    "test": "ts-node -P ./scripts ./scripts npm-check npm-compile init-test-fixtures run-unit-tests",
+    "non-interference": "ts-node -P ./scripts ./scripts npm-compile test-non-interference",
+    "system-test": "ts-node -P ./scripts ./scripts npm-compile decrypt-service-account-key run-system-tests",
     "changelog": "./bin/run-changelog.sh",
-    "coverage": "node ./build/scripts npm-check npm-compile init-test-fixtures run-unit-tests-with-coverage report-coverage",
+    "coverage": "ts-node -P ./scripts ./scripts npm-check npm-compile init-test-fixtures run-unit-tests-with-coverage report-coverage",
     "bump": "./bin/run-bump.sh",
     "check": "gts check",
     "clean": "gts clean",
     "compile-all": "tsc -p ./tsconfig.full.json",
     "compile-strict": "tsc -p .",
-    "compile": "node ./build/scripts npm-compile-all npm-compile-strict",
+    "compile": "ts-node -P ./scripts ./scripts npm-compile-all npm-compile-strict",
     "fix": "gts fix",
-    "postinstall": "tsc -p scripts",
     "prepare": "npm run compile"
   },
+  "files": [
+    "build/*.js",
+    "build/*.d.ts",
+    "build/src/*.js",
+    "build/src/*.d.ts",
+    "build/src/plugins/*.js",
+    "doc",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "types": "build/index.d.ts",
   "keywords": [
     "google",
     "tracing",
@@ -64,6 +75,7 @@
     "standard-version": "^4.2.0",
     "timekeeper": "^2.0.0",
     "tmp": "0.0.33",
+    "ts-node": "^3.3.0",
     "typescript": "^2.5.2"
   },
   "dependencies": {
