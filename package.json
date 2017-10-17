@@ -44,6 +44,7 @@
   "devDependencies": {
     "@google-cloud/datastore": "^1.0.2",
     "@types/continuation-local-storage": "^3.2.1",
+    "@types/extend": "^3.0.0",
     "@types/glob": "^5.0.32",
     "@types/is": "0.0.17",
     "@types/mocha": "^2.2.42",
