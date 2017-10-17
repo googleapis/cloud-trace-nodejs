@@ -81,14 +81,14 @@ export class TraceWriter extends common.Service {
       baseUrl: 'https://cloudtrace.googleapis.com/v1',
       scopes: SCOPES
     }, config);
-  
+
     this.logger_ = logger;
     this.config_ = config;
     this.buffer_ = [];
     this.defaultLabels_ = {};
 
     this.isActive = true;
-  
+
     if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
       logger.error('The value of onUncaughtException ' + config.onUncaughtException + ' should be one of ',
         onUncaughtExceptionValues);
@@ -111,12 +111,12 @@ export class TraceWriter extends common.Service {
 
   stop(): void {
     this.isActive = false;
-  };
+  }
 
   initialize(cb: (err?: Error) => void): void {
     // Ensure that cb is called only once.
     let pendingOperations = 2;
-  
+
     // Schedule periodic flushing of the buffer, but only if we are able to get
     // the project number (potentially from the network.)
     this.getProjectId((err: Error, project: string) => {
@@ -133,7 +133,7 @@ export class TraceWriter extends common.Service {
         }
       }
     });
-  
+
     this.getHostname((hostname) => {
       this.getInstanceId((instanceId) => {
         const labels: LabelObject = {};
@@ -144,7 +144,7 @@ export class TraceWriter extends common.Service {
         }
         const moduleName = this.config_.serviceContext.service || hostname;
         labels[TraceLabels.GAE_MODULE_NAME] = moduleName;
-  
+
         const moduleVersion = this.config_.serviceContext.version;
         if (moduleVersion) {
           labels[TraceLabels.GAE_MODULE_VERSION] = moduleVersion;
@@ -165,12 +165,12 @@ export class TraceWriter extends common.Service {
         }
       });
     });
-  };
-  
+  }
+
   config(): TraceWriterConfig {
     return this.config_;
-  };
-  
+  }
+
   getHostname(cb: (hostname: string) => void) {
     gcpMetadata.instance({
       property: 'hostname',
@@ -182,8 +182,8 @@ export class TraceWriter extends common.Service {
       }
       cb(hostname || require('os').hostname());
     });
-  };
-  
+  }
+
   getInstanceId(cb: (instanceId?: string) => void) {
     gcpMetadata.instance({
       property: 'id',
@@ -195,8 +195,8 @@ export class TraceWriter extends common.Service {
       }
       instanceId ? cb(instanceId) : cb();
     });
-  };
-  
+  }
+
   /**
    * Returns the project ID if it has been cached and attempts to load
    * it from the enviroment or network otherwise.
@@ -206,7 +206,7 @@ export class TraceWriter extends common.Service {
       callback(null, this.config_.projectId);
       return;
     }
-  
+
     gcpMetadata.project({
       property: 'project-id',
       headers: headers
@@ -231,8 +231,8 @@ export class TraceWriter extends common.Service {
       this.config_.projectId = projectId;
       callback(null, projectId);
     });
-  };
-  
+  }
+
   /**
    * Ensures that all sub spans of the provided spanData are
    * closed and then queues the span data to be published.
@@ -245,7 +245,7 @@ export class TraceWriter extends common.Service {
         span.close();
       }
     }
-  
+
     // Copy properties from the default labels.
     for (const k in this.defaultLabels_) {
       if (this.defaultLabels_.hasOwnProperty(k)) {
@@ -253,8 +253,8 @@ export class TraceWriter extends common.Service {
       }
     }
     this.queueTrace_(spanData.trace);
-  };
-  
+  }
+
   /**
    * Buffers the provided trace to be published.
    *
@@ -267,19 +267,19 @@ export class TraceWriter extends common.Service {
         this.logger_.info('No project number, dropping trace.');
         return; // if we even reach this point, disabling traces is already imminent.
       }
-  
+
       trace.projectId = projectId;
       this.buffer_.push(JSON.stringify(trace));
       this.logger_.debug('queued trace. new size:', this.buffer_.length);
-  
+
       // Publish soon if the buffer is getting big
       if (this.buffer_.length >= this.config_.bufferSize) {
         this.logger_.info('Flushing: trace buffer full');
         setImmediate(() => this.flushBuffer_());
       }
     });
-  };
-  
+  }
+
   /**
    * Flushes the buffer of traces at a regular interval
    * controlled by the flushDelay property of this
@@ -288,7 +288,7 @@ export class TraceWriter extends common.Service {
   scheduleFlush_() {
     this.logger_.info('Flushing: performing periodic flush');
     this.flushBuffer_();
-  
+
     // Do it again after delay
     if (this.isActive) {
       // 'global.setTimeout' avoids TS2339 on this line.
@@ -297,8 +297,8 @@ export class TraceWriter extends common.Service {
       global.setTimeout(this.scheduleFlush_.bind(this),
         this.config_.flushDelaySeconds * 1000).unref();
     }
-  };
-  
+  }
+
   /**
    * Serializes the buffered traces to be published asynchronously.
    */
@@ -306,22 +306,22 @@ export class TraceWriter extends common.Service {
     if (this.buffer_.length === 0) {
       return;
     }
-  
+
     // Privatize and clear the buffer.
     const buffer = this.buffer_;
     this.buffer_ = [];
     this.logger_.debug('Flushing traces', buffer);
     this.publish_(`{"traces":[${buffer.join()}]}`);
-  };
-  
+  }
+
   /**
    * Publishes flushed traces to the network.
-   * 
+   *
    * @param json The stringified json representation of the queued traces.
    */
   publish_(json: string) {
     const uri = `https://cloudtrace.googleapis.com/v1/projects/${this.config_.projectId}/traces`;
-  
+
     const options = {
       method: 'PATCH',
       uri: uri,
@@ -337,7 +337,7 @@ export class TraceWriter extends common.Service {
         this.logger_.info('TraceWriter: published. statusCode: ' + response.statusCode);
       }
     });
-  };
+  }
 }
 
 export type TraceWriterSingletonConfig = TraceWriterConfig & {

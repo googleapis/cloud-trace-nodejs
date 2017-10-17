@@ -54,7 +54,7 @@ export interface TraceContext {
   traceId: string;
   spanId: string;
   options?: number;
-};
+}
 
 /**
  * Parse a cookie-style header string to extract traceId, spandId and options

@@ -122,8 +122,8 @@ export interface Config {
     service?: string;
     version?: string;
     minorVersion?: string;
-  }
-};
+  };
+}
 
 // Default configuration. For fields with primitive values, any user-provided
 // value will override the corresponding default value.

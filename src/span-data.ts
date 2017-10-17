@@ -36,11 +36,11 @@ import * as util from 'util';
  * and ignore it.
  */
 interface StackFrame {
-  class_name?: string,
-  method_name?: string,
-  file_name?: string,
-  line_number?: number,
-  column_number?: number
+  class_name?: string;
+  method_name?: string;
+  file_name?: string;
+  line_number?: number;
+  column_number?: number;
 }
 
 // Auto-incrementing integer
@@ -79,14 +79,14 @@ export class SpanData implements SpanDataInterface {
       //
       const origLimit = Error.stackTraceLimit;
       Error.stackTraceLimit = traceWriter.get().config().stackTraceLimit + skipFrames;
-  
+
       const origPrepare = Error.prepareStackTrace;
       Error.prepareStackTrace = function(error: Error, structured: CallSite[]): CallSite[] {
         return structured;
       };
       const e: { stack?: CallSite[] } = {};
       Error.captureStackTrace(e, SpanData);
-  
+
       const stackFrames: StackFrame[] = [];
       if (e.stack) {
         e.stack.forEach(function(callSite, i) {

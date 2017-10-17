@@ -88,7 +88,7 @@ class AsyncHooksNamespace implements CLSNamespace {
     });
     return contextWrapper;
   }
-  
+
   // This function is not technically needed and all tests currently pass without it
   // (after removing call sites). While it is not a complete solution, restoring
   // correct context before running every request/response event handler reduces
@@ -125,12 +125,12 @@ function destroy(uid: number) {
 
 export function createNamespace(): CLSNamespace {
   return namespace;
-};
+}
 
 export function destroyNamespace(): void {
   current = {};
   contexts = {};
-};
+}
 
 export function getNamespace(): CLSNamespace {
   return namespace;

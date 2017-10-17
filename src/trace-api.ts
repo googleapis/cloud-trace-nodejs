@@ -40,10 +40,10 @@ export interface TraceAgentConfig extends TracingPolicy.TracePolicyConfig {
 }
 
 interface IncomingTraceContext {
-  traceId?: string,
-  spanId?: string,
-  options?: number
-};
+  traceId?: string;
+  spanId?: string;
+  options?: number;
+}
 
 /**
  * Type guard that returns whether an object is a string or not.
@@ -54,8 +54,8 @@ function isString(obj: any): obj is string {
 
 /**
  * Type guard that returns whether an object is a SpanData object or not.
- * 
- * @param obj 
+ *
+ * @param obj
  */
 function isSpanData(obj: cls.RootContext): obj is SpanData {
   // The second condition ensures that obj is not nullSpan.
@@ -104,7 +104,7 @@ export class TraceAgent implements TraceAgentInterface {
     this.config_ = config;
     this.policy_ = TracingPolicy.createTracePolicy(config);
     this.namespace_ = cls.getNamespace();
-  };
+  }
 
   /**
    * Disable this instance. This function is only for internal use and
@@ -118,7 +118,7 @@ export class TraceAgent implements TraceAgentInterface {
     // short-circuit out of trace generation logic.
     this.policy_ = new TracingPolicy.TraceNonePolicy();
     this.namespace_ = null;
-  };
+  }
 
   /**
    * Returns whether the TraceAgent instance is active. This function is only for
@@ -128,11 +128,11 @@ export class TraceAgent implements TraceAgentInterface {
    */
   isActive(): boolean {
     return !!this.namespace_;
-  };
+  }
 
   enhancedDatabaseReportingEnabled(): boolean {
     return !!this.config_ && this.config_.enhancedDatabaseReporting;
-  };
+  }
 
   runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData | null) => T): T {
     if (!this.isActive()) {
@@ -180,7 +180,7 @@ export class TraceAgent implements TraceAgentInterface {
       cls.setRootContext(rootContext);
       return fn(rootContext);
     });
-  };
+  }
 
   getCurrentContextId(): string | null {
     if (!this.isActive()) {
@@ -192,7 +192,7 @@ export class TraceAgent implements TraceAgentInterface {
       return null;
     }
     return rootSpan.trace.traceId;
-  };
+  }
 
   getWriterProjectId(): string | null {
     if (this.config_) {
@@ -200,13 +200,13 @@ export class TraceAgent implements TraceAgentInterface {
     } else {
       return null;
     }
-  };
+  }
 
   createChildSpan(options: SpanOptions): SpanData | null {
     if (!this.isActive()) {
       return null;
     }
-    
+
     const rootSpan = cls.getRootContext();
     if (!rootSpan) {
       // Context was lost.
@@ -232,7 +232,7 @@ export class TraceAgent implements TraceAgentInterface {
         skipFrames); /* # of frames to skip in stack trace */
       return childContext;
     }
-  };
+  }
 
   getResponseTraceContext(incomingTraceContext: string | null, isTraced: boolean): string {
     if (!this.isActive() || !incomingTraceContext) {
@@ -245,7 +245,7 @@ export class TraceAgent implements TraceAgentInterface {
     }
     traceContext.options = (traceContext.options || 0) & (isTraced ? 1 : 0);
     return util.generateTraceContext(traceContext);
-  };
+  }
 
   wrap<T>(fn: Func<T>): Func<T> {
     if (!this.isActive()) {
@@ -255,7 +255,7 @@ export class TraceAgent implements TraceAgentInterface {
     // This is safe because isActive checks the value of this.namespace_.
     const namespace = this.namespace_ as cls.Namespace;
     return namespace.bind<T>(fn);
-  };
+  }
 
   wrapEmitter(emitter: NodeJS.EventEmitter): void {
     if (!this.isActive()) {
@@ -265,5 +265,5 @@ export class TraceAgent implements TraceAgentInterface {
     // This is safe because isActive checks the value of this.namespace_.
     const namespace = this.namespace_ as cls.Namespace;
     namespace.bindEmitter(emitter);
-  };
+  }
 }
