@@ -15,13 +15,14 @@
  */
 
 import * as common from '@google-cloud/common';
-import { Constants } from './constants';
 import * as gcpMetadata from 'gcp-metadata';
-import { OutgoingHttpHeaders } from 'http';
-import { SpanData } from './span-data';
-import { Trace } from './trace';
-import { TraceLabels } from './trace-labels';
+import {OutgoingHttpHeaders} from 'http';
 import * as util from 'util';
+
+import {Constants} from './constants';
+import {SpanData} from './span-data';
+import {Trace} from './trace';
+import {TraceLabels} from './trace-labels';
 
 const pjson = require('../../package.json');
 
@@ -40,16 +41,10 @@ export interface TraceWriterConfig extends common.ServiceAuthenticationConfig {
   flushDelaySeconds: number;
   stackTraceLimit: number;
   maximumLabelValueSize: number;
-  serviceContext: {
-    service?: string;
-    version?: string;
-    minorVersion?: string;
-  };
+  serviceContext: {service?: string; version?: string; minorVersion?: string;};
 }
 
-export interface LabelObject {
-  [key: string]: string;
-}
+export interface LabelObject { [key: string]: string; }
 
 /**
  * A class representing a service that publishes traces in the background.
@@ -77,12 +72,14 @@ export class TraceWriter extends common.Service {
    * @constructor
    */
   constructor(logger: common.Logger, config: TraceWriterConfig) {
-    super({
-      packageJson: pjson,
-      projectIdRequired: false,
-      baseUrl: 'https://cloudtrace.googleapis.com/v1',
-      scopes: SCOPES
-    }, config);
+    super(
+        {
+          packageJson: pjson,
+          projectIdRequired: false,
+          baseUrl: 'https://cloudtrace.googleapis.com/v1',
+          scopes: SCOPES
+        },
+        config);
 
     this.logger = logger;
     this.config = config;
@@ -92,8 +89,10 @@ export class TraceWriter extends common.Service {
     this.isActive = true;
 
     if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
-      logger.error('The value of onUncaughtException ' + config.onUncaughtException + ' should be one of ',
-        onUncaughtExceptionValues);
+      logger.error(
+          'The value of onUncaughtException ' + config.onUncaughtException +
+              ' should be one of ',
+          onUncaughtExceptionValues);
       // TODO(kjin): Either log an error or throw one, but not both
       throw new Error('Invalid value for onUncaughtException configuration.');
     }
@@ -123,9 +122,10 @@ export class TraceWriter extends common.Service {
     // the project number (potentially from the network.)
     this.getProjectId((err: Error, project: string) => {
       if (err) {
-        this.logger.error('Unable to acquire the project number from metadata ' +
-          'service. Please provide a valid project number as an env. ' +
-          'variable, or through config.projectId passed to start(). ' + err);
+        this.logger.error(
+            'Unable to acquire the project number from metadata ' +
+            'service. Please provide a valid project number as an env. ' +
+            'variable, or through config.projectId passed to start(). ' + err);
         cb(err);
       } else {
         this.config.projectId = project;
@@ -139,7 +139,8 @@ export class TraceWriter extends common.Service {
     this.getHostname((hostname) => {
       this.getInstanceId((instanceId) => {
         const labels: LabelObject = {};
-        labels[TraceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
+        labels[TraceLabels.AGENT_DATA] =
+            'node ' + pjson.name + ' v' + pjson.version;
         labels[TraceLabels.GCE_HOSTNAME] = hostname;
         if (instanceId) {
           labels[TraceLabels.GCE_INSTANCE_ID] = instanceId;
@@ -174,65 +175,62 @@ export class TraceWriter extends common.Service {
   }
 
   getHostname(cb: (hostname: string) => void) {
-    gcpMetadata.instance({
-      property: 'hostname',
-      headers: headers
-    }, (err, response, hostname) => {
-      if (err && err.code !== 'ENOTFOUND') {
-        // We are running on GCP.
-        this.logger.warn('Unable to retrieve GCE hostname.', err);
-      }
-      cb(hostname || require('os').hostname());
-    });
+    gcpMetadata.instance(
+        {property: 'hostname', headers: headers}, (err, response, hostname) => {
+          if (err && err.code !== 'ENOTFOUND') {
+            // We are running on GCP.
+            this.logger.warn('Unable to retrieve GCE hostname.', err);
+          }
+          cb(hostname || require('os').hostname());
+        });
   }
 
   getInstanceId(cb: (instanceId?: string) => void) {
-    gcpMetadata.instance({
-      property: 'id',
-      headers: headers
-    }, (err, response, instanceId) => {
-      if (err && err.code !== 'ENOTFOUND') {
-        // We are running on GCP.
-        this.logger.warn('Unable to retrieve GCE instance id.', err);
-      }
-      instanceId ? cb(instanceId) : cb();
-    });
+    gcpMetadata.instance(
+        {property: 'id', headers: headers}, (err, response, instanceId) => {
+          if (err && err.code !== 'ENOTFOUND') {
+            // We are running on GCP.
+            this.logger.warn('Unable to retrieve GCE instance id.', err);
+          }
+          instanceId ? cb(instanceId) : cb();
+        });
   }
 
   /**
    * Returns the project ID if it has been cached and attempts to load
    * it from the enviroment or network otherwise.
    */
-  getProjectId(callback: (err: Error | null, projectId?: string) => void) {
+  getProjectId(callback: (err: Error|null, projectId?: string) => void) {
     if (this.config.projectId) {
       callback(null, this.config.projectId);
       return;
     }
 
-    gcpMetadata.project({
-      property: 'project-id',
-      headers: headers
-    }, (err, response, projectId) => {
-      if (response && response.statusCode !== 200) {
-        if (response.statusCode === 503) {
-          err = new Error('Metadata service responded with a 503 status ' +
-            'code. This may be due to a temporary server error; please try ' +
-            'again later.');
-        } else {
-          err = new Error('Metadata service responded with the following ' +
-            'status code: ' + response.statusCode);
-        }
-      }
-      if (err || !projectId) {
-        // We shouldn't observe a falsey projectId if there's no error
-        err = err || new Error('Project ID missing.');
-        callback(err);
-        return;
-      }
-      this.logger.info('Acquired ProjectId from metadata: ' + projectId);
-      this.config.projectId = projectId;
-      callback(null, projectId);
-    });
+    gcpMetadata.project(
+        {property: 'project-id', headers: headers},
+        (err, response, projectId) => {
+          if (response && response.statusCode !== 200) {
+            if (response.statusCode === 503) {
+              err = new Error(
+                  'Metadata service responded with a 503 status ' +
+                  'code. This may be due to a temporary server error; please try ' +
+                  'again later.');
+            } else {
+              err = new Error(
+                  'Metadata service responded with the following ' +
+                  'status code: ' + response.statusCode);
+            }
+          }
+          if (err || !projectId) {
+            // We shouldn't observe a falsey projectId if there's no error
+            err = err || new Error('Project ID missing.');
+            callback(err);
+            return;
+          }
+          this.logger.info('Acquired ProjectId from metadata: ' + projectId);
+          this.config.projectId = projectId;
+          callback(null, projectId);
+        });
   }
 
   /**
@@ -267,7 +265,8 @@ export class TraceWriter extends common.Service {
     this.getProjectId((err, projectId?) => {
       if (err || !projectId) {
         this.logger.info('No project number, dropping trace.');
-        return; // if we even reach this point, disabling traces is already imminent.
+        return;  // if we even reach this point, disabling traces is already
+                 // imminent.
       }
 
       trace.projectId = projectId;
@@ -296,8 +295,11 @@ export class TraceWriter extends common.Service {
       // 'global.setTimeout' avoids TS2339 on this line.
       // It helps disambiguate the Node runtime setTimeout function from
       // WindowOrWorkerGlobalScope.setTimeout, which returns an integer.
-      global.setTimeout(this.scheduleFlush_.bind(this),
-        this.config.flushDelaySeconds * 1000).unref();
+      global
+          .setTimeout(
+              this.scheduleFlush_.bind(this),
+              this.config.flushDelaySeconds * 1000)
+          .unref();
     }
   }
 
@@ -322,27 +324,25 @@ export class TraceWriter extends common.Service {
    * @param json The stringified json representation of the queued traces.
    */
   publish_(json: string) {
-    const uri = `https://cloudtrace.googleapis.com/v1/projects/${this.config.projectId}/traces`;
+    const uri = `https://cloudtrace.googleapis.com/v1/projects/${
+        this.config.projectId}/traces`;
 
-    const options = {
-      method: 'PATCH',
-      uri: uri,
-      body: json,
-      headers: headers
-    };
+    const options = {method: 'PATCH', uri: uri, body: json, headers: headers};
     this.logger.debug('TraceWriter: publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
       if (err) {
-        this.logger.error('TraceWriter: error: ',
-          ((response && response.statusCode) || '') + '\n' + err.stack);
+        this.logger.error(
+            'TraceWriter: error: ',
+            ((response && response.statusCode) || '') + '\n' + err.stack);
       } else {
-        this.logger.info('TraceWriter: published. statusCode: ' + response.statusCode);
+        this.logger.info(
+            'TraceWriter: published. statusCode: ' + response.statusCode);
       }
     });
   }
 }
 
-export type TraceWriterSingletonConfig = TraceWriterConfig & {
+export type TraceWriterSingletonConfig = TraceWriterConfig&{
   forceNewAgent_: boolean;
 };
 
@@ -350,8 +350,9 @@ export type TraceWriterSingletonConfig = TraceWriterConfig & {
 let singleton: TraceWriter;
 
 export const traceWriter = {
-  create(logger: common.Logger, config: TraceWriterSingletonConfig, cb?: (err?: Error) => void)
-      : TraceWriter {
+  create(
+      logger: common.Logger, config: TraceWriterSingletonConfig,
+      cb?: (err?: Error) => void): TraceWriter {
     if (!cb) {
       // tslint:disable-next-line:no-empty
       cb = () => {};

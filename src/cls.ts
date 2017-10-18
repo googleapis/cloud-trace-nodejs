@@ -17,16 +17,17 @@
 'use strict';
 
 import * as semver from 'semver';
-import { SpanData } from './span-data';
+import {SpanData} from './span-data';
 import * as CLS from 'continuation-local-storage';
 
-export type RootContext = SpanData | {} /* null span */ | null;
+export type RootContext = SpanData|{} /* null span */|null;
 export type Namespace = CLS.Namespace;
 export type Func<T> = CLS.Func<T>;
 
 const cls: typeof CLS = semver.satisfies(process.version, '>=8') &&
-  process.env.GCLOUD_TRACE_NEW_CONTEXT ? require('./cls-ah')
-                                       : require('continuation-local-storage');
+        process.env.GCLOUD_TRACE_NEW_CONTEXT ?
+    require('./cls-ah') :
+    require('continuation-local-storage');
 
 const TRACE_NAMESPACE = 'com.google.cloud.trace';
 

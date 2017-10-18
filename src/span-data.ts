@@ -16,12 +16,12 @@
 
 'use strict';
 
-import { Constants } from './constants';
-import { SpanData as SpanDataInterface } from './plugin-types';
-import { Trace } from './trace';
-import { TraceLabels } from './trace-labels';
-import { TraceSpan } from './trace-span';
-import { traceWriter } from './trace-writer';
+import {Constants} from './constants';
+import {SpanData as SpanDataInterface} from './plugin-types';
+import {Trace} from './trace';
+import {TraceLabels} from './trace-labels';
+import {TraceSpan} from './trace-span';
+import {traceWriter} from './trace-writer';
 import * as traceUtil from './util';
 import * as util from 'util';
 
@@ -59,14 +59,11 @@ export class SpanData implements SpanDataInterface {
    * @constructor
    */
   constructor(
-    readonly trace: Trace,
-    spanName: string,
-    parentSpanId: string,
-    private readonly isRoot: boolean,
-    skipFrames: number
-  ) {
+      readonly trace: Trace, spanName: string, parentSpanId: string,
+      private readonly isRoot: boolean, skipFrames: number) {
     const spanId = '' + (uid++);
-    spanName = traceUtil.truncate(spanName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
+    spanName =
+        traceUtil.truncate(spanName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
     this.span = new TraceSpan(spanName, spanId, parentSpanId);
     trace.spans.push(this.span);
     if (traceWriter.get().getConfig().stackTraceLimit > 0) {
@@ -78,13 +75,15 @@ export class SpanData implements SpanDataInterface {
       // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
       //
       const origLimit = Error.stackTraceLimit;
-      Error.stackTraceLimit = traceWriter.get().getConfig().stackTraceLimit + skipFrames;
+      Error.stackTraceLimit =
+          traceWriter.get().getConfig().stackTraceLimit + skipFrames;
 
       const origPrepare = Error.prepareStackTrace;
-      Error.prepareStackTrace = function(error: Error, structured: CallSite[]): CallSite[] {
+      Error.prepareStackTrace = function(
+          error: Error, structured: CallSite[]): CallSite[] {
         return structured;
       };
-      const e: { stack?: CallSite[] } = {};
+      const e: {stack?: CallSite[]} = {};
       Error.captureStackTrace(e, SpanData);
 
       const stackFrames: StackFrame[] = [];
@@ -96,23 +95,25 @@ export class SpanData implements SpanDataInterface {
           const functionName = callSite.getFunctionName();
           const methodName = callSite.getMethodName();
           const name = (methodName && functionName) ?
-            functionName + ' [as ' + methodName + ']' :
-            functionName || methodName || '<anonymous function>';
+              functionName + ' [as ' + methodName + ']' :
+              functionName || methodName || '<anonymous function>';
           const stackFrame: StackFrame = {
             method_name: name,
             file_name: callSite.getFileName() || undefined,
             line_number: callSite.getLineNumber() || undefined,
             column_number: callSite.getColumnNumber() || undefined
           };
-          // TODO(kjin): Check if callSite getters actually return null or undefined.
-          // Docs say undefined but we guard it here just in case.
+          // TODO(kjin): Check if callSite getters actually return null or
+          // undefined. Docs say undefined but we guard it here just in case.
           stackFrames.push(stackFrame);
         });
         // Set the label on the trace span directly to bypass truncation to
         // config.maxLabelValueSize.
-        this.span.setLabel(TraceLabels.STACK_TRACE_DETAILS_KEY,
-          traceUtil.truncate(JSON.stringify({stack_frame: stackFrames}),
-            Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT));
+        this.span.setLabel(
+            TraceLabels.STACK_TRACE_DETAILS_KEY,
+            traceUtil.truncate(
+                JSON.stringify({stack_frame: stackFrames}),
+                Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT));
       }
       Error.stackTraceLimit = origLimit;
       Error.prepareStackTrace = origPrepare;
@@ -123,14 +124,15 @@ export class SpanData implements SpanDataInterface {
     return traceUtil.generateTraceContext({
       traceId: this.trace.traceId.toString(),
       spanId: this.span.spanId.toString(),
-      options: 1 // always traced
+      options: 1  // always traced
     });
   }
 
   addLabel(key: string, value: any) {
     const k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
     const stringValue = typeof value === 'string' ? value : util.inspect(value);
-    const v = traceUtil.truncate(stringValue, traceWriter.get().getConfig().maximumLabelValueSize);
+    const v = traceUtil.truncate(
+        stringValue, traceWriter.get().getConfig().maximumLabelValueSize);
     this.span.setLabel(k, v);
   }
 

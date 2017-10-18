@@ -16,7 +16,7 @@
 
 'use strict';
 
-import { TraceSpan } from './trace-span';
+import {TraceSpan} from './trace-span';
 
 export class Trace {
   public readonly spans: TraceSpan[] = [];
@@ -25,8 +25,5 @@ export class Trace {
    * Creates a trace object.
    * @constructor
    */
-  constructor(
-    public projectId: string,
-    public readonly traceId: string
-  ) {}
+  constructor(public projectId: string, public readonly traceId: string) {}
 }

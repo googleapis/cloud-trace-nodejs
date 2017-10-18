@@ -16,7 +16,8 @@
 
 'use strict';
 
-// TODO(kjin): Once tests are fully converted, undercase the name of this variable.
+// TODO(kjin): Once tests are fully converted, undercase the name of this
+// variable.
 /**
  * Well-known trace span label values.
  */
@@ -73,22 +74,26 @@ export const TraceLabels = {
   GAE_MODULE_VERSION: 'g.co/gae/app/module_version',
 
   /**
-   * The label for GCE instance id. This is not a label recognized by the trace API.
+   * The label for GCE instance id. This is not a label recognized by the trace
+   * API.
    */
   GCE_INSTANCE_ID: 'g.co/gce/instanceid',
 
   /**
-   * The label for GCE hostname. This is not a label recognized by the trace API.
+   * The label for GCE hostname. This is not a label recognized by the trace
+   * API.
    */
   GCE_HOSTNAME: 'g.co/gce/hostname',
 
   /**
-   * The label for http request source ip. This is not a label recognized by the trace API.
+   * The label for http request source ip. This is not a label recognized by the
+   * trace API.
    */
   HTTP_SOURCE_IP: '/http/source/ip',
 
   /**
-   * The well-known label for agent metadata. Values should have the form "<name> <version>".
+   * The well-known label for agent metadata. Values should have the form
+   * "<name> <version>".
    */
   AGENT_DATA: '/agent'
 };

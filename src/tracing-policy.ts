@@ -44,14 +44,12 @@ export class RateLimiterPolicy implements TracePolicy {
 
 export class FilterPolicy implements TracePolicy {
   constructor(
-    private basePolicy: TracePolicy,
-    private filterUrls: (string | RegExp)[]
-  ) {}
+      private basePolicy: TracePolicy, private filterUrls: (string|RegExp)[]) {}
 
   private matches(url: string) {
     return this.filterUrls.some((candidate) => {
       return (typeof candidate === 'string' && candidate === url) ||
-        !!url.match(candidate);
+          !!url.match(candidate);
     });
   }
 
@@ -74,7 +72,7 @@ export class TraceNonePolicy implements TracePolicy {
 
 export interface TracePolicyConfig {
   samplingRate: number;
-  ignoreUrls?: (string | RegExp)[];
+  ignoreUrls?: (string|RegExp)[];
 }
 
 // TODO(kjin): This could be a class as well.

@@ -42,11 +42,7 @@ export function truncate(str: string, length: number) {
 // Regex: .*?node_modules(?!.*node_modules)\/(@[^\/]*\/[^\/]*|[^\/]*).*
 // Tests: https://regex101.com/r/lW2bE3/6
 const moduleRegex = new RegExp([
-  '.*?node_modules(?!.*node_modules)\\',
-  '(@[^\\',
-  ']*\\',
-  '[^\\',
-  ']*|[^\\',
+  '.*?node_modules(?!.*node_modules)\\', '(@[^\\', ']*\\', '[^\\', ']*|[^\\',
   ']*).*'
 ].join(path.sep));
 
@@ -66,7 +62,7 @@ export interface TraceContext {
  * @param str string representation of the trace headers
  * @return object with keys. null if there is a problem.
  */
-export function parseContextFromHeader(str: string): TraceContext | null {
+export function parseContextFromHeader(str: string): TraceContext|null {
   if (!str) {
     return null;
   }
@@ -138,7 +134,8 @@ export function findModulePath(request: string, parent?: NodeModule): string {
  *    module being loaded. This may be an empty string if we are loading an
  *    internal module such as http.
  */
-export function findModuleVersion(modulePath: string, load: (path: string) => any): string {
+export function findModuleVersion(
+    modulePath: string, load: (path: string) => any): string {
   if (!load) {
     load = Module._load;
   }

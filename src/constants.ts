@@ -16,7 +16,8 @@
 
 'use strict';
 
-// TODO(kjin): Once tests are fully converted, undercase the name of this variable.
+// TODO(kjin): Once tests are fully converted, undercase the name of this
+// variable.
 /** Constant values. */
 // tslint:disable-next-line:variable-name
 export const Constants = {

@@ -17,18 +17,16 @@
 'use strict';
 
 import * as asyncHook from 'async_hooks';
-import { Context, Func, Namespace as CLSNamespace } from 'continuation-local-storage';
+import {Context, Func, Namespace as CLSNamespace} from 'continuation-local-storage';
 
 const wrappedSymbol = Symbol('context_wrapped');
-let contexts: {
-  [asyncId: number]: Context;
-} = {};
+let contexts: {[asyncId: number]: Context;} = {};
 let current: Context = {};
 
 asyncHook.createHook({init, before, destroy}).enable();
 
 const EVENT_EMITTER_METHODS =
-  [ 'addListener', 'on', 'once', 'prependListener', 'prependOncelistener' ];
+    ['addListener', 'on', 'once', 'prependListener', 'prependOncelistener'];
 
 class AsyncHooksNamespace implements CLSNamespace {
   get name(): string {
@@ -89,10 +87,11 @@ class AsyncHooksNamespace implements CLSNamespace {
     return contextWrapper;
   }
 
-  // This function is not technically needed and all tests currently pass without it
-  // (after removing call sites). While it is not a complete solution, restoring
-  // correct context before running every request/response event handler reduces
-  // the number of situations in which userspace queuing will cause us to lose context.
+  // This function is not technically needed and all tests currently pass
+  // without it (after removing call sites). While it is not a complete
+  // solution, restoring correct context before running every request/response
+  // event handler reduces the number of situations in which userspace queuing
+  // will cause us to lose context.
   bindEmitter(ee: NodeJS.EventEmitter): void {
     const ns = this;
     EVENT_EMITTER_METHODS.forEach(function(method) {
@@ -109,7 +108,8 @@ const namespace = new AsyncHooksNamespace();
 
 // AsyncWrap Hooks
 
-function init(uid: number, provider: string, parentUid: number, parentHandle: Object) {
+function init(
+    uid: number, provider: string, parentUid: number, parentHandle: Object) {
   contexts[uid] = current;
 }
 

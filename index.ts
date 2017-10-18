@@ -25,18 +25,18 @@ if (require('semver').satisfies(process.version, '<8') ||
 
 import * as cls from './src/cls';
 import * as common from '@google-cloud/common';
-import { Constants } from './src/constants';
-import { Config, defaultConfig } from './config';
+import {Constants} from './src/constants';
+import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './src/plugin-types';
-import { PluginLoaderConfig } from './src/trace-plugin-loader';
+import {PluginLoaderConfig} from './src/trace-plugin-loader';
 import * as pluginLoader from './src/trace-plugin-loader';
-import { TraceAgent } from './src/trace-api';
-import { traceWriter, TraceWriterSingletonConfig } from './src/trace-writer';
+import {TraceAgent} from './src/trace-api';
+import {traceWriter, TraceWriterSingletonConfig} from './src/trace-writer';
 import * as traceUtil from './src/util';
 
-export { Config, PluginTypes };
+export {Config, PluginTypes};
 
 const modulesLoadedBeforeTrace: string[] = [];
 
@@ -59,7 +59,8 @@ interface TopLevelConfig {
 
 // TraceWriterSingletonConfig = TraceWriterConfig & { forceNewAgent_: boolean }
 // PluginLoaderConfig extends TraceAgentConfig
-type NormalizedConfig = TraceWriterSingletonConfig & PluginLoaderConfig & TopLevelConfig;
+type NormalizedConfig =
+    TraceWriterSingletonConfig&PluginLoaderConfig&TopLevelConfig;
 
 /**
  * Normalizes the user-provided configuration object by adding default values
@@ -81,18 +82,21 @@ function initConfig(projectConfig: Config): NormalizedConfig {
 
   let envSetConfig: Config = {};
   if (process.env.hasOwnProperty('GCLOUD_TRACE_CONFIG')) {
-    envSetConfig = require(path.resolve(process.env.GCLOUD_TRACE_CONFIG)) as Config;
+    envSetConfig =
+        require(path.resolve(process.env.GCLOUD_TRACE_CONFIG)) as Config;
   }
   // Configuration order of precedence:
   // 1. Environment Variables
   // 2. Project Config
   // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
   // 4. Default Config (as specified in './config')
-  const config = extend(true, { forceNewAgent_: false }, defaultConfig, envSetConfig,
-    projectConfig, envConfig);
+  const config = extend(
+      true, {forceNewAgent_: false}, defaultConfig, envSetConfig, projectConfig,
+      envConfig);
 
   // Enforce the upper limit for the label value size.
-  if (config.maximumLabelValueSize > Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
+  if (config.maximumLabelValueSize >
+      Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
     config.maximumLabelValueSize = Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
   }
   // Clamp the logger level.
@@ -133,7 +137,7 @@ function stop() {
 export function start(projectConfig?: Config): TraceAgent {
   const config: NormalizedConfig = initConfig(projectConfig || {});
 
-  if (traceAgent.isActive() && !config.forceNewAgent_) { // already started.
+  if (traceAgent.isActive() && !config.forceNewAgent_) {  // already started.
     throw new Error('Cannot call start on an already started agent.');
   } else if (traceAgent.isActive()) {
     // For unit tests only.
@@ -151,9 +155,10 @@ export function start(projectConfig?: Config): TraceAgent {
   });
 
   if (modulesLoadedBeforeTrace.length > 0) {
-    logger.error('Tracing might not work as the following modules ' +
-      'were loaded before the trace agent was initialized: ' +
-      JSON.stringify(modulesLoadedBeforeTrace));
+    logger.error(
+        'Tracing might not work as the following modules ' +
+        'were loaded before the trace agent was initialized: ' +
+        JSON.stringify(modulesLoadedBeforeTrace));
   }
   // CLS namespace for context propagation
   cls.createNamespace();
@@ -166,9 +171,11 @@ export function start(projectConfig?: Config): TraceAgent {
   traceAgent.enable(logger, config);
   pluginLoader.activate(logger, config);
 
-  if (typeof config.projectId !== 'string' && typeof config.projectId !== 'undefined') {
-    logger.error('config.projectId, if provided, must be a string. ' +
-      'Disabling trace agent.');
+  if (typeof config.projectId !== 'string' &&
+      typeof config.projectId !== 'undefined') {
+    logger.error(
+        'config.projectId, if provided, must be a string. ' +
+        'Disabling trace agent.');
     stop();
     return traceAgent;
   }

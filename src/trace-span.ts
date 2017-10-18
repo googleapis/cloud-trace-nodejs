@@ -16,9 +16,7 @@
 
 'use strict';
 
-export interface TraceSpanLabels {
-  [propName: string]: string;
-}
+export interface TraceSpanLabels { [propName: string]: string; }
 
 /**
  * Describes a trace span.
@@ -34,10 +32,8 @@ export class TraceSpan {
    * @constructor
    */
   constructor(
-    public readonly name: string,
-    public readonly spanId: string,
-    public readonly parentSpanId: string
-  ) {
+      public readonly name: string, public readonly spanId: string,
+      public readonly parentSpanId: string) {
     this.startTime = (new Date()).toISOString();
   }
 
