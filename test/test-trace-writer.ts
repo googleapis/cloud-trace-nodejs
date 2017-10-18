@@ -106,10 +106,10 @@ describe('TraceWriter', function() {
         forceNewAgent_: true
       } as createTraceWriterOptions, function() {
         var spanData = createFakeSpan('fake span');
-        writer.defaultLabels_ = {
+        writer.defaultLabels = {
           fakeKey: 'value'
         };
-        writer.queueTrace_ = function(trace) {
+        writer.queueTrace = function(trace) {
           assert.ok(trace && trace.spans && trace.spans[0]);
           var span = trace.spans[0];
           assert.strictEqual(span.name, 'fake span');
@@ -135,7 +135,7 @@ describe('TraceWriter', function() {
         onUncaughtException: 'ignore',
         forceNewAgent_: true
       } as createTraceWriterOptions);
-      writer.publish_('{"valid": "json"}');
+      writer.publish('{"valid": "json"}');
       setTimeout(function() {
         assert.ok(scope.isDone());
         done();
@@ -155,10 +155,10 @@ describe('TraceWriter', function() {
         onUncaughtException: 'ignore',
         forceNewAgent_: true
       } as createTraceWriterOptions);
-      writer.publish_(JSON.stringify(MESSAGE));
+      writer.publish(JSON.stringify(MESSAGE));
       setTimeout(function() {
         assert.ok(scope.isDone());
-        assert.equal(writer.buffer_.length, 0);
+        assert.equal(writer.buffer.length, 0);
         done();
       }, DEFAULT_DELAY);
     });
@@ -174,7 +174,7 @@ describe('TraceWriter', function() {
         onUncaughtException: 'ignore',
         forceNewAgent_: true
       } as createTraceWriterOptions);
-      writer.publish_ = function() { done(); };
+      writer.publish = function() { done(); };
       for (var i = 0; i < 4; i++) {
         writer.writeSpan(createFakeSpan(i));
       }
@@ -189,7 +189,7 @@ describe('TraceWriter', function() {
         onUncaughtException: 'ignore',
         forceNewAgent_: true
       } as createTraceWriterOptions);
-      writer.publish_ = function() { published = true; };
+      writer.publish = function() { published = true; };
       writer.initialize(function() {
         writer.writeSpan(createFakeSpan('fake span'));
         setTimeout(function() {
@@ -208,7 +208,7 @@ describe('TraceWriter', function() {
         metadata: {},
         assertResults: function(err, tw) {
           assert.ok(err);
-          assert.strictEqual(tw.config_.projectId, undefined);
+          assert.strictEqual(tw.config.projectId, undefined);
         }
       },
       {
@@ -217,7 +217,7 @@ describe('TraceWriter', function() {
         metadata: {},
         assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.strictEqual(tw.config_.projectId, 'foo');
+          assert.strictEqual(tw.config.projectId, 'foo');
         }
       },
       {
@@ -226,7 +226,7 @@ describe('TraceWriter', function() {
         metadata: { projectId: 'foo' },
         assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.strictEqual(tw.config_.projectId, 'foo');
+          assert.strictEqual(tw.config.projectId, 'foo');
         }
       },
       {
@@ -239,10 +239,10 @@ describe('TraceWriter', function() {
         assertResults: function(err, tw) {
           assert.ok(!err);
           // Having a hostname is reflected in whether these labels are set
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_HOSTNAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_NAME], 'bar');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GAE_MODULE_NAME], 'bar');
           // Having an instanceId is reflected in whether this label is set
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_INSTANCE_ID], undefined);
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GCE_INSTANCE_ID], undefined);
         }
       },
       {
@@ -255,10 +255,10 @@ describe('TraceWriter', function() {
         assertResults: function(err, tw) {
           assert.ok(!err);
           // Having a hostname is reflected in whether these labels are set
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_HOSTNAME], os.hostname());
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_NAME], os.hostname());
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GCE_HOSTNAME], os.hostname());
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GAE_MODULE_NAME], os.hostname());
           // Having an instanceId is reflected in whether this label is set
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_INSTANCE_ID], 'baz');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GCE_INSTANCE_ID], 'baz');
         }
       },
       {
@@ -271,9 +271,9 @@ describe('TraceWriter', function() {
         },
         assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_HOSTNAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_NAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_INSTANCE_ID], 'baz');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GAE_MODULE_NAME], 'bar');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GCE_INSTANCE_ID], 'baz');
         }
       },
       {
@@ -292,11 +292,11 @@ describe('TraceWriter', function() {
         },
         assertResults: function(err, tw) {
           assert.ok(!err);
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_HOSTNAME], 'bar');
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_NAME], 'barz');
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GCE_INSTANCE_ID], 'baz');
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_MODULE_VERSION], '1');
-          assert.strictEqual(tw.defaultLabels_[TraceLabels.GAE_VERSION], 'barz:1.2');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GCE_HOSTNAME], 'bar');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GAE_MODULE_NAME], 'barz');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GCE_INSTANCE_ID], 'baz');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GAE_MODULE_VERSION], '1');
+          assert.strictEqual(tw.defaultLabels[TraceLabels.GAE_VERSION], 'barz:1.2');
         }
       }
     ];

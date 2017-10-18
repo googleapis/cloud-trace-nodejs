@@ -53,12 +53,10 @@ export class TraceWriter extends common.Service {
   // TODO(kjin): Make public members private (they're public for testing)
   private logger: common.Logger;
   private config: TraceWriterConfig;
-  // tslint:disable:variable-name
   /** Stringified traces to be published */
-  public buffer_: string[];
+  public buffer: string[];
   /** Default labels to be attached to written spans */
-  public defaultLabels_: LabelObject;
-  // tslint:enable:variable-name
+  public defaultLabels: LabelObject;
   /** Reference to global unhandled exception handler */
   private unhandledException?: () => void;
   /** Whether the trace writer is active */
@@ -83,8 +81,8 @@ export class TraceWriter extends common.Service {
 
     this.logger = logger;
     this.config = config;
-    this.buffer_ = [];
-    this.defaultLabels_ = {};
+    this.buffer = [];
+    this.defaultLabels = {};
 
     this.isActive = true;
 
@@ -99,7 +97,7 @@ export class TraceWriter extends common.Service {
     const onUncaughtException = config.onUncaughtException;
     if (onUncaughtException !== 'ignore') {
       this.unhandledException = () => {
-        this.flushBuffer_();
+        this.flushBuffer();
         if (onUncaughtException === 'flushAndExit') {
           setTimeout(function() {
             process.exit(1);
@@ -129,7 +127,7 @@ export class TraceWriter extends common.Service {
         cb(err);
       } else {
         this.config.projectId = project;
-        this.scheduleFlush_();
+        this.scheduleFlush();
         if (--pendingOperations === 0) {
           cb();
         }
@@ -162,7 +160,7 @@ export class TraceWriter extends common.Service {
           }
         }
         Object.freeze(labels);
-        this.defaultLabels_ = labels;
+        this.defaultLabels = labels;
         if (--pendingOperations === 0) {
           cb();
         }
@@ -247,12 +245,12 @@ export class TraceWriter extends common.Service {
     }
 
     // Copy properties from the default labels.
-    for (const k in this.defaultLabels_) {
-      if (this.defaultLabels_.hasOwnProperty(k)) {
-        spanData.addLabel(k, this.defaultLabels_[k]);
+    for (const k in this.defaultLabels) {
+      if (this.defaultLabels.hasOwnProperty(k)) {
+        spanData.addLabel(k, this.defaultLabels[k]);
       }
     }
-    this.queueTrace_(spanData.trace);
+    this.queueTrace(spanData.trace);
   }
 
   /**
@@ -261,7 +259,7 @@ export class TraceWriter extends common.Service {
    * @private
    * @param trace The trace to be queued.
    */
-  queueTrace_(trace: Trace) {
+  queueTrace(trace: Trace) {
     this.getProjectId((err, projectId?) => {
       if (err || !projectId) {
         this.logger.info('No project number, dropping trace.');
@@ -270,13 +268,13 @@ export class TraceWriter extends common.Service {
       }
 
       trace.projectId = projectId;
-      this.buffer_.push(JSON.stringify(trace));
-      this.logger.debug('queued trace. new size:', this.buffer_.length);
+      this.buffer.push(JSON.stringify(trace));
+      this.logger.debug('queued trace. new size:', this.buffer.length);
 
       // Publish soon if the buffer is getting big
-      if (this.buffer_.length >= this.config.bufferSize) {
+      if (this.buffer.length >= this.config.bufferSize) {
         this.logger.info('Flushing: trace buffer full');
-        setImmediate(() => this.flushBuffer_());
+        setImmediate(() => this.flushBuffer());
       }
     });
   }
@@ -285,10 +283,11 @@ export class TraceWriter extends common.Service {
    * Flushes the buffer of traces at a regular interval
    * controlled by the flushDelay property of this
    * TraceWriter's config.
+   * @private
    */
-  scheduleFlush_() {
+  scheduleFlush() {
     this.logger.info('Flushing: performing periodic flush');
-    this.flushBuffer_();
+    this.flushBuffer();
 
     // Do it again after delay
     if (this.isActive) {
@@ -297,7 +296,7 @@ export class TraceWriter extends common.Service {
       // WindowOrWorkerGlobalScope.setTimeout, which returns an integer.
       global
           .setTimeout(
-              this.scheduleFlush_.bind(this),
+              this.scheduleFlush.bind(this),
               this.config.flushDelaySeconds * 1000)
           .unref();
     }
@@ -305,25 +304,26 @@ export class TraceWriter extends common.Service {
 
   /**
    * Serializes the buffered traces to be published asynchronously.
+   * @private
    */
-  flushBuffer_() {
-    if (this.buffer_.length === 0) {
+  flushBuffer() {
+    if (this.buffer.length === 0) {
       return;
     }
 
     // Privatize and clear the buffer.
-    const buffer = this.buffer_;
-    this.buffer_ = [];
+    const buffer = this.buffer;
+    this.buffer = [];
     this.logger.debug('Flushing traces', buffer);
-    this.publish_(`{"traces":[${buffer.join()}]}`);
+    this.publish(`{"traces":[${buffer.join()}]}`);
   }
 
   /**
    * Publishes flushed traces to the network.
-   *
+   * @private
    * @param json The stringified json representation of the queued traces.
    */
-  publish_(json: string) {
+  publish(json: string) {
     const uri = `https://cloudtrace.googleapis.com/v1/projects/${
         this.config.projectId}/traces`;
 

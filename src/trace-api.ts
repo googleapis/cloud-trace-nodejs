@@ -80,8 +80,7 @@ export class TraceAgent implements TraceAgentInterface {
   private logger: Logger;
   private config: TraceAgentConfig;
   // TODO(kjin): Make this private.
-  // tslint:disable-next-line:variable-name
-  public policy_: TracingPolicy.TracePolicy;
+  public policy: TracingPolicy.TracePolicy;
   private namespace: cls.Namespace|null;
 
   /**
@@ -105,7 +104,7 @@ export class TraceAgent implements TraceAgentInterface {
   enable(logger: Logger, config: TraceAgentConfig) {
     this.logger = logger;
     this.config = config;
-    this.policy_ = TracingPolicy.createTracePolicy(config);
+    this.policy = TracingPolicy.createTracePolicy(config);
     this.namespace = cls.getNamespace();
   }
 
@@ -119,7 +118,7 @@ export class TraceAgent implements TraceAgentInterface {
     // never generates traces allows persisting wrapped methods (either because
     // they are already instantiated or the plugin doesn't unpatch them) to
     // short-circuit out of trace generation logic.
-    this.policy_ = new TracingPolicy.TraceNonePolicy();
+    this.policy = new TracingPolicy.TraceNonePolicy();
     this.namespace = null;
   }
 
@@ -143,7 +142,7 @@ export class TraceAgent implements TraceAgentInterface {
       return fn(null);
     }
 
-    // This is safe because isActive checks the value of this.namespace_.
+    // This is safe because isActive checks the value of this.namespace.
     const namespace = this.namespace as cls.Namespace;
     // TODO validate options
     // Don't create a root span if we are already in a root span
@@ -165,7 +164,7 @@ export class TraceAgent implements TraceAgentInterface {
       // Consult the trace policy, and don't create a root span if the trace
       // policy disallows it.
       const locallyAllowed =
-          this.policy_.shouldTrace(Date.now(), options.url || '');
+          this.policy.shouldTrace(Date.now(), options.url || '');
       const remotelyAllowed = incomingTraceContext.options === undefined ||
           !!(incomingTraceContext.options &
              Constants.TRACE_OPTIONS_TRACE_ENABLED);
@@ -264,7 +263,7 @@ export class TraceAgent implements TraceAgentInterface {
       return fn;
     }
 
-    // This is safe because isActive checks the value of this.namespace_.
+    // This is safe because isActive checks the value of this.namespace.
     const namespace = this.namespace as cls.Namespace;
     return namespace.bind<T>(fn);
   }
@@ -274,7 +273,7 @@ export class TraceAgent implements TraceAgentInterface {
       return;
     }
 
-    // This is safe because isActive checks the value of this.namespace_.
+    // This is safe because isActive checks the value of this.namespace.
     const namespace = this.namespace as cls.Namespace;
     namespace.bindEmitter(emitter);
   }

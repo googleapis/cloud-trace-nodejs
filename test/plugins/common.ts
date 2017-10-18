@@ -59,7 +59,7 @@ shimmer.wrap(trace, 'start', function(original) {
       ignoreContextHeader: false,
       samplingRate: 0
     });
-    testTraceAgent.policy_ = new TracingPolicy.TraceAllPolicy();
+    testTraceAgent.policy = new TracingPolicy.TraceAllPolicy();
     return result;
   };
 });
@@ -79,18 +79,18 @@ function replaceFunction(target, prop, fn) {
 
 function replaceWarnLogger(fn) {
   var agent = trace.get();
-  return replaceFunction(agent.logger_, 'warn', fn);
+  return replaceFunction(agent.logger, 'warn', fn);
 }
 
 /**
  * Cleans the tracer state between test runs.
  */
 function cleanTraces() {
-  traceWriter.get().buffer_ = [];
+  traceWriter.get().buffer = [];
 }
 
 function getTraces() {
-  return traceWriter.get().buffer_.map(buffer => JSON.parse(buffer));
+  return traceWriter.get().buffer.map(buffer => JSON.parse(buffer));
 }
 
 function getMatchingSpan(predicate) {
