@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import common = require('@google-cloud/common');
-import { Constants } from './constants';
+import * as common from '@google-cloud/common';
 import * as gcpMetadata from 'gcp-metadata';
-import { OutgoingHttpHeaders } from 'http';
-import { SpanData } from './span-data';
-import { Trace } from './trace';
-import { TraceLabels } from './trace-labels';
+import {OutgoingHttpHeaders} from 'http';
 import * as util from 'util';
+
+import {Constants} from './constants';
+import {SpanData} from './span-data';
+import {Trace} from './trace';
+import {TraceLabels} from './trace-labels';
 
 const pjson = require('../../package.json');
 
@@ -40,30 +41,24 @@ export interface TraceWriterConfig extends common.ServiceAuthenticationConfig {
   flushDelaySeconds: number;
   stackTraceLimit: number;
   maximumLabelValueSize: number;
-  serviceContext: {
-    service?: string;
-    version?: string;
-    minorVersion?: string;
-  };
+  serviceContext: {service?: string; version?: string; minorVersion?: string;};
 }
 
-export interface LabelObject {
-  [key: string]: string;
-}
+export interface LabelObject { [key: string]: string; }
 
 /**
  * A class representing a service that publishes traces in the background.
  */
 export class TraceWriter extends common.Service {
   // TODO(kjin): Make public members private (they're public for testing)
-  private logger_: common.Logger;
-  private config_: TraceWriterConfig;
+  private logger: common.Logger;
+  private config: TraceWriterConfig;
   /** Stringified traces to be published */
-  public buffer_: string[];
+  public buffer: string[];
   /** Default labels to be attached to written spans */
-  public defaultLabels_: LabelObject;
+  public defaultLabels: LabelObject;
   /** Reference to global unhandled exception handler */
-  private unhandledException_?: () => void;
+  private unhandledException?: () => void;
   /** Whether the trace writer is active */
   isActive: boolean;
 
@@ -75,82 +70,86 @@ export class TraceWriter extends common.Service {
    * @constructor
    */
   constructor(logger: common.Logger, config: TraceWriterConfig) {
-    super({
-      packageJson: pjson,
-      projectIdRequired: false,
-      baseUrl: 'https://cloudtrace.googleapis.com/v1',
-      scopes: SCOPES
-    }, config || {});
+    super(
+        {
+          packageJson: pjson,
+          projectIdRequired: false,
+          baseUrl: 'https://cloudtrace.googleapis.com/v1',
+          scopes: SCOPES
+        },
+        config);
 
-    config = config || {};
-  
-    this.logger_ = logger;
-    this.config_ = config;
-    this.buffer_ = [];
-    this.defaultLabels_ = {};
+    this.logger = logger;
+    this.config = config;
+    this.buffer = [];
+    this.defaultLabels = {};
 
     this.isActive = true;
-  
+
     if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
-      logger.error('The value of onUncaughtException ' + config.onUncaughtException + ' should be one of ',
-        onUncaughtExceptionValues);
+      logger.error(
+          'The value of onUncaughtException ' + config.onUncaughtException +
+              ' should be one of ',
+          onUncaughtExceptionValues);
       // TODO(kjin): Either log an error or throw one, but not both
       throw new Error('Invalid value for onUncaughtException configuration.');
     }
     const onUncaughtException = config.onUncaughtException;
     if (onUncaughtException !== 'ignore') {
-      this.unhandledException_ = () => {
-        this.flushBuffer_();
+      this.unhandledException = () => {
+        this.flushBuffer();
         if (onUncaughtException === 'flushAndExit') {
           setTimeout(function() {
             process.exit(1);
           }, 2000);
         }
       };
-      process.on('uncaughtException', this.unhandledException_);
+      process.on('uncaughtException', this.unhandledException);
     }
   }
 
   stop(): void {
     this.isActive = false;
-  };
+  }
 
   initialize(cb: (err?: Error) => void): void {
     // Ensure that cb is called only once.
     let pendingOperations = 2;
-  
+
     // Schedule periodic flushing of the buffer, but only if we are able to get
     // the project number (potentially from the network.)
     this.getProjectId((err: Error, project: string) => {
       if (err) {
-        this.logger_.error('Unable to acquire the project number from metadata ' +
-          'service. Please provide a valid project number as an env. ' +
-          'variable, or through config.projectId passed to start(). ' + err);
+        this.logger.error(
+            'Unable to acquire the project number from metadata ' +
+            'service. Please provide a valid project number as an env. ' +
+            'variable, or through config.projectId passed to start(). ' + err);
         cb(err);
       } else {
-        this.config_.projectId = project;
-        this.scheduleFlush_();
+        this.config.projectId = project;
+        this.scheduleFlush();
         if (--pendingOperations === 0) {
           cb();
         }
       }
     });
-  
+
     this.getHostname((hostname) => {
       this.getInstanceId((instanceId) => {
         const labels: LabelObject = {};
-        labels[TraceLabels.AGENT_DATA] = 'node ' + pjson.name + ' v' + pjson.version;
+        labels[TraceLabels.AGENT_DATA] =
+            'node ' + pjson.name + ' v' + pjson.version;
         labels[TraceLabels.GCE_HOSTNAME] = hostname;
         if (instanceId) {
           labels[TraceLabels.GCE_INSTANCE_ID] = instanceId;
         }
-        const moduleName = this.config_.serviceContext.service || hostname;
+        const moduleName = this.config.serviceContext.service || hostname;
         labels[TraceLabels.GAE_MODULE_NAME] = moduleName;
-  
-        const moduleVersion = this.config_.serviceContext.version;
+
+        const moduleVersion = this.config.serviceContext.version;
         if (moduleVersion) {
           labels[TraceLabels.GAE_MODULE_VERSION] = moduleVersion;
-          const minorVersion = this.config_.serviceContext.minorVersion;
+          const minorVersion = this.config.serviceContext.minorVersion;
           if (minorVersion) {
             let versionLabel = '';
             if (moduleName !== 'default') {
@@ -161,80 +160,77 @@ export class TraceWriter extends common.Service {
           }
         }
         Object.freeze(labels);
-        this.defaultLabels_ = labels;
+        this.defaultLabels = labels;
         if (--pendingOperations === 0) {
           cb();
         }
       });
     });
-  };
-  
-  config(): TraceWriterConfig {
-    return this.config_;
-  };
-  
+  }
+
+  getConfig(): TraceWriterConfig {
+    return this.config;
+  }
+
   getHostname(cb: (hostname: string) => void) {
-    gcpMetadata.instance({
-      property: 'hostname',
-      headers: headers
-    }, (err, response, hostname) => {
-      if (err && err.code !== 'ENOTFOUND') {
-        // We are running on GCP.
-        this.logger_.warn('Unable to retrieve GCE hostname.', err);
-      }
-      cb(hostname || require('os').hostname());
-    });
-  };
-  
+    gcpMetadata.instance(
+        {property: 'hostname', headers: headers}, (err, response, hostname) => {
+          if (err && err.code !== 'ENOTFOUND') {
+            // We are running on GCP.
+            this.logger.warn('Unable to retrieve GCE hostname.', err);
+          }
+          cb(hostname || require('os').hostname());
+        });
+  }
+
   getInstanceId(cb: (instanceId?: string) => void) {
-    gcpMetadata.instance({
-      property: 'id',
-      headers: headers
-    }, (err, response, instanceId) => {
-      if (err && err.code !== 'ENOTFOUND') {
-        // We are running on GCP.
-        this.logger_.warn('Unable to retrieve GCE instance id.', err);
-      }
-      instanceId ? cb(instanceId) : cb();
-    });
-  };
-  
+    gcpMetadata.instance(
+        {property: 'id', headers: headers}, (err, response, instanceId) => {
+          if (err && err.code !== 'ENOTFOUND') {
+            // We are running on GCP.
+            this.logger.warn('Unable to retrieve GCE instance id.', err);
+          }
+          instanceId ? cb(instanceId) : cb();
+        });
+  }
+
   /**
    * Returns the project ID if it has been cached and attempts to load
    * it from the enviroment or network otherwise.
    */
-  getProjectId(callback: (err: Error | null, projectId?: string) => void) {
-    if (this.config_.projectId) {
-      callback(null, this.config_.projectId);
+  getProjectId(callback: (err: Error|null, projectId?: string) => void) {
+    if (this.config.projectId) {
+      callback(null, this.config.projectId);
       return;
     }
-  
-    gcpMetadata.project({
-      property: 'project-id',
-      headers: headers
-    }, (err, response, projectId) => {
-      if (response && response.statusCode !== 200) {
-        if (response.statusCode === 503) {
-          err = new Error('Metadata service responded with a 503 status ' +
-            'code. This may be due to a temporary server error; please try ' +
-            'again later.');
-        } else {
-          err = new Error('Metadata service responded with the following ' +
-            'status code: ' + response.statusCode);
-        }
-      }
-      if (err || !projectId) {
-        // We shouldn't observe a falsey projectId if there's no error
-        err = err || new Error('Project ID missing.');
-        callback(err);
-        return;
-      }
-      this.logger_.info('Acquired ProjectId from metadata: ' + projectId);
-      this.config_.projectId = projectId;
-      callback(null, projectId);
-    });
-  };
-  
+
+    gcpMetadata.project(
+        {property: 'project-id', headers: headers},
+        (err, response, projectId) => {
+          if (response && response.statusCode !== 200) {
+            if (response.statusCode === 503) {
+              err = new Error(
+                  'Metadata service responded with a 503 status ' +
+                  'code. This may be due to a temporary server error; please try ' +
+                  'again later.');
+            } else {
+              err = new Error(
+                  'Metadata service responded with the following ' +
+                  'status code: ' + response.statusCode);
+            }
+          }
+          if (err || !projectId) {
+            // We shouldn't observe a falsey projectId if there's no error
+            err = err || new Error('Project ID missing.');
+            callback(err);
+            return;
+          }
+          this.logger.info('Acquired ProjectId from metadata: ' + projectId);
+          this.config.projectId = projectId;
+          callback(null, projectId);
+        });
+  }
+
   /**
    * Ensures that all sub spans of the provided spanData are
    * closed and then queues the span data to be published.
@@ -247,99 +243,106 @@ export class TraceWriter extends common.Service {
         span.close();
       }
     }
-  
+
     // Copy properties from the default labels.
-    for (const k in this.defaultLabels_) {
-      if (this.defaultLabels_.hasOwnProperty(k)) {
-        spanData.addLabel(k, this.defaultLabels_[k]);
+    for (const k in this.defaultLabels) {
+      if (this.defaultLabels.hasOwnProperty(k)) {
+        spanData.addLabel(k, this.defaultLabels[k]);
       }
     }
-    this.queueTrace_(spanData.trace);
-  };
-  
+    this.queueTrace(spanData.trace);
+  }
+
   /**
    * Buffers the provided trace to be published.
    *
    * @private
    * @param trace The trace to be queued.
    */
-  queueTrace_(trace: Trace) {
+  queueTrace(trace: Trace) {
     this.getProjectId((err, projectId?) => {
       if (err || !projectId) {
-        this.logger_.info('No project number, dropping trace.');
-        return; // if we even reach this point, disabling traces is already imminent.
+        this.logger.info('No project number, dropping trace.');
+        return;  // if we even reach this point, disabling traces is already
+                 // imminent.
       }
-  
+
       trace.projectId = projectId;
-      this.buffer_.push(JSON.stringify(trace));
-      this.logger_.debug('queued trace. new size:', this.buffer_.length);
-  
+      this.buffer.push(JSON.stringify(trace));
+      this.logger.debug('queued trace. new size:', this.buffer.length);
+
       // Publish soon if the buffer is getting big
-      if (this.buffer_.length >= this.config_.bufferSize) {
-        this.logger_.info('Flushing: trace buffer full');
-        setImmediate(() => this.flushBuffer_());
+      if (this.buffer.length >= this.config.bufferSize) {
+        this.logger.info('Flushing: trace buffer full');
+        setImmediate(() => this.flushBuffer());
       }
     });
-  };
-  
+  }
+
   /**
    * Flushes the buffer of traces at a regular interval
    * controlled by the flushDelay property of this
    * TraceWriter's config.
+   * @private
    */
-  scheduleFlush_() {
-    this.logger_.info('Flushing: performing periodic flush');
-    this.flushBuffer_();
-  
+  scheduleFlush() {
+    this.logger.info('Flushing: performing periodic flush');
+    this.flushBuffer();
+
     // Do it again after delay
     if (this.isActive) {
-      setTimeout(this.scheduleFlush_.bind(this),
-        this.config_.flushDelaySeconds * 1000).unref();
+      // 'global.setTimeout' avoids TS2339 on this line.
+      // It helps disambiguate the Node runtime setTimeout function from
+      // WindowOrWorkerGlobalScope.setTimeout, which returns an integer.
+      global
+          .setTimeout(
+              this.scheduleFlush.bind(this),
+              this.config.flushDelaySeconds * 1000)
+          .unref();
     }
-  };
-  
+  }
+
   /**
    * Serializes the buffered traces to be published asynchronously.
+   * @private
    */
-  flushBuffer_() {
-    if (this.buffer_.length === 0) {
+  flushBuffer() {
+    if (this.buffer.length === 0) {
       return;
     }
-  
+
     // Privatize and clear the buffer.
-    const buffer = this.buffer_;
-    this.buffer_ = [];
-    this.logger_.debug('Flushing traces', buffer);
-    this.publish_(`{"traces":[${buffer.join()}]}`);
-  };
-  
+    const buffer = this.buffer;
+    this.buffer = [];
+    this.logger.debug('Flushing traces', buffer);
+    this.publish(`{"traces":[${buffer.join()}]}`);
+  }
+
   /**
    * Publishes flushed traces to the network.
-   * 
+   * @private
    * @param json The stringified json representation of the queued traces.
    */
-  publish_(json: string) {
-    const uri = `https://cloudtrace.googleapis.com/v1/projects/${this.config_.projectId}/traces`;
-  
-    const options = {
-      method: 'PATCH',
-      uri: uri,
-      body: json,
-      headers: headers
-    };
-    this.logger_.debug('TraceWriter: publishing to ' + uri);
+  publish(json: string) {
+    const uri = `https://cloudtrace.googleapis.com/v1/projects/${
+        this.config.projectId}/traces`;
+
+    const options = {method: 'PATCH', uri: uri, body: json, headers: headers};
+    this.logger.debug('TraceWriter: publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
       if (err) {
-        this.logger_.error('TraceWriter: error: ',
-          ((response && response.statusCode) || '') + '\n' + err.stack);
+        this.logger.error(
+            'TraceWriter: error: ',
+            ((response && response.statusCode) || '') + '\n' + err.stack);
       } else {
-        this.logger_.info('TraceWriter: published. statusCode: ' + response.statusCode);
+        this.logger.info(
+            'TraceWriter: published. statusCode: ' + response.statusCode);
       }
     });
-  };
+  }
 }
 
-export type TraceWriterSingletonConfig = TraceWriterConfig & {
+export type TraceWriterSingletonConfig = TraceWriterConfig&{
   forceNewAgent_: boolean;
 };
 
@@ -347,9 +350,11 @@ export type TraceWriterSingletonConfig = TraceWriterConfig & {
 let singleton: TraceWriter;
 
 export const traceWriter = {
-  create(logger: common.Logger, config: TraceWriterSingletonConfig, cb?: (err?: Error) => void)
-      : TraceWriter {
+  create(
+      logger: common.Logger, config: TraceWriterSingletonConfig,
+      cb?: (err?: Error) => void): TraceWriter {
     if (!cb) {
+      // tslint:disable-next-line:no-empty
       cb = () => {};
     }
     if (!singleton || config.forceNewAgent_) {

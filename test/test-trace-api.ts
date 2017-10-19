@@ -39,7 +39,7 @@ function createTraceAgent(policy?, config?) {
     enhancedDatabaseReporting: false,
     ignoreContextHeader: false
   });
-  result.policy_ = policy || new TracingPolicy.TraceAllPolicy();
+  result.policy = policy || new TracingPolicy.TraceAllPolicy();
   return result;
 }
 

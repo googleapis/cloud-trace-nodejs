@@ -16,15 +16,15 @@
 
 'use strict';
 
-import { Logger } from '@google-cloud/common';
+import {Logger} from '@google-cloud/common';
 import * as cls from './cls';
-import { Constants } from './constants';
+import {Constants} from './constants';
 import * as is from 'is';
-import { Func, SpanOptions, RootSpanOptions, TraceAgent as TraceAgentInterface } from './plugin-types';
+import {Func, SpanOptions, RootSpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
 import * as semver from 'semver';
-import { SpanData } from './span-data';
-import { Trace } from './trace';
-import { TraceLabels } from './trace-labels';
+import {SpanData} from './span-data';
+import {Trace} from './trace';
+import {TraceLabels} from './trace-labels';
 import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
 import * as uuid from 'uuid';
@@ -40,10 +40,10 @@ export interface TraceAgentConfig extends TracingPolicy.TracePolicyConfig {
 }
 
 interface IncomingTraceContext {
-  traceId?: string,
-  spanId?: string,
-  options?: number
-};
+  traceId?: string;
+  spanId?: string;
+  options?: number;
+}
 
 /**
  * Type guard that returns whether an object is a string or not.
@@ -54,15 +54,16 @@ function isString(obj: any): obj is string {
 
 /**
  * Type guard that returns whether an object is a SpanData object or not.
- * 
- * @param obj 
+ *
+ * @param obj
  */
 function isSpanData(obj: cls.RootContext): obj is SpanData {
   // The second condition ensures that obj is not nullSpan.
   return !!obj && !!(obj as SpanData).span;
 }
 
-// A sentinal stored in CLS to indicate that the current request was not sampled.
+// A sentinal stored in CLS to indicate that the current request was not
+// sampled.
 const nullSpan = Object.freeze({});
 
 const ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
@@ -75,36 +76,37 @@ export class TraceAgent implements TraceAgentInterface {
   public readonly constants = Constants;
   public readonly labels = TraceLabels;
 
-  private pluginName_: string;
-  private logger_: Logger;
-  private config_: TraceAgentConfig;
+  private pluginName: string;
+  private logger: Logger;
+  private config: TraceAgentConfig;
   // TODO(kjin): Make this private.
-  public policy_: TracingPolicy.TracePolicy;
-  private namespace_: cls.Namespace | null;
+  public policy: TracingPolicy.TracePolicy;
+  private namespace: cls.Namespace|null;
 
   /**
    * Constructs a new TraceAgent instance.
    * @param name A string identifying this TraceAgent instance in logs.
    */
   constructor(name: string) {
-    this.pluginName_ = name;
-    this.disable(); // disable immediately
+    this.pluginName = name;
+    this.disable();  // disable immediately
   }
 
   /**
    * Enables this instance. This function is only for internal use and
-   * unit tests. A separate TraceWriter instance should be initialized beforehand.
+   * unit tests. A separate TraceWriter instance should be initialized
+   * beforehand.
    * @param logger A logger object.
    * @param config An object specifying how this instance should
    * be configured.
    * @private
    */
   enable(logger: Logger, config: TraceAgentConfig) {
-    this.logger_ = logger;
-    this.config_ = config;
-    this.policy_ = TracingPolicy.createTracePolicy(config);
-    this.namespace_ = cls.getNamespace();
-  };
+    this.logger = logger;
+    this.config = config;
+    this.policy = TracingPolicy.createTracePolicy(config);
+    this.namespace = cls.getNamespace();
+  }
 
   /**
    * Disable this instance. This function is only for internal use and
@@ -116,42 +118,43 @@ export class TraceAgent implements TraceAgentInterface {
     // never generates traces allows persisting wrapped methods (either because
     // they are already instantiated or the plugin doesn't unpatch them) to
     // short-circuit out of trace generation logic.
-    this.policy_ = new TracingPolicy.TraceNonePolicy();
-    this.namespace_ = null;
-  };
+    this.policy = new TracingPolicy.TraceNonePolicy();
+    this.namespace = null;
+  }
 
   /**
-   * Returns whether the TraceAgent instance is active. This function is only for
-   * internal use and unit tests; under normal circumstances it will always return
-   * true.
+   * Returns whether the TraceAgent instance is active. This function is only
+   * for internal use and unit tests; under normal circumstances it will always
+   * return true.
    * @private
    */
   isActive(): boolean {
-    return !!this.namespace_;
-  };
+    return !!this.namespace;
+  }
 
   enhancedDatabaseReportingEnabled(): boolean {
-    return !!this.config_ && this.config_.enhancedDatabaseReporting;
-  };
+    return !!this.config && this.config.enhancedDatabaseReporting;
+  }
 
-  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData | null) => T): T {
+  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData|null) => T):
+      T {
     if (!this.isActive()) {
       return fn(null);
     }
 
-    // This is safe because isActive checks the value of this.namespace_.
-    const namespace = this.namespace_ as cls.Namespace;
+    // This is safe because isActive checks the value of this.namespace.
+    const namespace = this.namespace as cls.Namespace;
     // TODO validate options
     // Don't create a root span if we are already in a root span
     if (cls.getRootContext()) {
-      this.logger_.warn(this.pluginName_ + ': Cannot create nested root spans.');
+      this.logger.warn(this.pluginName + ': Cannot create nested root spans.');
       return fn(null);
     }
 
     return namespace.runAndReturn(() => {
       // Attempt to read incoming trace context.
       let incomingTraceContext: IncomingTraceContext = {};
-      if (isString(options.traceContext) && !this.config_.ignoreContextHeader) {
+      if (isString(options.traceContext) && !this.config.ignoreContextHeader) {
         const parsedContext = util.parseContextFromHeader(options.traceContext);
         if (parsedContext) {
           incomingTraceContext = parsedContext;
@@ -160,29 +163,33 @@ export class TraceAgent implements TraceAgentInterface {
 
       // Consult the trace policy, and don't create a root span if the trace
       // policy disallows it.
-      const locallyAllowed = this.policy_.shouldTrace(Date.now(), options.url || '');
+      const locallyAllowed =
+          this.policy.shouldTrace(Date.now(), options.url || '');
       const remotelyAllowed = incomingTraceContext.options === undefined ||
-        !!(incomingTraceContext.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
+          !!(incomingTraceContext.options &
+             Constants.TRACE_OPTIONS_TRACE_ENABLED);
       if (!locallyAllowed || !remotelyAllowed) {
         cls.setRootContext(nullSpan);
         return fn(null);
       }
 
       // Create a new root span, and invoke fn with it.
-      const traceId = incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
+      const traceId =
+          incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
       const parentId = incomingTraceContext.spanId || '0';
-      const rootContext = new SpanData(new Trace('', traceId), /* Trace object */
-        options.name, /* Span name */
-        parentId, /* Parent's span ID */
-        true, /* Is root span */
-        ROOT_SPAN_STACK_OFFSET + (options.skipFrames || 0));
+      const rootContext = new SpanData(
+          new Trace('', traceId), /* Trace object */
+          options.name,           /* Span name */
+          parentId,               /* Parent's span ID */
+          true,                   /* Is root span */
+          ROOT_SPAN_STACK_OFFSET + (options.skipFrames || 0));
       rootContext.span.kind = 'RPC_SERVER';
       cls.setRootContext(rootContext);
       return fn(rootContext);
     });
-  };
+  }
 
-  getCurrentContextId(): string | null {
+  getCurrentContextId(): string|null {
     if (!this.isActive()) {
       return null;
     }
@@ -192,26 +199,27 @@ export class TraceAgent implements TraceAgentInterface {
       return null;
     }
     return rootSpan.trace.traceId;
-  };
+  }
 
-  getWriterProjectId(): string | null {
-    if (this.config_) {
-      return this.config_.projectId || null;
+  getWriterProjectId(): string|null {
+    if (this.config) {
+      return this.config.projectId || null;
     } else {
       return null;
     }
-  };
+  }
 
-  createChildSpan(options: SpanOptions): SpanData | null {
+  createChildSpan(options: SpanOptions): SpanData|null {
     if (!this.isActive()) {
       return null;
     }
-    
+
     const rootSpan = cls.getRootContext();
     if (!rootSpan) {
       // Context was lost.
-      this.logger_.warn(this.pluginName_ + ': Attempted to create child span ' +
-        'without root');
+      this.logger.warn(
+          this.pluginName + ': Attempted to create child span ' +
+          'without root');
       return null;
     } else if (!isSpanData(rootSpan)) {
       // Context wasn't lost, but there's no root span, indicating that this
@@ -219,22 +227,25 @@ export class TraceAgent implements TraceAgentInterface {
       return null;
     } else {
       if (rootSpan.span.isClosed()) {
-        this.logger_.warn(this.pluginName_ + ': creating child for an already closed span',
-          options.name, rootSpan.span.name);
+        this.logger.warn(
+            this.pluginName + ': creating child for an already closed span',
+            options.name, rootSpan.span.name);
       }
       // Create a new child span and return it.
-      options = options || {};
+      options = options || {name: ''};
       const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-      const childContext = new SpanData(rootSpan.trace, /* Trace object */
-        options.name, /* Span name */
-        rootSpan.span.spanId, /* Parent's span ID */
-        false, /* Is root span */
-        skipFrames); /* # of frames to skip in stack trace */
+      const childContext = new SpanData(
+          rootSpan.trace,       /* Trace object */
+          options.name,         /* Span name */
+          rootSpan.span.spanId, /* Parent's span ID */
+          false,                /* Is root span */
+          skipFrames);          /* # of frames to skip in stack trace */
       return childContext;
     }
-  };
+  }
 
-  getResponseTraceContext(incomingTraceContext: string | null, isTraced: boolean): string {
+  getResponseTraceContext(incomingTraceContext: string|null, isTraced: boolean):
+      string {
     if (!this.isActive() || !incomingTraceContext) {
       return '';
     }
@@ -245,25 +256,25 @@ export class TraceAgent implements TraceAgentInterface {
     }
     traceContext.options = (traceContext.options || 0) & (isTraced ? 1 : 0);
     return util.generateTraceContext(traceContext);
-  };
+  }
 
   wrap<T>(fn: Func<T>): Func<T> {
     if (!this.isActive()) {
       return fn;
     }
 
-    // This is safe because isActive checks the value of this.namespace_.
-    const namespace = this.namespace_ as cls.Namespace;
+    // This is safe because isActive checks the value of this.namespace.
+    const namespace = this.namespace as cls.Namespace;
     return namespace.bind<T>(fn);
-  };
+  }
 
   wrapEmitter(emitter: NodeJS.EventEmitter): void {
     if (!this.isActive()) {
       return;
     }
 
-    // This is safe because isActive checks the value of this.namespace_.
-    const namespace = this.namespace_ as cls.Namespace;
+    // This is safe because isActive checks the value of this.namespace.
+    const namespace = this.namespace as cls.Namespace;
     namespace.bindEmitter(emitter);
-  };
+  }
 }

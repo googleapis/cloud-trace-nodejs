@@ -17,16 +17,16 @@
 'use strict';
 
 import * as asyncHook from 'async_hooks';
-import { Context, Func, Namespace as CLSNamespace } from 'continuation-local-storage';
+import {Context, Func, Namespace as CLSNamespace} from 'continuation-local-storage';
 
 const wrappedSymbol = Symbol('context_wrapped');
-let contexts = {};
+let contexts: {[asyncId: number]: Context;} = {};
 let current: Context = {};
 
 asyncHook.createHook({init, before, destroy}).enable();
 
 const EVENT_EMITTER_METHODS =
-  [ 'addListener', 'on', 'once', 'prependListener', 'prependOncelistener' ];
+    ['addListener', 'on', 'once', 'prependListener', 'prependOncelistener'];
 
 class AsyncHooksNamespace implements CLSNamespace {
   get name(): string {
@@ -64,18 +64,20 @@ class AsyncHooksNamespace implements CLSNamespace {
   }
 
   bind<T>(cb: Func<T>): Func<T> {
-    if (cb[wrappedSymbol] || !current) {
+    // TODO(kjin): Monitor https://github.com/Microsoft/TypeScript/pull/15473.
+    // When it's landed and released, we can remove these `any` casts.
+    if ((cb as any)[wrappedSymbol] as boolean || !current) {
       return cb;
     }
     const boundContext = current;
-    const contextWrapper = function() {
+    const contextWrapper = function(this: any) {
       const oldContext = current;
       current = boundContext;
-      const res = cb.apply(this, arguments);
+      const res = cb.apply(this, arguments) as T;
       current = oldContext;
       return res;
     };
-    contextWrapper[wrappedSymbol] = true;
+    (contextWrapper as any)[wrappedSymbol] = true;
     Object.defineProperty(contextWrapper, 'length', {
       enumerable: false,
       configurable: true,
@@ -84,16 +86,20 @@ class AsyncHooksNamespace implements CLSNamespace {
     });
     return contextWrapper;
   }
-  
-  // This function is not technically needed and all tests currently pass without it
-  // (after removing call sites). While it is not a complete solution, restoring
-  // correct context before running every request/response event handler reduces
-  // the number of situations in which userspace queuing will cause us to lose context.
+
+  // This function is not technically needed and all tests currently pass
+  // without it (after removing call sites). While it is not a complete
+  // solution, restoring correct context before running every request/response
+  // event handler reduces the number of situations in which userspace queuing
+  // will cause us to lose context.
   bindEmitter(ee: NodeJS.EventEmitter): void {
     const ns = this;
     EVENT_EMITTER_METHODS.forEach(function(method) {
-      const oldMethod = ee[method];
-      ee[method] = function(e, f) { return oldMethod.call(this, e, ns.bind(f)); };
+      // TODO(kjin): Presumably also dependent on MS/TS-#15473.
+      const oldMethod = (ee as any)[method];
+      (ee as any)[method] = function(event: string, cb: Func<void>) {
+        return oldMethod.call(this, event, ns.bind(cb));
+      };
     });
   }
 }
@@ -102,28 +108,29 @@ const namespace = new AsyncHooksNamespace();
 
 // AsyncWrap Hooks
 
-function init(uid, provider, parentUid, parentHandle) {
+function init(
+    uid: number, provider: string, parentUid: number, parentHandle: Object) {
   contexts[uid] = current;
 }
 
-function before(uid) {
+function before(uid: number) {
   if (contexts[uid]) {
     current = contexts[uid];
   }
 }
 
-function destroy(uid) {
+function destroy(uid: number) {
   delete contexts[uid];
 }
 
 export function createNamespace(): CLSNamespace {
   return namespace;
-};
+}
 
 export function destroyNamespace(): void {
   current = {};
   contexts = {};
-};
+}
 
 export function getNamespace(): CLSNamespace {
   return namespace;

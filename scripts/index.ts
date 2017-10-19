@@ -16,7 +16,7 @@ async function run(steps: string[]) {
         'npm',
         [
           'run',
-          ...moduleAndArgs.slice(1)
+          moduleAndArgs.slice(1).join('-')
         ]
       );
       continue;

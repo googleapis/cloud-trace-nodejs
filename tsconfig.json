@@ -1,18 +1,13 @@
 {
-  "extends": "./node_modules/gts/tsconfig-google.json",
+  "extends": "./tsconfig.full.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "build",
-    "target": "es2015",
-    "allowUnreachableCode": true,
-    "noUnusedParameters": false,
-    "noImplicitAny": false,
-    "noImplicitThis": false,
-    "noEmitOnError": false
+    "allowUnreachableCode": false,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noEmitOnError": true
   },
   "include": [
     "*.ts",
-    "src/**/*.ts",
-    "test/**/*.ts"
+    "src/*.ts"
   ]
 }

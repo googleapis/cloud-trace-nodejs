@@ -33,7 +33,7 @@ var agent = require('..').start({ logLevel: 3,
 
 describe('should respect config load order', function() {
   it('should order Default -> env config -> start -> env specific', function() {
-    var config = agent.config_;
+    var config = agent.config;
 
     assert.equal(config.logLevel, 2);
     assert.equal(config.stackTraceLimit, 2);

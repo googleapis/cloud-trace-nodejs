@@ -25,13 +25,13 @@ var trace = require('..');
 describe('maximumLabelValueSize configuration', function() {
   it('should not allow values above server maximum', function() {
     trace.start({forceNewAgent_: true, maximumLabelValueSize: 1000000});
-    var valueMax = traceWriter.get().config().maximumLabelValueSize;
+    var valueMax = traceWriter.get().getConfig().maximumLabelValueSize;
     assert.strictEqual(valueMax, Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
   });
 
   it('should not modify values below server maximum', function() {
     trace.start({forceNewAgent_: true, maximumLabelValueSize: 10});
-    var valueMax = traceWriter.get().config().maximumLabelValueSize;
+    var valueMax = traceWriter.get().getConfig().maximumLabelValueSize;
     assert.strictEqual(valueMax, 10);
   });
 });

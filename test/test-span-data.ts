@@ -108,7 +108,7 @@ describe('SpanData', function() {
       var longLabelVal = Array(16550).join('a');
       spanData.addLabel('a', longLabelVal);
       assert.strictEqual(spanData.span.labels.a,
-        Array(traceWriter.get().config().maximumLabelValueSize - 2).join('a') +
+        Array(traceWriter.get().getConfig().maximumLabelValueSize - 2).join('a') +
           '...');
     });
   });
@@ -125,7 +125,7 @@ describe('SpanData', function() {
   });
 
   it('captures stack traces', function() {
-    traceWriter.get().config().stackTraceLimit = 25;
+    traceWriter.get().getConfig().stackTraceLimit = 25;
     cls.getNamespace().run(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
       assert.ok(!spanData.span.isClosed());
@@ -141,7 +141,7 @@ describe('SpanData', function() {
   });
 
   it('does not limit stack trace', function() {
-    traceWriter.get().config().maximumLabelValueSize = 10;
+    traceWriter.get().getConfig().maximumLabelValueSize = 10;
     cls.getNamespace().run(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
       spanData.endSpan();
