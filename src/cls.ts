@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import * as semver from 'semver';
-import {SpanData} from './span-data';
 import * as CLS from 'continuation-local-storage';
+import * as semver from 'semver';
+
+import {SpanData} from './span-data';
 
 export type RootContext = SpanData|{} /* null span */|null;
 export type Namespace = CLS.Namespace;
