@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 import {Constants} from './constants';
 import {SpanData as SpanDataInterface} from './plugin-types';
 import {Trace} from './trace';

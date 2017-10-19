@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 import {Logger} from '@google-cloud/common';
 import * as cls from './cls';
 import {Constants} from './constants';

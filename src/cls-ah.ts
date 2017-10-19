@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 import * as asyncHook from 'async_hooks';
 import {Context, Func, Namespace as CLSNamespace} from 'continuation-local-storage';
 

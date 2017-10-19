@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 import * as semver from 'semver';
 import {SpanData} from './span-data';
 import * as CLS from 'continuation-local-storage';

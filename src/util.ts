@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 import * as fs from 'fs';
 import Module = require('module');
 import * as path from 'path';

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 import {TraceSpan} from './trace-span';
 
 export class Trace {

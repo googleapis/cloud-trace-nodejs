@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-'use strict';
-
 // TODO(kjin): Once tests are fully converted, undercase the name of this
 // variable.
 /** Constant values. */
