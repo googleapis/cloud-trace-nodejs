@@ -134,7 +134,7 @@ function stop() {
  * @example
  * trace.start();
  */
-export function start(projectConfig?: Config): TraceAgent {
+export function start(projectConfig?: Config): PluginTypes.TraceAgent {
   const config: NormalizedConfig = initConfig(projectConfig || {});
 
   if (traceAgent.isActive() && !config.forceNewAgent_) {  // already started.
@@ -187,7 +187,7 @@ export function start(projectConfig?: Config): TraceAgent {
   return traceAgent;
 }
 
-export function get() {
+export function get(): PluginTypes.TraceAgent {
   return traceAgent;
 }
 
