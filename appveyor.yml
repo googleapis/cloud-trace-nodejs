@@ -34,6 +34,8 @@ before_test:
 
 # Post-install test scripts.
 test_script:
+  # check that installing this module is OK
+  - npm run check-install
   # run tests
   - npm run test
 
