@@ -9,7 +9,7 @@
     "non-interference": "ts-node -P ./scripts ./scripts npm-compile test-non-interference",
     "system-test": "ts-node -P ./scripts ./scripts npm-compile decrypt-service-account-key run-system-tests",
     "changelog": "./bin/run-changelog.sh",
-    "check-install": "ts-node -P ./scripts ./scripts check-install",
+    "check-install": "ts-node -P ./scripts ./scripts npm-compile check-install",
     "coverage": "ts-node -P ./scripts ./scripts npm-check npm-compile init-test-fixtures run-unit-tests-with-coverage report-coverage",
     "bump": "./bin/run-bump.sh",
     "check": "gts check",

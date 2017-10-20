@@ -12,11 +12,14 @@ export default async function() {
   const installDir = await tmpDirP();
   console.log(installDir);
   await spawnP('npm', ['pack']);
-  const tgz = (await globP(`${process.cwd()}/*.tgz`)).join(' '); // should be only one
+  const tgz = await globP(`${process.cwd()}/*.tgz`);
+  if (tgz.length !== 1) {
+    throw new Error(`Expected 1 tgz file in current directory, but found ${tgz.length}`);
+  }
   await spawnP('npm', ['init', '-y'], {
     cwd: installDir
   });
-  await spawnP('npm', ['install', 'typescript', '@types/node', tgz], {
+  await spawnP('npm', ['install', 'typescript', '@types/node', tgz[0]], {
     cwd: installDir
   });
   // use-module.ts is a fixture that imports the Trace Agent

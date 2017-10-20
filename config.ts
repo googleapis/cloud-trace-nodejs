@@ -16,13 +16,9 @@
 
 import * as path from 'path';
 
-/**
- * Available configuration options.
- */
+/** Available configuration options. */
 export interface Config {
-  /**
-   * Log levels: 0-disabled,1-error,2-warn,3-info,4-debug
-   */
+  /** Log levels: 0=disabled, 1=error, 2=warn, 3=info, 4=debug */
   logLevel?: number;
 
   /**
@@ -96,7 +92,7 @@ export interface Config {
   /**
    * Specifies the behavior of the trace agent in the case of an uncaught
    * exception. Possible values are:
-   *   `ignore` Take no action. The process may terminate before all the traces
+   *   `ignore`: Take no action. The process may terminate before all the traces
    *            currently buffered have been flushed to the network.
    *   `flush`: Handle the uncaught exception and attempt to publish the traces
    *            to the API. Note that if you have other uncaught exception
