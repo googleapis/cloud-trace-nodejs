@@ -1,5 +1,6 @@
 const [bin, script, ...steps] = process.argv;
 
+import checkInstall from './check-install';
 import decryptServiceAccountKey from './decrypt-service-account-key';
 import initTestFixtures from './init-test-fixtures';
 import reportCoverage from './report-coverage';
@@ -22,6 +23,9 @@ async function run(steps: string[]) {
       continue;
     }
     switch (step) {
+      case 'check-install':
+        await checkInstall();
+        break;
       case 'decrypt-service-account-key':
         if (process.env.TRAVIS_PULL_REQUEST === 'false') {
           await decryptServiceAccountKey();

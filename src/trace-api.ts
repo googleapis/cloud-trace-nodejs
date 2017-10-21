@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-'use strict';
-
 import {Logger} from '@google-cloud/common';
+import * as is from 'is';
+import * as semver from 'semver';
+import * as uuid from 'uuid';
+
 import * as cls from './cls';
 import {Constants} from './constants';
-import * as is from 'is';
-import {Func, SpanOptions, RootSpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
-import * as semver from 'semver';
+import {Func, RootSpanOptions, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
 import {SpanData} from './span-data';
 import {Trace} from './trace';
 import {TraceLabels} from './trace-labels';
 import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
-import * as uuid from 'uuid';
 
 /**
  * An interface describing configuration fields read by the TraceAgent object.

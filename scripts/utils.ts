@@ -5,13 +5,15 @@ import * as path from 'path';
 import * as pify from 'pify';
 import { ChildProcess, ForkOptions, fork, SpawnOptions, spawn } from 'child_process';
 import * as once from 'once';
+import * as tmp from 'tmp';
 
 export const BUILD_DIRECTORY = 'build';
 
 export const globP: (pattern: string) => Promise<string[]> = pify(glob);
 export const ncpP: (src: string, dest: string) => Promise<void> = pify(ncp);
-export const statP: (path: string) => Promise<Stats> = pify(stat);
 export const readFileP: (path: string, encoding?: string) => Promise<Buffer|string> = pify(readFile);
+export const statP: (path: string) => Promise<Stats> = pify(stat);
+export const tmpDirP: () => Promise<string> = pify(tmp.dir);
 
 export function nodule(nodule: string) {
   return path.relative(BUILD_DIRECTORY, `node_modules/${nodule}`);

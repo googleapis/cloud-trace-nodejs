@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-'use strict';
+import * as util from 'util';
 
 import {Constants} from './constants';
 import {SpanData as SpanDataInterface} from './plugin-types';
@@ -23,7 +23,6 @@ import {TraceLabels} from './trace-labels';
 import {TraceSpan} from './trace-span';
 import {traceWriter} from './trace-writer';
 import * as traceUtil from './util';
-import * as util from 'util';
 
 /**
  * Trace API expects stack frames to be a JSON string with the following
