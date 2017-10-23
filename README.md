@@ -18,7 +18,21 @@ This module provides Stackdriver Trace support for Node.js applications. [Stackd
 1. Your application will need to be using Node.js version 4.0 or greater.
 1. You will need a project in the [Google Developers Console][cloud-console]. Your application can run anywhere, but the trace data is associated with a particular project.
 1. [Enable the Trace API](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) for your project.
-1. At this point, code using untranspiled async/await is not supported by this module. See [this section](#how-does-automatic-tracing-work).
+
+### Tracing with `async/await`
+
+Using the trace agent to trace applications using untranspiled `async/await` is not currently supported by default.
+
+Versions 2.2+ ship with an experimental implementation (using the Node 8 `async_hooks` API) that supports `async/await`. To enable this implementation, run your application in an environment where the environmental variable `GCLOUD_TRACE_NEW_CONTEXT` is set:
+
+```bash
+# Requires Node 8+
+$ GCLOUD_TRACE_NEW_CONTEXT=1 npm start
+```
+
+We are actively looking for feedback on this new implementation. Please file an issue if you encounter unexpected or unwanted behavior.
+
+See [this section](#how-does-automatic-tracing-work) for more information.
 
 ## Installation
 
