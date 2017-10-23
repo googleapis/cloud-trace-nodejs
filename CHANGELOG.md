@@ -1,5 +1,34 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-10-20, Version 2.3.0 (Beta), @kjin
+
+### Notable Changes
+
+* The Trace Agent module is now written in TypeScript (save for plugins), and ships with type definitions. This on its own is not expected to produce any API changes. However, any code that reaches into internal files within the Trace Agent will likely break.
+* Support for tracing restify 5 and 6 has been added.
+* The `continuation-local-storage` dependency version has been bumped to 3.2.0.
+
+### Commits
+
+* [[`ac23fc47a1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ac23fc47a1)] - **docs**: mention GCLOUD_TRACE_NEW_CONTEXT (#580) (Kelvin Jin) [#580](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/580)
+* [[`26d6f59236`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/26d6f59236)] - **test**: cleanups and ensure module installs correctly (#578) (Kelvin Jin) [#578](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/578)
+* [[`e732e67727`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e732e67727)] - **style**: start lint/format for src files (#576) (Kelvin Jin) [#576](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/576)
+* [[`cf3ada06b4`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/cf3ada06b4)] - **feat**: expand restify supported version range to include v5, v6 (#577) (Kelvin Jin) [#577](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/577)
+* [[`18547974df`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/18547974df)] - **docs**: update config.ts (#575) (Kelvin Jin)
+* [[`e18697be83`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e18697be83)] - **refactor**: ts conversion of index.ts (#569) (Kelvin Jin) [#569](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/569)
+* [[`b43259f4cb`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b43259f4cb)] - **chore**: update cls dependency version (#573) (Ali Ijaz Sheikh)
+* [[`4785f4708c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4785f4708c)] - **refactor**: bump @types/node (#570) (Kelvin Jin) [#570](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/570)
+* [[`212f45fd2c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/212f45fd2c)] - **refactor**: ts conversion of plugin loader (#568) (Kelvin Jin) [#568](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/568)
+* [[`7af102e521`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7af102e521)] - **refactor**: ts conversion of trace-agent (#567) (Kelvin Jin) [#567](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/567)
+* [[`50ad81155a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/50ad81155a)] - **refactor**: ts conversion of tracing-policy and cls (#559) (Kelvin Jin) [#559](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/559)
+* [[`20e69f23d3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/20e69f23d3)] - **style**: change constants/trace labels to consts from namespaces; remove JSDoc types (#564) (Kelvin Jin) [#564](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/564)
+* [[`b44e36c52f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b44e36c52f)] - **refactor**: ts conversion of config, trace-writer, span-data (#560) (Kelvin Jin) [#560](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/560)
+* [[`d6231275bf`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d6231275bf)] - Update dependencies (#563) (Matthew Loring) [#563](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/563)
+* [[`0d73bffd7c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0d73bffd7c)] - **refactor**: ts conversion of util (#562) (Kelvin Jin)
+* [[`7cdeb615ac`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7cdeb615ac)] - **refactor**: ts conversion of trace and span-data (#561) (Kelvin Jin)
+* [[`7a614c5a9b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7a614c5a9b)] - **refactor**: ts conversion of trace-labels and constants (#558) (Kelvin Jin) [#558](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/558)
+* [[`ce34e55632`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ce34e55632)] - **refactor**: rename files to .ts and add ts-based build commands (#554) (Kelvin Jin)
+
 ## 2017-09-12, Version 2.2.0 (Beta), @matthewloring
 
 ### Notable changes
@@ -10,7 +39,7 @@
   * [[`debc49331c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/debc49331c)] - **feat**: add public API for root span id (#542) (Ali Ijaz Sheikh) 
   * [[`4496d3d6f0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4496d3d6f0)] - **feat**: Add GCLOUD_TRACE_CONFIG env config (#539) (Oleg Shalygin)
 
-## Commits
+### Commits
 
 * [[`6f9614a810`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6f9614a810)] - **test**: restore Function#length property in wrapped mocha test functions when using continuation-local-storage with node 8 (#553) (Kelvin Jin) [#553](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/553)
 * [[`e744614e6a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e744614e6a)] - **chore**: delete performance scripts (#551) (Kelvin Jin) [#551](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/551)
