@@ -10,6 +10,7 @@
 
 ### Commits
 
+* [[`ac23fc47a1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ac23fc47a1)] - **docs**: mention GCLOUD_TRACE_NEW_CONTEXT (#580) (Kelvin Jin) [#580](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/580)
 * [[`26d6f59236`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/26d6f59236)] - **test**: cleanups and ensure module installs correctly (#578) (Kelvin Jin) [#578](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/578)
 * [[`e732e67727`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e732e67727)] - **style**: start lint/format for src files (#576) (Kelvin Jin) [#576](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/576)
 * [[`cf3ada06b4`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/cf3ada06b4)] - **feat**: expand restify supported version range to include v5, v6 (#577) (Kelvin Jin) [#577](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/577)
