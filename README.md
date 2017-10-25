@@ -1,5 +1,7 @@
 # Stackdriver Trace for Node.js
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/GoogleCloudPlatform/cloud-trace-nodejs.svg)](https://greenkeeper.io/)
+
 [![NPM Version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
 [![Test Coverage][coveralls-image]][coveralls-url]
