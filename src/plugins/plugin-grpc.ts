@@ -32,6 +32,11 @@ function patchMetadata(metadata, api) {
   Metadata = metadata;
 }
 
+function unpatchMetadata(metadata) {
+  // patchMetadata doesn't modify the module exports of metadata.js.
+  // So it's safe to provide a no-op unpatch function.
+}
+
 function patchClient(client, api) {
   /**
    * Wraps a callback so that the current span for this trace is also ended when
@@ -480,9 +485,7 @@ module.exports = [
     file: 'src/node/src/metadata.js',
     versions: '0.13 - 1.6',
     patch: patchMetadata,
-    // patchMetadata doesn't modify the module exports of metadata.js.
-    // So it's safe to have provide a no-op unpatch function.
-    unpatch: function unpatchMetadata() {}
+    unpatch: unpatchMetadata
   },
   {
     file: 'src/node/src/server.js',
@@ -500,9 +503,7 @@ module.exports = [
     file: 'src/metadata.js',
     versions: '1.7',
     patch: patchMetadata,
-    // patchMetadata doesn't modify the module exports of metadata.js.
-    // So it's safe to have provide a no-op unpatch function.
-    unpatch: function unpatchMetadata() {}
+    unpatch: unpatchMetadata
   },
   {
     file: 'src/server.js',
