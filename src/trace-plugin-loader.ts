@@ -165,6 +165,14 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
                 originalModuleLoad(instrumentation.file, module, false);
             patchSet = {};
             if (semver.valid(version)) {
+              // strip version of pre-release tags.
+              // warn if they exist.
+              if (!!semver.prerelease(version)) {
+                const originalVersion = version;
+                version = version.split('-')[0];
+                logger.warn(`${moduleRoot}: Using patch for version ${
+                    version} for pre-release version ${originalVersion}`);
+              }
               plugin.forEach((patch) => {
                 if (!patch.versions ||
                     semver.satisfies(version, patch.versions)) {
