@@ -26,7 +26,8 @@ var shimmer = require('shimmer');
 var common = require('./common'/*.js*/);
 
 var versions = {
-  grpc1: './fixtures/grpc1'
+  grpc1_6: './fixtures/grpc1.6',
+  grpc1_7: './fixtures/grpc1.7'
 };
 
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';
@@ -281,7 +282,8 @@ Object.keys(versions).forEach(function(version) {
       agent = require('../..').start({
         projectId: '0',
         samplingRate: 0,
-        enhancedDatabaseReporting: true
+        enhancedDatabaseReporting: true,
+        forceNewAgent_: true
       });
 
       grpc = require(versions[version]);

@@ -32,6 +32,11 @@ function patchMetadata(metadata, api) {
   Metadata = metadata;
 }
 
+function unpatchMetadata(metadata) {
+  // patchMetadata doesn't modify the module exports of metadata.js.
+  // So it's safe to provide a no-op unpatch function.
+}
+
 function patchClient(client, api) {
   /**
    * Wraps a callback so that the current span for this trace is also ended when
@@ -469,26 +474,40 @@ function unpatchServer(server) {
 
 // # Exports
 
-var SUPPORTED_VERSIONS = '0.13 - 1';
-
 module.exports = [
   {
     file: 'src/node/src/client.js',
-    versions: SUPPORTED_VERSIONS,
+    versions: '0.13 - 1.6',
     patch: patchClient,
     unpatch: unpatchClient
   },
   {
     file: 'src/node/src/metadata.js',
-    versions: SUPPORTED_VERSIONS,
+    versions: '0.13 - 1.6',
     patch: patchMetadata,
-    // patchMetadata doesn't modify the module exports of metadata.js.
-    // So it's safe to have provide a no-op unpatch function.
-    unpatch: function unpatchMetadata() {}
+    unpatch: unpatchMetadata
   },
   {
     file: 'src/node/src/server.js',
-    versions: SUPPORTED_VERSIONS,
+    versions: '0.13 - 1.6',
+    patch: patchServer,
+    unpatch: unpatchServer
+  },
+  {
+    file: 'src/client.js',
+    versions: '1.7',
+    patch: patchClient,
+    unpatch: unpatchClient
+  },
+  {
+    file: 'src/metadata.js',
+    versions: '1.7',
+    patch: patchMetadata,
+    unpatch: unpatchMetadata
+  },
+  {
+    file: 'src/server.js',
+    versions: '1.7',
     patch: patchServer,
     unpatch: unpatchServer
   }
