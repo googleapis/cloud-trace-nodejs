@@ -1,5 +1,14 @@
 # Node.js Agent for Google Cloud Trace ChangeLog
 
+## 2017-10-31, Version 2.3.1 (Beta), @kjin
+
+This change fixes a potential issue with tracing gRPC 1.7.
+
+### Commits
+
+* [[`609d0cc161`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/609d0cc161)] - **chore**: bump typescript dependency to 2.6 and disable https test on node \>=8.9 (#588) (Kelvin Jin) [#588](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/588)
+* [[`3e30d28086`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/3e30d28086)] - **fix**: extend supported gRPC version range to 1.7 (#586) (Kelvin Jin)
+
 ## 2017-10-20, Version 2.3.0 (Beta), @kjin
 
 ### Notable Changes
