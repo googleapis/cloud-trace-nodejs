@@ -81,7 +81,7 @@
     "timekeeper": "^2.0.0",
     "tmp": "0.0.33",
     "ts-node": "^3.3.0",
-    "typescript": "^2.5.2"
+    "typescript": "^2.6.1"
   },
   "dependencies": {
     "@google-cloud/common": "^0.13.2",

@@ -118,7 +118,7 @@ export class TraceWriter extends common.Service {
 
     // Schedule periodic flushing of the buffer, but only if we are able to get
     // the project number (potentially from the network.)
-    this.getProjectId((err: Error, project: string) => {
+    this.getProjectId((err: Error|null, project?: string) => {
       if (err) {
         this.logger.error(
             'Unable to acquire the project number from metadata ' +
