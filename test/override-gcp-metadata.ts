@@ -20,5 +20,12 @@ import * as proxyquire from 'proxyquire';
 import * as request from 'request';
 
 proxyquire('gcp-metadata', {
-  'retry-request': request
+  'retry-request': (requestOpts, opts, callback?): any => {
+    // gcp-metadata 0.4+ supplies an extra options object to retry-request.
+    // Since we're substituting retry-request with request,
+    // omit this extra object to the substituted request call.
+    if (typeof opts === 'object') {
+      return (request as Function)(requestOpts, callback);
+    }
+  }
 });

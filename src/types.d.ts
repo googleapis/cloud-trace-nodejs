@@ -43,27 +43,6 @@ interface ErrorConstructor {
   stackTraceLimit: number;
 }
 
-declare module 'gcp-metadata' {
-  import * as http from 'http';
-
-  // TODO: Determine if the signature of the callback on these methods are
-  //       correct.
-  type PropFunction = (
-    options: string | {
-      property: string;
-      headers?: http.OutgoingHttpHeaders
-    },
-    callback: (
-      err: Error & { code?: string },
-      response?: http.ServerResponse,
-      metadataProject?: string
-    ) => void
-  ) => http.ServerResponse;
-  
-  export const instance: PropFunction;
-  export const project: PropFunction;
-}
-
 declare module '@google-cloud/common' {
   import * as request from 'request';
 
