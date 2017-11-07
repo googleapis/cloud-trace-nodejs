@@ -44,7 +44,8 @@ export class RateLimiterPolicy implements TracePolicy {
 
 export class FilterPolicy implements TracePolicy {
   constructor(
-      private basePolicy: TracePolicy, private filterUrls: Array<string|RegExp>) {}
+      private basePolicy: TracePolicy,
+      private filterUrls: Array<string|RegExp>) {}
 
   private matches(url: string) {
     return this.filterUrls.some((candidate) => {

@@ -1,7 +1,9 @@
+// tslint:disable:no-any
+
 import {Constants} from './constants';
 import {TraceLabels} from './trace-labels';
 
-export type Func<T> = (...args: {}[]) => T;
+export type Func<T> = (...args: any[]) => T;
 
 // Defines an interface for storing Trace-Agent related data on patched modules.
 export interface TraceAgentExtension { _google_trace_patched: boolean; }
@@ -23,7 +25,7 @@ export interface SpanData {
    * @param key The label's key.
    * @param value The label's value.
    */
-  addLabel(key: string, value: {}): void;
+  addLabel(key: string, value: any): void;
 
   /**
    * Ends the span. This method should only be called once.
@@ -161,4 +163,4 @@ export interface Intercept<T> {
 
 export type Instrumentation<T> = Patch<T>|Intercept<T>;
 
-export type Plugin = Array<Instrumentation<{}>>;
+export type Plugin = Array<Instrumentation<any>>;

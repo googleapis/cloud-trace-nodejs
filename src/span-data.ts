@@ -78,16 +78,16 @@ export class SpanData implements SpanDataInterface {
           traceWriter.get().getConfig().stackTraceLimit + skipFrames;
 
       const origPrepare = Error.prepareStackTrace;
-      Error.prepareStackTrace = function(
-          error: Error, structured: CallSite[]): CallSite[] {
-        return structured;
-      };
+      Error.prepareStackTrace =
+          (error: Error, structured: CallSite[]): CallSite[] => {
+            return structured;
+          };
       const e: {stack?: CallSite[]} = {};
       Error.captureStackTrace(e, SpanData);
 
       const stackFrames: StackFrame[] = [];
       if (e.stack) {
-        e.stack.forEach(function(callSite, i) {
+        e.stack.forEach((callSite, i) => {
           if (i < skipFrames) {
             return;
           }

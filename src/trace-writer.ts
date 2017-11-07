@@ -99,7 +99,7 @@ export class TraceWriter extends common.Service {
       this.unhandledException = () => {
         this.flushBuffer();
         if (onUncaughtException === 'flushAndExit') {
-          setTimeout(function() {
+          setTimeout(() => {
             process.exit(1);
           }, 2000);
         }
@@ -205,8 +205,7 @@ export class TraceWriter extends common.Service {
     }
 
     gcpMetadata.project(
-        {property: 'project-id', headers},
-        (err, response, projectId) => {
+        {property: 'project-id', headers}, (err, response, projectId) => {
           if (response && response.statusCode !== 200) {
             if (response.statusCode === 503) {
               err = new Error(

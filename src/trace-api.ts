@@ -47,7 +47,8 @@ interface IncomingTraceContext {
 /**
  * Type guard that returns whether an object is a string or not.
  */
-function isString(obj: {}): obj is string {
+// tslint:disable-next-line:no-any
+function isString(obj: any): obj is string {
   return is.string(obj);
 }
 
