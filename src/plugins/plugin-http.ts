@@ -174,7 +174,7 @@ module.exports = [
   },
   {
     file: 'https',
-    versions: '>=8.9.0',
+    versions: '=8.9.0 || >=9.0.0',
     patch: patchHttps,
     unpatch: unpatchHttps
   }
