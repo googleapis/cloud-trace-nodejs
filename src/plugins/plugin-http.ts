@@ -44,16 +44,94 @@ function extractUrl(options) {
     (options.path || options.pathName || '/');
 }
 
-function unpatchHttp(http) {
-  shimmer.unwrap(http, 'request');
-  if (semver.satisfies(process.version, '>=8.0.0')) {
-    shimmer.unwrap(http, 'get');
-  }
+function isTraceAgentRequest (options, api) {
+  return options && options.headers &&
+    !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
+}
+
+function makeRequestTrace(request, api) {
+  // On Node 8+ we use the following function to patch both request and get.
+  // Here `request` may also happen to be `get`.
+  return function request_trace(options, callback) {
+    if (!options) {
+      return request.apply(this, arguments);
+    }
+
+    // Don't trace ourselves lest we get into infinite loops
+    // Note: this would not be a problem if we guarantee buffering
+    // of trace api calls. If there is no buffering then each trace is
+    // an http call which will get a trace which will be an http call
+    if (isTraceAgentRequest(options, api)) {
+      return request.apply(this, arguments);
+    }
+
+    options = isString(options) ? url.parse(options) : merge({}, options);
+    options.headers = options.headers || {};
+
+    var uri = extractUrl(options);
+    var requestLifecycleSpan =
+        api.createChildSpan({name: getSpanName(options)});
+    if (!requestLifecycleSpan) {
+      return request.apply(this, arguments);
+    }
+
+    requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
+                                  options.method);
+    requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
+    options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
+        requestLifecycleSpan.getTraceContext();
+    var req = request.call(this, options, function(res) {
+      api.wrapEmitter(res);
+      var numBytes = 0;
+      var listenerAttached = false;
+      // Responses returned by http#request are yielded in paused mode. Attaching
+      // a 'data' listener to the request will switch the stream to flowing mode
+      // which could cause the request to drain before the calling framework has
+      // a chance to attach their own listeners. To avoid this, we attach our listener
+      // lazily.
+      // This approach to tracking data size will not observe data read by
+      // explicitly calling `read` on the request. We expect this to be very
+      // uncommon as it is not mentioned in any of the official documentation.
+      shimmer.wrap(res, 'on', function onWrap(on) {
+        return function on_trace(eventName, cb) {
+          if (eventName === 'data' && !listenerAttached) {
+            on.call(this, 'data', function(chunk) {
+              numBytes += chunk.length;
+            });
+          }
+          return on.apply(this, arguments);
+        };
+      });
+      res.on('end', function () {
+        requestLifecycleSpan
+          .addLabel(api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
+        requestLifecycleSpan
+          .addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+        requestLifecycleSpan.endSpan();
+      });
+      if (callback) {
+        return callback(res);
+      }
+    });
+    api.wrapEmitter(req);
+    req.on('error', function (e) {
+      if (e) {
+        requestLifecycleSpan.addLabel(api.labels.ERROR_DETAILS_NAME, e.name);
+        requestLifecycleSpan
+          .addLabel(api.labels.ERROR_DETAILS_MESSAGE, e.message);
+      } else {
+        // What's the new logger target?
+        // console.error('HTTP request error was null or undefined', e);
+      }
+      requestLifecycleSpan.endSpan();
+    });
+    return req;
+  };
 }
 
 function patchHttp(http, api) {
   shimmer.wrap(http, 'request', function requestWrap(request) {
-    return makeRequestTrace(request);
+    return makeRequestTrace(request, api);
   });
 
   if (semver.satisfies(process.version, '>=8.0.0')) {
@@ -61,94 +139,31 @@ function patchHttp(http, api) {
     // we have patched on module.export. We need to patch get as well. Luckily,
     // the request patch we have does work for get as well.
     shimmer.wrap(http, 'get', function getWrap(get) {
-      return makeRequestTrace(get);
+      return makeRequestTrace(get, api);
     });
   }
+}
 
-  function isTraceAgentRequest (options) {
-    return options && options.headers &&
-      !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
+function patchHttps(https, api) {
+  console.log('patch https');
+  shimmer.wrap(https, 'request', function requestWrap(request) {
+    return makeRequestTrace(request, api);
+  });
+  shimmer.wrap(https, 'get', function getWrap(get) {
+    return makeRequestTrace(get, api);
+  });
+}
+
+function unpatchHttp(http) {
+  shimmer.unwrap(http, 'request');
+  if (semver.satisfies(process.version, '>=8.0.0')) {
+    shimmer.unwrap(http, 'get');
   }
+}
 
-  function makeRequestTrace(request) {
-    // On Node 8+ we use the following function to patch both request and get.
-    // Here `request` may also happen to be `get`.
-    return function request_trace(options, callback) {
-      if (!options) {
-        return request.apply(this, arguments);
-      }
-
-      // Don't trace ourselves lest we get into infinite loops
-      // Note: this would not be a problem if we guarantee buffering
-      // of trace api calls. If there is no buffering then each trace is
-      // an http call which will get a trace which will be an http call
-      if (isTraceAgentRequest(options)) {
-        return request.apply(this, arguments);
-      }
-
-      options = isString(options) ? url.parse(options) : merge({}, options);
-      options.headers = options.headers || {};
-
-      var uri = extractUrl(options);
-      var requestLifecycleSpan =
-          api.createChildSpan({name: getSpanName(options)});
-      if (!requestLifecycleSpan) {
-        return request.apply(this, arguments);
-      }
-
-      requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
-                                    options.method);
-      requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
-      options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
-          requestLifecycleSpan.getTraceContext();
-      var req = request.call(this, options, function(res) {
-        api.wrapEmitter(res);
-        var numBytes = 0;
-        var listenerAttached = false;
-        // Responses returned by http#request are yielded in paused mode. Attaching
-        // a 'data' listener to the request will switch the stream to flowing mode
-        // which could cause the request to drain before the calling framework has
-        // a chance to attach their own listeners. To avoid this, we attach our listener
-        // lazily.
-        // This approach to tracking data size will not observe data read by
-        // explicitly calling `read` on the request. We expect this to be very
-        // uncommon as it is not mentioned in any of the official documentation.
-        shimmer.wrap(res, 'on', function onWrap(on) {
-          return function on_trace(eventName, cb) {
-            if (eventName === 'data' && !listenerAttached) {
-              on.call(this, 'data', function(chunk) {
-                numBytes += chunk.length;
-              });
-            }
-            return on.apply(this, arguments);
-          };
-        });
-        res.on('end', function () {
-          requestLifecycleSpan
-            .addLabel(api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
-          requestLifecycleSpan
-            .addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-          requestLifecycleSpan.endSpan();
-        });
-        if (callback) {
-          return callback(res);
-        }
-      });
-      api.wrapEmitter(req);
-      req.on('error', function (e) {
-        if (e) {
-          requestLifecycleSpan.addLabel(api.labels.ERROR_DETAILS_NAME, e.name);
-          requestLifecycleSpan
-            .addLabel(api.labels.ERROR_DETAILS_MESSAGE, e.message);
-        } else {
-          // What's the new logger target?
-          // console.error('HTTP request error was null or undefined', e);
-        }
-        requestLifecycleSpan.endSpan();
-      });
-      return req;
-    };
-  }
+function unpatchHttps(https) {
+  shimmer.unwrap(https, 'request');
+  shimmer.unwrap(https, 'get');
 }
 
 module.exports = [
@@ -156,6 +171,12 @@ module.exports = [
     file: 'http',
     patch: patchHttp,
     unpatch: unpatchHttp
+  },
+  {
+    file: 'https',
+    versions: '>=8.9.0',
+    patch: patchHttps,
+    unpatch: unpatchHttps
   }
 ];
 

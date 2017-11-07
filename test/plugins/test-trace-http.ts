@@ -22,7 +22,7 @@ var common = require('./common'/*.js*/);
 var semver = require('semver');
 var stream = require('stream');
 
-require('../..').start({ 
+require('../..').start({
   projectId: '0',
   samplingRate: 0
 });
@@ -308,9 +308,7 @@ describe('test-trace-http', function() {
   });
 });
 
-// TODO(kjin): https patching doens't work in Node 8.9+; see #589 on GitHub.
-var noHttps = semver.satisfies(process.version, '>=8.9.0');
-(noHttps ? describe.skip : describe)('https', function() {
+describe('https', function() {
   var https;
   before(function() {
     https = require('https');
