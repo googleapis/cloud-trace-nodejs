@@ -46,7 +46,7 @@ interface StackFrame {
 let uid = 1;
 
 export class SpanData implements SpanDataInterface {
-  public readonly span: TraceSpan;
+  readonly span: TraceSpan;
 
   /**
    * Creates a trace context object.
@@ -127,7 +127,7 @@ export class SpanData implements SpanDataInterface {
     });
   }
 
-  addLabel(key: string, value: any) {
+  addLabel(key: string, value: {}) {
     const k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
     const stringValue = typeof value === 'string' ? value : util.inspect(value);
     const v = traceUtil.truncate(

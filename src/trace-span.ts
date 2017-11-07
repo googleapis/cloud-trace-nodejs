@@ -20,18 +20,18 @@ export interface TraceSpanLabels { [propName: string]: string; }
  * Describes a trace span.
  */
 export class TraceSpan {
-  public readonly labels: TraceSpanLabels = {};
-  public readonly startTime: string;
-  public endTime = '';
-  public kind = 'RPC_CLIENT';
+  readonly labels: TraceSpanLabels = {};
+  readonly startTime: string;
+  endTime = '';
+  kind = 'RPC_CLIENT';
 
   /**
    * Creates a trace span object.
    * @constructor
    */
   constructor(
-      public readonly name: string, public readonly spanId: string,
-      public readonly parentSpanId: string) {
+      readonly name: string, readonly spanId: string,
+      readonly parentSpanId: string) {
     this.startTime = (new Date()).toISOString();
   }
 

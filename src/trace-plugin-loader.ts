@@ -46,7 +46,7 @@ type InternalInstrumentation<T> = InternalPatch<T>|InternalIntercept<T>;
 interface InternalPlugin {
   file: string;
   patches:
-      {[patchName: string]: {[file: string]: InternalInstrumentation<any>;}};
+      {[patchName: string]: {[file: string]: InternalInstrumentation<{}>;}};
   agent: TraceAgent;
 }
 
@@ -75,7 +75,7 @@ function isInternalIntercept<T>(obj: InternalInstrumentation<T>):
 }
 
 let plugins: PluginStore = Object.create(null);
-let intercepts: {[moduleName: string]: {interceptedValue: any}} =
+let intercepts: {[moduleName: string]: {interceptedValue: {}}} =
     Object.create(null);
 let activated = false;
 // TODO(kjin): Make plugin loader a singleton, so we can avoid shadowing.
@@ -145,7 +145,7 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
     plugins[moduleName] = {
       file: pluginConfig[moduleName],
       patches: {},
-      agent: agent
+      agent
     };
   }
 
@@ -157,7 +157,7 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
       (originalModuleLoad: typeof Module._load): typeof Module._load => {
         function loadAndPatch(
             instrumentation: InternalPlugin, moduleRoot: string,
-            version: string): any {
+            version: string): {} {
           let patchSet = instrumentation.patches[moduleRoot];
           if (!patchSet) {
             // Load the plugin object
@@ -179,13 +179,13 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
                   const file = patch.file || '';
                   if (isPatch(patch)) {
                     patchSet[file] = {
-                      file: file,
+                      file,
                       patch: patch.patch,
                       unpatch: patch.unpatch
                     };
                   }
                   if (isIntercept(patch)) {
-                    patchSet[file] = {file: file, intercept: patch.intercept};
+                    patchSet[file] = {file, intercept: patch.intercept};
                   }
                   // The conditionals exhaustively cover types for the patch
                   // object, but throw an error in JavaScript anyway
@@ -232,8 +232,8 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
 
         // Future requires get patched as they get loaded.
         return function Module_load(
-            this: any, request: string, parent?: NodeModule,
-            isMain?: boolean): any {
+            this: {}, request: string, parent?: NodeModule,
+            isMain?: boolean): {} {
           const instrumentation = plugins[request];
           if (instrumentation) {
             const moduleRoot = util.findModulePath(request, parent);

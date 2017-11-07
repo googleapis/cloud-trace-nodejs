@@ -133,7 +133,7 @@ export function findModulePath(request: string, parent?: NodeModule): string {
  *    internal module such as http.
  */
 export function findModuleVersion(
-    modulePath: string, load: (path: string) => any): string {
+    modulePath: string, load: (path: string) => {}): string {
   if (!load) {
     load = Module._load;
   }

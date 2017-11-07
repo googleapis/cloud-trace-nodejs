@@ -73,7 +73,7 @@ export interface Config {
    * while having an ignoreUrls value of ['^/$'] will ignore only '/' URLs.
    * Health checker probe URLs (/_ah/health) are ignored by default.
    */
-  ignoreUrls?: (string|RegExp)[];
+  ignoreUrls?: Array<string|RegExp>;
 
   /**
    * An upper bound on the number of traces to gather each second. If set to 0,

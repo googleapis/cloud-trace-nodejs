@@ -64,18 +64,18 @@ class AsyncHooksNamespace implements CLSNamespace {
   bind<T>(cb: Func<T>): Func<T> {
     // TODO(kjin): Monitor https://github.com/Microsoft/TypeScript/pull/15473.
     // When it's landed and released, we can remove these `any` casts.
-    if ((cb as any)[wrappedSymbol] as boolean || !current) {
+    if ((cb as {})[wrappedSymbol] as boolean || !current) {
       return cb;
     }
     const boundContext = current;
-    const contextWrapper = function(this: any) {
+    const contextWrapper = function(this: {}) {
       const oldContext = current;
       current = boundContext;
       const res = cb.apply(this, arguments) as T;
       current = oldContext;
       return res;
     };
-    (contextWrapper as any)[wrappedSymbol] = true;
+    (contextWrapper as {})[wrappedSymbol] = true;
     Object.defineProperty(contextWrapper, 'length', {
       enumerable: false,
       configurable: true,
@@ -94,8 +94,8 @@ class AsyncHooksNamespace implements CLSNamespace {
     const ns = this;
     EVENT_EMITTER_METHODS.forEach(function(method) {
       // TODO(kjin): Presumably also dependent on MS/TS-#15473.
-      const oldMethod = (ee as any)[method];
-      (ee as any)[method] = function(event: string, cb: Func<void>) {
+      const oldMethod = (ee as {})[method];
+      (ee as {})[method] = function(event: string, cb: Func<void>) {
         return oldMethod.call(this, event, ns.bind(cb));
       };
     });
