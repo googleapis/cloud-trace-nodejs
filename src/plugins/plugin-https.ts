@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-'use strict';
-
 // Force load http to patch https with the http plugin.
 // https depends on http anyway, so this shouldn't cause an unnecessary load.
-require('http');
+import 'http';
 
-module.exports = [];
-
-export default {};
+export = [];

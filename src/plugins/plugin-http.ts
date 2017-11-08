@@ -144,8 +144,7 @@ function patchHttp(http, api) {
   }
 }
 
-function patchHttps(https, api) {
-  console.log('patch https');
+function patchHttps(https, api) { // https.get depends on https.request in <8.9 and >=8.9.1
   shimmer.wrap(https, 'request', function requestWrap(request) {
     return makeRequestTrace(request, api);
   });
