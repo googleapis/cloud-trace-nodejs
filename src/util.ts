@@ -18,6 +18,11 @@ import * as fs from 'fs';
 import Module = require('module');
 import * as path from 'path';
 
+interface PackageJson {
+  name: string;
+  version: string;
+}
+
 /**
  * Truncates the provided `string` to be at most `length` bytes
  * after utf8 encoding and the appending of '...'.
@@ -133,14 +138,14 @@ export function findModulePath(request: string, parent?: NodeModule): string {
  *    internal module such as http.
  */
 export function findModuleVersion(
-    modulePath: string, load: (path: string) => any): string {
+    modulePath: string, load: (path: string) => {}): string {
   if (!load) {
     load = Module._load;
   }
   if (modulePath !== '') {
     const pjson = path.join(modulePath, 'package.json');
     if (fs.existsSync(pjson)) {
-      return load(pjson).version;
+      return (load(pjson) as PackageJson).version;
     }
   }
   return process.version;

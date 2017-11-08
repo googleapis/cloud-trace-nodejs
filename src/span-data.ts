@@ -46,7 +46,7 @@ interface StackFrame {
 let uid = 1;
 
 export class SpanData implements SpanDataInterface {
-  public readonly span: TraceSpan;
+  readonly span: TraceSpan;
 
   /**
    * Creates a trace context object.
@@ -78,16 +78,16 @@ export class SpanData implements SpanDataInterface {
           traceWriter.get().getConfig().stackTraceLimit + skipFrames;
 
       const origPrepare = Error.prepareStackTrace;
-      Error.prepareStackTrace = function(
-          error: Error, structured: CallSite[]): CallSite[] {
-        return structured;
-      };
+      Error.prepareStackTrace =
+          (error: Error, structured: CallSite[]): CallSite[] => {
+            return structured;
+          };
       const e: {stack?: CallSite[]} = {};
       Error.captureStackTrace(e, SpanData);
 
       const stackFrames: StackFrame[] = [];
       if (e.stack) {
-        e.stack.forEach(function(callSite, i) {
+        e.stack.forEach((callSite, i) => {
           if (i < skipFrames) {
             return;
           }
@@ -127,7 +127,7 @@ export class SpanData implements SpanDataInterface {
     });
   }
 
-  addLabel(key: string, value: any) {
+  addLabel(key: string, value: {}) {
     const k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
     const stringValue = typeof value === 'string' ? value : util.inspect(value);
     const v = traceUtil.truncate(

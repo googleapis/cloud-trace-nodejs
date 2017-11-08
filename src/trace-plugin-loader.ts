@@ -43,12 +43,14 @@ interface InternalIntercept<T> extends Intercept<T> {
 
 type InternalInstrumentation<T> = InternalPatch<T>|InternalIntercept<T>;
 
+// tslint:disable:no-any
 interface InternalPlugin {
   file: string;
   patches:
       {[patchName: string]: {[file: string]: InternalInstrumentation<any>;}};
   agent: TraceAgent;
 }
+// tslint:enable:no-any
 
 interface PluginStore {
   [pluginName: string]: InternalPlugin;
@@ -75,6 +77,7 @@ function isInternalIntercept<T>(obj: InternalInstrumentation<T>):
 }
 
 let plugins: PluginStore = Object.create(null);
+// tslint:disable-next-line:no-any
 let intercepts: {[moduleName: string]: {interceptedValue: any}} =
     Object.create(null);
 let activated = false;
@@ -142,11 +145,7 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
     }
     const agent = new TraceAgent(moduleName);
     agent.enable(logger, config);
-    plugins[moduleName] = {
-      file: pluginConfig[moduleName],
-      patches: {},
-      agent: agent
-    };
+    plugins[moduleName] = {file: pluginConfig[moduleName], patches: {}, agent};
   }
 
   checkLoadedModules();
@@ -155,9 +154,11 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
   shimmer.wrap(
       Module, '_load',
       (originalModuleLoad: typeof Module._load): typeof Module._load => {
+        // tslint:disable:no-any
         function loadAndPatch(
             instrumentation: InternalPlugin, moduleRoot: string,
             version: string): any {
+          // tslint:enable:no-any
           let patchSet = instrumentation.patches[moduleRoot];
           if (!patchSet) {
             // Load the plugin object
@@ -179,13 +180,13 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
                   const file = patch.file || '';
                   if (isPatch(patch)) {
                     patchSet[file] = {
-                      file: file,
+                      file,
                       patch: patch.patch,
                       unpatch: patch.unpatch
                     };
                   }
                   if (isIntercept(patch)) {
-                    patchSet[file] = {file: file, intercept: patch.intercept};
+                    patchSet[file] = {file, intercept: patch.intercept};
                   }
                   // The conditionals exhaustively cover types for the patch
                   // object, but throw an error in JavaScript anyway
@@ -231,9 +232,11 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
         }
 
         // Future requires get patched as they get loaded.
+        // tslint:disable:no-any
         return function Module_load(
             this: any, request: string, parent?: NodeModule,
             isMain?: boolean): any {
+          // tslint:enable:no-any
           const instrumentation = plugins[request];
           if (instrumentation) {
             const moduleRoot = util.findModulePath(request, parent);
