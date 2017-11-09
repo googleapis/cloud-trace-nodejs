@@ -62,7 +62,7 @@ if (semver.satisfies(process.version, '>=4')) {
               });
               assert.equal(spans.length, 1);
               assert.equal(spans[0].labels.sql, 'SELECT * FROM t');
-              done();
+              server.stop(done);
             });
           });
         });

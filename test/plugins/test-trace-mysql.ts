@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 'use strict';
-
 import { TraceLabels } from '../../src/trace-labels';
 
 var common = require('./common'/*.js*/);
@@ -41,6 +40,10 @@ describe('test-trace-mysql', function() {
     });
     mysql = require('./fixtures/mysql2');
     pool = mysql.createPool(require('../mysql-config'/*.js*/));
+  });
+
+  after(function() {
+    pool.end();
   });
 
   beforeEach(function(done) {

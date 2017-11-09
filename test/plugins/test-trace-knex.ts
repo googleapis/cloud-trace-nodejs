@@ -58,6 +58,10 @@ describe('test-trace-knex', function() {
         });
       });
 
+      after(function() {
+        knex.destroy();
+      });
+
       beforeEach(function(done) {
         knex.schema.createTable(TABLE_NAME, function(table) {
           table.integer('k', 10);

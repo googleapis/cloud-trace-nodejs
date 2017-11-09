@@ -139,6 +139,7 @@ describe('test-plugins-no-project-num', function(){
         assert(!err, 'Skipping: Failed to connect to mysql.');
         conn.query('SHOW TABLES', function(err, result) {
           conn.release();
+          pool.end();
           done();
         });
       });

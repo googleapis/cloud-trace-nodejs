@@ -41,6 +41,7 @@ if (semver.satisfies(process.version, '<8') || !process.env.GCLOUD_TRACE_NEW_CON
               clearInterval(i);
               res.end('yay');
               if (++ended === 10) {
+                server.close();
                 done();
               }
             }
