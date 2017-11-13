@@ -16,12 +16,11 @@
 'use strict';
 
 const shimmer = require('shimmer');
-const co = require('co');
-var urlParse = require('url').parse;
+const urlParse = require('url').parse;
 
 function startSpanForRequest(api, req, res, next) {
-  var originalEnd = res.end;
-  var options = {
+  const originalEnd = res.end;
+  const options = {
     name: urlParse(req.url).pathname,
     url: req.url,
     traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME],
@@ -29,14 +28,14 @@ function startSpanForRequest(api, req, res, next) {
   };
   return api.runInRootSpan(options, function(root) {
     // Set response trace context.
-    var responseTraceContext =
+    const responseTraceContext =
       api.getResponseTraceContext(options.traceContext, !!root);
     if (responseTraceContext) {
       res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
     }
     
     if (!root) {
-      return;
+      return next;
     }
 
     api.wrapEmitter(req);

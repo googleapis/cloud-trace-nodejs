@@ -25,8 +25,9 @@ var semver = require('semver');
 var appBuilders: any = {
   koa1: buildKoa1App,
 };
-if (semver.satisfies(process.version, '>4')) {
-  appBuilders.koa2 = buildKoa2App;
+var skipKoa2 = semver.satisfies(process.version, '<=4');
+if (!skipKoa2) {
+  appBuilders.koa2 = buildKoa2App
 }
 
 describe('koa', function() {
@@ -42,7 +43,7 @@ describe('koa', function() {
   });
 
   Object.keys(appBuilders).forEach(function(version) {
-    describe.skip(version, function() {
+    describe(version, function() {
       var buildKoaApp = appBuilders[version];
 
       afterEach(function() {
@@ -196,7 +197,7 @@ describe('koa', function() {
       });
     });
 
-    it('should work in koa 2', function(done) {
+    (skipKoa2 ? it.skip : it)('should work in koa 2', function(done) {
       var children: any[] = [];
       var Koa = require('./fixtures/koa2');
       var app = new Koa();
