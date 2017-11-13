@@ -16,6 +16,7 @@
 'use strict';
 
 const shimmer = require('shimmer');
+const co = require('co');
 var urlParse = require('url').parse;
 
 function startSpanForRequest(api, req, res, next) {
@@ -26,7 +27,7 @@ function startSpanForRequest(api, req, res, next) {
     traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME],
     skipFrames: 4
   };
-  api.runInRootSpan(options, function(root) {
+  return api.runInRootSpan(options, function(root) {
     // Set response trace context.
     var responseTraceContext =
       api.getResponseTraceContext(options.traceContext, !!root);
@@ -74,7 +75,14 @@ function startSpanForRequest(api, req, res, next) {
       root.endSpan();
     });
 
-    api.wrap(next);
+    // In Koa 1, next is a Generator object.
+    // We wrap Generator#next here.
+    if (!next.apply && next.next) {
+      next.next = api.wrap(next.next);
+      return next;
+    } else {
+      return api.wrap(next);
+    }
   });
 }
 
@@ -84,7 +92,7 @@ function createMiddleware(api) {
     const req = this.req;
     const res = this.res;
 
-    startSpanForRequest(api, req, res, next);
+    next = startSpanForRequest(api, req, res, next);
 
     yield next;
   };
@@ -95,7 +103,7 @@ function createMiddleware2x(api) {
     const req = ctx.req;
     const res = ctx.res;
 
-    startSpanForRequest(api, req, res, next);
+    next = startSpanForRequest(api, req, res, next);
 
     return next();
   };

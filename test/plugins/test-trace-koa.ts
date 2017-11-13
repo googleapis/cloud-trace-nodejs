@@ -42,7 +42,7 @@ describe('koa', function() {
   });
 
   Object.keys(appBuilders).forEach(function(version) {
-    describe(version, function() {
+    describe.skip(version, function() {
       var buildKoaApp = appBuilders[version];
 
       afterEach(function() {
@@ -163,6 +163,65 @@ describe('koa', function() {
           common.assertSpanDurationCorrect(span, common.serverWait / 2);
           done();
         }, common.serverWait);
+      });
+    });
+  });
+
+  describe('execution context propagation', function() {
+    it('should work in koa 1', function(done) {
+      var children: any[] = [];
+      var koa = require('./fixtures/koa1');
+      var app = koa();
+      app.use(function* (next) {
+        children.push(agent.createChildSpan({ name: 'span0' }));
+        yield* next;
+        this.body = '';
+      });
+      app.use(function* () {
+        children.push(agent.createChildSpan({ name: 'span1' }));
+      });
+      server = app.listen(common.serverPort, () => {
+        http.get({ port: common.serverPort, path: '/' }, (res) => {
+          res.on('data', () => {});
+          res.on('end', () => {
+            server.close();
+            assert.strictEqual(children.length, 2);
+            children.forEach((childSpan, index) => {
+              assert.ok(childSpan);
+              assert.strictEqual(childSpan.span.name, `span${index}`);
+            });
+            done();
+          });
+        });
+      });
+    });
+
+    it('should work in koa 2', function(done) {
+      var children: any[] = [];
+      var Koa = require('./fixtures/koa2');
+      var app = new Koa();
+      app.use(function (ctx, next) {
+        children.push(agent.createChildSpan({ name: 'span0' }));
+        return new Promise(resolve => {
+          ctx.body = '';
+          setTimeout(resolve, 100);
+        }).then(() => {
+          children.push(agent.createChildSpan({ name: 'span1' }));
+        });
+      });
+      server = app.listen(common.serverPort, () => {
+        http.get({ port: common.serverPort, path: '/' }, (res) => {
+          res.on('data', () => {});
+          res.on('end', () => {
+            server.close();
+            assert.strictEqual(children.length, 2);
+            children.forEach((childSpan, index) => {
+              assert.ok(childSpan);
+              assert.strictEqual(childSpan.span.name, `span${index}`);
+            });
+            done();
+          });
+        });
       });
     });
   });
