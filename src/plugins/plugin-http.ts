@@ -145,12 +145,14 @@ function patchHttp(http, api) {
 }
 
 function patchHttps(https, api) { // https.get depends on https.request in <8.9 and >=8.9.1
-  shimmer.wrap(https, 'request', function requestWrap(request) {
-    return makeRequestTrace(request, api);
-  });
-  shimmer.wrap(https, 'get', function getWrap(get) {
-    return makeRequestTrace(get, api);
-  });
+  if (semver.satisfies(process.version, '=8.9.0 || >=9.0.0')) {
+    shimmer.wrap(https, 'request', function requestWrap(request) {
+      return makeRequestTrace(request, api);
+    });
+    shimmer.wrap(https, 'get', function getWrap(get) {
+      return makeRequestTrace(get, api);
+    });
+  }
 }
 
 function unpatchHttp(http) {
@@ -161,8 +163,10 @@ function unpatchHttp(http) {
 }
 
 function unpatchHttps(https) {
-  shimmer.unwrap(https, 'request');
-  shimmer.unwrap(https, 'get');
+  if (semver.satisfies(process.version, '=8.9.0 || >=9.0.0')) {
+    shimmer.unwrap(https, 'request');
+    shimmer.unwrap(https, 'get');
+  }
 }
 
 module.exports = [
@@ -173,7 +177,6 @@ module.exports = [
   },
   {
     file: 'https',
-    versions: '=8.9.0 || >=9.0.0',
     patch: patchHttps,
     unpatch: unpatchHttps
   }
