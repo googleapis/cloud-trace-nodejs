@@ -1,5 +1,14 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2017-11-14, Version 2.3.3 (Beta), @kjin
+
+This change removes a spurious warning message that was introduced in the fix for HTTPS tracing in 2.3.2. There should be no other observable changes.
+
+### Commits
+
+* [[`a6b56bbbe7`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a6b56bbbe7)] - **fix**: actually prevent useless warning when loading https plugin (#597) (Kelvin Jin) [#597](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/597)
+* [[`7edc320089`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7edc320089)] - **fix**: prevent useless warning when loading https plugin (#596) (Kelvin Jin) [#596](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/596)
+
 ## 2017-11-13, Version 2.3.2 (Beta), @kjin
 
 **bug fixes**
