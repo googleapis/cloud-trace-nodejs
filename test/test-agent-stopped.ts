@@ -21,7 +21,7 @@ import './override-gcp-metadata';
 var assert = require('assert');
 var http = require('http');
 var nock = require('nock');
-var trace = require('..');
+var trace = require('../..');
 
 describe('test-agent-stopped', function() {
   var agent;

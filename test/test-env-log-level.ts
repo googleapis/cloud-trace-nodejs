@@ -19,7 +19,7 @@
 var assert = require('assert');
 var gcloudCommon = require('@google-cloud/common');
 var shimmer = require('shimmer');
-var trace = require('..');
+var trace = require('../..');
 
 describe('should respect environment variables', function() {
   var logLevel;

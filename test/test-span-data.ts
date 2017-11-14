@@ -40,7 +40,7 @@ function createRootSpanData(name, traceId?, parentId?, skipFrames?) {
 describe('SpanData', function() {
   var agent;
   before(function() {
-    agent = require('..').start({
+    agent = require('../..').start({
       projectId: '0',
       samplingRate: 0
     });

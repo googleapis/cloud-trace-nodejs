@@ -41,7 +41,7 @@ describe('redis', function() {
   var agent;
 
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       samplingRate: 0,
       enhancedDatabaseReporting: true,

@@ -50,7 +50,7 @@ describe('test-config-credentials', function() {
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
       forceNewAgent_: true
     };
-    var agent = require('..').start(config);
+    var agent = require('../..').start(config);
     nock.disableNetConnect();
     var scope = nock('https://accounts.google.com')
       .intercept('/o/oauth2/token', 'POST', function(body) {
@@ -82,7 +82,7 @@ describe('test-config-credentials', function() {
       credentials: require('./fixtures/gcloud-credentials.json'),
       forceNewAgent_: true
     };
-    var agent = require('..').start(config);
+    var agent = require('../..').start(config);
     nock.disableNetConnect();
     var scope = nock('https://accounts.google.com')
       .intercept('/o/oauth2/token', 'POST', function(body) {
@@ -121,7 +121,7 @@ describe('test-config-credentials', function() {
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
       forceNewAgent_: true
     };
-    var agent = require('..').start(config);
+    var agent = require('../..').start(config);
     nock.disableNetConnect();
     var scope = nock('https://accounts.google.com')
       .intercept('/o/oauth2/token', 'POST', function(body) {

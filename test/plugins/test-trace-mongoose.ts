@@ -31,7 +31,7 @@ describe('test-trace-mongoose', function() {
   var mongoose;
   var Simple;
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       samplingRate: 0
     });

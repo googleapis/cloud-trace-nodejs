@@ -16,7 +16,7 @@
 'use strict';
 
 var assert = require('assert');
-var agent = require('../../');
+var agent = require('../../..');
 
 assert(agent.get().isActive());
 

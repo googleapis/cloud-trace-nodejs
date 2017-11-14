@@ -22,7 +22,7 @@ var common = require('./common'/*.js*/);
 var semver = require('semver');
 var stream = require('stream');
 
-require('../..').start({
+require('../../..').start({
   projectId: '0',
   samplingRate: 0
 });
