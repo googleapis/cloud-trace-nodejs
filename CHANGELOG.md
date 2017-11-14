@@ -1,4 +1,19 @@
-# Node.js Agent for Google Cloud Trace ChangeLog
+# Node.js Agent for Google Cloud Trace Changelog
+
+## 2017-11-13, Version 2.3.2 (Beta), @kjin
+
+**bug fixes**
+
+* Fixed HTTPS tracing in Node 8.9.0 and 9.0.0+ (#589)
+* Fixed trace context not being propagated for Koa (#593)
+
+### Commits
+
+* [[`b9e6a3bc24`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b9e6a3bc24)] - **fix**: propagate context in koa tracing (#594) (Kelvin Jin) [#594](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/594)
+* [[`4170f8967a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4170f8967a)] - **src**: patch https in Node 8.9 and 9.0 (#591) (Kelvin Jin) [#591](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/591)
+* [[`58925af30e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/58925af30e)] - **chore**: update dependencies to enable greenkeeper (#584) (greenkeeper[bot]) [#584](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/584)
+* [[`84a5f7d94c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/84a5f7d94c)] - **style**: upgrade to gts@0.5 (#592) (Kelvin Jin) [#592](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/592)
+* [[`523ab22d74`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/523ab22d74)] - **chore**: upgrade gcp-metadata to 0.4 (#590) (Kelvin Jin) [#590](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/590)
 
 ## 2017-10-31, Version 2.3.1 (Beta), @kjin
 
