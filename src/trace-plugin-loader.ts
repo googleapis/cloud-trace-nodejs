@@ -174,30 +174,34 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
                 logger.warn(`${moduleRoot}: Using patch for version ${
                     version} for pre-release version ${originalVersion}`);
               }
-              plugin.forEach((patch) => {
-                if (!patch.versions ||
-                    semver.satisfies(version, patch.versions)) {
-                  const file = patch.file || '';
-                  if (isPatch(patch)) {
-                    patchSet[file] = {
-                      file,
-                      patch: patch.patch,
-                      unpatch: patch.unpatch
-                    };
+              if (plugin.length > 0) {
+                plugin.forEach((patch) => {
+                  if (!patch.versions ||
+                      semver.satisfies(version, patch.versions)) {
+                    const file = patch.file || '';
+                    if (isPatch(patch)) {
+                      patchSet[file] = {
+                        file,
+                        patch: patch.patch,
+                        unpatch: patch.unpatch
+                      };
+                    }
+                    if (isIntercept(patch)) {
+                      patchSet[file] = {file, intercept: patch.intercept};
+                    }
+                    // The conditionals exhaustively cover types for the patch
+                    // object, but throw an error in JavaScript anyway
+                    checkPatch(patch);
                   }
-                  if (isIntercept(patch)) {
-                    patchSet[file] = {file, intercept: patch.intercept};
-                  }
-                  // The conditionals exhaustively cover types for the patch
-                  // object, but throw an error in JavaScript anyway
-                  checkPatch(patch);
+                });
+                if (Object.keys(patchSet).length === 0) {
+                  logger.warn(`${moduleRoot}: version ${
+                      version} not supported by plugin.`);
                 }
-              });
-            }
-            if (Object.keys(patchSet).length === 0) {
+              }
+            } else {
               logger.warn(
-                  moduleRoot + ': version ' + version + ' not supported ' +
-                  'by plugin.');
+                  `${moduleRoot}: invalid version ${version}; not patching.`);
             }
             instrumentation.patches[moduleRoot] = patchSet;
           }
