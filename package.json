@@ -3,6 +3,7 @@
   "version": "2.3.3",
   "description": "Node.js Support for StackDriver Trace",
   "main": "build/src/index.js",
+  "types": "build/src/index.d.ts",
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
     "test": "ts-node -P ./scripts ./scripts npm-check npm-compile init-test-fixtures run-unit-tests",
@@ -33,7 +34,6 @@
     "LICENSE",
     "README.md"
   ],
-  "types": "build/src/index.d.ts",
   "keywords": [
     "google",
     "tracing",
