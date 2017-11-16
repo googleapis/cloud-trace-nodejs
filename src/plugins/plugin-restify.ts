@@ -14,43 +14,58 @@
  * limitations under the License.
  */
 
-'use strict';
+// TODO(kjin): Remove this when @types/shimmer are published.
+// tslint:disable-next-line:no-reference
+/// <reference path="../types.d.ts" />
 
-var shimmer = require('shimmer');
+import {ServerResponse} from 'http';
+import * as shimmer from 'shimmer';
+import {parse as urlParse} from 'url';
 
-var SUPPORTED_VERSIONS = '<=6.x';
+import {PluginTypes} from '..';
 
-function unpatchRestify(restify) {
+import {restify_5} from './types';
+
+type Restify5 = typeof restify_5;
+type Request = restify_5.Request&{route?: {path: string | RegExp}};
+type Response = restify_5.Response;
+type Next = restify_5.Next;
+type CreateServerFn = (options?: restify_5.ServerOptions) => restify_5.Server;
+
+const SUPPORTED_VERSIONS = '<=6.x';
+
+function unpatchRestify(restify: Restify5) {
   shimmer.unwrap(restify, 'createServer');
 }
 
-function patchRestify(restify, api) {
-  shimmer.wrap(restify, 'createServer', createServerWrap);
+function patchRestify(restify: Restify5, api: PluginTypes.TraceAgent) {
+  shimmer.wrap<CreateServerFn>(restify, 'createServer', createServerWrap);
 
-  function createServerWrap(createServer) {
-    return function createServerTrace() {
-      var server = createServer.apply(this, arguments);
+  function createServerWrap(createServer: CreateServerFn): CreateServerFn {
+    return function createServerTrace(this: {}) {
+      const server = createServer.apply(this, arguments) as restify_5.Server;
       server.use(middleware);
       return server;
     };
   }
 
-  function middleware(req, res, next) {
-    var options = {
+  function middleware(req: Request, res: Response, next: Next): void {
+    const options = {
       // we use the path part of the url as the span name and add the full url
       // as a label later.
       name: req.path(),
       url: req.url,
-      traceContext: req.header(api.constants.TRACE_CONTEXT_HEADER_NAME, null),
+      traceContext: req.header(api.constants.TRACE_CONTEXT_HEADER_NAME),
       skipFrames: 3
     };
 
-    api.runInRootSpan(options, function(rootSpan) {
+    api.runInRootSpan(options, rootSpan => {
       // Set response trace context.
-      var responseTraceContext =
-        api.getResponseTraceContext(options.traceContext, !!rootSpan);
+      const responseTraceContext =
+          api.getResponseTraceContext(options.traceContext, !!rootSpan);
       if (responseTraceContext) {
-        res.header(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+        res.header(
+            api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
 
       if (!rootSpan) {
@@ -60,23 +75,23 @@ function patchRestify(restify, api) {
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
-      var fullUrl = req.header('X-Forwarded-Proto', 'http') + '://' +
-                    req.header('host') + req.url;
+      const fullUrl = req.header('X-Forwarded-Proto', 'http') + '://' +
+          req.header('host') + req.url;
       rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
       rootSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, fullUrl);
-      rootSpan.addLabel(api.labels.HTTP_SOURCE_IP,
-                        req.connection.remoteAddress);
+      rootSpan.addLabel(
+          api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
-      var originalEnd = res.end;
-      res.end = function() {
+      const originalEnd = res.end;
+      res.end = function(this: ServerResponse) {
         res.end = originalEnd;
-        var returned = res.end.apply(this, arguments);
+        const returned = res.end.apply(this, arguments);
 
         if (req.route && req.route.path) {
           rootSpan.addLabel('restify/request.route.path', req.route.path);
         }
-        rootSpan.addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY,
-                          res.statusCode);
+        rootSpan.addLabel(
+            api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
         rootSpan.endSpan();
         return returned;
       };
@@ -86,8 +101,10 @@ function patchRestify(restify, api) {
   }
 }
 
-module.exports = [
-  {versions: SUPPORTED_VERSIONS, patch: patchRestify, unpatch: unpatchRestify}
-];
+const plugin: PluginTypes.Plugin = [{
+  versions: SUPPORTED_VERSIONS,
+  patch: patchRestify,
+  unpatch: unpatchRestify
+} as PluginTypes.Patch<Restify5>];
 
-export default {};
+export = plugin;

@@ -12,6 +12,12 @@
     "src/plugins/plugin-http.ts",
     "src/plugins/plugin-http2.ts",
     "src/plugins/plugin-https.ts",
+    "src/plugins/plugin-connect.ts",
+    "src/plugins/plugin-express.ts",
+    "src/plugins/plugin-hapi.ts",
+    "src/plugins/plugin-https.ts",
+    "src/plugins/plugin-koa.ts",
+    "src/plugins/plugin-restify.ts",
     "test/plugins/test-trace-http2.ts"
   ]
 }

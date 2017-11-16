@@ -13,26 +13,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-var urlParse = require('url').parse;
+// tslint:disable-next-line:no-reference
+/// <reference path="../types.d.ts" />
 
-var SUPPORTED_VERSIONS = '3.x';
+import {IncomingMessage, ServerResponse} from 'http';
+import * as shimmer from 'shimmer';
+import {parse as urlParse} from 'url';
 
-function createMiddleware(api) {
-  return function middleware(req, res, next) {
-    var options = {
-      name: urlParse(req.originalUrl).pathname,
+import {PluginTypes} from '..';
+
+import {connect_3} from './types';
+
+type Connect3 = typeof connect_3;
+// Connect docs note that routed requests have an originalUrl property.
+// https://github.com/senchalabs/connect/tree/3.6.5#appuseroute-fn
+type Request = IncomingMessage&{originalUrl?: string};
+
+const SUPPORTED_VERSIONS = '3.x';
+
+function getFirstHeader(req: IncomingMessage, key: string) {
+  let headerValue = req.headers[key];
+  if (headerValue && typeof headerValue !== 'string') {
+    headerValue = headerValue[0];
+  }
+  return headerValue;
+}
+
+function createMiddleware(api: PluginTypes.TraceAgent):
+    connect_3.NextHandleFunction {
+  return function middleware(req: Request, res, next) {
+    const options = {
+      name: req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '',
       url: req.originalUrl,
-      traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME.toLowerCase()],
+      traceContext:
+          getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
       skipFrames: 3
     };
-    api.runInRootSpan(options, function(root) {
+    api.runInRootSpan(options, (root) => {
       // Set response trace context.
-      var responseTraceContext =
-        api.getResponseTraceContext(options.traceContext, !!root);
+      const responseTraceContext =
+          api.getResponseTraceContext(options.traceContext || null, !!root);
       if (responseTraceContext) {
-        res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+        res.setHeader(
+            api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
 
       if (!root) {
@@ -42,8 +66,8 @@ function createMiddleware(api) {
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
-      var url = (req.headers['X-Forwarded-Proto'] || 'http') +
-        '://' + req.headers.host + req.originalUrl;
+      const url = (req.headers['X-Forwarded-Proto'] || 'http') + '://' +
+          req.headers.host + req.originalUrl;
 
       // we use the path part of the url as the span name and add the full
       // url as a label
@@ -52,18 +76,13 @@ function createMiddleware(api) {
       root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
       // wrap end
-      var originalEnd = res.end;
-      res.end = function() {
+      const originalEnd = res.end;
+      res.end = function(this: ServerResponse) {
         res.end = originalEnd;
-        var returned = res.end.apply(this, arguments);
+        const returned = res.end.apply(this, arguments);
 
-        if (req.route && req.route.path) {
-          root.addLabel(
-            'connect/request.route.path', req.route.path);
-        }
-
-        root.addLabel(
-          api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+        root.addLabel('connect/request.route.path', req.originalUrl);
+        root.addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
         root.endSpan();
 
         return returned;
@@ -74,19 +93,16 @@ function createMiddleware(api) {
   };
 }
 
-module.exports = [
-  {
-    file: '',
-    versions: SUPPORTED_VERSIONS,
-    intercept: function(connect, api) {
-      return function() {
-        var app = connect();
-        app.use(createMiddleware(api));
-        return app;
-      };
-    }
+const plugin: PluginTypes.Plugin = [{
+  file: '',
+  versions: SUPPORTED_VERSIONS,
+  intercept: (connect, api) => {
+    return function(this: {}) {
+      const app = connect();
+      app.use(createMiddleware(api));
+      return app;
+    };
   }
-];
+} as PluginTypes.Intercept<Connect3>];
 
-
-export default {};
+export = plugin;

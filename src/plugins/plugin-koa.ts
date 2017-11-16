@@ -13,134 +13,169 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-const shimmer = require('shimmer');
-const urlParse = require('url').parse;
+// TODO(kjin): Remove this when @types/shimmer are published.
+// tslint:disable-next-line:no-reference
+/// <reference path="../types.d.ts" />
 
-function startSpanForRequest(api, req, res, next) {
+import {IncomingMessage, ServerResponse} from 'http';
+import * as shimmer from 'shimmer';
+import {parse as urlParse} from 'url';
+
+import {PluginTypes} from '..';
+
+import {koa_1, koa_2} from './types';
+
+type Koa1Module = typeof koa_1;
+type Koa2Module = typeof koa_2;
+// routePath is populated if the user uses the koa-route module.
+type KoaContext = (koa_1.Context|koa_2.Context)&{routePath?: string | RegExp};
+
+interface KoaModule<T> {
+  // TypeScript isn't expressive enough, but KoaModule#use should return `this`.
+  // tslint:disable-next-line:no-any
+  readonly prototype: {use: (m: T) => any};
+}
+
+// Function signature for createMiddleware[2x]
+type CreateMiddlewareFn<T> = (api: PluginTypes.TraceAgent) => T;
+// Function signature for a function that returns the value of the "next"
+// middleware function parameter, wrapped to propagate context based on the
+// propagateContext flag. The type of "next" differs between Koa 1 and 2.
+type GetNextFn<T> = (propagateContext: boolean) => T;
+
+function getFirstHeader(req: IncomingMessage, key: string) {
+  let headerValue = req.headers[key];
+  if (headerValue && typeof headerValue !== 'string') {
+    headerValue = headerValue[0];
+  }
+  return headerValue;
+}
+
+function startSpanForRequest<T>(
+    api: PluginTypes.TraceAgent, ctx: KoaContext, getNext: GetNextFn<T>): T {
+  const {req, res} = ctx;
   const originalEnd = res.end;
   const options = {
-    name: urlParse(req.url).pathname,
+    name: req.url ? (urlParse(req.url).pathname || '') : '',
     url: req.url,
-    traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME],
+    traceContext: getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
     skipFrames: 4
   };
-  return api.runInRootSpan(options, function(root) {
+  return api.runInRootSpan(options, root => {
     // Set response trace context.
     const responseTraceContext =
-      api.getResponseTraceContext(options.traceContext, !!root);
+        api.getResponseTraceContext(options.traceContext || null, !!root);
     if (responseTraceContext) {
-      res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+      res.setHeader(
+          api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
     }
-    
+
     if (!root) {
-      return next;
+      return getNext(false);
     }
 
     api.wrapEmitter(req);
     api.wrapEmitter(res);
 
-    const url = (req.headers['X-Forwarded-Proto'] || 'http') +
-      '://' + req.headers.host + req.url;
+    const url = (req.headers['X-Forwarded-Proto'] || 'http') + '://' +
+        req.headers.host + req.url;
 
     // we use the path part of the url as the span name and add the full
     // url as a label
-    // req.path would be more desirable but is not set at the time our middlewear runs.
+    // req.path would be more desirable but is not set at the time our
+    // middlewear runs.
     root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
     root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
     root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
     // wrap end
-    res.end = function() {
+    res.end = function(this: ServerResponse) {
       res.end = originalEnd;
       const returned = res.end.apply(this, arguments);
 
-      if (req.route && req.route.path) {
-        root.addLabel(
-          'koa/request.route.path', req.route.path);
+      if (ctx.routePath) {
+        root.addLabel('koa/request.route.path', ctx.routePath);
       }
-      root.addLabel(
-          api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+      root.addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
       root.endSpan();
 
       return returned;
     };
 
     // if the event is aborted, end the span (as res.end will not be called)
-    req.once('aborted', function() {
+    req.once('aborted', () => {
       root.addLabel(api.labels.ERROR_DETAILS_NAME, 'aborted');
-      root.addLabel(api.labels.ERROR_DETAILS_MESSAGE, 'client aborted the request');
+      root.addLabel(
+          api.labels.ERROR_DETAILS_MESSAGE, 'client aborted the request');
       root.endSpan();
     });
 
-    // In Koa 1, next is a Generator object.
-    // We wrap Generator#next here.
-    if (!next.apply && next.next) {
-      next.next = api.wrap(next.next);
-      return next;
-    } else {
-      return api.wrap(next);
-    }
+    return getNext(true);
   });
 }
 
-function createMiddleware(api) {
-  return function* middleware(next) {
-    /* jshint validthis:true */
-    const req = this.req;
-    const res = this.res;
-
-    next = startSpanForRequest(api, req, res, next);
-
+function createMiddleware(api: PluginTypes.TraceAgent): koa_1.Middleware {
+  // Koa 1 type definitions use any here.
+  // tslint:disable-next-line:no-any
+  return function* middleware(this: koa_1.Context, next: IterableIterator<{}>) {
+    next = startSpanForRequest(api, this, (propagateContext: boolean) => {
+      if (propagateContext) {
+        next.next = api.wrap(next.next);
+      }
+      return next;
+    });
     yield next;
   };
 }
 
-function createMiddleware2x(api) {
+function createMiddleware2x(api: PluginTypes.TraceAgent): koa_2.Middleware {
   return function middleware(ctx, next) {
-    const req = ctx.req;
-    const res = ctx.res;
-
-    next = startSpanForRequest(api, req, res, next);
-
+    next = startSpanForRequest(
+        api, ctx,
+        (propagateContext: boolean) =>
+            propagateContext ? api.wrap(next) : next);
     return next();
   };
 }
 
-function patchUse(koa, api, createMiddlewareFunction) {
-  shimmer.wrap(koa.prototype, 'use', function useWrap(use) {
-    return function useTrace() {
-      if (!this._google_trace_patched) {
-        this._google_trace_patched = true;
-        this.use(createMiddlewareFunction(api));
-      }
-      return use.apply(this, arguments);
-    };
+function patchUse<T>(
+    koa: KoaModule<T>, api: PluginTypes.TraceAgent,
+    createMiddlewareFunction: CreateMiddlewareFn<T>) {
+  shimmer.wrap<typeof koa.prototype.use>(koa.prototype, 'use', (use) => {
+    return function useTrace(this: typeof koa.prototype&
+                             PluginTypes.TraceAgentExtension):
+        typeof koa.prototype {
+          if (!this._google_trace_patched) {
+            this._google_trace_patched = true;
+            this.use(createMiddlewareFunction(api));
+          }
+          return use.apply(this, arguments);
+        };
   });
 }
 
-module.exports = [
+const plugin: PluginTypes.Plugin = [
   {
     file: '',
     versions: '1.x',
-    patch: function(koa, api) {
+    patch: (koa, api) => {
       patchUse(koa, api, createMiddleware);
     },
-    unpatch: function(koa) {
+    unpatch: (koa) => {
       shimmer.unwrap(koa.prototype, 'use');
     }
-  },
+  } as PluginTypes.Patch<Koa1Module>,
   {
     file: '',
     versions: '2.x',
-    patch: function(koa, api) {
+    patch: (koa, api) => {
       patchUse(koa, api, createMiddleware2x);
     },
-    unpatch: function(koa) {
+    unpatch: (koa) => {
       shimmer.unwrap(koa.prototype, 'use');
     }
-  }
+  } as PluginTypes.Patch<Koa2Module>
 ];
 
-export default {};
+export = plugin;

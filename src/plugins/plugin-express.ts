@@ -14,35 +14,36 @@
  * limitations under the License.
  */
 
-'use strict';
-var shimmer = require('shimmer');
-var methods = require('methods').concat('use', 'route', 'param', 'all');
+// tslint:disable-next-line:no-reference
+/// <reference path="../types.d.ts" />
 
-var SUPPORTED_VERSIONS = '4.x';
+import * as httpMethods from 'methods';
+import * as shimmer from 'shimmer';
 
-function patchModuleRoot(express, api) {
-  var labels = api.labels;
-  function applicationActionWrap(method) {
-    return function expressActionTrace() {
-      if (!this._google_trace_patched && !this._router) {
-        this._google_trace_patched = true;
-        this.use(middleware);
-      }
-      return method.apply(this, arguments);
-    };
-  }
+import {PluginTypes} from '..';
 
-  function middleware(req, res, next) {
-    var options = {
+import {express_4} from './types';
+
+// application is an undocumented member of the express object.
+type Express4Module = typeof express_4&{application: express_4.Application};
+
+const methods = httpMethods.concat('use', 'route', 'param', 'all');
+
+const SUPPORTED_VERSIONS = '4.x';
+
+function patchModuleRoot(express: Express4Module, api: PluginTypes.TraceAgent) {
+  const labels = api.labels;
+  const middleware: express_4.RequestHandler = (req, res, next) => {
+    const options: PluginTypes.RootSpanOptions = {
       name: req.path,
       traceContext: req.get(api.constants.TRACE_CONTEXT_HEADER_NAME),
       url: req.originalUrl,
       skipFrames: 3
     };
-    api.runInRootSpan(options, function(rootSpan) {
+    api.runInRootSpan(options, (rootSpan) => {
       // Set response trace context.
-      var responseTraceContext =
-        api.getResponseTraceContext(options.traceContext, !!rootSpan);
+      const responseTraceContext =
+          api.getResponseTraceContext(options.traceContext || null, !!rootSpan);
       if (responseTraceContext) {
         res.set(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
@@ -55,16 +56,16 @@ function patchModuleRoot(express, api) {
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
-      var url = req.protocol + '://' + req.hostname + req.originalUrl;
+      const url = req.protocol + '://' + req.hostname + req.originalUrl;
       rootSpan.addLabel(labels.HTTP_METHOD_LABEL_KEY, req.method);
       rootSpan.addLabel(labels.HTTP_URL_LABEL_KEY, url);
       rootSpan.addLabel(labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
       // wrap end
-      var originalEnd = res.end;
-      res.end = function() {
+      const originalEnd = res.end;
+      res.end = function(this: express_4.Response) {
         res.end = originalEnd;
-        var returned = res.end.apply(this, arguments);
+        const returned = res.end.apply(this, arguments);
 
         if (req.route && req.route.path) {
           rootSpan.addLabel('express/request.route.path', req.route.path);
@@ -76,23 +77,34 @@ function patchModuleRoot(express, api) {
 
       next();
     });
+  };
+
+  function applicationActionWrap<T extends Function>(method: T): () => T {
+    return function expressActionTrace(this: express_4.Application&
+                                       PluginTypes.TraceAgentExtension) {
+      if (!this._google_trace_patched && !this._router) {
+        this._google_trace_patched = true;
+        this.use(middleware);
+      }
+      return method.apply(this, arguments);
+    };
   }
 
-  methods.forEach(function(method) {
+  methods.forEach((method) => {
     shimmer.wrap(express.application, method, applicationActionWrap);
   });
 }
 
-function unpatchModuleRoot(express) {
-  methods.forEach(function(method) {
+function unpatchModuleRoot(express: Express4Module) {
+  methods.forEach((method) => {
     shimmer.unwrap(express.application, method);
   });
 }
 
-module.exports = [{
-    versions: SUPPORTED_VERSIONS,
-    patch: patchModuleRoot,
-    unpatch: unpatchModuleRoot
-}];
+const plugin: PluginTypes.Plugin = [{
+  versions: SUPPORTED_VERSIONS,
+  patch: patchModuleRoot,
+  unpatch: unpatchModuleRoot
+} as PluginTypes.Patch<Express4Module>];
 
-export default {};
+export = plugin;

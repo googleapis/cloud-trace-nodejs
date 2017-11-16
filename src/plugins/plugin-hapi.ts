@@ -13,40 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-var shimmer = require('shimmer');
-var urlParse = require('url').parse;
+// TODO(kjin): Remove this when @types/shimmer are published.
+// tslint:disable-next-line:no-reference
+/// <reference path="../types.d.ts" />
 
-var SUPPORTED_VERSIONS = '8 - 16';
+import {IncomingMessage, ServerResponse} from 'http';
+import * as shimmer from 'shimmer';
+import {parse as urlParse} from 'url';
 
-function createConnectionWrap(api) {
-  return function connectionWrap(connection) {
-    return function connectionTrace() {
-      var server = connection.apply(this, arguments);
-      server.ext('onRequest', createMiddleware(api));
-      return server;
-    };
-  };
+import {PluginTypes} from '..';
+
+import {hapi_16} from './types';
+
+type Hapi16Module = typeof hapi_16;
+
+const SUPPORTED_VERSIONS = '8 - 16';
+
+function getFirstHeader(req: IncomingMessage, key: string) {
+  let headerValue = req.headers[key];
+  if (headerValue && typeof headerValue !== 'string') {
+    headerValue = headerValue[0];
+  }
+  return headerValue;
 }
 
-function createMiddleware(api) {
+function createMiddleware(api: PluginTypes.TraceAgent):
+    hapi_16.ServerExtRequestHandler {
   return function middleware(request, reply) {
-    var req = request.raw.req;
-    var res = request.raw.res;
-    var originalEnd = res.end;
-    var options = {
-      name: urlParse(req.url).pathname,
+    const req = request.raw.req;
+    const res = request.raw.res;
+    const originalEnd = res.end;
+    const options: PluginTypes.RootSpanOptions = {
+      name: req.url ? (urlParse(req.url).pathname || '') : '',
       url: req.url,
-      traceContext: req.headers[api.constants.TRACE_CONTEXT_HEADER_NAME],
+      traceContext:
+          getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
       skipFrames: 3
     };
-    api.runInRootSpan(options, function(root) {
+    api.runInRootSpan(options, (root) => {
       // Set response trace context.
-      var responseTraceContext =
-        api.getResponseTraceContext(options.traceContext, !!root);
+      const responseTraceContext =
+          api.getResponseTraceContext(options.traceContext || null, !!root);
       if (responseTraceContext) {
-        res.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+        res.setHeader(
+            api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
 
       if (!root) {
@@ -56,36 +67,36 @@ function createMiddleware(api) {
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
-      var url = (req.headers['X-Forwarded-Proto'] || 'http') +
-      '://' + req.headers.host + req.url;
-    
+      const url = (req.headers['X-Forwarded-Proto'] || 'http') + '://' +
+          req.headers.host + req.url;
+
       // we use the path part of the url as the span name and add the full
       // url as a label
-      // req.path would be more desirable but is not set at the time our middleware runs.
+      // req.path would be more desirable but is not set at the time our
+      // middleware runs.
       root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
       root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
       root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
       // wrap end
-      res.end = function() {
+      res.end = function(this: ServerResponse) {
         res.end = originalEnd;
-        var returned = res.end.apply(this, arguments);
+        const returned = res.end.apply(this, arguments);
 
-        if (req.route && req.route.path) {
-          root.addLabel(
-            'hapi/request.route.path', req.route.path);
+        if (request.route && request.route.path) {
+          root.addLabel('hapi/request.route.path', request.route.path);
         }
-        root.addLabel(
-            api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+        root.addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
         root.endSpan();
 
         return returned;
       };
 
       // if the event is aborted, end the span (as res.end will not be called)
-      req.once('aborted', function() {
+      req.once('aborted', () => {
         root.addLabel(api.labels.ERROR_DETAILS_NAME, 'aborted');
-        root.addLabel(api.labels.ERROR_DETAILS_MESSAGE, 'client aborted the request');
+        root.addLabel(
+            api.labels.ERROR_DETAILS_MESSAGE, 'client aborted the request');
         root.endSpan();
       });
 
@@ -94,19 +105,21 @@ function createMiddleware(api) {
   };
 }
 
-module.exports = [
-  {
-    file: '',
-    versions: SUPPORTED_VERSIONS,
-    patch: function(hapi, api) {
-      shimmer.wrap(hapi.Server.prototype,
-                   'connection',
-                   createConnectionWrap(api));
-    },
-    unpatch: function(hapi) {
-      shimmer.unwrap(hapi.Server.prototype, 'connection');
-    }
+const plugin: PluginTypes.Plugin = [{
+  file: '',
+  versions: SUPPORTED_VERSIONS,
+  patch: (hapi, api) => {
+    shimmer.wrap<typeof hapi.Server.prototype.connection>(
+        hapi.Server.prototype, 'connection', (connection) => {
+          return function connectionTrace(this: {}) {
+            const server: hapi_16.Server = connection.apply(this, arguments);
+            server.ext('onRequest', createMiddleware(api));
+            return server;
+          };
+        });
+  },
+  unpatch: (hapi) => {
+    shimmer.unwrap(hapi.Server.prototype, 'connection');
   }
-];
-
-export default {};
+} as PluginTypes.Patch<Hapi16Module>];
+export = plugin;

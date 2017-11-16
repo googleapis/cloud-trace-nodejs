@@ -1,4 +1,4 @@
-import { Stats, stat, readFile, writeFile, mkdir } from 'fs';
+import { mkdir, Stats, stat, readFile, writeFile } from 'fs';
 import * as glob from 'glob';
 import { ncp } from 'ncp';
 import * as path from 'path';
@@ -19,6 +19,10 @@ export const tmpDirP: () => Promise<string> = pify(tmp.dir);
 
 export function nodule(nodule: string) {
   return path.relative(BUILD_DIRECTORY, `node_modules/${nodule}`);
+}
+
+export function flatten<T>(arr: Array<Array<T>>): Array<T> {
+  return arr.reduce((acc, e) => acc.concat(e), []);
 }
 
 export function existsP(path: string): Promise<boolean> {
