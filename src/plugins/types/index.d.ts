@@ -1,9 +1,40 @@
-import * as connect_3 from 'connect'; // connect@3
-import * as express_4 from 'express'; // express@4
-import * as hapi_16 from 'hapi'; // hapi@16
-import * as koa_2 from 'koa'; // koa@2
-import * as pg_7 from 'pg'; // pg@7
-import * as restify_5 from 'restify'; // restify@5
+/**
+ * Copyright 2018 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//---module type imports---//
+
+/**
+ * NOTE: The lines in this section are parsed by scripts/get-plugin-types.ts
+ * and therefore must have a specific format
+ * 
+ * import * as X_Y from './X_Y'; // X@Y
+ * 
+ * where X is the module name and Y is the module version string.
+ * Ideally, Y is just the module's major version, since variable names cannot
+ * contain dots.
+ */
+
+import * as connect_3 from './connect_3'; // connect@3
+import * as express_4 from './express_4'; // express@4
+import * as hapi_16 from './hapi_16'; // hapi@16
+import * as koa_2 from './koa_2'; // koa@2
+import * as pg_7 from './pg_7'; // pg@7
+import * as restify_5 from './restify_5'; // restify@5
+
+//---other imports---//
 
 import { EventEmitter } from 'events';
 import { Server } from 'http';

@@ -17,6 +17,7 @@ const {
 import { checkInstall } from './check-install';
 import { compile } from './compile';
 import { encryptCredentials, decryptCredentials } from './credentials';
+import { getPluginTypes } from './get-plugin-types';
 import { initTestFixtures } from './init-test-fixtures';
 import { reportCoverage } from './report-coverage';
 import { runTests } from './run-tests';
@@ -80,6 +81,9 @@ async function run(steps: string[]) {
           }
 
           await decryptCredentials({ key, iv }, `node-team-test-${keyID}.json`);
+          break;
+        case 'get-plugin-types':
+          await getPluginTypes();
           break;
         case 'init-test-fixtures':
           await initTestFixtures(!TRACE_TEST_EXCLUDE_INTEGRATION);
