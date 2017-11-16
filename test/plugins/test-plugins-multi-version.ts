@@ -29,7 +29,7 @@ describe('multiple instrumentations of the same module', function() {
   var clientv2;
 
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       enhancedDatabaseReporting: true,
       samplingRate: 0

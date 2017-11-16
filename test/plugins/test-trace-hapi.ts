@@ -41,7 +41,7 @@ describe('hapi', function() {
   var agent;
 
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       ignoreUrls: ['/ignore'],
       samplingRate: 0

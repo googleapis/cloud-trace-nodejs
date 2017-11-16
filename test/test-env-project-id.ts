@@ -18,7 +18,7 @@
 
 process.env.GCLOUD_PROJECT = '1729';
 
-var trace = require('..');
+var trace = require('../..');
 
 var assert = require('assert');
 

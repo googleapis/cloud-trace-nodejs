@@ -2,7 +2,8 @@
   "name": "@google-cloud/trace-agent",
   "version": "2.3.3",
   "description": "Node.js Support for StackDriver Trace",
-  "main": "build/index.js",
+  "main": "build/src/index.js",
+  "types": "build/src/index.d.ts",
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
     "test": "ts-node -P ./scripts ./scripts npm-check npm-compile init-test-fixtures run-unit-tests",
@@ -18,22 +19,21 @@
     "compile-strict": "tsc -p .",
     "compile": "ts-node -P ./scripts ./scripts npm-compile-all npm-compile-strict",
     "fix": "gts fix",
-    "prepare": "npm run compile"
+    "prepare": "ts-node -P ./scripts ./scripts npm-clean npm-compile"
   },
   "files": [
-    "build/*.js",
-    "build/*.d.ts",
     "build/src/*.js",
+    "build/src/config.d.ts",
     "build/src/constants.d.ts",
-    "build/src/trace-labels.d.ts",
+    "build/src/index.d.ts",
     "build/src/plugin-types.d.ts",
+    "build/src/trace-labels.d.ts",
     "build/src/plugins/*.js",
     "doc",
     "CHANGELOG.md",
     "LICENSE",
     "README.md"
   ],
-  "types": "build/index.d.ts",
   "keywords": [
     "google",
     "tracing",

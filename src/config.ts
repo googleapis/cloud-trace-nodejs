@@ -16,6 +16,9 @@
 
 import * as path from 'path';
 
+const pluginDirectory =
+    path.join(path.resolve(__dirname, '..'), 'src', 'plugins');
+
 /** Available configuration options. */
 export interface Config {
   /** Log levels: 0=disabled, 1=error, 2=warn, 3=info, 4=debug */
@@ -158,20 +161,20 @@ export const defaultConfig = {
   maximumLabelValueSize: 512,
   plugins: {
     // enable all by default
-    'connect': path.join(__dirname, 'src/plugins/plugin-connect.js'),
-    'express': path.join(__dirname, 'src/plugins/plugin-express.js'),
-    'generic-pool': path.join(__dirname, 'src/plugins/plugin-generic-pool.js'),
-    'grpc': path.join(__dirname, 'src/plugins/plugin-grpc.js'),
-    'hapi': path.join(__dirname, 'src/plugins/plugin-hapi.js'),
-    'http': path.join(__dirname, 'src/plugins/plugin-http.js'),
-    'https': path.join(__dirname, 'src/plugins/plugin-https.js'),
-    'knex': path.join(__dirname, 'src/plugins/plugin-knex.js'),
-    'koa': path.join(__dirname, 'src/plugins/plugin-koa.js'),
-    'mongodb-core': path.join(__dirname, 'src/plugins/plugin-mongodb-core.js'),
-    'mysql': path.join(__dirname, 'src/plugins/plugin-mysql.js'),
-    'pg': path.join(__dirname, 'src/plugins/plugin-pg.js'),
-    'redis': path.join(__dirname, 'src/plugins/plugin-redis.js'),
-    'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
+    'connect': path.join(pluginDirectory, 'plugin-connect.js'),
+    'express': path.join(pluginDirectory, 'plugin-express.js'),
+    'generic-pool': path.join(pluginDirectory, 'plugin-generic-pool.js'),
+    'grpc': path.join(pluginDirectory, 'plugin-grpc.js'),
+    'hapi': path.join(pluginDirectory, 'plugin-hapi.js'),
+    'http': path.join(pluginDirectory, 'plugin-http.js'),
+    'https': path.join(pluginDirectory, 'plugin-https.js'),
+    'knex': path.join(pluginDirectory, 'plugin-knex.js'),
+    'koa': path.join(pluginDirectory, 'plugin-koa.js'),
+    'mongodb-core': path.join(pluginDirectory, 'plugin-mongodb-core.js'),
+    'mysql': path.join(pluginDirectory, 'plugin-mysql.js'),
+    'pg': path.join(pluginDirectory, 'plugin-pg.js'),
+    'redis': path.join(pluginDirectory, 'plugin-redis.js'),
+    'restify': path.join(pluginDirectory, 'plugin-restify.js')
   },
   stackTraceLimit: 10,
   flushDelaySeconds: 30,

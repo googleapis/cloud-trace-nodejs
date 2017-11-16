@@ -24,7 +24,7 @@ describe('test-default-ignore-ah-health', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('..').start({
+    agent = require('../..').start({
       projectId: '0',
       samplingRate: 0
     });

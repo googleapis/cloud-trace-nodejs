@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-'use strict';
+import * as semver from 'semver';
+import { execSync } from 'child_process';
+import * as assert from 'assert';
 
-var semver = require('semver');
-var execSync = require('child_process').execSync;
-var assert = require('assert');
-
-// --require added `internal/preload` semantics in 2.2.0.
-if (semver.satisfies(process.versions.node, '>= 2.2.0')) {
-  describe('preloaded agent', function() {
-    it('should start automatically when preloaded using --require', function() {
-      var output = execSync('node --require "." test/fixtures/preloaded-agent.js');
-      assert(output.toString().match(/passed/));
-    });
+describe('preloaded agent', () => {
+  it('should start automatically when preloaded using --require', () => {
+    console.log(process.cwd());
+    const output = execSync('node --require "./src" test/fixtures/preloaded-agent.js');
+    assert.ok(output.toString().match(/passed/));
   });
-} else {
-  console.log('Skipping --require test for node ', process.versions.node);
-}
-
-export default {};
+});

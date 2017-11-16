@@ -29,7 +29,7 @@ describe('test-trace-express', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       ignoreUrls: ['/ignore'],
       samplingRate: 0

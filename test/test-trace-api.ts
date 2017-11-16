@@ -18,7 +18,7 @@
 
 import './override-gcp-metadata';
 import * as cls from '../src/cls';
-import { defaultConfig } from '../config';
+import { defaultConfig } from '../src/config';
 import { TraceAgent } from '../src/trace-api';
 import { traceWriter } from '../src/trace-writer';
 import * as TracingPolicy from '../src/tracing-policy';

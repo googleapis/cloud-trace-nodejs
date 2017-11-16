@@ -21,7 +21,7 @@ import * as cls from '../src/cls';
 var assert = require('assert');
 var nock = require('nock');
 var common = require('./plugins/common'/*.js*/);
-var trace = require('..');
+var trace = require('../..');
 
 nock.disableNetConnect();
 

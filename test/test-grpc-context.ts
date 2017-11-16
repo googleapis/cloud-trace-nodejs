@@ -51,7 +51,7 @@ function requestAndSendHTTPStatus(res, expectedReqs) {
 
 // Trace agent must be started out of the loop over gRPC versions,
 // because express can't be re-patched.
-var agent = require('..').start({
+var agent = require('../..').start({
   projectId: '0',
   samplingRate: 0
 });

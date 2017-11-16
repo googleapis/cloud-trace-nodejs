@@ -11,7 +11,6 @@
     "noEmitOnError": false
   },
   "include": [
-    "*.ts",
     "src/**/*.ts",
     "test/*.ts",
     "test/plugins/*.ts"

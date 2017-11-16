@@ -23,18 +23,18 @@ if (require('semver').satisfies(process.version, '<8') ||
   require('continuation-local-storage');
 }
 
-import * as cls from './src/cls';
+import * as cls from './cls';
 import * as common from '@google-cloud/common';
-import {Constants} from './src/constants';
+import {Constants} from './constants';
 import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
-import * as PluginTypes from './src/plugin-types';
-import {PluginLoaderConfig} from './src/trace-plugin-loader';
-import * as pluginLoader from './src/trace-plugin-loader';
-import {TraceAgent} from './src/trace-api';
-import {traceWriter, TraceWriterSingletonConfig} from './src/trace-writer';
-import * as traceUtil from './src/util';
+import * as PluginTypes from './plugin-types';
+import {PluginLoaderConfig} from './trace-plugin-loader';
+import * as pluginLoader from './trace-plugin-loader';
+import {TraceAgent} from './trace-api';
+import {traceWriter, TraceWriterSingletonConfig} from './trace-writer';
+import * as traceUtil from './util';
 
 export {Config, PluginTypes};
 

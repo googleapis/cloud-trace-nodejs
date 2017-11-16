@@ -20,7 +20,7 @@ import { Constants } from '../src/constants';
 import { traceWriter } from '../src/trace-writer';
 
 var assert = require('assert');
-var trace = require('..');
+var trace = require('../..');
 
 describe('maximumLabelValueSize configuration', function() {
   it('should not allow values above server maximum', function() {

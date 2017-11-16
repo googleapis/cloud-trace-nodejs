@@ -29,7 +29,7 @@ describe('test-trace-connect', function() {
   var agent;
   var connect;
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       ignoreUrls: ['/ignore'],
       samplingRate: 0

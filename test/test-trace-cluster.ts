@@ -24,7 +24,7 @@ describe('test-trace-cluster', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('..').start({
+    agent = require('../..').start({
       projectId: '0',
       samplingRate: 0
     });

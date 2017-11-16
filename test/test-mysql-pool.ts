@@ -26,7 +26,7 @@ if (semver.satisfies(process.version, '>=4')) {
     var agent;
     var Hapi;
     before(function() {
-      agent = require('..').start({
+      agent = require('../..').start({
         projectId: '0',
         samplingRate: 0,
         enhancedDatabaseReporting: true

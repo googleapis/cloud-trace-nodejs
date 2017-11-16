@@ -34,7 +34,7 @@ var versions = {
 
 describe('mongodb', function() {
   before(function() {
-    require('../..').start({
+    require('../../..').start({
       projectId: '0',
       samplingRate: 0,
       enhancedDatabaseReporting: true,
