@@ -172,6 +172,22 @@ describe('test-trace-http', function() {
     );
   });
 
+  it('custom port number must be included in the url label', function(done) {
+    server.listen(common.serverPort, common.runInTransaction.bind(null,
+      function(endTransaction) {
+        http.get({port: common.serverPort});
+        setTimeout(function() {
+          endTransaction();
+          var traces = common.getTraces();
+          assert.equal(traces.length, 1);
+          assert.equal(traces[0].spans[1].labels['/http/url'],
+              `http://localhost:${common.serverPort}/`);
+          done();
+        }, common.serverWait * 1.5);
+      })
+    );
+  });
+
   it('should accurately measure get time, error', function(done) {
     var server = http.Server(function(req, res) {
       setTimeout(function() {

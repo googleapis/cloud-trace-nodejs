@@ -40,7 +40,7 @@ function extractUrl(options) {
   return isString(uri) ? uri :
     (options.protocol || agent.protocol) + '//' +
     (options.hostname || options.host || 'localhost') +
-    ((isString(options.port) ? (':' + options.port) : '')) +
+    (options.port ? (':' + options.port) : '') +
     (options.path || options.pathName || '/');
 }
 
