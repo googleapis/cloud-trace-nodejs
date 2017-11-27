@@ -54,9 +54,9 @@ export class TraceWriter extends common.Service {
   private logger: common.Logger;
   private config: TraceWriterConfig;
   /** Stringified traces to be published */
-  public buffer: string[];
+  buffer: string[];
   /** Default labels to be attached to written spans */
-  public defaultLabels: LabelObject;
+  defaultLabels: LabelObject;
   /** Reference to global unhandled exception handler */
   private unhandledException?: () => void;
   /** Whether the trace writer is active */
@@ -99,7 +99,7 @@ export class TraceWriter extends common.Service {
       this.unhandledException = () => {
         this.flushBuffer();
         if (onUncaughtException === 'flushAndExit') {
-          setTimeout(function() {
+          setTimeout(() => {
             process.exit(1);
           }, 2000);
         }
@@ -118,7 +118,7 @@ export class TraceWriter extends common.Service {
 
     // Schedule periodic flushing of the buffer, but only if we are able to get
     // the project number (potentially from the network.)
-    this.getProjectId((err: Error, project: string) => {
+    this.getProjectId((err: Error|null, project?: string) => {
       if (err) {
         this.logger.error(
             'Unable to acquire the project number from metadata ' +
@@ -174,7 +174,7 @@ export class TraceWriter extends common.Service {
 
   getHostname(cb: (hostname: string) => void) {
     gcpMetadata.instance(
-        {property: 'hostname', headers: headers}, (err, response, hostname) => {
+        {property: 'hostname', headers}, (err, response, hostname) => {
           if (err && err.code !== 'ENOTFOUND') {
             // We are running on GCP.
             this.logger.warn('Unable to retrieve GCE hostname.', err);
@@ -185,7 +185,7 @@ export class TraceWriter extends common.Service {
 
   getInstanceId(cb: (instanceId?: string) => void) {
     gcpMetadata.instance(
-        {property: 'id', headers: headers}, (err, response, instanceId) => {
+        {property: 'id', headers}, (err, response, instanceId) => {
           if (err && err.code !== 'ENOTFOUND') {
             // We are running on GCP.
             this.logger.warn('Unable to retrieve GCE instance id.', err);
@@ -205,8 +205,7 @@ export class TraceWriter extends common.Service {
     }
 
     gcpMetadata.project(
-        {property: 'project-id', headers: headers},
-        (err, response, projectId) => {
+        {property: 'project-id', headers}, (err, response, projectId) => {
           if (response && response.statusCode !== 200) {
             if (response.statusCode === 503) {
               err = new Error(
@@ -327,7 +326,7 @@ export class TraceWriter extends common.Service {
     const uri = `https://cloudtrace.googleapis.com/v1/projects/${
         this.config.projectId}/traces`;
 
-    const options = {method: 'PATCH', uri: uri, body: json, headers: headers};
+    const options = {method: 'PATCH', uri, body: json, headers};
     this.logger.debug('TraceWriter: publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
       if (err) {

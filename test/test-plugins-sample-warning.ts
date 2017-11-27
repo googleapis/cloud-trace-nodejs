@@ -31,7 +31,7 @@ describe('express + dbs', function() {
   var agent;
 
   before(function() {
-    agent = require('..').start({
+    agent = require('../..').start({
       projectId: '0',
       samplingRate: 0
     });
@@ -123,10 +123,10 @@ describe('express + dbs', function() {
   it('mysql should not warn', function(done) {
     var mysql = require('./plugins/fixtures/mysql2');
     var express = require('./plugins/fixtures/express4');
+    var pool = mysql.createPool(require('./mysql-config'/*.js*/));
 
     var app = express();
     app.get('/', function (req, res) {
-      var pool = mysql.createPool(require('./mysql-config'/*.js*/));
       http.get('http://www.google.com/', function() {
         pool.getConnection(function(err, conn) {
           conn.query('SHOW COLUMNS FROM t', function(err) {
@@ -138,6 +138,7 @@ describe('express + dbs', function() {
     var server = app.listen(common.serverPort + 3, function() {
       http.get({port: common.serverPort + 3}, function(res) {
         http.get({port: common.serverPort + 3}, function(res) {
+          pool.end();
           server.close();
           common.cleanTraces();
           assert.equal(untracedHttpSpanCount, 2);

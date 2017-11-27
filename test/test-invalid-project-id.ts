@@ -22,7 +22,7 @@ var assert = require('assert');
 
 describe('index.js', function() {
   it('should complain when config.projectId is not a string or number', function() {
-    var agent = require('..').start({
+    var agent = require('../..').start({
       projectId: {test: false},
       enabled: true,
       logLevel: 0,

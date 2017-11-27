@@ -25,8 +25,9 @@ var semver = require('semver');
 var appBuilders: any = {
   koa1: buildKoa1App,
 };
-if (semver.satisfies(process.version, '>4')) {
-  appBuilders.koa2 = buildKoa2App;
+var skipKoa2 = semver.satisfies(process.version, '<=4');
+if (!skipKoa2) {
+  appBuilders.koa2 = buildKoa2App
 }
 
 describe('koa', function() {
@@ -34,7 +35,7 @@ describe('koa', function() {
   var agent;
 
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       ignoreUrls: ['/ignore'],
       samplingRate: 0
@@ -163,6 +164,65 @@ describe('koa', function() {
           common.assertSpanDurationCorrect(span, common.serverWait / 2);
           done();
         }, common.serverWait);
+      });
+    });
+  });
+
+  describe('execution context propagation', function() {
+    it('should work in koa 1', function(done) {
+      var children: any[] = [];
+      var koa = require('./fixtures/koa1');
+      var app = koa();
+      app.use(function* (next) {
+        children.push(agent.createChildSpan({ name: 'span0' }));
+        yield* next;
+        this.body = '';
+      });
+      app.use(function* () {
+        children.push(agent.createChildSpan({ name: 'span1' }));
+      });
+      server = app.listen(common.serverPort, () => {
+        http.get({ port: common.serverPort, path: '/' }, (res) => {
+          res.on('data', () => {});
+          res.on('end', () => {
+            server.close();
+            assert.strictEqual(children.length, 2);
+            children.forEach((childSpan, index) => {
+              assert.ok(childSpan);
+              assert.strictEqual(childSpan.span.name, `span${index}`);
+            });
+            done();
+          });
+        });
+      });
+    });
+
+    (skipKoa2 ? it.skip : it)('should work in koa 2', function(done) {
+      var children: any[] = [];
+      var Koa = require('./fixtures/koa2');
+      var app = new Koa();
+      app.use(function (ctx, next) {
+        children.push(agent.createChildSpan({ name: 'span0' }));
+        return new Promise(resolve => {
+          ctx.body = '';
+          setTimeout(resolve, 100);
+        }).then(() => {
+          children.push(agent.createChildSpan({ name: 'span1' }));
+        });
+      });
+      server = app.listen(common.serverPort, () => {
+        http.get({ port: common.serverPort, path: '/' }, (res) => {
+          res.on('data', () => {});
+          res.on('end', () => {
+            server.close();
+            assert.strictEqual(children.length, 2);
+            children.forEach((childSpan, index) => {
+              assert.ok(childSpan);
+              assert.strictEqual(childSpan.span.name, `span${index}`);
+            });
+            done();
+          });
+        });
       });
     });
   });

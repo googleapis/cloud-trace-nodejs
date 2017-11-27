@@ -29,7 +29,7 @@ describe('express + mongo with trace options header', function() {
   var agent;
   var express;
   before(function() {
-    agent = require('..').start({
+    agent = require('../..').start({
       projectId: '0',
       samplingRate: 0
     });

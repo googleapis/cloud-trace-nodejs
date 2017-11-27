@@ -33,7 +33,7 @@ import * as TracingPolicy from '../../src/tracing-policy';
 var semver = require('semver');
 
 var logger = require('@google-cloud/common').logger;
-var trace = require('../..');
+var trace = require('../../..');
 if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CONTEXT) {
   // Monkeypatch the monkeypatcher
   var oldIt = global.it;

@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-import * as semver from 'semver';
-import { execSync } from 'child_process';
-import * as assert from 'assert';
+// Force load http to patch https with the http plugin.
+// https depends on http anyway, so this shouldn't cause an unnecessary load.
+import 'http';
 
-describe('preloaded agent', () => {
-  it('should start automatically when preloaded using --require', () => {
-    console.log(process.cwd());
-    const output = execSync('node --require "./src" test/fixtures/preloaded-agent.js');
-    assert.ok(output.toString().match(/passed/));
-  });
-});
+export = [];

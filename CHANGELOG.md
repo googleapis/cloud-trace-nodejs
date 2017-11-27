@@ -1,4 +1,37 @@
-# Node.js Agent for Google Cloud Trace ChangeLog
+# Node.js Agent for Google Cloud Trace Changelog
+
+## 2017-11-14, Version 2.3.3 (Beta), @kjin
+
+This change removes a spurious warning message that was introduced in the fix for HTTPS tracing in 2.3.2. There should be no other observable changes.
+
+### Commits
+
+* [[`a6b56bbbe7`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a6b56bbbe7)] - **fix**: actually prevent useless warning when loading https plugin (#597) (Kelvin Jin) [#597](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/597)
+* [[`7edc320089`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/7edc320089)] - **fix**: prevent useless warning when loading https plugin (#596) (Kelvin Jin) [#596](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/596)
+
+## 2017-11-13, Version 2.3.2 (Beta), @kjin
+
+**bug fixes**
+
+* Fixed HTTPS tracing in Node 8.9.0 and 9.0.0+ (#589)
+* Fixed trace context not being propagated for Koa (#593)
+
+### Commits
+
+* [[`b9e6a3bc24`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b9e6a3bc24)] - **fix**: propagate context in koa tracing (#594) (Kelvin Jin) [#594](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/594)
+* [[`4170f8967a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4170f8967a)] - **src**: patch https in Node 8.9 and 9.0 (#591) (Kelvin Jin) [#591](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/591)
+* [[`58925af30e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/58925af30e)] - **chore**: update dependencies to enable greenkeeper (#584) (greenkeeper[bot]) [#584](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/584)
+* [[`84a5f7d94c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/84a5f7d94c)] - **style**: upgrade to gts@0.5 (#592) (Kelvin Jin) [#592](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/592)
+* [[`523ab22d74`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/523ab22d74)] - **chore**: upgrade gcp-metadata to 0.4 (#590) (Kelvin Jin) [#590](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/590)
+
+## 2017-10-31, Version 2.3.1 (Beta), @kjin
+
+This change fixes a potential issue with tracing gRPC 1.7.
+
+### Commits
+
+* [[`609d0cc161`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/609d0cc161)] - **chore**: bump typescript dependency to 2.6 and disable https test on node \>=8.9 (#588) (Kelvin Jin) [#588](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/588)
+* [[`3e30d28086`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/3e30d28086)] - **fix**: extend supported gRPC version range to 1.7 (#586) (Kelvin Jin)
 
 ## 2017-10-20, Version 2.3.0 (Beta), @kjin
 

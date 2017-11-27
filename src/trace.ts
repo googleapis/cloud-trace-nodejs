@@ -17,11 +17,11 @@
 import {TraceSpan} from './trace-span';
 
 export class Trace {
-  public readonly spans: TraceSpan[] = [];
+  readonly spans: TraceSpan[] = [];
 
   /**
    * Creates a trace object.
    * @constructor
    */
-  constructor(public projectId: string, public readonly traceId: string) {}
+  constructor(public projectId: string, readonly traceId: string) {}
 }

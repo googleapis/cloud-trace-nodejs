@@ -8,7 +8,7 @@
     "noEmitOnError": true
   },
   "include": [
-    "*.ts",
-    "src/*.ts"
+    "src/*.ts",
+    "src/plugins/plugin-https.ts"
   ]
 }

@@ -27,7 +27,7 @@ describe('generic-pool2', function() {
   var api;
   var genericPool;
   before(function() {
-    api = require('../..').start({
+    api = require('../../..').start({
       projectId: '0',
       samplingRate: 0,
       forceNewAgent_: true
@@ -86,7 +86,7 @@ describe('generic-pool3', function() {
   }
 
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       samplingRate: 0,
       forceNewAgent_: true

@@ -39,7 +39,7 @@ var versions = {
 describe('test-trace-knex', function() {
   var agent;
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       logLevel: 2,
       flushDelaySeconds: 1,
@@ -56,6 +56,10 @@ describe('test-trace-knex', function() {
           client: 'mysql',
           connection: require('../mysql-config')
         });
+      });
+
+      after(function() {
+        knex.destroy();
       });
 
       beforeEach(function(done) {

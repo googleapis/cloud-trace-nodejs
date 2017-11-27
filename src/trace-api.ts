@@ -47,6 +47,7 @@ interface IncomingTraceContext {
 /**
  * Type guard that returns whether an object is a string or not.
  */
+// tslint:disable-next-line:no-any
 function isString(obj: any): obj is string {
   return is.string(obj);
 }
@@ -72,14 +73,14 @@ const ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
  * trace context across asynchronous boundaries.
  */
 export class TraceAgent implements TraceAgentInterface {
-  public readonly constants = Constants;
-  public readonly labels = TraceLabels;
+  readonly constants = Constants;
+  readonly labels = TraceLabels;
 
   private pluginName: string;
   private logger: Logger;
   private config: TraceAgentConfig;
   // TODO(kjin): Make this private.
-  public policy: TracingPolicy.TracePolicy;
+  policy: TracingPolicy.TracePolicy;
   private namespace: cls.Namespace|null;
 
   /**

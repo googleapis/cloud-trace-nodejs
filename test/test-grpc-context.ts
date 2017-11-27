@@ -21,7 +21,8 @@ var assert = require('assert');
 var http = require('http');
 
 var versions = {
-  grpc1: './plugins/fixtures/grpc1'
+  grpc1_6: './plugins/fixtures/grpc1.6',
+  grpc1_7: './plugins/fixtures/grpc1.7'
 };
 
 var grpcPort = 50051;
@@ -48,18 +49,19 @@ function requestAndSendHTTPStatus(res, expectedReqs) {
   }, expectedReqs);
 }
 
+// Trace agent must be started out of the loop over gRPC versions,
+// because express can't be re-patched.
+var agent = require('../..').start({
+  projectId: '0',
+  samplingRate: 0
+});
+var express = require('./plugins/fixtures/express4');
+
 Object.keys(versions).forEach(function(version) {
-  var agent;
-  var express;
   var grpc;
   var httpLogCount;
   describe('express + ' + version, function() {
     before(function(done) {
-      agent = require('..').start({
-        projectId: '0',
-        samplingRate: 0
-      });
-      express = require('./plugins/fixtures/express4');
       grpc = require(versions[version]);
 
       common.replaceWarnLogger(function(msg) {

@@ -64,17 +64,19 @@ class AsyncHooksNamespace implements CLSNamespace {
   bind<T>(cb: Func<T>): Func<T> {
     // TODO(kjin): Monitor https://github.com/Microsoft/TypeScript/pull/15473.
     // When it's landed and released, we can remove these `any` casts.
+    // tslint:disable-next-line:no-any
     if ((cb as any)[wrappedSymbol] as boolean || !current) {
       return cb;
     }
     const boundContext = current;
-    const contextWrapper = function(this: any) {
+    const contextWrapper = function(this: {}) {
       const oldContext = current;
       current = boundContext;
       const res = cb.apply(this, arguments) as T;
       current = oldContext;
       return res;
     };
+    // tslint:disable-next-line:no-any
     (contextWrapper as any)[wrappedSymbol] = true;
     Object.defineProperty(contextWrapper, 'length', {
       enumerable: false,
@@ -92,12 +94,14 @@ class AsyncHooksNamespace implements CLSNamespace {
   // will cause us to lose context.
   bindEmitter(ee: NodeJS.EventEmitter): void {
     const ns = this;
-    EVENT_EMITTER_METHODS.forEach(function(method) {
+    EVENT_EMITTER_METHODS.forEach((method) => {
       // TODO(kjin): Presumably also dependent on MS/TS-#15473.
+      // tslint:disable:no-any
       const oldMethod = (ee as any)[method];
-      (ee as any)[method] = function(event: string, cb: Func<void>) {
+      (ee as any)[method] = function(this: {}, event: string, cb: Func<void>) {
         return oldMethod.call(this, event, ns.bind(cb));
       };
+      // tslint:enable:no-any
     });
   }
 }
@@ -107,7 +111,7 @@ const namespace = new AsyncHooksNamespace();
 // AsyncWrap Hooks
 
 function init(
-    uid: number, provider: string, parentUid: number, parentHandle: Object) {
+    uid: number, provider: string, parentUid: number, parentHandle: {}) {
   contexts[uid] = current;
 }
 

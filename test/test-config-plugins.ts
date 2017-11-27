@@ -20,10 +20,10 @@ import * as pluginLoader from '../src/trace-plugin-loader';
 
 var assert = require('assert');
 var shimmer = require('shimmer');
-var trace = require('..');
+var trace = require('../..');
 
 var instrumentedModules = ['connect', 'express', 'generic-pool', 'grpc', 'hapi',
-  'http', 'knex', 'koa', 'mongodb-core', 'mysql', 'pg', 'redis', 'restify'];
+  'http', 'https', 'knex', 'koa', 'mongodb-core', 'mysql', 'pg', 'redis', 'restify'];
 
 describe('plugin configuration', function() {
   var plugins;

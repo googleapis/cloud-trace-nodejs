@@ -22,7 +22,7 @@ import { TraceAgent } from '../src/trace-api';
 var assert = require('assert');
 var nock = require('nock');
 var nocks = require('./nocks'/*.js*/);
-var trace = require('..');
+var trace = require('../..');
 
 var disabledAgent: TraceAgent = trace.get();
 

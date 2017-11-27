@@ -25,7 +25,7 @@ describe('test-plugins-no-project-num', function(){
   before(function() {
     savedProject = process.env.GCLOUD_PROJECT;
     delete process.env.GCLOUD_PROJECT;
-    agent = require('..').start();
+    agent = require('../..').start();
   });
 
   after(function() {
@@ -139,6 +139,7 @@ describe('test-plugins-no-project-num', function(){
         assert(!err, 'Skipping: Failed to connect to mysql.');
         conn.query('SHOW TABLES', function(err, result) {
           conn.release();
+          pool.end();
           done();
         });
       });

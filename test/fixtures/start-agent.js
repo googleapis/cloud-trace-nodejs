@@ -17,7 +17,7 @@
 
 process.env.GCLOUD_TRACE_LOGLEVEL = 4;
 require('glob'); // Load a module before agent
-require('../..').start();
+require('../../..').start();
 // Exit explicitly since the process is being held open by retries to the
 // metadata service.
 process.exit(0);

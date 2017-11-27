@@ -24,7 +24,7 @@ describe('google-gax', function() {
   var speech;
 
   before(function() {
-    agent = require('../..').start({
+    agent = require('../../..').start({
       projectId: '0',
       keyFilename: path.join(__dirname, '..', 'fixtures', 
           'gcloud-credentials.json'),
@@ -40,7 +40,7 @@ describe('google-gax', function() {
 
   it('should not interfere with google-cloud api tracing', function(done) {
     common.runInTransaction(function(endRootSpan) {
-      speech.recognize('./index.js', {
+      speech.recognize('./src/index.js', {
         encoding: 'LINEAR16',
         sampleRate: 16000
       }, function(err, res) {
