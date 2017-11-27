@@ -168,6 +168,7 @@ export const defaultConfig = {
     'koa': path.join(__dirname, 'src/plugins/plugin-koa.js'),
     'mongodb-core': path.join(__dirname, 'src/plugins/plugin-mongodb-core.js'),
     'mysql': path.join(__dirname, 'src/plugins/plugin-mysql.js'),
+    'mysql2': path.join(__dirname, 'src/plugins/plugin-mysql2.js'),
     'pg': path.join(__dirname, 'src/plugins/plugin-pg.js'),
     'redis': path.join(__dirname, 'src/plugins/plugin-redis.js'),
     'restify': path.join(__dirname, 'src/plugins/plugin-restify.js')
