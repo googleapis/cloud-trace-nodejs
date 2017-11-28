@@ -178,6 +178,7 @@ export const defaultConfig = {
     'grpc': path.join(pluginDirectory, 'plugin-grpc.js'),
     'hapi': path.join(pluginDirectory, 'plugin-hapi.js'),
     'http': path.join(pluginDirectory, 'plugin-http.js'),
+    'http2': path.join(pluginDirectory, 'plugin-http2.js'),
     'https': path.join(pluginDirectory, 'plugin-https.js'),
     'knex': path.join(pluginDirectory, 'plugin-knex.js'),
     'koa': path.join(pluginDirectory, 'plugin-koa.js'),
