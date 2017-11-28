@@ -21,7 +21,10 @@ const pluginDirectory =
 
 /** Available configuration options. */
 export interface Config {
-  /** Log levels: 0=disabled, 1=error, 2=warn, 3=info, 4=debug */
+  /**
+   * Log levels: 0=disabled, 1=error, 2=warn, 3=info, 4=debug
+   * The value of GCLOUD_TRACE_LOGLEVEL takes precedence over this value.
+   */
   logLevel?: number;
 
   /**
@@ -127,7 +130,9 @@ export interface Config {
 
   /**
    * The ID of the Google Cloud Platform project with which traces should
-   * be associated.
+   * be associated. The value of GCLOUD_PROJECT takes precedence over this
+   * value; if neither are provided, the trace agent will attempt to retrieve
+   * this information from the GCE metadata service.
    */
   projectId?: string;
 
