@@ -12,6 +12,10 @@ if [ ! -z $1 ]; then
     docker stop trace-test-redis
     docker stop trace-test-mysql
     docker stop trace-test-postgres
+    docker rm trace-test-mongo
+    docker rm trace-test-redis
+    docker rm trace-test-mysql
+    docker rm trace-test-postgres
     exit $?
   fi
 fi
