@@ -8,14 +8,8 @@ if [ ! -z $1 ]; then
     docker run --name trace-test-postgres -p 127.0.0.1:5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD='Password12!' -e POSTGRES_DB=test -d postgres
     exit $?
   elif [ $COMMAND = 'stop' ]; then
-    docker stop trace-test-mongo
-    docker stop trace-test-redis
-    docker stop trace-test-mysql
-    docker stop trace-test-postgres
-    docker rm trace-test-mongo
-    docker rm trace-test-redis
-    docker rm trace-test-mysql
-    docker rm trace-test-postgres
+    docker stop trace-test-mongo trace-test-redis trace-test-mysql trace-test-postgres
+    docker rm trace-test-mongo trace-test-redis trace-test-mysql trace-test-postgres
     exit $?
   fi
 fi
