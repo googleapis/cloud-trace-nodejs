@@ -126,6 +126,12 @@ export interface Config {
   ignoreContextHeader?: boolean;
 
   /**
+   * The ID of the Google Cloud Platform project with which traces should
+   * be associated.
+   */
+  projectId?: string;
+
+  /**
    * The contents of a key file. If this field is set, its contents will be
    * used for authentication instead of your application default credentials.
    */
