@@ -132,15 +132,18 @@ describe('test-plugins-no-project-num', function(){
       });
     });
 
-    it('mysql', function(done) {
-      var mysql = require('./plugins/fixtures/mysql2');
-      var pool = mysql.createPool(require('./mysql-config'/*.js*/));
-      pool.getConnection(function(err, conn) {
-        assert(!err, 'Skipping: Failed to connect to mysql.');
-        conn.query('SHOW TABLES', function(err, result) {
-          conn.release();
-          pool.end();
-          done();
+    var mysql_implementations = ['mysql-2', 'mysql2-1'];
+    mysql_implementations.forEach(function(impl) {
+      it(impl, function(done) {
+        var mysql = require('./plugins/fixtures/' + impl);
+        var pool = mysql.createPool(require('./mysql-config'/*.js*/));
+        pool.getConnection(function(err, conn) {
+          assert(!err, 'Skipping: Failed to connect to mysql.');
+          conn.query('SHOW TABLES', function(err, result) {
+            conn.release();
+            pool.end();
+            done();
+          });
         });
       });
     });
