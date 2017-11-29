@@ -17,7 +17,7 @@
 
 var shimmer = require('shimmer');
 
-var SUPPORTED_VERSIONS = '^1.3.5';
+var SUPPORTED_VERSIONS = '^1.0.0';
 
 function createCreateQueryWrap(api) {
   return function createQueryWrap(createQuery) {
@@ -86,14 +86,14 @@ module.exports = [
     }
   },
   {
-    file: 'lib/pool.js',
+    file: 'index.js',
     versions: SUPPORTED_VERSIONS,
-    patch: function(Pool, api) {
-      shimmer.wrap(Pool.prototype, 'getConnection',
+    patch: function(mysql2, api) {
+      shimmer.wrap(mysql2.Pool.prototype, 'getConnection',
                    createWrapGetConnection(api));
     },
-    unpatch: function(Pool) {
-      shimmer.unwrap(Pool.prototype, 'getConnection');
+    unpatch: function(mysql2) {
+      shimmer.unwrap(mysql2.Pool.prototype, 'getConnection');
     }
   }
 ];

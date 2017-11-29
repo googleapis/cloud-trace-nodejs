@@ -1,8 +1,8 @@
 {
-  "name": "mysql2",
+  "name": "mysql2-1",
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
-    "mysql": "^2.9.0"
+    "mysql2": "^1.5.1"
   }
 }
