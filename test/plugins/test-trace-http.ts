@@ -45,6 +45,9 @@ describe('test-trace-http', function() {
 
   afterEach(function() {
     common.cleanTraces();
+  });
+
+  after(function() {
     server.close();
   });
 
@@ -203,8 +206,8 @@ describe('test-trace-http', function() {
         req.on('error', function() {
           endTransaction();
           common.assertDurationCorrect(Date.now() - start);
-          var span = common.getMatchingSpan(function(span) { 
-            return span.name !== 'outer'; 
+          var span = common.getMatchingSpan(function(span) {
+            return span.name !== 'outer';
           });
           assert.equal(span.labels[TraceLabels.ERROR_DETAILS_NAME],
               'Error');
