@@ -45,9 +45,6 @@ describe('test-trace-http', function() {
 
   afterEach(function() {
     common.cleanTraces();
-  });
-
-  after(function() {
     server.close();
   });
 
