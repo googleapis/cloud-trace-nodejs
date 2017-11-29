@@ -23,6 +23,7 @@ require('../../..').start({
 
 import * as assert from 'assert';
 import * as http2 from 'http2';
+import * as semver from 'semver';
 import * as stream from 'stream';
 
 import {Constants} from '../../src/constants';
@@ -30,6 +31,12 @@ import {TraceLabels} from '../../src/trace-labels';
 import {TraceSpan} from '../../src/trace-span';
 
 describe('test-trace-http2', () => {
+  if (semver.satisfies(process.version, '<8')) {
+    console.log(
+        'Skipping test-trace-http2 on Node.js version ' + process.version);
+    return;
+  }
+
   let server: http2.Http2Server;
 
   before(() => {
@@ -278,6 +285,13 @@ describe('test-trace-http2', () => {
 });
 
 describe('test-trace-secure-http2', () => {
+  if (semver.satisfies(process.version, '<8')) {
+    console.log(
+        'Skipping test-trace-secure-http2 on Node.js version ' +
+        process.version);
+    return;
+  }
+
   afterEach(() => {
     common.cleanTraces();
   });
