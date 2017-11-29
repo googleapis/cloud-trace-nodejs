@@ -66,7 +66,7 @@ describe('test-trace-http', function() {
           res.on('data', function(data) { result += data; });
           res.on('end', function() {
             endTransaction();
-            assert.equal(common.serverRes, result);
+            assert.equal(result, common.serverRes);
             common.assertDurationCorrect(Date.now() - start);
             done();
           });
@@ -95,13 +95,14 @@ describe('test-trace-http', function() {
     server.listen(common.serverPort, common.runInTransaction.bind(null,
       function(endTransaction) {
         var headers = {};
-        headers[Constants.TRACE_CONTEXT_HEADER_NAME] = 'yay';
+        headers[Constants.TRACE_AGENT_REQUEST_HEADER] = 'yay';
         http.get({port: common.serverPort, headers: headers});
         setTimeout(function() {
           endTransaction();
-          // The only trace present should be the outer transaction
           var traces = common.getTraces();
           assert.equal(traces.length, 1);
+          // The only span present should be the outer span.
+          assert.equal(traces[0].spans.length, 1);
           assert.equal(traces[0].spans[0].name, 'outer');
           done();
         }, common.serverWait * 1.5);
@@ -133,7 +134,7 @@ describe('test-trace-http', function() {
           };
           writable.on('finish', function() {
             endTransaction();
-            assert.equal(common.serverRes, result);
+            assert.equal(result, common.serverRes);
             common.assertDurationCorrect(Date.now() - start);
             done();
           });
@@ -227,7 +228,7 @@ describe('test-trace-http', function() {
           res.on('data', function(data) { result += data; });
           res.on('end', function() {
             endTransaction();
-            assert.equal(common.serverRes, result);
+            assert.equal(result, common.serverRes);
             common.assertDurationCorrect(Date.now() - start);
             done();
           });
@@ -251,7 +252,7 @@ describe('test-trace-http', function() {
           res.on('data', function(data) { result += data; });
           res.on('end', function() {
             endTransaction();
-            assert.equal(common.serverRes, result);
+            assert.equal(result, common.serverRes);
             common.assertDurationCorrect(Date.now() - start);
             server.close();
             done();
@@ -354,7 +355,7 @@ describe('https', function() {
           res.on('data', function(data) { result += data; });
           res.on('end', function() {
             endTransaction();
-            assert.equal(common.serverRes, result);
+            assert.equal(result, common.serverRes);
             common.assertDurationCorrect(Date.now() - start);
             secureServer.close();
             done();
