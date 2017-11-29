@@ -95,6 +95,7 @@ function makeRequestTrace(request, api) {
       shimmer.wrap(res, 'on', function onWrap(on) {
         return function on_trace(eventName, cb) {
           if (eventName === 'data' && !listenerAttached) {
+            listenerAttached = true;
             on.call(this, 'data', function(chunk) {
               numBytes += chunk.length;
             });
