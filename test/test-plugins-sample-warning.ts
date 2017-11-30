@@ -120,29 +120,32 @@ describe('express + dbs', function() {
     });
   });
 
-  it('mysql should not warn', function(done) {
-    var mysql = require('./plugins/fixtures/mysql2');
-    var express = require('./plugins/fixtures/express4');
-    var pool = mysql.createPool(require('./mysql-config'/*.js*/));
-
-    var app = express();
-    app.get('/', function (req, res) {
-      http.get('http://www.google.com/', function() {
-        pool.getConnection(function(err, conn) {
-          conn.query('SHOW COLUMNS FROM t', function(err) {
-            res.sendStatus(200);
+  var mysql_implementations = ['mysql-2', 'mysql2-1'];
+  mysql_implementations.forEach(function(impl) {
+    it(impl + ' should not warn', function(done) {
+      var mysql = require('./plugins/fixtures/' + impl);
+      var express = require('./plugins/fixtures/express4');
+      var pool = mysql.createPool(require('./mysql-config'/*.js*/));
+  
+      var app = express();
+      app.get('/', function (req, res) {
+        http.get('http://www.google.com/', function() {
+          pool.getConnection(function(err, conn) {
+            conn.query('SHOW COLUMNS FROM t', function(err) {
+              res.sendStatus(200);
+            });
           });
         });
       });
-    });
-    var server = app.listen(common.serverPort + 3, function() {
-      http.get({port: common.serverPort + 3}, function(res) {
+      var server = app.listen(common.serverPort + 3, function() {
         http.get({port: common.serverPort + 3}, function(res) {
-          pool.end();
-          server.close();
-          common.cleanTraces();
-          assert.equal(untracedHttpSpanCount, 2);
-          done();
+          http.get({port: common.serverPort + 3}, function(res) {
+            pool.end();
+            server.close();
+            common.cleanTraces();
+            assert.equal(untracedHttpSpanCount, 2);
+            done();
+          });
         });
       });
     });
