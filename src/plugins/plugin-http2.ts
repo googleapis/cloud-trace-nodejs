@@ -23,9 +23,9 @@ import {URL} from 'url';
 
 import {TraceAgent} from '../plugin-types';
 
-// type of Http2Session#request()
+// type of ClientHttp2Session#request()
 type Http2SessionRequestFunction =
-    (this: http2.Http2Session, headers?: http2.OutgoingHttpHeaders,
+    (this: http2.ClientHttp2Session, headers?: http2.OutgoingHttpHeaders,
      options?: http2.ClientSessionRequestOptions) => http2.ClientHttp2Stream;
 
 function getSpanName(authority: string|URL): string {
@@ -68,6 +68,11 @@ function makeRequestTrace(
   return function(
              this: http2.Http2Session,
              headers?: http2.OutgoingHttpHeaders): http2.ClientHttp2Stream {
+    // Create new headers so that the object passed in by the client is not
+    // modified.
+    const newHeaders: http2.OutgoingHttpHeaders =
+        Object.assign({}, headers || {});
+
     // Don't trace ourselves lest we get into infinite loops.
     // Note: this would not be a problem if we guarantee buffering of trace api
     // calls. If there is no buffering then each trace is an http call which
@@ -76,7 +81,7 @@ function makeRequestTrace(
     // TraceWriter uses http1 so this check is not needed at the moment. But
     // add the check anyway for the potential migration to http2 in the
     // future.
-    if (isTraceAgentRequest(headers, api)) {
+    if (isTraceAgentRequest(newHeaders, api)) {
       return request.apply(this, arguments);
     }
 
@@ -87,25 +92,38 @@ function makeRequestTrace(
     }
     // Node sets the :method pseudo-header to GET if not set by client.
     requestLifecycleSpan.addLabel(
-        api.labels.HTTP_METHOD_LABEL_KEY, extractMethodName(headers));
+        api.labels.HTTP_METHOD_LABEL_KEY, extractMethodName(newHeaders));
     requestLifecycleSpan.addLabel(
-        api.labels.HTTP_URL_LABEL_KEY, extractUrl(authority, headers));
-    // `headers` may not be passed by the client. Create an empty one in that
-    // case.
-    if (!headers) {
-      headers = {};
-    }
-    headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
+        api.labels.HTTP_URL_LABEL_KEY, extractUrl(authority, newHeaders));
+    newHeaders[api.constants.TRACE_CONTEXT_HEADER_NAME] =
         requestLifecycleSpan.getTraceContext();
-    // `headers` may have been created by this monkey-patch when it is not
-    // passed by the client. Explicitly pass `headers` because `arguments` may
-    // not have it.
     const stream: http2.ClientHttp2Stream = request.call(
-        this, headers, ...Array.prototype.slice.call(arguments, 1));
+        this, newHeaders, ...Array.prototype.slice.call(arguments, 1));
     api.wrapEmitter(stream);
 
     let numBytes = 0;
     let listenerAttached = false;
+    stream
+        .on('response',
+            (headers) => {
+              requestLifecycleSpan.addLabel(
+                  api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, headers[':status']);
+            })
+        .on('end',
+            () => {
+              requestLifecycleSpan.addLabel(
+                  api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
+              requestLifecycleSpan.endSpan();
+            })
+        .on('error', (err: Error) => {
+          if (err) {
+            requestLifecycleSpan.addLabel(
+                api.labels.ERROR_DETAILS_NAME, err.name);
+            requestLifecycleSpan.addLabel(
+                api.labels.ERROR_DETAILS_MESSAGE, err.message);
+          }
+          requestLifecycleSpan.endSpan();
+        });
     // Streams returned by Http2Session#request are yielded in paused mode.
     // Attaching a 'data' listener to the stream will switch it to flowing
     // mode which could cause the stream to drain before the calling
@@ -130,27 +148,6 @@ function makeRequestTrace(
             }
             return on.apply(this, arguments);
           };
-        });
-    stream
-        .on('response',
-            (headers) => {
-              requestLifecycleSpan.addLabel(
-                  api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, headers[':status']);
-            })
-        .on('end',
-            () => {
-              requestLifecycleSpan.addLabel(
-                  api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
-              requestLifecycleSpan.endSpan();
-            })
-        .on('error', (err: Error) => {
-          if (err) {
-            requestLifecycleSpan.addLabel(
-                api.labels.ERROR_DETAILS_NAME, err.name);
-            requestLifecycleSpan.addLabel(
-                api.labels.ERROR_DETAILS_MESSAGE, err.message);
-          }
-          requestLifecycleSpan.endSpan();
         });
     return stream;
   };
