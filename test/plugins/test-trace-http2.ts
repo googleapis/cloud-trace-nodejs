@@ -124,6 +124,31 @@ describe('test-trace-http2', () => {
     });
   });
 
+  it('should not break with no headers', (done) => {
+    server.listen(common.serverPort, () => {
+      common.runInTransaction((endTransaction: () => void) => {
+        const session = http2.connect(`http://localhost:${common.serverPort}`);
+        // `headers` are not passed
+        const s = session.request();
+        s.setEncoding('utf8');
+        s.on('data', (data: string) => {}).on('end', () => {
+          endTransaction();
+          const traces = common.getTraces();
+          assert.equal(traces.length, 1);
+          // /http/method and /http/url must be set correctly even when the
+          // `headers` argument is not passed to the request() call.
+          assert.equal(traces[0].spans[1].labels['/http/method'], 'GET');
+          assert.equal(
+              traces[0].spans[1].labels['/http/url'],
+              `http://localhost:${common.serverPort}/`);
+          session.destroy();
+          done();
+        });
+        s.end();
+      });
+    });
+  });
+
   it('should leave request streams in paused mode', (done) => {
     server.listen(common.serverPort, () => {
       common.runInTransaction((endTransaction: () => void) => {

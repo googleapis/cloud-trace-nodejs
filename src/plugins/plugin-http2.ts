@@ -90,13 +90,18 @@ function makeRequestTrace(
         api.labels.HTTP_METHOD_LABEL_KEY, extractMethodName(headers));
     requestLifecycleSpan.addLabel(
         api.labels.HTTP_URL_LABEL_KEY, extractUrl(authority, headers));
-    // TODO(jinwoo): When headers is not passed to a request() call, there is no
-    // way to set the trace context header. Fix this.
-    if (headers) {
-      headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
-          requestLifecycleSpan.getTraceContext();
+    // `headers` may not be passed by the client. Create an empty one in that
+    // case.
+    if (!headers) {
+      headers = {};
     }
-    const stream: http2.ClientHttp2Stream = request.apply(this, arguments);
+    headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
+        requestLifecycleSpan.getTraceContext();
+    // `headers` may have been created by this monkey-patch when it is not
+    // passed by the client. Explicitly pass `headers` because `arguments` may
+    // not have it.
+    const stream: http2.ClientHttp2Stream = request.call(
+        this, headers, ...Array.prototype.slice.call(arguments, 1));
     api.wrapEmitter(stream);
 
     let numBytes = 0;
