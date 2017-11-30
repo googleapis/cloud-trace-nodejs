@@ -22,6 +22,8 @@ require('../../..').start({
 });
 
 import * as assert from 'assert';
+// This is imported only for types. Generated .js file should NOT load 'http2'
+// in this place. It is dynamically loaded later from each test suite below.
 import * as http2 from 'http2';
 import * as semver from 'semver';
 import * as stream from 'stream';
@@ -36,6 +38,8 @@ describe('test-trace-http2', () => {
         'Skipping test-trace-http2 on Node.js version ' + process.version);
     return;
   }
+
+  const http2 = require('http2');
 
   let server: http2.Http2Server;
 
@@ -186,7 +190,7 @@ describe('test-trace-http2', () => {
   });
 
   it('should accurately measure request time, error', (done) => {
-    const server = http2.createServer();
+    const server: http2.Http2SecureServer = http2.createServer();
     server.on('stream', (s) => {
       s.rstWithInternalError();
     });
@@ -221,7 +225,7 @@ describe('test-trace-http2', () => {
       common.runInTransaction((endTransaction: () => void) => {
         const start = Date.now();
         const session = http2.connect(`http://localhost:${common.serverPort}`);
-        const s = session.request({':path': '/'});
+        const s: http2.ClientHttp2Stream = session.request({':path': '/'});
         s.setEncoding('utf8');
         s.on('response', () => {
           let result = '';
@@ -242,7 +246,7 @@ describe('test-trace-http2', () => {
   it('should handle concurrent requests', function(done) {
     this.timeout(10000);  // this test takes a long time
     let count = 200;
-    const slowServer = http2.createServer();
+    const slowServer: http2.Http2Server = http2.createServer();
     slowServer.on('stream', (s) => {
       setTimeout(() => {
         s.respond({':status': count++});
@@ -292,6 +296,8 @@ describe('test-trace-secure-http2', () => {
     return;
   }
 
+  const http2 = require('http2');
+
   afterEach(() => {
     common.cleanTraces();
   });
@@ -301,7 +307,8 @@ describe('test-trace-secure-http2', () => {
       key: common.serverKey,
       cert: common.serverCert,
     };
-    const secureServer = http2.createSecureServer(options);
+    const secureServer: http2.Http2SecureServer =
+        http2.createSecureServer(options);
     secureServer.on('stream', (s) => {
       setTimeout(() => {
         s.respond({':status': 200});
