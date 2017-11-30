@@ -22,8 +22,11 @@ var assert = require('assert');
 var shimmer = require('shimmer');
 var trace = require('../..');
 
-var instrumentedModules = ['connect', 'express', 'generic-pool', 'grpc', 'hapi',
-  'http', 'https', 'knex', 'koa', 'mongodb-core', 'mysql', 'mysql2', 'pg', 'redis', 'restify'];
+var instrumentedModules = [
+  'connect', 'express', 'generic-pool', 'grpc', 'hapi', 'http', 'http2',
+  'https', 'knex', 'koa', 'mongodb-core', 'mysql', 'mysql2', 'pg', 'redis',
+  'restify',
+];
 
 describe('plugin configuration', function() {
   var plugins;
