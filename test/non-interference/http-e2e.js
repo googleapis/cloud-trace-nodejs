@@ -43,7 +43,8 @@ if (!testCommonPath) {
 }
 cp.execFileSync('sed', ['-i.bak', 's/exports.globalCheck = true/' +
     'exports.globalCheck = false/g', testCommonPath]);
-var test_glob = path.join(node_dir, 'test', 'parallel', 'test-http-*.js');
+// Test files for http, https, and http2.
+var test_glob = path.join(node_dir, 'test', 'parallel', 'test-http?(s|2)-*.js');
 
 // Run tests
 console.log('Running tests');
@@ -81,7 +82,7 @@ glob(test_glob, function(err, files) {
     const matches = contents.match(/^\/\/ Flags: (.*)$/m);
     const flags = matches ? matches[1] : '';
 
-    // The use of the -i flag as '-i.bak' to specify a backup extension of 
+    // The use of the -i flag as '-i.bak' to specify a backup extension of
     // '.bak' is needed to ensure that the command works on both Linux and OS X
     cp.execFileSync('sed', ['-i.bak', 's#\'use strict\';#' +
         '\'use strict\';' + gcloud_require + '#g', files[testCount]]);
