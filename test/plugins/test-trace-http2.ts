@@ -217,7 +217,9 @@ describe('test-trace-http2', () => {
   it('should accurately measure request time, error', (done) => {
     const server: http2.Http2SecureServer = http2.createServer();
     server.on('stream', (s) => {
-      s.rstWithInternalError();
+      setTimeout(() => {
+        s.rstWithInternalError();
+      }, common.serverWait / 2);
     });
     server.listen(common.serverPort, () => {
       common.runInTransaction((endTransaction: () => void) => {
