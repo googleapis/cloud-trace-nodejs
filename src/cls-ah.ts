@@ -16,6 +16,7 @@
 
 import * as asyncHook from 'async_hooks';
 import {Context, Func, Namespace as CLSNamespace} from 'continuation-local-storage';
+import * as shimmer from 'shimmer';
 
 const wrappedSymbol = Symbol('context_wrapped');
 let contexts: {[asyncId: number]: Context;} = {};
@@ -97,10 +98,13 @@ class AsyncHooksNamespace implements CLSNamespace {
     EVENT_EMITTER_METHODS.forEach((method) => {
       // TODO(kjin): Presumably also dependent on MS/TS-#15473.
       // tslint:disable:no-any
-      const oldMethod = (ee as any)[method];
-      (ee as any)[method] = function(this: {}, event: string, cb: Func<void>) {
-        return oldMethod.call(this, event, ns.bind(cb));
-      };
+      if ((ee as any)[method]) {
+        shimmer.wrap(ee, method, (oldMethod) => {
+          return function(this: {}, event: string, cb: Func<void>) {
+            return oldMethod.call(this, event, ns.bind(cb));
+          };
+        });
+      }
       // tslint:enable:no-any
     });
   }
