@@ -34,7 +34,7 @@ export async function getPluginTypes() {
         cwd: installDir
       });
       await writeFileP(`${installDir}/index.ts`,
-        `import * as _ from '${name}'; export = _;\n`, 'utf8');
+        `import * as _ from '${name}';\nexport = _;\n`, 'utf8');
     }
   }
 }
