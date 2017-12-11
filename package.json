@@ -80,7 +80,7 @@
     "standard-version": "^4.2.0",
     "timekeeper": "^2.0.0",
     "tmp": "0.0.33",
-    "ts-node": "^3.3.0",
+    "ts-node": "^4.0.0",
     "typescript": "~2.6.2"
   },
   "dependencies": {
