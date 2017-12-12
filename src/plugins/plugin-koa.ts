@@ -54,7 +54,8 @@ function getFirstHeader(req: IncomingMessage, key: string) {
 
 function startSpanForRequest<T>(
     api: PluginTypes.TraceAgent, ctx: KoaContext, getNext: GetNextFn<T>): T {
-  const {req, res} = ctx;
+  const req = ctx.req;
+  const res = ctx.res;
   const originalEnd = res.end;
   const options = {
     name: req.url ? (urlParse(req.url).pathname || '') : '',

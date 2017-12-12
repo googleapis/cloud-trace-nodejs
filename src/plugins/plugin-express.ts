@@ -33,7 +33,9 @@ const SUPPORTED_VERSIONS = '4.x';
 
 function patchModuleRoot(express: Express4Module, api: PluginTypes.TraceAgent) {
   const labels = api.labels;
-  const middleware: express_4.RequestHandler = (req, res, next) => {
+  function middleware(
+      req: express_4.Request, res: express_4.Response,
+      next: express_4.NextFunction) {
     const options: PluginTypes.RootSpanOptions = {
       name: req.path,
       traceContext: req.get(api.constants.TRACE_CONTEXT_HEADER_NAME),
@@ -77,7 +79,7 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.TraceAgent) {
 
       next();
     });
-  };
+  }
 
   function applicationActionWrap<T extends Function>(method: T): () => T {
     return function expressActionTrace(this: express_4.Application&
