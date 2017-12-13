@@ -79,10 +79,10 @@ export class SpanData implements SpanDataInterface {
 
       const origPrepare = Error.prepareStackTrace;
       Error.prepareStackTrace =
-          (error: Error, structured: CallSite[]): CallSite[] => {
+          (error: Error, structured: NodeJS.CallSite[]): NodeJS.CallSite[] => {
             return structured;
           };
-      const e: {stack?: CallSite[]} = {};
+      const e: {stack?: NodeJS.CallSite[]} = {};
       Error.captureStackTrace(e, SpanData);
 
       const stackFrames: StackFrame[] = [];

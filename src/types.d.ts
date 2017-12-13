@@ -18,31 +18,6 @@ declare namespace NodeJS {
   }
 }
 
-interface CallSite {
-  getThis: () => any | undefined;
-  getTypeName: () => string;
-  getFunction: () => Function | undefined;
-  getFunctionName: () => string;
-  getMethodName: () => string;
-  getFileName: () => string | undefined;
-  getLineNumber: () => number | undefined;
-  getColumnNumber: () => number | undefined;
-  getEvalOrigin: () => CallSite | undefined;
-  isToplevel: () => boolean;
-  isEval: () => boolean;
-  isNative: () => boolean;
-  isConstructor: () => boolean;
-}
-
-interface ErrorConstructor {
-  prepareStackTrace?: (
-    error: Error,
-    structuredStackTrace: CallSite[]
-  ) => CallSite[] | string;
-  captureStackTrace(targetObject: Object, constructorOpt?: Function): void;
-  stackTraceLimit: number;
-}
-
 declare module '@google-cloud/common' {
   import * as request from 'request';
 
