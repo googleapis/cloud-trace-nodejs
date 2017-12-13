@@ -93,7 +93,7 @@
     "lodash.isequal": "^4.0.0",
     "lodash.merge": "^4.6.0",
     "methods": "^1.1.1",
-    "semver": "^5.0.1",
+    "semver": "^5.4.1",
     "shimmer": "^1.2.0",
     "uuid": "^3.0.1"
   }
