@@ -227,9 +227,17 @@ export class TraceAgent implements TraceAgentInterface {
       return null;
     } else {
       if (rootSpan.span.isClosed()) {
+        // A closed root span suggests that we either have context confusion or
+        // some work is being done after the root request has been completed.
+        // The first case could lead to a memory leak, if somehow all spans end
+        // up getting misattributed to the same root span – we get a root span
+        // with continuously growing number of child spans. The second case
+        // seems to have some value, but isn't representable. The user probably
+        // needs a custom outer span that encompasses the entirety of work.
         this.logger.warn(
             this.pluginName + ': creating child for an already closed span',
             options.name, rootSpan.span.name);
+        return null;
       }
       // Create a new child span and return it.
       options = options || {name: ''};
