@@ -1,5 +1,33 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-01-04, Version 2.4.0 (Beta), @kjin
+
+This change adds tracing support for HTTP/2 requests (client-side only) and the `mysql2` module, along with a number of bug fixes.
+
+### Notable Changes
+
+* [[`2e25b4e4ab`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/2e25b4e4ab)] - **feat**: support http2 client side (#616) (Jinwoo Lee)
+* [[`b6bd7c24b9`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b6bd7c24b9)] - Port mysql plugin to support mysql2 (#607) (Julien Vincent)
+
+### Commits
+
+* [[`50a13000e0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/50a13000e0)] - chore(package): update google-auto-auth to version 0.9.0 (#627) (greenkeeper[bot])
+* [[`63ca1432de`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/63ca1432de)] - **fix**: avoid adding child spans to closed root (#631) (Ali Ijaz Sheikh)
+* [[`3b1cd24e5d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/3b1cd24e5d)] - **fix**: extend supported gRPC version range to 1.8 (#630) (Kelvin Jin)
+* [[`9866d292a5`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9866d292a5)] - **fix**: upgrade semver to 5.4 (#624) (Kelvin Jin)
+* [[`5700cda2b3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5700cda2b3)] - **fix**: use new node error constructor type definitions (#625) (Kelvin Jin)
+* [[`aabf69c1ab`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/aabf69c1ab)] - chore(package): update ts-node to version 4.0.0 (#623) (greenkeeper[bot])
+* [[`f1ca3a39e1`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f1ca3a39e1)] - **fix**: use shimmer to wrap event emitters in async_hooks-based cls (#619) (Kelvin Jin) [#619](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/619)
+* [[`2e25b4e4ab`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/2e25b4e4ab)] - **feat**: support http2 client side (#616) (Jinwoo Lee)
+* [[`b6bd7c24b9`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b6bd7c24b9)] - Port mysql plugin to support mysql2 (#607) (Julien Vincent)
+* [[`582ed5081a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/582ed5081a)] - **fix**: wrong test/assertion in test-trace-http (#615) (Jinwoo Lee)
+* [[`2807a10e8f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/2807a10e8f)] - **fix**: add projectId to config type definitions (#609) (Kelvin Jin) [#609](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/609)
+* [[`38d4673e43`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/38d4673e43)] - **fix**: listenerAttached should be set to true (#613) (Jinwoo Lee)
+* [[`a4129f32cb`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a4129f32cb)] - **fix**: remove docker containers on `docker-trace.sh stop` (#611) (Jinwoo Lee)
+* [[`036476d2b5`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/036476d2b5)] - **chore**: update with latest packages (#610) (Jinwoo Lee)
+* [[`84cd4771af`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/84cd4771af)] - **fix**: options.port is supposed to be a number (#608) (Jinwoo Lee)
+* [[`10ed0edb74`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/10ed0edb74)] - **refactor**: move index.ts and config.ts into src (#599) (Kelvin Jin) [#599](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/599)
+
 ## 2017-11-14, Version 2.3.3 (Beta), @kjin
 
 This change removes a spurious warning message that was introduced in the fix for HTTPS tracing in 2.3.2. There should be no other observable changes.
