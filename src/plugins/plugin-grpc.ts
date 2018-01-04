@@ -495,19 +495,19 @@ module.exports = [
   },
   {
     file: 'src/client.js',
-    versions: '1.7',
+    versions: '1.7 - 1.8',
     patch: patchClient,
     unpatch: unpatchClient
   },
   {
     file: 'src/metadata.js',
-    versions: '1.7',
+    versions: '1.7 - 1.8',
     patch: patchMetadata,
     unpatch: unpatchMetadata
   },
   {
     file: 'src/server.js',
-    versions: '1.7',
+    versions: '1.7 - 1.8',
     patch: patchServer,
     unpatch: unpatchServer
   }

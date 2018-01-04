@@ -27,7 +27,7 @@ var common = require('./common'/*.js*/);
 
 var versions = {
   grpc1_6: './fixtures/grpc1.6',
-  grpc1_7: './fixtures/grpc1.7'
+  grpc1_8: './fixtures/grpc1.8'
 };
 
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';

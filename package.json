@@ -6,20 +6,21 @@
   "types": "build/src/index.d.ts",
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
-    "test": "ts-node -P ./scripts ./scripts npm-check npm-compile init-test-fixtures run-unit-tests",
-    "non-interference": "ts-node -P ./scripts ./scripts npm-compile test-non-interference",
-    "system-test": "ts-node -P ./scripts ./scripts npm-compile decrypt-service-account-key run-system-tests",
+    "test": "npm run script npm-check npm-compile init-test-fixtures run-unit-tests",
+    "non-interference": "npm run script npm-compile test-non-interference",
+    "system-test": "npm run script npm-compile decrypt-service-account-key run-system-tests",
     "changelog": "./bin/run-changelog.sh",
-    "check-install": "ts-node -P ./scripts ./scripts npm-compile check-install",
-    "coverage": "ts-node -P ./scripts ./scripts npm-check npm-compile init-test-fixtures run-unit-tests-with-coverage report-coverage",
+    "check-install": "npm run script npm-compile check-install",
+    "coverage": "npm run script npm-check npm-compile init-test-fixtures run-unit-tests-with-coverage report-coverage",
     "bump": "./bin/run-bump.sh",
     "check": "gts check",
     "clean": "gts clean",
     "compile-all": "tsc -p ./tsconfig.full.json",
     "compile-strict": "tsc -p .",
-    "compile": "ts-node -P ./scripts ./scripts npm-compile-all npm-compile-strict",
+    "compile": "npm run script npm-compile-all npm-compile-strict",
     "fix": "gts fix",
-    "prepare": "ts-node -P ./scripts ./scripts npm-clean npm-compile"
+    "prepare": "npm run script npm-clean npm-compile",
+    "script": "ts-node -P ./scripts ./scripts"
   },
   "files": [
     "build/src/*.js",

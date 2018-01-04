@@ -52,7 +52,7 @@ describe('test-trace-datastore', function() {
       ds.get(key, function(err, entity) {
         endTransaction();
         assert(err);
-        assert.strictEqual(err.code, 401);
+        assert.strictEqual(err.code, 16); // 16 = Status.UNAUTHENTICATED
         assert.notStrictEqual(
             err.message.indexOf('accounts.google.com:443/o/oauth2/token'), -1);
         var trace = common.getMatchingSpan(grpcPredicate);

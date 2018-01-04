@@ -22,7 +22,7 @@ var http = require('http');
 
 var versions = {
   grpc1_6: './plugins/fixtures/grpc1.6',
-  grpc1_7: './plugins/fixtures/grpc1.7'
+  grpc1_8: './plugins/fixtures/grpc1.8'
 };
 
 var grpcPort = 50051;
