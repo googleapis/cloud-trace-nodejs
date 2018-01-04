@@ -168,7 +168,7 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
             if (semver.valid(version)) {
               // strip version of pre-release tags.
               // warn if they exist.
-              if (!!semver.prerelease(version)) {
+              if (typeof semver.prerelease === 'function' && !!semver.prerelease(version)) {
                 const originalVersion = version;
                 version = version.split('-')[0];
                 logger.warn(`${moduleRoot}: Using patch for version ${
