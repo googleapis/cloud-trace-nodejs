@@ -7,6 +7,7 @@
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
     "test": "npm run script npm-check npm-compile init-test-fixtures run-unit-tests",
+    "posttest": "npm run license-check",
     "non-interference": "npm run script npm-compile test-non-interference",
     "system-test": "npm run script npm-compile decrypt-service-account-key run-system-tests",
     "changelog": "./bin/run-changelog.sh",
@@ -20,7 +21,8 @@
     "compile": "npm run script npm-compile-all npm-compile-strict",
     "fix": "gts fix",
     "prepare": "npm run script npm-clean npm-compile",
-    "script": "ts-node -P ./scripts ./scripts"
+    "script": "ts-node -P ./scripts ./scripts",
+    "license-check": "jsgl --local ."
   },
   "files": [
     "build/src/*.js",
@@ -69,6 +71,7 @@
     "got": "^7.1.0",
     "gts": "^0.5.1",
     "istanbul": "^0.4.2",
+    "js-green-licenses": "^0.2.0",
     "jshint": "^2.9.1",
     "mocha": "^4.0.1",
     "ncp": "^2.0.0",
