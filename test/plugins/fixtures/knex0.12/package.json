@@ -1,9 +1,0 @@
-{
-  "name": "knex0.12",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "knex": "^0.12.9",
-    "mysql": "^2.13.0"
-  }
-}
