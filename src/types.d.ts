@@ -22,7 +22,7 @@ declare module '@google-cloud/common' {
   import * as request from 'request';
 
   type LogFunction = (message: any, ...args: any[]) => void;
-  
+
   export interface Logger {
     error: LogFunction;
     warn: LogFunction;
@@ -54,11 +54,11 @@ declare module '@google-cloud/common' {
 
   export interface ServiceConfig {
     packageJson?: any;
-    projectIdRequired?: false;
+    projectIdRequired?: boolean;
     baseUrl?: string;
     scopes?: string[];
   }
-  
+
   export interface ServiceAuthenticationConfig {
     projectId?: string;
     keyFilename?: string;
