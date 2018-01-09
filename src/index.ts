@@ -83,7 +83,7 @@ function initConfig(projectConfig: Config): NormalizedConfig {
   let envSetConfig: Config = {};
   if (process.env.hasOwnProperty('GCLOUD_TRACE_CONFIG')) {
     envSetConfig =
-        require(path.resolve(process.env.GCLOUD_TRACE_CONFIG)) as Config;
+        require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
   }
   // Configuration order of precedence:
   // 1. Environment Variables
