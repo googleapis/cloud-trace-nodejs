@@ -6,7 +6,7 @@ import { globP, ncpP, spawnP, tmpDirP } from './utils';
  * 1. In a temporary directory, installs from the `npm pack` of this directory
  * 2. Compiles a top-level file in that directory that imports this module
  */
-export default async function() {
+export async function checkInstall() {
   // This script assumes that you don't already have a TGZ file
   // in your current working directory.
   const installDir = await tmpDirP();
