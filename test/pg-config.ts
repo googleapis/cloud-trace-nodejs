@@ -13,16 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-module.exports = (process.env.CIRCLECI === 'true') ? {
-  host: 'localhost',
-  user: 'ubuntu',
-  database: 'circle_test'
-} : {
+export = {
   user: 'postgres',
   password: 'Password12!',
   database: 'test'
 };
-
-export default {};

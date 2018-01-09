@@ -1,8 +1,0 @@
-{
-  "name": "google-cloud-datastore1",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "@google-cloud/datastore": "^1.0.2"
-  }
-}

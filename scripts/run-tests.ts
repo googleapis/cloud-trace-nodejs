@@ -8,7 +8,7 @@ export interface Options {
   timeout?: number
 }
 
-export default async function(options: Options) {
+export async function runTests(options: Options) {
   const { globs, rootDir, coverage, timeout } = options;
   function nodule(nodule: string) {
     return path.relative(rootDir, `node_modules/${nodule}`);

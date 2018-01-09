@@ -1,8 +1,0 @@
-{
-  "name": "express4",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "express": "^4.13.3"
-  }
-}

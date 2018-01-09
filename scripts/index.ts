@@ -1,12 +1,14 @@
 const [bin, script, ...steps] = process.argv;
 
-import checkInstall from './check-install';
-import decryptServiceAccountKey from './decrypt-service-account-key';
-import initTestFixtures from './init-test-fixtures';
-import reportCoverage from './report-coverage';
-import runTests from './run-tests';
-import testNonInterference from './test-non-interference';
+import { checkInstall } from './check-install';
+import { encryptCredentials, decryptCredentials } from './credentials';
+import { initTestFixtures } from './init-test-fixtures';
+import { reportCoverage } from './report-coverage';
+import { runTests } from './run-tests';
+import { testNonInterference } from './test-non-interference';
 import { BUILD_DIRECTORY, existsP, spawnP } from './utils';
+
+const keyID = 'de480e4f9023';
 
 async function run(steps: string[]) {
   for (const step of steps) {
@@ -26,12 +28,25 @@ async function run(steps: string[]) {
       case 'check-install':
         await checkInstall();
         break;
-      case 'decrypt-service-account-key':
-        if (process.env.TRAVIS_PULL_REQUEST === 'false') {
-          await decryptServiceAccountKey();
-        } else {
-          console.log('> Not decrypting service account key in PRs');
+      case 'encrypt-service-account-credentials':
+        const keyAndIV = await encryptCredentials(`node-team-test-${keyID}.json`);
+        console.log([
+          `key: ${keyAndIV.key}`,
+          `iv: ${keyAndIV.iv}`
+        ].join('\n'));
+        break;
+      case 'decrypt-service-account-credentials':
+        const {
+          TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY: key,
+          TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV: iv,
+        } = process.env;
+      
+        if (!key || !iv) {
+          console.log('> Environment insufficient to decrypt service account credentials');
+          break;
         }
+
+        await decryptCredentials({ key, iv }, `node-team-test-${keyID}.json`);
         break;
       case 'init-test-fixtures':
         await initTestFixtures();
@@ -59,7 +74,7 @@ async function run(steps: string[]) {
         });
         break;
       case 'run-system-tests':
-        if (process.env.TRAVIS_PULL_REQUEST && !(await existsP('node-team-test-d0b0be11c23d.json'))) {
+        if (process.env.CI_PULL_REQUEST && !(await existsP('node-team-test-d0b0be11c23d.json'))) {
           console.log('> Not running system tests in PRs');
         } else {
           await runTests({

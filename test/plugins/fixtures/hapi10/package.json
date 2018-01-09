@@ -1,8 +1,0 @@
-{
-  "name": "hapi10",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "hapi": "^10.5.0"
-  }
-}

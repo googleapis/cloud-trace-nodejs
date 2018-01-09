@@ -1,8 +1,0 @@
-{
-  "name": "generic-pool2",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "generic-pool": "^2.0.0"
-  }
-}

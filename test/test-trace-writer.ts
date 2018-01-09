@@ -87,13 +87,16 @@ describe('TraceWriter', function() {
   });
   
   it('should not attach exception handler with ignore option', function() {
+    // In Node 9+, this should be 1.
+    // Otherwise, it should be 0.
+    const numListenersBeforeTraceWriter = process.listeners('uncaughtException').length;
     traceWriter.create(fakeLogger, {
       projectId: '0',
       onUncaughtException: 'ignore',
       forceNewAgent_: true
     } as createTraceWriterOptions);
     // Mocha attaches 1 exception handler
-    assert.equal(process.listeners('uncaughtException').length, 1);
+    assert.equal(process.listeners('uncaughtException').length, numListenersBeforeTraceWriter);
   });
 
   describe('writeSpan', function() {

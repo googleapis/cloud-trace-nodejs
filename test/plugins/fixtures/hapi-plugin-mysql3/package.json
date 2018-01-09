@@ -1,8 +1,0 @@
-{
-  "name": "hapi-plugin-mysql3",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "hapi-plugin-mysql": "^3.1.3"
-  }
-}

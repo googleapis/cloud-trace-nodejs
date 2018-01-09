@@ -1,9 +1,0 @@
-{
-  "name": "redis2.3-hiredis0.5",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "hiredis": "^0.5.0",
-    "redis": "~2.3.x"
-  }
-}

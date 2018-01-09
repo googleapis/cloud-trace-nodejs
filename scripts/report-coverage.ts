@@ -1,14 +1,8 @@
-import { BUILD_DIRECTORY, nodule, readFileP, forkP } from './utils';
+import { BUILD_DIRECTORY, nodule, readFileP, forkP, spawnP } from './utils';
 import * as path from 'path';
 import * as pify from 'pify';
 
-const coveralls: {
-  handleInput: (input: string, cb: (err: Error) => void) => void
-} = require('coveralls');
-
-const reportToCoverallsP = pify((input: string, cb: (err: Error) => void) => coveralls.handleInput(input, cb));
-
-export default async function() {
+export async function reportCoverage() {
   await forkP(nodule('istanbul/lib/cli'), [
     'report',
     'lcovonly'
@@ -16,5 +10,7 @@ export default async function() {
     cwd: BUILD_DIRECTORY
   });
   const lcov = await readFileP(`${BUILD_DIRECTORY}/coverage/lcov.info`, 'utf8');
-  await reportToCoverallsP(lcov);
+  await forkP(nodule('.bin/codecov'), [], {
+    cwd: BUILD_DIRECTORY
+  });
 }

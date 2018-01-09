@@ -1,8 +1,0 @@
-{
-  "name": "connect3",
-  "version": "1.0.0",
-  "main": "index.js",
-  "dependencies": {
-    "connect": "^3.5.0"
-  }
-}

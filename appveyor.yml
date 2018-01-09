@@ -6,6 +6,10 @@ environment:
   - nodejs_version: "6"
   - nodejs_version: "8"
 
+cache:
+  - node_modules -> package-lock.json, package.json
+  - build\test\plugins\fixtures -> test\fixtures\plugin-fixtures.json
+
 services:
   - mongodb
   - mysql
@@ -19,8 +23,6 @@ install:
   - nuget install redis-64 -excludeversion
   - redis-64\tools\redis-server.exe --service-install
   - redis-64\tools\redis-server.exe --service-start
-  # install modules
-  - npm install
   - SET GCLOUD_PROJECT=0
   - SET GCLOUD_TRACE_NEW_CONTEXT=1
 
@@ -34,8 +36,16 @@ before_test:
 
 # Post-install test scripts.
 test_script:
+  # install modules
+  - npm install
+  # check code style and linting
+  - npm run check
+  # compile the code
+  - npm run compile
   # check that installing this module is OK
   - npm run check-install
+  # initialize test fixtures
+  - npm run init-test-fixtures
   # run tests
   - npm run test
 
