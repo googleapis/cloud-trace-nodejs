@@ -18,14 +18,10 @@
 var shimmer = require('shimmer');
 var url = require('url');
 var isString = require('is').string;
-var merge = require('lodash.merge');
 var httpAgent = require('_http_agent');
 var semver = require('semver');
 
 function getSpanName(options) {
-  if (isString(options)) {
-    options = url.parse(options);
-  }
   // c.f. _http_client.js ClientRequest constructor
   return options.hostname || options.host || 'localhost';
 }
@@ -65,22 +61,35 @@ function makeRequestTrace(request, api) {
       return request.apply(this, arguments);
     }
 
-    options = isString(options) ? url.parse(options) : merge({}, options);
-    options.headers = options.headers || {};
+    var uri;
+    if (isString(options)) {
+      // save the value of uri so we don't have to reconstruct it later
+      uri = extractUrl(options);
+      options = url.parse(options);
+    }
 
-    var uri = extractUrl(options);
     var requestLifecycleSpan =
         api.createChildSpan({name: getSpanName(options)});
     if (!requestLifecycleSpan) {
       return request.apply(this, arguments);
     }
 
+    if (!uri) {
+      uri = extractUrl(options);
+    }
+
     requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
                                   options.method);
     requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
-    options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
+
+    var headers = options.headers ? Object.assign({}, options.headers) : {};
+    headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
         requestLifecycleSpan.getTraceContext();
-    var req = request.call(this, options, function(res) {
+    // Clone the options object to pass to request options,
+    // using the new set of headers.
+    var requestOptions = Object.assign({}, options, { headers: headers });
+
+    var req = request.call(this, requestOptions, function(res) {
       api.wrapEmitter(res);
       var numBytes = 0;
       var listenerAttached = false;
