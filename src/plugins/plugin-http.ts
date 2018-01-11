@@ -82,14 +82,7 @@ function makeRequestTrace(request, api) {
                                   options.method);
     requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
 
-    var headers = options.headers ? Object.assign({}, options.headers) : {};
-    headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
-        requestLifecycleSpan.getTraceContext();
-    // Clone the options object to pass to request options,
-    // using the new set of headers.
-    var requestOptions = Object.assign({}, options, { headers: headers });
-
-    var req = request.call(this, requestOptions, function(res) {
+    var req = request.call(this, options, function(res) {
       api.wrapEmitter(res);
       var numBytes = 0;
       var listenerAttached = false;
@@ -123,6 +116,8 @@ function makeRequestTrace(request, api) {
         return callback(res);
       }
     });
+    req.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME,
+        requestLifecycleSpan.getTraceContext());
     api.wrapEmitter(req);
     req.on('error', function (e) {
       if (e) {
