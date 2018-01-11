@@ -50,7 +50,7 @@ function makeRequestTrace(request, api) {
   // Here `request` may also happen to be `get`.
   return function request_trace(options, callback) {
     if (!options) {
-      return request.apply(this, arguments);
+      return request(options, callback);
     }
 
     // Don't trace ourselves lest we get into infinite loops
@@ -58,7 +58,7 @@ function makeRequestTrace(request, api) {
     // of trace api calls. If there is no buffering then each trace is
     // an http call which will get a trace which will be an http call
     if (isTraceAgentRequest(options, api)) {
-      return request.apply(this, arguments);
+      return request(options, callback);
     }
 
     var uri;
@@ -71,7 +71,7 @@ function makeRequestTrace(request, api) {
     var requestLifecycleSpan =
         api.createChildSpan({name: getSpanName(options)});
     if (!requestLifecycleSpan) {
-      return request.apply(this, arguments);
+      return request(options, callback);
     }
 
     if (!uri) {
@@ -152,8 +152,8 @@ function patchHttp(http, api) {
       // The former is already true (at least in supported Node versions up to
       // v9), so we simply follow the latter.
       // Ref: https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
-      return function makeGetTrace() {
-        var req = http.request.apply(this, arguments);
+      return function getTrace(options, callback) {
+        var req = http.request(options, callback);
         req.end();
         return req;
       };
@@ -167,8 +167,8 @@ function patchHttps(https, api) {
     return makeRequestTrace(request, api);
   });
   shimmer.wrap(https, 'get', function getWrap() {
-    return function makeGetTrace() {
-      var req = https.request.apply(this, arguments);
+    return function getTrace(options, callback) {
+      var req = https.request(options, callback);
       req.end();
       return req;
     };
