@@ -141,20 +141,37 @@ function patchHttp(http, api) {
 
   if (semver.satisfies(process.version, '>=8.0.0')) {
     // http.get in Node 8 calls the private copy of request rather than the one
-    // we have patched on module.export. We need to patch get as well. Luckily,
-    // the request patch we have does work for get as well.
-    shimmer.wrap(http, 'get', function getWrap(get) {
-      return makeRequestTrace(get, api);
+    // we have patched on module.export, so patch get as well.
+    shimmer.wrap(http, 'get', function getWrap() {
+      // Re-implement http.get. This needs to be done (instead of using
+      // makeRequestTrace to patch it) because we need to set the trace
+      // context header before the returned ClientRequest is ended.
+      // The Node.js docs state that the only differences between request and
+      // get are that (1) get defaults to the HTTP GET method and (2) the
+      // returned request object is ended immediately.
+      // The former is already true (at least in supported Node versions up to
+      // v9), so we simply follow the latter.
+      // Ref: https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
+      return function makeGetTrace() {
+        var req = http.request.apply(this, arguments);
+        req.end();
+        return req;
+      };
     });
   }
 }
 
-function patchHttps(https, api) { // https.get depends on https.request in <8.9 and >=8.9.1
+// https.get depends on https.request in <8.9 and >=8.9.1
+function patchHttps(https, api) {
   shimmer.wrap(https, 'request', function requestWrap(request) {
     return makeRequestTrace(request, api);
   });
-  shimmer.wrap(https, 'get', function getWrap(get) {
-    return makeRequestTrace(get, api);
+  shimmer.wrap(https, 'get', function getWrap() {
+    return function makeGetTrace() {
+      var req = https.request.apply(this, arguments);
+      req.end();
+      return req;
+    };
   });
 }
 
