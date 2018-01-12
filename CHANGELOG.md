@@ -1,5 +1,24 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-01-12, Version 2.4.1 (Beta), @kjin
+
+This change adds a patch to reduce the overhead introduced by the Trace Agent for outgoing HTTP requests.
+
+### Notable Changes
+
+* [[`182c0cbc6f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/182c0cbc6f)] - **refactor**: use setHeader to set trace context header (#643) (Kelvin Jin) [#643](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/643)
+
+### Commits
+
+* [[`dbeae04f51`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/dbeae04f51)] - **fix**: fix a failing http2 test in Node 9.4.0 (#648) (Jinwoo Lee)
+* [[`182c0cbc6f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/182c0cbc6f)] - **refactor**: use setHeader to set trace context header (#643) (Kelvin Jin) [#643](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/643)
+* [[`202d4cb5b7`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/202d4cb5b7)] - chore(package): update js-green-licenses to version 0.3.1 (#641) (greenkeeper[bot])
+* [[`4c036eaa3a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4c036eaa3a)] - chore(package): update @types/node to version 9.3.0 (greenkeeper[bot])
+* [[`4003286152`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4003286152)] - **chore**: Update `@google-cloud/common` types (#628) (Dominic Kramer) [#628](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/628)
+* [[`c275079956`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c275079956)] - **chore**: Update LICENSE (#635) (chenyumic)
+* [[`ea3b26e7fe`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ea3b26e7fe)] - **build**: transition to circle 2 and cache test fixtures in CI (#634) (Kelvin Jin) [#634](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/634)
+* [[`61f620d7e7`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/61f620d7e7)] - **chore**: license check in posttest (#636) (Jinwoo Lee)
+
 ## 2018-01-04, Version 2.4.0 (Beta), @kjin
 
 This change adds tracing support for HTTP/2 requests (client-side only) and the `mysql2` module, along with a number of bug fixes.
