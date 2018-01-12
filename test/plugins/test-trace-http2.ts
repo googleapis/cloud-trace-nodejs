@@ -33,7 +33,7 @@ import {TraceLabels} from '../../src/trace-labels';
 import {TraceSpan} from '../../src/trace-span';
 
 describe('test-trace-http2', () => {
-  if (semver.satisfies(process.version, '<8')) {
+  if (semver.satisfies(process.version, '<8 || >=9.4')) {
     console.log(
         'Skipping test-trace-http2 on Node.js version ' + process.version);
     return;
@@ -316,7 +316,7 @@ describe('test-trace-http2', () => {
 });
 
 describe('test-trace-secure-http2', () => {
-  if (semver.satisfies(process.version, '<8')) {
+  if (semver.satisfies(process.version, '<8 || >=9.4')) {
     console.log(
         'Skipping test-trace-secure-http2 on Node.js version ' +
         process.version);
