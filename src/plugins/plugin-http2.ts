@@ -178,7 +178,6 @@ function unpatchHttp2(h2: NodeJS.Module) {
   shimmer.unwrap(h2, 'connect');
 }
 
-// TODO(kjin): Node 9.4+ introduces incompatible changes
 module.exports = [
   {
     file: 'http2',

@@ -323,7 +323,7 @@ describe('test-trace-http2', () => {
 });
 
 describe('test-trace-secure-http2', () => {
-  if (semver.satisfies(process.version, '<8 || >=9.4')) {
+  if (semver.satisfies(process.version, '<8')) {
     console.log(
         'Skipping test-trace-secure-http2 on Node.js version ' +
         process.version);
