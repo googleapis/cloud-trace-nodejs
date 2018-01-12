@@ -33,7 +33,7 @@ import {TraceLabels} from '../../src/trace-labels';
 import {TraceSpan} from '../../src/trace-span';
 
 describe('test-trace-http2', () => {
-  if (semver.satisfies(process.version, '<8 || >=9.4')) {
+  if (semver.satisfies(process.version, '<8')) {
     console.log(
         'Skipping test-trace-http2 on Node.js version ' + process.version);
     return;
@@ -216,11 +216,18 @@ describe('test-trace-http2', () => {
 
   it('should accurately measure request time, error', (done) => {
     const server: http2.Http2SecureServer = http2.createServer();
-    server.on('stream', (s) => {
-      setTimeout(() => {
-        s.rstWithInternalError();
-      }, common.serverWait / 2);
-    });
+    server.on(
+        'stream',
+        // Node 9.4 removed rstWithInternalError() and uses added close().
+        (s: http2.ServerHttp2Stream&({close: (code: number) => void})) => {
+          setTimeout(() => {
+            if (semver.satisfies(process.version, '>=9.4')) {
+              s.close(http2.constants.NGHTTP2_INTERNAL_ERROR);
+            } else {
+              s.rstWithInternalError();
+            }
+          }, common.serverWait / 2);
+        });
     server.listen(common.serverPort, () => {
       common.runInTransaction((endTransaction: () => void) => {
         const start = Date.now();

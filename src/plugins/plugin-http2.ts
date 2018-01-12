@@ -182,7 +182,6 @@ function unpatchHttp2(h2: NodeJS.Module) {
 module.exports = [
   {
     file: 'http2',
-    versions: '<9.4.0',
     patch: patchHttp2,
     unpatch: unpatchHttp2,
   },
