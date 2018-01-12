@@ -18,14 +18,10 @@
 var shimmer = require('shimmer');
 var url = require('url');
 var isString = require('is').string;
-var merge = require('lodash.merge');
 var httpAgent = require('_http_agent');
 var semver = require('semver');
 
 function getSpanName(options) {
-  if (isString(options)) {
-    options = url.parse(options);
-  }
   // c.f. _http_client.js ClientRequest constructor
   return options.hostname || options.host || 'localhost';
 }
@@ -54,7 +50,7 @@ function makeRequestTrace(request, api) {
   // Here `request` may also happen to be `get`.
   return function request_trace(options, callback) {
     if (!options) {
-      return request.apply(this, arguments);
+      return request(options, callback);
     }
 
     // Don't trace ourselves lest we get into infinite loops
@@ -62,24 +58,30 @@ function makeRequestTrace(request, api) {
     // of trace api calls. If there is no buffering then each trace is
     // an http call which will get a trace which will be an http call
     if (isTraceAgentRequest(options, api)) {
-      return request.apply(this, arguments);
+      return request(options, callback);
     }
 
-    options = isString(options) ? url.parse(options) : merge({}, options);
-    options.headers = options.headers || {};
+    var uri;
+    if (isString(options)) {
+      // save the value of uri so we don't have to reconstruct it later
+      uri = extractUrl(options);
+      options = url.parse(options);
+    }
 
-    var uri = extractUrl(options);
     var requestLifecycleSpan =
         api.createChildSpan({name: getSpanName(options)});
     if (!requestLifecycleSpan) {
-      return request.apply(this, arguments);
+      return request(options, callback);
+    }
+
+    if (!uri) {
+      uri = extractUrl(options);
     }
 
     requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
                                   options.method);
     requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
-    options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
-        requestLifecycleSpan.getTraceContext();
+
     var req = request.call(this, options, function(res) {
       api.wrapEmitter(res);
       var numBytes = 0;
@@ -114,6 +116,8 @@ function makeRequestTrace(request, api) {
         return callback(res);
       }
     });
+    req.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME,
+        requestLifecycleSpan.getTraceContext());
     api.wrapEmitter(req);
     req.on('error', function (e) {
       if (e) {
@@ -137,20 +141,37 @@ function patchHttp(http, api) {
 
   if (semver.satisfies(process.version, '>=8.0.0')) {
     // http.get in Node 8 calls the private copy of request rather than the one
-    // we have patched on module.export. We need to patch get as well. Luckily,
-    // the request patch we have does work for get as well.
-    shimmer.wrap(http, 'get', function getWrap(get) {
-      return makeRequestTrace(get, api);
+    // we have patched on module.export, so patch get as well.
+    shimmer.wrap(http, 'get', function getWrap() {
+      // Re-implement http.get. This needs to be done (instead of using
+      // makeRequestTrace to patch it) because we need to set the trace
+      // context header before the returned ClientRequest is ended.
+      // The Node.js docs state that the only differences between request and
+      // get are that (1) get defaults to the HTTP GET method and (2) the
+      // returned request object is ended immediately.
+      // The former is already true (at least in supported Node versions up to
+      // v9), so we simply follow the latter.
+      // Ref: https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
+      return function getTrace(options, callback) {
+        var req = http.request(options, callback);
+        req.end();
+        return req;
+      };
     });
   }
 }
 
-function patchHttps(https, api) { // https.get depends on https.request in <8.9 and >=8.9.1
+// https.get depends on https.request in <8.9 and >=8.9.1
+function patchHttps(https, api) {
   shimmer.wrap(https, 'request', function requestWrap(request) {
     return makeRequestTrace(request, api);
   });
-  shimmer.wrap(https, 'get', function getWrap(get) {
-    return makeRequestTrace(get, api);
+  shimmer.wrap(https, 'get', function getWrap() {
+    return function getTrace(options, callback) {
+      var req = https.request(options, callback);
+      req.end();
+      return req;
+    };
   });
 }
 
