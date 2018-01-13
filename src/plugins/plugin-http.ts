@@ -14,41 +14,71 @@
  * limitations under the License.
  */
 
-'use strict';
-var shimmer = require('shimmer');
-var url = require('url');
-var isString = require('is').string;
-var httpAgent = require('_http_agent');
-var semver = require('semver');
+import * as httpModule from 'http';
+import {Agent, ClientRequest, ClientRequestArgs, get, request} from 'http';
+import * as httpsModule from 'https';
+import * as is from 'is';
+import * as semver from 'semver';
+import * as shimmer from 'shimmer';
+import * as url from 'url';
 
-function getSpanName(options) {
+import {Plugin, TraceAgent} from '../plugin-types';
+
+type HttpModule = typeof httpModule;
+type HttpsModule = typeof httpsModule;
+type RequestFunction = typeof request;
+
+// tslint:disable:no-any
+const isString = is.string as (value: any) => value is string;
+// url.URL is used for type checking, but doesn't exist in Node <7.
+// This function works around that.
+const isURL = semver.satisfies(process.version, '>=7') ?
+    ((value: any): value is url.URL => value instanceof url.URL) :
+    ((value: any): value is url.URL => false);
+// tslint:enable:no-any
+
+function getSpanName(options: ClientRequestArgs|url.URL) {
   // c.f. _http_client.js ClientRequest constructor
   return options.hostname || options.host || 'localhost';
 }
 
-function extractUrl(options) {
-  var uri = options;
-  var agent = options._defaultAgent || httpAgent.globalAgent;
+function extractUrl(
+    options: ClientRequestArgs|url.URL, fallbackProtocol: string) {
+  let path;
+  if (isURL(options)) {
+    // pathname only exists on a URL object.
+    path = options.pathname || '/';
+  } else {
+    const agent = options._defaultAgent as Agent & {protocol?: string};
+    if (agent) {
+      fallbackProtocol = agent.protocol || fallbackProtocol;
+    }
+    // path only exists on a ClientRequestArgs object.
+    path = options.path || '/';
+  }
+  const protocol = options.protocol || fallbackProtocol;
+  const host = options.hostname || options.host || 'localhost';
+  const portString = options.port ? (':' + options.port) : '';
+
   // In theory we should use url.format here. However, that is
   // broken. See: https://github.com/joyent/node/issues/9117 and
   // https://github.com/nodejs/io.js/pull/893
   // Let's do things the same way _http_client does it.
-  return isString(uri) ? uri :
-    (options.protocol || agent.protocol) + '//' +
-    (options.hostname || options.host || 'localhost') +
-    (options.port ? (':' + options.port) : '') +
-    (options.path || options.pathName || '/');
+  return `${protocol}//${host}${portString}${path}`;
 }
 
-function isTraceAgentRequest (options, api) {
+// tslint:disable-next-line:no-any
+function isTraceAgentRequest(options: any, api: TraceAgent) {
   return options && options.headers &&
-    !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
+      !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
 }
 
-function makeRequestTrace(request, api) {
+function makeRequestTrace(
+    protocol: string, request: RequestFunction,
+    api: TraceAgent): RequestFunction {
   // On Node 8+ we use the following function to patch both request and get.
   // Here `request` may also happen to be `get`.
-  return function request_trace(options, callback) {
+  return function requestTrace(options, callback): ClientRequest {
     if (!options) {
       return request(options, callback);
     }
@@ -61,88 +91,79 @@ function makeRequestTrace(request, api) {
       return request(options, callback);
     }
 
-    var uri;
+    let uri;
     if (isString(options)) {
       // save the value of uri so we don't have to reconstruct it later
-      uri = extractUrl(options);
+      uri = options;
       options = url.parse(options);
     }
 
-    var requestLifecycleSpan =
-        api.createChildSpan({name: getSpanName(options)});
-    if (!requestLifecycleSpan) {
+    const span = api.createChildSpan({name: getSpanName(options)});
+    if (!span) {
       return request(options, callback);
     }
 
     if (!uri) {
-      uri = extractUrl(options);
+      uri = extractUrl(options, protocol);
     }
 
-    requestLifecycleSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY,
-                                  options.method);
-    requestLifecycleSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
+    const method = (options as ClientRequestArgs).method || 'GET';
+    span.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, method);
+    span.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
 
-    var req = request.call(this, options, function(res) {
+    const req = request(options, (res) => {
       api.wrapEmitter(res);
-      var numBytes = 0;
-      var listenerAttached = false;
-      // Responses returned by http#request are yielded in paused mode. Attaching
-      // a 'data' listener to the request will switch the stream to flowing mode
-      // which could cause the request to drain before the calling framework has
-      // a chance to attach their own listeners. To avoid this, we attach our listener
-      // lazily.
-      // This approach to tracking data size will not observe data read by
-      // explicitly calling `read` on the request. We expect this to be very
-      // uncommon as it is not mentioned in any of the official documentation.
-      shimmer.wrap(res, 'on', function onWrap(on) {
-        return function on_trace(eventName, cb) {
+      let numBytes = 0;
+      let listenerAttached = false;
+      // Responses returned by http#request are yielded in paused mode.
+      // Attaching a 'data' listener to the request will switch the stream to
+      // flowing mode which could cause the request to drain before the calling
+      // framework has a chance to attach their own listeners. To avoid this, we
+      // attach our listener lazily. This approach to tracking data size will
+      // not observe data read by explicitly calling `read` on the request. We
+      // expect this to be very uncommon as it is not mentioned in any of the
+      // official documentation.
+      shimmer.wrap<typeof res.on>(res, 'on', (on) => {
+        return function on_trace(this: {}, eventName: string) {
           if (eventName === 'data' && !listenerAttached) {
             listenerAttached = true;
-            on.call(this, 'data', function(chunk) {
+            on.call(this, 'data', (chunk: string|Buffer) => {
               numBytes += chunk.length;
             });
           }
           return on.apply(this, arguments);
         };
       });
-      res.on('end', function () {
-        requestLifecycleSpan
-          .addLabel(api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
-        requestLifecycleSpan
-          .addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
-        requestLifecycleSpan.endSpan();
+      res.on('end', () => {
+        span.addLabel(api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
+        span.addLabel(api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+        span.endSpan();
       });
       if (callback) {
         return callback(res);
       }
     });
-    req.setHeader(api.constants.TRACE_CONTEXT_HEADER_NAME,
-        requestLifecycleSpan.getTraceContext());
     api.wrapEmitter(req);
-    req.on('error', function (e) {
-      if (e) {
-        requestLifecycleSpan.addLabel(api.labels.ERROR_DETAILS_NAME, e.name);
-        requestLifecycleSpan
-          .addLabel(api.labels.ERROR_DETAILS_MESSAGE, e.message);
-      } else {
-        // What's the new logger target?
-        // console.error('HTTP request error was null or undefined', e);
-      }
-      requestLifecycleSpan.endSpan();
+    req.setHeader(
+        api.constants.TRACE_CONTEXT_HEADER_NAME, span.getTraceContext());
+    req.on('error', error => {
+      span.addLabel(api.labels.ERROR_DETAILS_NAME, error.name);
+      span.addLabel(api.labels.ERROR_DETAILS_MESSAGE, error.message);
+      span.endSpan();
     });
     return req;
   };
 }
 
-function patchHttp(http, api) {
-  shimmer.wrap(http, 'request', function requestWrap(request) {
-    return makeRequestTrace(request, api);
+function patchHttp(http: HttpModule, api: TraceAgent) {
+  shimmer.wrap<typeof request>(http, 'request', (request) => {
+    return makeRequestTrace('http:', request, api);
   });
 
   if (semver.satisfies(process.version, '>=8.0.0')) {
     // http.get in Node 8 calls the private copy of request rather than the one
     // we have patched on module.export, so patch get as well.
-    shimmer.wrap(http, 'get', function getWrap() {
+    shimmer.wrap<typeof get>(http, 'get', () => {
       // Re-implement http.get. This needs to be done (instead of using
       // makeRequestTrace to patch it) because we need to set the trace
       // context header before the returned ClientRequest is ended.
@@ -151,9 +172,10 @@ function patchHttp(http, api) {
       // returned request object is ended immediately.
       // The former is already true (at least in supported Node versions up to
       // v9), so we simply follow the latter.
-      // Ref: https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
+      // Ref:
+      // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
       return function getTrace(options, callback) {
-        var req = http.request(options, callback);
+        const req = http.request(options, callback);
         req.end();
         return req;
       };
@@ -162,43 +184,42 @@ function patchHttp(http, api) {
 }
 
 // https.get depends on https.request in <8.9 and >=8.9.1
-function patchHttps(https, api) {
-  shimmer.wrap(https, 'request', function requestWrap(request) {
-    return makeRequestTrace(request, api);
+function patchHttps(https: HttpsModule, api: TraceAgent) {
+  shimmer.wrap(https, 'request', (request) => {
+    return makeRequestTrace('https:', request, api);
   });
   shimmer.wrap(https, 'get', function getWrap() {
     return function getTrace(options, callback) {
-      var req = https.request(options, callback);
+      const req = https.request(options, callback);
       req.end();
       return req;
     };
   });
 }
 
-function unpatchHttp(http) {
+function unpatchHttp(http: HttpModule) {
   shimmer.unwrap(http, 'request');
   if (semver.satisfies(process.version, '>=8.0.0')) {
     shimmer.unwrap(http, 'get');
   }
 }
 
-function unpatchHttps(https) {
+function unpatchHttps(https: HttpsModule) {
   shimmer.unwrap(https, 'request');
   shimmer.unwrap(https, 'get');
 }
 
-module.exports = [
+const plugin: Plugin = [
   {
     file: 'http',
     patch: patchHttp,
-    unpatch: unpatchHttp
+    unpatch: unpatchHttp,
   },
   {
     file: 'https',
     versions: '=8.9.0 || >=9.0.0',
     patch: patchHttps,
-    unpatch: unpatchHttps
+    unpatch: unpatchHttps,
   }
 ];
-
-export default {};
+export = plugin;

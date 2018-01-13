@@ -9,6 +9,7 @@
   },
   "include": [
     "src/*.ts",
+    "src/plugins/plugin-http.ts",
     "src/plugins/plugin-http2.ts",
     "src/plugins/plugin-https.ts",
     "test/plugins/test-trace-http2.ts"

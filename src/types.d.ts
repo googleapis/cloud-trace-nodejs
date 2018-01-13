@@ -69,31 +69,3 @@ declare module '@google-cloud/common' {
     };
   }
 }
-
-declare module 'shimmer' {
-  global {
-    interface Function {
-      __wrapped: boolean;
-    }
-  }
-
-  const shimmer: {
-    (options: { logger?: (msg: string) => void }): void;
-    wrap: <T extends Function>(
-      nodule: Object,
-      name: string,
-      wrapper: (original: T) => T
-    ) => void;
-    massWrap: <T extends Function>(
-      nodules: Object[],
-      names: string[],
-      wrapper: (original: T) => T
-    ) => void;
-    unwrap: <T extends Function>(
-      nodule: Object,
-      name: string
-    ) => void;
-  }
-
-  export = shimmer;
-}
