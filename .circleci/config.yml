@@ -4,7 +4,6 @@
 node_modules_cache_key: &node_modules_cache_key node-modules-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "package.json" }}-{{ checksum "package-lock.json" }}
 test_fixtures_cache_key: &test_fixtures_cache_key test-fixtures-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "test/fixtures/plugin-fixtures.json" }}
 test_env: &test_env
-  GCLOUD_PROJECT: 0
   GCLOUD_TRACE_NEW_CONTEXT: 1
 release_tags: &release_tags
   tags:
@@ -78,6 +77,19 @@ mysql_service: &mysql_service
 version: 2.0
 workflows:
   version: 2
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 6 * * *" # Daily at 6:00AM
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - node4
+      - node6
+      - node8
+      - node9
   tests:
     jobs:
       - node4:
