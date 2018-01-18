@@ -99,24 +99,24 @@ describe('test-trace-header-context', function() {
   });
 
   it('should parse incoming header', function(done) {
-    const app = express();
-    let server;
-    const sentTraceId = '0000000000000000000000000000000a';
-    const sentSpanId = '2';
-    const sentTraceOptions = 'o=1';
-    const sentTraceContext = `${sentTraceId}/${sentSpanId};${sentTraceOptions}`;
+    var app = express();
+    var server;
+    var sentTraceId = '0000000000000000000000000000000a';
+    var sentSpanId = '2';
+    var sentTraceOptions = 'o=1';
+    var sentTraceContext = `${sentTraceId}/${sentSpanId};${sentTraceOptions}`;
     app.get('/', function(req, res) {
       http.get({port: common.serverPort, path: '/self'});
       res.send(common.serverRes);
     });
     app.get('/self', function(req, res) {
-      const receivedTraceContext =
+      var receivedTraceContext =
           req.headers[Constants.TRACE_CONTEXT_HEADER_NAME];
-      const receivedTraceId = receivedTraceContext.split('/')[0];
-      const receivedSpanIdAndOptions =
+      var receivedTraceId = receivedTraceContext.split('/')[0];
+      var receivedSpanIdAndOptions =
           receivedTraceContext.split('/')[1].split(';');
-      const receivedSpanId = receivedSpanIdAndOptions[0];
-      const receivedTraceOptions = receivedSpanIdAndOptions[1];
+      var receivedSpanId = receivedSpanIdAndOptions[0];
+      var receivedTraceOptions = receivedSpanIdAndOptions[1];
       // Trace ID and trace options should be the same in sender and receiver.
       assert.equal(receivedTraceId, sentTraceId);
       assert.equal(receivedTraceOptions, sentTraceOptions);
@@ -136,7 +136,7 @@ describe('test-trace-header-context', function() {
       done();
     });
     server = app.listen(common.serverPort, function() {
-      const headers = {};
+      var headers = {};
       headers[Constants.TRACE_CONTEXT_HEADER_NAME] = sentTraceContext;
       http.get({port: common.serverPort, headers: headers});
     });
