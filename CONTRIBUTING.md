@@ -41,6 +41,8 @@ npm install
 GCLOUD_TRACE_NEW_CONTEXT=1 npm run script npm-compile-all init-test-fixtures run-unit-tests
 ```
 
+You will need to have mysql, postgres, redis, and mongo instances listening on their corresponding canonical ports. When running locally, you can use `./bin/docker-trace.sh start` to start docker images that does this for you.
+
 ### Why `init-test-fixtures`
 
 The Trace Agent unit tests rely on installing traced modules fixed at distinct version ranges. See [`plugin-fixtures.json`](test/fixtures/plugin-fixtures.json) for the list of fixtures.
