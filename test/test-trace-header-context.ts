@@ -113,8 +113,10 @@ describe('test-trace-header-context', function() {
       const receivedTraceContext =
           req.headers[Constants.TRACE_CONTEXT_HEADER_NAME];
       const receivedTraceId = receivedTraceContext.split('/')[0];
-      const [receivedSpanId, receivedTraceOptions] =
+      const receivedSpanIdAndOptions =
           receivedTraceContext.split('/')[1].split(';');
+      const receivedSpanId = receivedSpanIdAndOptions[0];
+      const receivedTraceOptions = receivedSpanIdAndOptions[1];
       // Trace ID and trace options should be the same in sender and receiver.
       assert.equal(receivedTraceId, sentTraceId);
       assert.equal(receivedTraceOptions, sentTraceOptions);
