@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {randomBytes} from 'crypto';
 import * as util from 'util';
 
 import {Constants} from './constants';
@@ -42,8 +43,10 @@ interface StackFrame {
   column_number?: number;
 }
 
-// Auto-incrementing integer
-let uid = 1;
+function randomSpanId() {
+  // Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
+  return parseInt(randomBytes(6).toString('hex'), 16).toString();
+}
 
 export class SpanData implements SpanDataInterface {
   readonly span: TraceSpan;
@@ -60,10 +63,9 @@ export class SpanData implements SpanDataInterface {
   constructor(
       readonly trace: Trace, spanName: string, parentSpanId: string,
       private readonly isRoot: boolean, skipFrames: number) {
-    const spanId = '' + (uid++);
     spanName =
         traceUtil.truncate(spanName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
-    this.span = new TraceSpan(spanName, spanId, parentSpanId);
+    this.span = new TraceSpan(spanName, randomSpanId(), parentSpanId);
     trace.spans.push(this.span);
     if (traceWriter.get().getConfig().stackTraceLimit > 0) {
       // This is a mechanism to get the structured stack trace out of V8.
