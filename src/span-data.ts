@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {randomBytes} from 'crypto';
+import {randomFillSync} from 'crypto';
 import * as util from 'util';
 
 import {Constants} from './constants';
@@ -43,10 +43,11 @@ interface StackFrame {
   column_number?: number;
 }
 
+const spanIdBuffer = Buffer.alloc(6);
 function randomSpanId() {
   // Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
   // tslint:disable-next-line:ban Needed to parse hexadecimal.
-  return parseInt(randomBytes(6).toString('hex'), 16).toString();
+  return parseInt(randomFillSync(spanIdBuffer).toString('hex'), 16).toString();
 }
 
 export class SpanData implements SpanDataInterface {
