@@ -45,6 +45,7 @@ interface StackFrame {
 
 function randomSpanId() {
   // Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
+  // tslint:disable-next-line:ban Needed to parse hexadecimal.
   return parseInt(randomBytes(6).toString('hex'), 16).toString();
 }
 
