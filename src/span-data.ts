@@ -44,21 +44,21 @@ interface StackFrame {
 }
 
 // Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
-const spanIdBuffer = Buffer.alloc(6);
-function randomSpanIdWithRandomFillSync() {
-  // tslint:disable-next-line:ban Needed to parse hexadecimal.
-  return parseInt(crypto.randomFillSync(spanIdBuffer).toString('hex'), 16)
-      .toString();
-}
+const SPAN_ID_RANDOM_BYTES = 6;
 
-function randomSpanIdWithRandomBytes() {
-  // tslint:disable-next-line:ban Needed to parse hexadecimal.
-  return parseInt(crypto.randomBytes(6).toString('hex'), 16).toString();
-}
+// Use the faster crypto.randomFillSync when available (Node 7+) falling back to
+// using crypto.randomBytes.
+const spanIdBuffer = Buffer.alloc(SPAN_ID_RANDOM_BYTES);
+const randomFillSync = crypto.randomFillSync;
+const randomBytes = crypto.randomBytes;
+const spanRandomBuffer = randomFillSync ?
+    () => randomFillSync(spanIdBuffer) :
+    () => randomBytes(SPAN_ID_RANDOM_BYTES);
 
-// randomFillSync is faster than randomBytes but was introduced in Node 7.
-const randomSpanId = crypto.randomFillSync ? randomSpanIdWithRandomFillSync :
-                                             randomSpanIdWithRandomBytes;
+function randomSpanId() {
+  // tslint:disable-next-line:ban Needed to parse hexadecimal.
+  return parseInt(spanRandomBuffer().toString('hex'), 16).toString();
+}
 
 export class SpanData implements SpanDataInterface {
   readonly span: TraceSpan;

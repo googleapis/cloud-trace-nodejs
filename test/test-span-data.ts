@@ -56,6 +56,26 @@ describe('SpanData', function() {
     });
   });
 
+  it('generates unique numeric span ID strings', function() {
+    cls.getNamespace().run(function() {
+      const spans = [];
+      const spanIds = new Set<string>();
+      const rootSpanData = createRootSpanData('hi');
+      const numSpanIdsToCheck = 5;
+      for (let i = 0; i < numSpanIdsToCheck; i++) {
+        const spanData = new SpanData(
+            rootSpanData.trace, 'child', rootSpanData.span.spanId, false, 0);
+        const spanId = spanData.span.spanId;
+        spanIds.add(spanId);
+        // Check that the span IDs are numeric positive number strings
+        assert.ok(typeof spanId === 'string');
+        assert.ok(spanId.match(/\d+/));
+        assert.ok(Number(spanId) > 0);
+        assert.equal(Number(spanId).toString(), spanId);
+      }
+    });
+  });
+
   it('converts label values to strings', function() {
     cls.getNamespace().run(function() {
       var spanData = createRootSpanData('name', 1, 2);

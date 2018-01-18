@@ -99,20 +99,28 @@ describe('test-trace-header-context', function() {
   });
 
   it('should parse incoming header', function(done) {
-    var app = express();
-    var server;
-    var context = '123456/2;o=1';
-    app.get('/', function (req, res) {
-      http.get({ port: common.serverPort, path: '/self'});
+    const app = express();
+    let server;
+    const sentTraceId = '0000000000000000000000000000000a';
+    const sentSpanId = '2';
+    const sentTraceOptions = 'o=1';
+    const sentTraceContext = `${sentTraceId}/${sentSpanId};${sentTraceOptions}`;
+    app.get('/', function(req, res) {
+      http.get({port: common.serverPort, path: '/self'});
       res.send(common.serverRes);
     });
     app.get('/self', function(req, res) {
-      assert.equal(
-        req.headers[Constants.TRACE_CONTEXT_HEADER_NAME].slice(0, 6),
-        context.slice(0, 6));
-      assert.equal(
-        req.headers[Constants.TRACE_CONTEXT_HEADER_NAME].slice(8),
-        ';o=1');
+      const receivedTraceContext =
+          req.headers[Constants.TRACE_CONTEXT_HEADER_NAME];
+      const receivedTraceId = receivedTraceContext.split('/')[0];
+      const [receivedSpanId, receivedTraceOptions] =
+          receivedTraceContext.split('/')[1].split(';');
+      // Trace ID and trace options should be the same in sender and receiver.
+      assert.equal(receivedTraceId, sentTraceId);
+      assert.equal(receivedTraceOptions, sentTraceOptions);
+      // Span ID should be different as receiver generates a new span ID.
+      assert.notEqual(receivedSpanId, sentSpanId);
+
       res.send(common.serverRes);
       var traces = common.getTraces();
       assert.equal(traces.length, 2);
@@ -126,9 +134,9 @@ describe('test-trace-header-context', function() {
       done();
     });
     server = app.listen(common.serverPort, function() {
-      var headers = {};
-      headers[Constants.TRACE_CONTEXT_HEADER_NAME] = context;
-      http.get({ port: common.serverPort, headers: headers });
+      const headers = {};
+      headers[Constants.TRACE_CONTEXT_HEADER_NAME] = sentTraceContext;
+      http.get({port: common.serverPort, headers: headers});
     });
   });
 });
