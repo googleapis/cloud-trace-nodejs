@@ -71,7 +71,7 @@ describe('SpanData', function() {
         assert.ok(typeof spanId === 'string');
         assert.ok(spanId.match(/\d+/));
         assert.ok(Number(spanId) > 0);
-        assert.equal(Number(spanId).toString(), spanId);
+        assert.strictEqual(Number(spanId).toString(), spanId);
       }
     });
   });

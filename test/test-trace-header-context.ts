@@ -118,19 +118,19 @@ describe('test-trace-header-context', function() {
       var receivedSpanId = receivedSpanIdAndOptions[0];
       var receivedTraceOptions = receivedSpanIdAndOptions[1];
       // Trace ID and trace options should be the same in sender and receiver.
-      assert.equal(receivedTraceId, sentTraceId);
-      assert.equal(receivedTraceOptions, sentTraceOptions);
+      assert.strictEqual(receivedTraceId, sentTraceId);
+      assert.strictEqual(receivedTraceOptions, sentTraceOptions);
       // Span ID should be different as receiver generates a new span ID.
-      assert.notEqual(receivedSpanId, sentSpanId);
+      assert.notStrictEqual(receivedSpanId, sentSpanId);
 
       res.send(common.serverRes);
       var traces = common.getTraces();
-      assert.equal(traces.length, 2);
-      assert.equal(traces[0].spans.length, 2);
-      assert.equal(traces[1].spans.length, 1);
-      assert.equal(traces[0].spans[0].name, '/');
-      assert.equal(traces[0].spans[1].name, 'localhost');
-      assert.equal(traces[1].spans[0].name, '/self');
+      assert.strictEqual(traces.length, 2);
+      assert.strictEqual(traces[0].spans.length, 2);
+      assert.strictEqual(traces[1].spans.length, 1);
+      assert.strictEqual(traces[0].spans[0].name, '/');
+      assert.strictEqual(traces[0].spans[1].name, 'localhost');
+      assert.strictEqual(traces[1].spans[0].name, '/self');
       common.cleanTraces();
       server.close();
       done();

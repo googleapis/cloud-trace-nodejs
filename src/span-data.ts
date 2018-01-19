@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
 import * as util from 'util';
 
 import {Constants} from './constants';
@@ -43,21 +42,12 @@ interface StackFrame {
   column_number?: number;
 }
 
-// Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
-const SPAN_ID_RANDOM_BYTES = 6;
-
-// Use the faster crypto.randomFillSync when available (Node 7+) falling back to
-// using crypto.randomBytes.
-const spanIdBuffer = Buffer.alloc(SPAN_ID_RANDOM_BYTES);
-const randomFillSync = crypto.randomFillSync;
-const randomBytes = crypto.randomBytes;
-const spanRandomBuffer = randomFillSync ?
-    () => randomFillSync(spanIdBuffer) :
-    () => randomBytes(SPAN_ID_RANDOM_BYTES);
+// This evaluates to a large whole number such that any fractional number
+// between 0 and 1 multiplied by it will always give a whole number.
+const SPAN_ID_MAX = (1 << 30) * (1 << 30);
 
 function randomSpanId() {
-  // tslint:disable-next-line:ban Needed to parse hexadecimal.
-  return parseInt(spanRandomBuffer().toString('hex'), 16).toString();
+  return String(Math.random() * SPAN_ID_MAX);
 }
 
 export class SpanData implements SpanDataInterface {
