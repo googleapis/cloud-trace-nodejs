@@ -15,6 +15,7 @@
  */
 
 import * as util from 'util';
+import * as crypto from 'crypto';
 
 import {Constants} from './constants';
 import {SpanData as SpanDataInterface} from './plugin-types';
@@ -42,15 +43,17 @@ interface StackFrame {
   column_number?: number;
 }
 
-// Span IDs in the X-Cloud-Trace-Context header are 64-bit unsigned integers
-// This is the largest JavaScript number that is less than the max unsigned
-// 64-bit int, that is less than 2^64-1.
-const SPAN_ID_MAX = 18446744073709550000;
+// Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
+const SPAN_ID_RANDOM_BYTES = 6;
 
-function randomSpanId() {
-  // No rounding is needed because SPAN_ID_MAX is bigger than 1 / Number.EPSILON
-  return String(Math.random() * SPAN_ID_MAX);
-}
+// Use the faster crypto.randomFillSync when available (Node 7+) falling back to
+// using crypto.randomBytes.
+const spanIdBuffer = Buffer.alloc(SPAN_ID_RANDOM_BYTES);
+const randomFillSync = crypto.randomFillSync;
+const randomBytes = crypto.randomBytes;
+const spanRandomBuffer = randomFillSync ?
+    () => randomFillSync(spanIdBuffer) :
+    () => randomBytes(SPAN_ID_RANDOM_BYTES);
 
 export class SpanData implements SpanDataInterface {
   readonly span: TraceSpan;
