@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as util from 'util';
 import * as crypto from 'crypto';
+import * as util from 'util';
 
 import {Constants} from './constants';
 import {SpanData as SpanDataInterface} from './plugin-types';
