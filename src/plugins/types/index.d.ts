@@ -1,8 +1,8 @@
-import * as connect_3 from './connect_3'; // connect@3
-import * as express_4 from './express_4'; // express@4
-import * as hapi_16 from './hapi_16'; // hapi@16
-import * as koa_2 from './koa_2'; // koa@2
-import * as restify_5 from './restify_5'; // restify@5
+import * as connect_3 from 'connect'; // connect@3
+import * as express_4 from 'express'; // express@4
+import * as hapi_16 from 'hapi'; // hapi@16
+import * as koa_2 from 'koa'; // koa@2
+import * as restify_5 from 'restify'; // restify@5
 
 //---koa@1---//
 
