@@ -42,11 +42,13 @@ interface StackFrame {
   column_number?: number;
 }
 
-// This evaluates to a large whole number such that any fractional number
-// between 0 and 1 multiplied by it will always give a whole number.
-const SPAN_ID_MAX = (1 << 30) * (1 << 30);
+// Span IDs in the X-Cloud-Trace-Context header are 64-bit unsigned integers
+// This is the largest JavaScript number that is less than the max unsigned
+// 64-bit int, that is less than 2^64-1.
+const SPAN_ID_MAX = 18446744073709550000;
 
 function randomSpanId() {
+  // No rounding is needed because SPAN_ID_MAX is bigger than 1 / Number.EPSILON
   return String(Math.random() * SPAN_ID_MAX);
 }
 
