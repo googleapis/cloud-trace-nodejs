@@ -55,6 +55,11 @@ const spanRandomBuffer = randomFillSync ?
     () => randomFillSync(spanIdBuffer) :
     () => randomBytes(SPAN_ID_RANDOM_BYTES);
 
+function randomSpanId() {
+  // tslint:disable-next-line:ban Needed to parse hexadecimal.
+  return parseInt(spanRandomBuffer().toString('hex'), 16).toString();
+}
+
 export class SpanData implements SpanDataInterface {
   readonly span: TraceSpan;
 
