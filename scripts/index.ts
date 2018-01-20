@@ -1,3 +1,11 @@
+/**
+ * The main entry point for cross-platform build scripts.
+ * Usage (in repository root directory):
+ *   ts-node -P ./scripts ./scripts [step1] [step2 ... stepN]
+ * Alias for above:
+ *   npm run script [step1] [step2 ... stepN]
+ */
+
 const [bin, script, ...steps] = process.argv;
 
 import { checkInstall } from './check-install';
@@ -8,11 +16,17 @@ import { runTests } from './run-tests';
 import { testNonInterference } from './test-non-interference';
 import { BUILD_DIRECTORY, existsP, spawnP } from './utils';
 
+// The identifying string in the service account credentials file path.
 const keyID = 'de480e4f9023';
 
+/**
+ * Sequentially runs a list of commands.
+ */
 async function run(steps: string[]) {
   for (const step of steps) {
     console.log(`> Running step: ${step}`);
+    // If the step string is prefixed with "npm-", treat it as an "npm run"
+    // command, and then short-circuit.
     if (step.indexOf('npm-') === 0) {
       const moduleAndArgs = step.split('-');
       await spawnP(
@@ -24,6 +38,7 @@ async function run(steps: string[]) {
       );
       continue;
     }
+
     switch (step) {
       case 'check-install':
         await checkInstall();

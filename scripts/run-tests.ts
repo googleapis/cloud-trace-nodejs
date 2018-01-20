@@ -20,15 +20,15 @@ export async function runTests(options: Options) {
   for (const file of files) {
     const moduleAndArgs = [
       ...coverage ? [
-        nodule('istanbul/lib/cli'),
-        'cover',
-        '--dir',
+        nodule('.bin/nyc'),
+        '--reporter',
+        'lcov',
+        '--report-dir',
         `./coverage/${testNum++}`,
-        nodule('mocha/bin/_mocha'),
-        '--'
-      ] : [
-        nodule('mocha/bin/_mocha')
-      ],
+        '--exclude',
+        'build/test/**'
+      ] : [],
+      nodule('mocha/bin/_mocha'),
       '--require',
       'source-map-support/register',
       path.relative(rootDir, file),
