@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-// TODO(kjin): Remove this when @types/shimmer are published.
-// tslint:disable-next-line:no-reference
-/// <reference path="../types.d.ts" />
-
 import {IncomingMessage, ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
 import {parse as urlParse} from 'url';
@@ -44,8 +40,8 @@ type CreateMiddlewareFn<T> = (api: PluginTypes.TraceAgent) => T;
 // propagateContext flag. The type of "next" differs between Koa 1 and 2.
 type GetNextFn<T> = (propagateContext: boolean) => T;
 
-function getFirstHeader(req: IncomingMessage, key: string) {
-  let headerValue = req.headers[key];
+function getFirstHeader(req: IncomingMessage, key: string): string|null {
+  let headerValue = req.headers[key] || null;
   if (headerValue && typeof headerValue !== 'string') {
     headerValue = headerValue[0];
   }
@@ -79,8 +75,9 @@ function startSpanForRequest<T>(
     api.wrapEmitter(req);
     api.wrapEmitter(res);
 
-    const url = (req.headers['X-Forwarded-Proto'] || 'http') + '://' +
-        req.headers.host + req.url;
+
+    const url = `${req.headers['X-Forwarded-Proto'] || 'http'}://${
+        req.headers.host}${req.url}`;
 
     // we use the path part of the url as the span name and add the full
     // url as a label
@@ -117,8 +114,6 @@ function startSpanForRequest<T>(
 }
 
 function createMiddleware(api: PluginTypes.TraceAgent): koa_1.Middleware {
-  // Koa 1 type definitions use any here.
-  // tslint:disable-next-line:no-any
   return function* middleware(this: koa_1.Context, next: IterableIterator<{}>) {
     next = startSpanForRequest(api, this, (propagateContext: boolean) => {
       if (propagateContext) {

@@ -72,9 +72,9 @@ export interface RootSpanOptions extends SpanOptions {
   url?: string;
   /**
    * The serialized form of an object that contains information about an
-   * existing trace context.
+   * existing trace context, if it exists.
    */
-  traceContext?: string;
+  traceContext?: string|null;
 }
 
 export interface TraceAgent {

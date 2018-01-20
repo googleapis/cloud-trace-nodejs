@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-// TODO(kjin): Remove this when @types/shimmer are published.
-// tslint:disable-next-line:no-reference
-/// <reference path="../types.d.ts" />
-
 import {IncomingMessage, ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
 import {parse as urlParse} from 'url';
@@ -30,8 +26,8 @@ type Hapi16Module = typeof hapi_16;
 
 const SUPPORTED_VERSIONS = '8 - 16';
 
-function getFirstHeader(req: IncomingMessage, key: string) {
-  let headerValue = req.headers[key];
+function getFirstHeader(req: IncomingMessage, key: string): string|null {
+  let headerValue = req.headers[key] || null;
   if (headerValue && typeof headerValue !== 'string') {
     headerValue = headerValue[0];
   }
@@ -67,8 +63,8 @@ function createMiddleware(api: PluginTypes.TraceAgent):
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
-      const url = (req.headers['X-Forwarded-Proto'] || 'http') + '://' +
-          req.headers.host + req.url;
+      const url = `${req.headers['X-Forwarded-Proto'] || 'http'}://${
+          req.headers.host}${req.url}`;
 
       // we use the path part of the url as the span name and add the full
       // url as a label

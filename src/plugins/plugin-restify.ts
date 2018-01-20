@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-// TODO(kjin): Remove this when @types/shimmer are published.
-// tslint:disable-next-line:no-reference
-/// <reference path="../types.d.ts" />
-
 import {ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
 import {parse as urlParse} from 'url';
@@ -75,8 +71,9 @@ function patchRestify(restify: Restify5, api: PluginTypes.TraceAgent) {
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
-      const fullUrl = req.header('X-Forwarded-Proto', 'http') + '://' +
-          req.header('host') + req.url;
+
+      const fullUrl = `${req.header('X-Forwarded-Proto', 'http')}://${
+          req.header('host')}${req.url}`;
       rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
       rootSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, fullUrl);
       rootSpan.addLabel(

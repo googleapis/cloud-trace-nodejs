@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-// tslint:disable-next-line:no-reference
-/// <reference path="../types.d.ts" />
-
 import {IncomingMessage, ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
 import {parse as urlParse} from 'url';
@@ -32,8 +29,8 @@ type Request = IncomingMessage&{originalUrl?: string};
 
 const SUPPORTED_VERSIONS = '3.x';
 
-function getFirstHeader(req: IncomingMessage, key: string) {
-  let headerValue = req.headers[key];
+function getFirstHeader(req: IncomingMessage, key: string): string|null {
+  let headerValue = req.headers[key] || null;
   if (headerValue && typeof headerValue !== 'string') {
     headerValue = headerValue[0];
   }
@@ -66,8 +63,8 @@ function createMiddleware(api: PluginTypes.TraceAgent):
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
-      const url = (req.headers['X-Forwarded-Proto'] || 'http') + '://' +
-          req.headers.host + req.originalUrl;
+      const url = `${req.headers['X-Forwarded-Proto'] || 'http'}://${
+          req.headers.host}${req.originalUrl}`;
 
       // we use the path part of the url as the span name and add the full
       // url as a label
