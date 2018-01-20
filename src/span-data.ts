@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import * as crypto from 'crypto';
 import * as util from 'util';
 
 import {Constants} from './constants';
@@ -42,8 +43,22 @@ interface StackFrame {
   column_number?: number;
 }
 
-// Auto-incrementing integer
-let uid = 1;
+// Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
+const SPAN_ID_RANDOM_BYTES = 6;
+
+// Use the faster crypto.randomFillSync when available (Node 7+) falling back to
+// using crypto.randomBytes.
+const spanIdBuffer = Buffer.alloc(SPAN_ID_RANDOM_BYTES);
+const randomFillSync = crypto.randomFillSync;
+const randomBytes = crypto.randomBytes;
+const spanRandomBuffer = randomFillSync ?
+    () => randomFillSync(spanIdBuffer) :
+    () => randomBytes(SPAN_ID_RANDOM_BYTES);
+
+function randomSpanId() {
+  // tslint:disable-next-line:ban Needed to parse hexadecimal.
+  return parseInt(spanRandomBuffer().toString('hex'), 16).toString();
+}
 
 export class SpanData implements SpanDataInterface {
   readonly span: TraceSpan;
@@ -60,10 +75,9 @@ export class SpanData implements SpanDataInterface {
   constructor(
       readonly trace: Trace, spanName: string, parentSpanId: string,
       private readonly isRoot: boolean, skipFrames: number) {
-    const spanId = '' + (uid++);
     spanName =
         traceUtil.truncate(spanName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT);
-    this.span = new TraceSpan(spanName, spanId, parentSpanId);
+    this.span = new TraceSpan(spanName, randomSpanId(), parentSpanId);
     trace.spans.push(this.span);
     if (traceWriter.get().getConfig().stackTraceLimit > 0) {
       // This is a mechanism to get the structured stack trace out of V8.
