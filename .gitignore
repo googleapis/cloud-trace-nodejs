@@ -1,7 +1,7 @@
-*.tgz
+node_modules/
+npm-debug.log
 .DS_Store
 .nyc_output/
 .vscode/
 build/
-node_modules/
-npm-debug.log
+*.tgz
