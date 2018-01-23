@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.full.json",
   "compilerOptions": {
-    "outDir": "build",
     "allowUnreachableCode": false,
     "noImplicitAny": true,
     "noImplicitThis": true,
