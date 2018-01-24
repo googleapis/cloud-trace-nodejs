@@ -14,52 +14,62 @@
  * limitations under the License.
  */
 
-'use strict';
+import * as assert from 'assert';
+import axiosModule from 'axios';
+import * as cluster from 'cluster';
+import {Server} from 'http';
 
-var assert = require('assert');
-var common = require('./plugins/common'/*.js*/);
-var cluster = require('cluster');
+import * as cls from '../src/cls';
+import {express_4 as expressModule} from '../src/plugins/types';
 
-describe('test-trace-cluster', function() {
-  var agent;
-  var express;
-  before(function() {
-    agent = require('../..').start({
-      projectId: '0',
-      samplingRate: 0
-    });
+import * as trace from './trace';
+import {assertSpanDuration, DEFAULT_SPAN_DURATION, SERVER_SPAN_PREDICATE, wait} from './utils';
+
+describe('test-trace-cluster', () => {
+  let axios: typeof axiosModule;
+  let express: typeof expressModule;
+  before(() => {
+    trace.start();
     express = require('./plugins/fixtures/express4');
+    axios = require('axios');
   });
 
-  it('should not interfere with express span', function(done) {
+  it('should not interfere with express span', async () => {
     if (cluster.isMaster) {
-      var worker = cluster.fork();
-      worker.on('exit', function(code) {
-        assert.equal(code, 0);
-        console.log('Success!');
-        done();
+      await new Promise(resolve => {
+        const worker = cluster.fork();
+        worker.on('exit', code => {
+          assert.strictEqual(code, 0);
+          console.log('Success!');
+          resolve();
+        });
       });
     } else {
-      var app = express();
-      app.get('/', function (req, res) {
-        setTimeout(function() {
-          res.send(common.serverRes);
-        }, common.serverWait);
+      const app = express();
+      app.get('/', async (req, res) => {
+        await wait(DEFAULT_SPAN_DURATION);
+        res.send('hello!');
       });
-      var server = app.listen(common.serverPort, function() {
-        var finalize = function() {
-          cluster.worker.disconnect();
-          server.close();
-          done();
-        };
-        common.doRequest('GET', finalize, expressPredicate);
+      const server = await new Promise<Server>(resolve => {
+        const server = app.listen(0, () => resolve(server));
       });
+      const port = server.address().port;
+
+      // TODO(kjin): This fails because context is incorrectly propagated to
+      // the request handler. See issue #659
+
+      // await trace.get().runInRootSpan({ name: 'outer' }, async span => {
+      //   assert.ok(span);
+      //   await axios.get(`http://localhost:${port}`);
+      //   span!.endSpan();
+      // });
+      let recordedTime = Date.now();
+      await axios.get(`http://localhost:${port}`);
+      recordedTime = Date.now() - recordedTime;
+      const serverSpan = trace.getOneSpan(SERVER_SPAN_PREDICATE);
+      assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
+      cluster.worker.disconnect();
+      server.close();
     }
   });
 });
-
-function expressPredicate(span) {
-  return span.name === '/';
-}
-
-export default {};
