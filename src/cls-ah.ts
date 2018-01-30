@@ -18,9 +18,15 @@ import * as asyncHook from 'async_hooks';
 import {Context, Func, Namespace as CLSNamespace} from 'continuation-local-storage';
 import * as shimmer from 'shimmer';
 
-const wrappedSymbol = Symbol('context_wrapped');
-let contexts: {[asyncId: number]: Context;} = {};
-let current: Context = {};
+interface AsyncHooksContext {
+  prevId?: number;
+  uid?: number;
+  context: Context;
+}
+
+const kWrapped = Symbol('context-wrapped');
+let contexts: {[asyncId: number]: AsyncHooksContext} = {};
+let current: AsyncHooksContext = {context: {}};
 
 asyncHook.createHook({init, before, destroy}).enable();
 
@@ -41,11 +47,11 @@ class AsyncHooksNamespace implements CLSNamespace {
   }
 
   get(k: string) {
-    return current[k];
+    return current.context[k];
   }
 
   set<T>(k: string, v: T): T {
-    current[k] = v;
+    current.context[k] = v;
     return v;
   }
 
@@ -56,7 +62,7 @@ class AsyncHooksNamespace implements CLSNamespace {
 
   runAndReturn<T>(fn: Func<T>): T {
     const oldContext = current;
-    current = {};
+    current = {context: {}};
     const res = fn();
     current = oldContext;
     return res;
@@ -66,7 +72,7 @@ class AsyncHooksNamespace implements CLSNamespace {
     // TODO(kjin): Monitor https://github.com/Microsoft/TypeScript/pull/15473.
     // When it's landed and released, we can remove these `any` casts.
     // tslint:disable-next-line:no-any
-    if ((cb as any)[wrappedSymbol] as boolean || !current) {
+    if ((cb as any)[kWrapped] as boolean || !current) {
       return cb;
     }
     const boundContext = current;
@@ -78,7 +84,7 @@ class AsyncHooksNamespace implements CLSNamespace {
       return res;
     };
     // tslint:disable-next-line:no-any
-    (contextWrapper as any)[wrappedSymbol] = true;
+    (contextWrapper as any)[kWrapped] = true;
     Object.defineProperty(contextWrapper, 'length', {
       enumerable: false,
       configurable: true,
@@ -116,12 +122,20 @@ const namespace = new AsyncHooksNamespace();
 
 function init(
     uid: number, provider: string, parentUid: number, parentHandle: {}) {
-  contexts[uid] = current;
+  contexts[uid] = {uid, context: current.context};
 }
 
 function before(uid: number) {
   if (contexts[uid]) {
+    const prevId = current.prevId;
     current = contexts[uid];
+    current.prevId = prevId;
+  }
+}
+
+function after(uid: number) {
+  if (current.prevId) {
+    current = contexts[current.prevId];
   }
 }
 
@@ -134,7 +148,7 @@ export function createNamespace(): CLSNamespace {
 }
 
 export function destroyNamespace(): void {
-  current = {};
+  current = {context: {}};
   contexts = {};
 }
 
