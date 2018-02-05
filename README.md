@@ -70,7 +70,7 @@ If you are running somewhere other than the Google Cloud Platform, see [running 
 
 ## Configuration
 
-See [the default configuration](config.js) for a list of possible configuration options. These options can be passed to the agent through the object argument to the start command shown above:
+See [the default configuration](src/config.ts) for a list of possible configuration options. These options can be passed to the agent through the object argument to the start command shown above:
 
 ```js
 require('@google-cloud/trace-agent').start({samplingRate: 500});
@@ -127,7 +127,7 @@ If your application is running outside of Google Cloud Platform, such as locally
 
 If you are running your application on a development machine or test environment where you are using the [`gcloud` command line tools][gcloud-sdk], and are logged using `gcloud beta auth application-default login`, you already have sufficient credentials, and a service account key is not required.
   
-Alternatively, you may set the `keyFilename` or `credentials` configuration field to the full path or contents to the key file, respectively. Setting either of these fields will override either setting `GOOGLE_APPLICATION_CREDENTIALS` or logging in using `gcloud`. (See the [default configuration](config.js) for more details.)
+Alternatively, you may set the `keyFilename` or `credentials` configuration field to the full path or contents to the key file, respectively. Setting either of these fields will override either setting `GOOGLE_APPLICATION_CREDENTIALS` or logging in using `gcloud`. (See the [default configuration](src/config.ts) for more details.)
 
 ## Viewing your traces
 
@@ -164,13 +164,13 @@ We are working on expanding the types of frameworks and services we can do autom
 
 ## Advanced trace configuration
 
-The trace agent can be configured by passing a configurations object to the agent `start` method. This configuration option accepts all values in the [default configuration](config.js).
+The trace agent can be configured by passing a configurations object to the agent `start` method. This configuration option accepts all values in the [default configuration](src/config.ts).
 
 One configuration option of note is `enhancedDatabaseReporting`. Setting this option to `true` will cause database operations for redis and MongoDB to record query summaries and results as labels on reported trace spans.
 
 ### Trace batching and sampling
 
-The aggregation of trace spans before publishing can be configured using the `flushDelaySeconds` and `bufferSize` [options](config.js). The spans recorded for each incoming requests are placed in a buffer after the request has completed. Spans will be published to the UI in batch when the spans from `bufferSize` requests have been queued in the buffer or after `flushDelaySeconds` have passed since the last publish, whichever comes first.
+The aggregation of trace spans before publishing can be configured using the `flushDelaySeconds` and `bufferSize` [options](src/config.ts). The spans recorded for each incoming requests are placed in a buffer after the request has completed. Spans will be published to the UI in batch when the spans from `bufferSize` requests have been queued in the buffer or after `flushDelaySeconds` have passed since the last publish, whichever comes first.
 
 The trace configuration additionally exposes the `samplingRate` option which sets an upper bound on the number of traced requests captured per second. Some Google Cloud environments may override this sampling policy.
 

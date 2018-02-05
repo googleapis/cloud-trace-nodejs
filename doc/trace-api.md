@@ -80,7 +80,7 @@ It is highly recommended for plugins to set this header field in responses, _if_
   * Returns `string`
   * Returns a string that should be set in the response headers in a traced request. If incomingTraceContext is falsy (indicating that the incoming request didn't have a trace context), this function returns an empty string.
 
-This function is usually called from within the function passed to `runInRootSpan`. See any of the built-in plugins ([express](../src/plugins/plugin-express.js#L42)) for an example. Note that the value for `isTraced` is based on the value of the root span - if a root span was created, that means that this request is being traced.
+This function is usually called from within the function passed to `runInRootSpan`. See any of the built-in plugins ([express](../src/plugins/plugin-express.ts)) for an example. Note that the value for `isTraced` is based on the value of the root span - if a root span was created, that means that this request is being traced.
 
 ### For Outgoing Requests
 
