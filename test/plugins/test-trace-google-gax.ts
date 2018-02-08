@@ -47,8 +47,6 @@ describe('google-gax', function() {
         endRootSpan();
         // Authentication will fail due to invalid credentials but a span will still be
         // generated.
-        assert.equal(err.message,
-          'Getting metadata from plugin failed with error: invalid_client');
         assert.equal(err.code, 16);
         var span = common.getMatchingSpan(function(span) {
           return span.kind === 'RPC_CLIENT' && span.name.indexOf('grpc:') === 0;
