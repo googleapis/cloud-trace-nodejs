@@ -31,10 +31,11 @@ describe('google-gax', function() {
       enhancedDatabaseReporting: true,
       samplingRate: 0
     });
-    speech = require('./fixtures/google-cloud-speech0.6')({
+    const SpeechClient = require('./fixtures/google-cloud-speech1').SpeechClient;
+    speech = new SpeechClient({
       projectId: '0',
       keyFilename: path.join(__dirname, '..', 'fixtures', 
-          'gcloud-credentials.json'),    
+          'gcloud-credentials.json')
     });
   });
 
@@ -52,7 +53,7 @@ describe('google-gax', function() {
           return span.kind === 'RPC_CLIENT' && span.name.indexOf('grpc:') === 0;
         });
         assert.ok(span);
-        assert.equal(span.name, 'grpc:/google.cloud.speech.v1beta1.Speech/SyncRecognize');
+        assert.equal(span.name, 'grpc:/google.cloud.speech.v1.Speech/Recognize');
         done();
       });
     });

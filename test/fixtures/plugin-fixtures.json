@@ -24,9 +24,9 @@
       "@google-cloud/datastore": "^1.0.2"
     }
   },
-  "google-cloud-speech0.6": {
+  "google-cloud-speech1": {
     "dependencies": {
-      "@google-cloud/speech": "^0.6.0"
+      "@google-cloud/speech": "^1.1.0"
     }
   },
   "grpc1.6": {
