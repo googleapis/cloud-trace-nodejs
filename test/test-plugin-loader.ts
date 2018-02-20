@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,430 +13,328 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-var shimmer = require('shimmer');
-var Module = require('module');
-var assert = require('assert');
-var proxyquire = require('proxyquire');
-var path = require('path');
+import * as assert from 'assert';
+import * as path from 'path';
+import * as hook from 'require-in-the-middle';
+import * as shimmer from 'shimmer';
 
-// Save logs because in some cases we want to verify that something was logged.
-var logs = {
-  error: '',
-  warn: '',
-  info: ''
-};
-function writeToLog(log, data) {
-  logs[log] += data + '\n';
+import {PluginLoader, PluginLoaderState, PluginWrapper} from '../src/trace-plugin-loader';
+
+import {TestLogger} from './logger';
+
+export interface SimplePluginLoaderConfig {
+  // An object which contains paths to files that should be loaded as plugins
+  // upon loading a module with a given name.
+  plugins: {[pluginName: string]: string};
 }
-var logger = {
-  error: writeToLog.bind(null, 'error'),
-  warn: writeToLog.bind(null, 'warn'),
-  info: writeToLog.bind(null, 'info')
+
+const SEARCH_PATH = `${__dirname}/fixtures/loader/node_modules`;
+const PROCESS_VERSION = process.version.slice(1);
+
+const clearRequireCache = () => {
+  Object.keys(require.cache).forEach(key => delete require.cache[key]);
 };
 
-// Facilitates loading "fake" modules upon calling require().
-var fakeModules = {};
-
-// Adds module moduleName to the set of fake modules, using mock as the object
-// being "exported" by this module. In addition, providing version makes it
-// accessible by calling findModuleVersion.
-function addModuleMock(moduleName, version, mock) {
-  fakeModules[moduleName.replace('/', path.sep)] = {
-    exports: mock,
-    version: version
+describe('Trace Plugin Loader', () => {
+  let logger: TestLogger;
+  const makePluginLoader = (config: SimplePluginLoaderConfig) => {
+    return new PluginLoader(
+        logger,
+        Object.assign(
+            {
+              samplingRate: 0,
+              ignoreUrls: [],
+              enhancedDatabaseReporting: false,
+              ignoreContextHeader: false,
+              projectId: '0'
+            },
+            config));
   };
-}
 
-describe('Trace Plugin Loader', function() {
-  var pluginLoader;
+  before(() => {
+    module.paths.push(SEARCH_PATH);
+    PluginLoader.setPluginSearchPath(SEARCH_PATH);
+    logger = new TestLogger();
+  });
 
-  before(function() {
-    // Wrap Module._load so that it loads from our fake module set rather than the
-    // real thing
-    shimmer.wrap(Module, '_load', function(originalModuleLoad) {
-      return function wrappedModuleLoad(modulePath) {
-        if (fakeModules[modulePath.replace('/', path.sep)]) {
-          return fakeModules[modulePath.replace('/', path.sep)].exports;
+  afterEach(() => {
+    logger.clearLogs();
+    clearRequireCache();
+  });
+
+  describe('interface', () => {
+    describe('state', () => {
+      it('returns NO_HOOK when first called', () => {
+        const pluginLoader = makePluginLoader({plugins: {}});
+        assert.strictEqual(pluginLoader.state, PluginLoaderState.NO_HOOK);
+      });
+    });
+
+    describe('activate', () => {
+      it('transitions from NO_HOOK to ACTIVATED, enabling require hook', () => {
+        let requireHookCalled = false;
+        const pluginLoader = makePluginLoader({plugins: {}});
+        // TODO(kjin): Stop using index properties.
+        pluginLoader['enableRequireHook'] = () => requireHookCalled = true;
+        pluginLoader.activate();
+
+        assert.strictEqual(pluginLoader.state, PluginLoaderState.ACTIVATED);
+        assert.ok(requireHookCalled);
+      });
+
+      it('throws if internal state is already ACTIVATED', () => {
+        let requireHookCalled = false;
+        const pluginLoader = makePluginLoader({plugins: {}}).activate();
+        assert.strictEqual(pluginLoader.state, PluginLoaderState.ACTIVATED);
+        // TODO(kjin): Stop using index properties.
+        pluginLoader['enableRequireHook'] = () => requireHookCalled = true;
+
+        assert.throws(() => pluginLoader.activate());
+        assert.ok(!requireHookCalled);
+      });
+
+      it('throws if internal state is DEACTIVATED', () => {
+        // There is currently no reason to transition back and forth.
+        // This behavior may change in the future.
+        let requireHookCalled = false;
+        const pluginLoader =
+            makePluginLoader({plugins: {}}).activate().deactivate();
+        assert.strictEqual(pluginLoader.state, PluginLoaderState.DEACTIVATED);
+        // TODO(kjin): Stop using index properties.
+        pluginLoader['enableRequireHook'] = () => requireHookCalled = true;
+
+        assert.throws(() => pluginLoader.activate());
+        assert.ok(!requireHookCalled);
+      });
+    });
+
+    describe('deactivate', () => {
+      class TestPluginWrapper implements PluginWrapper {
+        unapplyCalled = false;
+        isSupported(version: string): boolean {
+          return false;
         }
-        return originalModuleLoad.apply(this, arguments);
-      };
-    });
-
-    // Prevent filename resolution from happening to fake modules
-    shimmer.wrap(Module, '_resolveFilename', function(originalResolve) {
-      return function wrappedResolveFilename(request) {
-        if (fakeModules[request.replace('/', path.sep)]) {
-          return request;
+        unapplyAll(): void {
+          this.unapplyCalled = true;
         }
-        return originalResolve.apply(this, arguments);
-      };
-    });
-
-    // proxyquire the plugin loader with stubbed module utility methods
-    pluginLoader = proxyquire('../src/trace-plugin-loader', {
-      './util': {
-        findModulePath: function(request) {
-          return request.replace('/', path.sep);
-        },
-        findModuleVersion: function(modulePath) {
-          return fakeModules[modulePath].version;
-        }
-      }
-    });
-  });
-
-  after(function() {
-    shimmer.unwrap(Module, '_load');
-  });
-
-  afterEach(function() {
-    pluginLoader.deactivate();
-    logs.error = '';
-    logs.warn = '';
-    logs.info = '';
-    fakeModules = {};
-  });
-
-  /**
-   * Loads two modules (one of them twice), and makes sure that plugins are
-   * applied correctly.
-   */
-  it('loads plugins no more than once', function() {
-    var patched: any[] = [];
-    addModuleMock('module-a', '1.0.0', {});
-    addModuleMock('module-b', '1.0.0', {});
-    addModuleMock('module-a-plugin', '', [
-      { patch: function() { patched.push('a'); } }
-    ]);
-    addModuleMock('module-b-plugin', '', [
-      { file: '', patch: function() { patched.push('b'); } }
-    ]);
-    // Activate plugin loader
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-a': 'module-a-plugin',
-        'module-b': 'module-b-plugin'
-      }
-    });
-    assert.deepEqual(patched, [],
-      'No patches are initially loaded');
-    require('module-a');
-    assert.deepEqual(patched, ['a'],
-      'Patches are applied when the relevant patch is loaded');
-    assert(logs.info.indexOf('Patching module-a at version 1.0.0') !== -1,
-      'Info log is emitted when a module if patched');
-    require('module-a');
-    assert.deepEqual(patched, ['a'],
-      'Patches aren\'t applied twice');
-    require('module-b');
-    assert.deepEqual(patched, ['a', 'b'],
-      'Multiple plugins can be loaded, and file can be set to an empty string');
-  });
-
-  /**
-   * Loads two plugins that each monkeypatch modules, and checks that they are
-   * actually monkeypatched.
-   */
-  it('applies patches', function() {
-    addModuleMock('module-c', '1.0.0', {
-      getStatus: function() { return 'not wrapped'; }
-    });
-    addModuleMock('module-d', '1.0.0', {
-      getStatus: function() { return 'not wrapped'; }
-    });
-    addModuleMock('module-c-plugin', '', [
-      {
-        patch: function(originalModule, api) {
-          shimmer.wrap(originalModule, 'getStatus', function() {
-            return function() { return 'wrapped'; };
-          });
+        applyPlugin<T>(moduleExports: T, file: string, version: string): T {
+          return moduleExports;
         }
       }
-    ]);
-    assert.strictEqual(require('module-c').getStatus(), 'not wrapped',
-      'Plugin loader shouldn\'t affect module before plugin is loaded');
-    // Activate plugin loader
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-c': 'module-c-plugin'
-      }
+
+      it('transitions state from ACTIVATED to DEACTIVATED, unapplying plugins',
+         () => {
+           const pluginLoader = makePluginLoader({plugins: {}}).activate();
+           assert.strictEqual(pluginLoader.state, PluginLoaderState.ACTIVATED);
+           const plugin = new TestPluginWrapper();
+           // TODO(kjin): Stop using index properties.
+           pluginLoader['pluginMap'].set('foo', plugin);
+           pluginLoader.deactivate();
+
+           assert.strictEqual(
+               pluginLoader.state, PluginLoaderState.DEACTIVATED);
+           assert.ok(plugin.unapplyCalled);
+         });
+
+      it('does nothing when already deactivated', () => {
+        const pluginLoader = makePluginLoader({plugins: {}});
+        assert.strictEqual(pluginLoader.state, PluginLoaderState.NO_HOOK);
+        const plugin = new TestPluginWrapper();
+        // TODO(kjin): Stop using index properties.
+        pluginLoader['pluginMap'].set('foo', plugin);
+        pluginLoader.deactivate();
+
+        assert.strictEqual(pluginLoader.state, PluginLoaderState.NO_HOOK);
+        assert.ok(!plugin.unapplyCalled);
+
+        pluginLoader.activate().deactivate();
+        assert.strictEqual(pluginLoader.state, PluginLoaderState.DEACTIVATED);
+
+        plugin.unapplyCalled = false;
+        pluginLoader.deactivate();
+        assert.strictEqual(pluginLoader.state, PluginLoaderState.DEACTIVATED);
+        assert.ok(!plugin.unapplyCalled);
+      });
     });
-    assert.strictEqual(require('module-c').getStatus(), 'wrapped',
-      'Plugin patch() method is called the right arguments');
-    assert.strictEqual(require('module-d').getStatus(), 'not wrapped',
-      'Modules for which there aren\'t plugins won\'t be patched');
   });
 
-  /**
-   * Loads one module to check that plugin patches that aren't compatible don't
-   * get applied. Then, loads another module with no compatible patches to check
-   * that nothing gets patched at all.
-   */
-  it('respects patch set semver conditions', function() {
-    var patched: any[] = [];
-    addModuleMock('module-e', '1.0.0', {});
-    addModuleMock('module-f', '2.0.0', {});
-    addModuleMock('module-e-plugin', '', [
-      { versions: '1.x', patch: function() { patched.push('e-1.x'); } },
-      { versions: '2.x', patch: function() { patched.push('e-2.x'); } }
-    ]);
-    addModuleMock('module-f-plugin', '', [
-      { versions: '1.x', patch: function() { patched.push('f-1.x'); } }
-    ]);
-    // Activate plugin loader
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-e': 'module-e-plugin',
-        'module-f': 'module-f-plugin'
-      }
+  describe('static interface', () => {
+    describe('parseModuleString', () => {
+      it('parses module strings', () => {
+        const p = PluginLoader.parseModuleString;
+        const sep = path.sep;
+        assert.deepStrictEqual(p('m'), {name: 'm', file: ''});
+        assert.deepStrictEqual(p('m/f'), {name: 'm', file: 'f'});
+        assert.deepStrictEqual(p('m/d/f'), {name: 'm', file: 'd/f'});
+        assert.deepStrictEqual(p(`m\\d\\f`), {name: 'm', file: 'd/f'});
+        assert.deepStrictEqual(p(`@o\\m\\d\\f`), {name: '@o/m', file: 'd/f'});
+        assert.deepStrictEqual(p('@o/m/d/f'), {name: '@o/m', file: 'd/f'});
+        assert.deepStrictEqual(p('@o/m/d/f'), {name: '@o/m', file: 'd/f'});
+      });
     });
-    assert.deepEqual(patched, []);
-    require('module-e');
-    assert.deepEqual(patched, ['e-1.x'],
-      'Only patches with a correct semver condition are loaded');
-    require('module-f');
-    assert.deepEqual(patched, ['e-1.x'],
-      'No patches are loaded if the module version isn\'t supported at all');
-    assert(logs.warn.indexOf('module-f: version 2.0.0 not supported') !== -1,
-      'A warning is printed if the module version isn\'t supported at all');
   });
 
-  /**
-   * Loads a module with internal exports and patches them, and then makes sure
-   * that they are actually patched.
-   */
-  it('patches internal files in modules', function() {
-    addModuleMock('module-g', '1.0.0', {
-      createSentence: function() {
-        return require('module-g/subject').get() + ' ' +
-          require('module-g/predicate').get() + '.';
-      }
+  describe('patching behavior', () => {
+    it('[sanity check]', () => {
+      // Ensure that module fixtures contain values that we expect.
+      assert.strictEqual(require('small-number').value, 0);
+      assert.strictEqual(require('large-number'), 1e100);
+      assert.strictEqual(
+          require('new-keyboard'),
+          'The QUICK BROWN FOX jumps over the LAZY DOG');
+      assert.strictEqual(require('my-version-1.0'), '1.0.0');
+      assert.strictEqual(require('my-version-1.0-pre'), '1.0.0-pre');
+      assert.strictEqual(require('my-version-1.1'), '1.1.0');
+      assert.strictEqual(require('my-version-2.0'), '2.0.0');
     });
-    addModuleMock('module-g/subject', '', {
-      get: function() {
-        return 'bad tests';
-      }
-    });
-    addModuleMock('module-g/predicate', '', {
-      get: function() {
-        return 'don\'t make sense';
-      }
-    });
-    addModuleMock('module-g-plugin', '', [
-      {
-        file: 'subject',
-        patch: function(originalModule, api) {
-          shimmer.wrap(originalModule, 'get', function() {
-            return function() {
-              return 'good tests';
-            };
-          });
-        }
-      },
-      {
-        file: 'predicate',
-        patch: function(originalModule, api) {
-          shimmer.wrap(originalModule, 'get', function() {
-            return function() {
-              return 'make sense';
-            };
-          });
-        }
-      }
-    ]);
-    assert.strictEqual(require('module-g').createSentence(),
-      'bad tests don\'t make sense.');
-    // Activate plugin loader
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-g': 'module-g-plugin'
-      }
-    });
-    assert.strictEqual(require('module-g').createSentence(),
-      'good tests make sense.',
-      'Files internal to a module are patched');
-  });
 
-  /**
-   * Loads a module with internal exports and patches them, and then makes sure
-   * that they are actually patched.
-   */
-  it('intercepts internal files in modules', function() {
-    addModuleMock('module-h', '1.0.0', {
-      createSentence: function() {
-        return require('module-h/subject').get() + ' ' +
-          require('module-h/predicate').get() + '.';
-      }
+    it('doesn\'t patch before activation', () => {
+      makePluginLoader({plugins: {'small-number': 'plugin-small-number'}});
+      assert.strictEqual(require('small-number').value, 0);
     });
-    addModuleMock('module-h/subject', '', {
-      get: function() {
-        return 'bad tests';
-      }
-    });
-    addModuleMock('module-h/predicate', '', {
-      get: function() {
-        return 'don\'t make sense';
-      }
-    });
-    addModuleMock('module-h-plugin', '', [
-      {
-        file: 'subject',
-        intercept: function(originalModule, api) {
-          return {
-            get: function() {
-              return 'good tests';
-            }
-          };
-        }
-      },
-      {
-        file: 'predicate',
-        intercept: function(originalModule, api) {
-          return {
-            get: function() {
-              return 'make sense';
-            }
-          };
-        }
-      }
-    ]);
-    assert.strictEqual(require('module-h').createSentence(),
-      'bad tests don\'t make sense.');
-    // Activate plugin loader
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-h': 'module-h-plugin'
-      }
-    });
-    assert.strictEqual(require('module-h').createSentence(),
-      'good tests make sense.',
-      'Files internal to a module are patched');
-  });
 
-  /**
-   * Uses module interception to completely replace a module export
-   */
-  it('can intercept modules', function() {
-    addModuleMock('module-i', '1.0.0', function() { return 1; });
-    addModuleMock('module-i-plugin', '', [{
-      intercept: function(originalModule, api) {
-        return function() { return originalModule() + 1; };
-      }
-    }]);
-    assert.strictEqual(require('module-i')(), 1);
-    // Activate plugin loader
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-i': 'module-i-plugin'
-      }
+    it('doesn\'t patch modules for which plugins aren\'t specified', () => {
+      makePluginLoader({plugins: {}}).activate();
+      assert.strictEqual(require('small-number').value, 0);
     });
-    assert.strictEqual(require('module-i')(), 2,
-      'Module can be intercepted');
-  });
 
-  /**
-   * Patches a module, then immediately unpatches it, then patches it again to
-   * show that patching isn't irreversible (and neither is unpatching)
-   */
-  it('can unpatch', function() {
-    addModuleMock('module-j', '1.0.0', {
-      getPatchMode: function() { return 'none'; }
-    });
-    addModuleMock('module-j-plugin', '', [{
-      patch: function(originalModule, api) {
-        shimmer.wrap(originalModule, 'getPatchMode', function() {
-          return function() { return 'patch'; };
-        });
-      },
-      unpatch: function(originalModule) {
-        shimmer.unwrap(originalModule, 'getPatchMode');
-      }
-    }]);
-    assert.strictEqual(require('module-j').getPatchMode(), 'none');
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-j': 'module-j-plugin'
-      }
-    });
-    assert.strictEqual(require('module-j').getPatchMode(), 'patch');
-    pluginLoader.deactivate();
-    assert.strictEqual(require('module-j').getPatchMode(), 'none',
-      'Module gets unpatched');
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-j': 'module-j-plugin'
-      }
-    });
-    assert.strictEqual(require('module-j').getPatchMode(), 'patch',
-      'Patches still work after unpatching');
-  });
+    it('patches modules when activated, with no plugin file field specifying the main file',
+       () => {
+         makePluginLoader({
+           plugins: {'small-number': 'plugin-small-number'}
+         }).activate();
+         assert.strictEqual(require('small-number').value, 1);
+         // Make sure requiring doesn't patch twice
+         assert.strictEqual(require('small-number').value, 1);
+         assert.strictEqual(
+             logger.getNumLogsWith('info', '[small-number@0.0.1]'), 1);
+       });
 
-  it('doesn\'t load plugins with falsey paths', function() {
-    var moduleExports = {};
-    addModuleMock('module-k', '1.0.0', moduleExports);
-    assert(require('module-k') === moduleExports);
-    pluginLoader.activate(logger, { plugins: { 'module-k': '' } });
-    assert(require('module-k') === moduleExports,
-      'Module exports the same thing as before');
-  });
-
-  /**
-   * Loads plugins with bad patches and ensures that they throw/log
-   */
-  it('throws and warns for serious problems', function() {
-    addModuleMock('module-l', '1.0.0', {});
-    addModuleMock('module-l-plugin-noop', '', [{}]);
-    addModuleMock('module-l-plugin-pi', '', [{
-      patch: function() {},
-      intercept: function() { return 'intercepted'; }
-    }]);
-    addModuleMock('module-l-plugin-upi', '', [{
-      unpatch: function() {},
-      intercept: function() { return 'intercepted'; }
-    }]);
-    addModuleMock('module-l-plugin-noup', '', [{
-      patch: function(m) { m.patched = true; }
-    }]);
-    
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-l': 'module-l-plugin-noop'
-      }
+    it('accepts absolute paths in configuration', () => {
+      makePluginLoader({
+        plugins: {'small-number': `${SEARCH_PATH}/plugin-small-number`}
+      }).activate();
+      assert.strictEqual(require('small-number').value, 1);
+      assert.strictEqual(
+          logger.getNumLogsWith('info', '[small-number@0.0.1]'), 1);
     });
-    assert.throws(function() { require('module-l'); },
-      'Loading patch object with no patch/intercept function throws');
-    pluginLoader.deactivate();
 
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-l': 'module-l-plugin-pi'
-      }
+    it('unpatches modules when deactivated', () => {
+      const loader = makePluginLoader({
+                       plugins: {'small-number': 'plugin-small-number'}
+                     }).activate();
+      require('small-number');
+      loader.deactivate();
+      assert.strictEqual(require('small-number').value, 0);
+      // One each for activate/deactivate
+      assert.strictEqual(
+          logger.getNumLogsWith('info', '[small-number@0.0.1]'), 2);
     });
-    assert.throws(function() { require('module-l'); },
-      'Loading patch object with both patch/intercept functions throws');
-    pluginLoader.deactivate();
 
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-l': 'module-l-plugin-upi'
-      }
+    it('doesn\'t unpatch twice', () => {
+      const loader = makePluginLoader({
+                       plugins: {'small-number': 'plugin-small-number'}
+                     }).activate();
+      require('small-number');
+      loader.deactivate().deactivate();
+      assert.strictEqual(require('small-number').value, 0);
+      // One each for activate/deactivate
+      assert.strictEqual(
+          logger.getNumLogsWith('info', '[small-number@0.0.1]'), 2);
     });
-    assert.strictEqual(require('module-l'), 'intercepted');
-    assert(logs.warn.indexOf('unpatch is not compatible with intercept') !== -1,
-      'Warn when plugin has both unpatch and intercept');
-    pluginLoader.deactivate();
 
-    pluginLoader.activate(logger, {
-      plugins: {
-        'module-l': 'module-l-plugin-noup'
-      }
+    it('doesn\'t unpatch modules when deactivated immediately', () => {
+      makePluginLoader({
+        plugins: {'small-number': 'plugin-small-number'}
+      }).deactivate();
+      assert.strictEqual(require('small-number').value, 0);
     });
-    assert.ok(require('module-l').patched);
-    assert(logs.warn.indexOf('without accompanying unpatch') !== -1,
-      'Warn when plugin has both patch and no unpatch');
+
+    it('intercepts and patches internal files', () => {
+      makePluginLoader({
+        plugins: {'large-number': 'plugin-large-number'}
+      }).activate();
+      assert.strictEqual(require('large-number'), 2e100);
+    });
+
+    ['http', 'url', '[core]'].forEach(key => {
+      it(`intercepts and patches core modules with key "${key}"`, () => {
+        const loader =
+            makePluginLoader({plugins: {[key]: 'plugin-core'}}).activate();
+        const input = {protocol: 'http:', host: 'hi'};
+        assert.strictEqual(require('url').format(input), 'patched-value');
+        loader.deactivate();
+        assert.strictEqual(require('url').format(input), 'http://hi');
+        // One each for activate/deactivate
+        assert.strictEqual(
+            logger.getNumLogsWith('info', `[${key}@${PROCESS_VERSION}:url]`),
+            2);
+      });
+    });
+
+    it('intercepts and patches files with circular dependencies', () => {
+      makePluginLoader({
+        plugins: {'new-keyboard': 'plugin-new-keyboard'}
+      }).activate();
+      assert.strictEqual(
+          require('new-keyboard'),
+          'The lab-grown ketchup Fox jumps over the chili Dog');
+    });
+
+    it('doesn\'t load plugins with falsey paths', () => {
+      makePluginLoader({plugins: {'small-number': ''}}).activate();
+      assert.strictEqual(require('small-number').value, 0);
+    });
+
+    it('uses version ranges to determine how to patch internals', () => {
+      makePluginLoader({
+        plugins: {'my-version': 'plugin-my-version-1'}
+      }).activate();
+      assert.strictEqual(require('my-version-1.0'), '1.0.0-patched');
+      // v1.1 has different internals.
+      assert.strictEqual(require('my-version-1.1'), '1.1.0-patched');
+      assert.strictEqual(require('my-version-2.0'), '2.0.0');
+      // warns for my-version-2.0 that nothing matches
+      assert.strictEqual(
+          logger.getNumLogsWith('warn', '[my-version@2.0.0]'), 1);
+    });
+
+    it('patches pre-releases, but warns', () => {
+      makePluginLoader({
+        plugins: {'my-version': 'plugin-my-version-1'}
+      }).activate();
+      assert.strictEqual(require('my-version-1.0-pre'), '1.0.0-pre-patched');
+      assert.strictEqual(
+          logger.getNumLogsWith('warn', '[my-version@1.0.0-pre]'), 1);
+    });
+
+    it('throws when the plugin throws', () => {
+      makePluginLoader({
+        plugins: {'my-version': 'plugin-my-version-2'}
+      }).activate();
+      let threw = false;
+      try {
+        require('my-version-1.0');
+      } catch (e) {
+        threw = true;
+      }
+      assert.ok(threw);
+    });
+
+    it('warns when a module is patched by a non-conformant plugin', () => {
+      makePluginLoader({plugins: {'[core]': 'plugin-core'}}).activate();
+      // Reasons for warnings issued are listed as comments.
+      require('crypto');  // neither patch nor intercept
+      require('os');      // both patch and intercept
+      require('dns');     // two Patch objects for a single file
+      assert.strictEqual(
+          logger.getNumLogsWith('warn', `[[core]@${PROCESS_VERSION}:crypto]`),
+          1);
+      assert.strictEqual(
+          logger.getNumLogsWith('warn', `[[core]@${PROCESS_VERSION}:os]`), 1);
+      assert.strictEqual(
+          logger.getNumLogsWith('warn', `[[core]@${PROCESS_VERSION}:dns]`), 1);
+    });
   });
 });
-
-export default {};

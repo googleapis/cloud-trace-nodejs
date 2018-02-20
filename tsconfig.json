@@ -21,6 +21,7 @@
     "test/nocks.ts",
     "test/test-config-credentials.ts",
     "test/test-modules-loaded-before-agent.ts",
+    "test/test-plugin-loader.ts",
     "test/test-trace-cluster.ts",
     "test/test-trace-web-frameworks.ts",
     "test/trace.ts",
