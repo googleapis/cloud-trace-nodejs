@@ -66,10 +66,6 @@ describe('index.js', function() {
     });
   }
 
-  it('should wrap/unwrap module._load on start/stop', function() {
-    wrapTest(require('module'), '_load');
-  });
-
   it('should wrap/unwrap http on start/stop', function() {
     var http = require('http');
     wrapTest(http, 'request');

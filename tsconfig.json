@@ -19,11 +19,13 @@
     "test/plugins/test-trace-http2.ts",
     "test/logger.ts",
     "test/nocks.ts",
+    "test/test-config-plugins.ts",
     "test/test-config-credentials.ts",
     "test/test-modules-loaded-before-agent.ts",
     "test/test-plugin-loader.ts",
     "test/test-trace-cluster.ts",
     "test/test-trace-web-frameworks.ts",
+    "test/test-util.ts",
     "test/trace.ts",
     "test/utils.ts",
     "test/web-frameworks/*.ts"
