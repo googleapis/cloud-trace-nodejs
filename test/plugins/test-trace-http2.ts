@@ -218,10 +218,10 @@ describe('test-trace-http2', () => {
     const server: http2.Http2SecureServer = http2.createServer();
     server.on(
         'stream',
-        // Node 9.4 removed rstWithInternalError() and uses added close().
-        (s: http2.ServerHttp2Stream&({close: (code: number) => void})) => {
+        (s: http2.ServerHttp2Stream&({rstWithInternalError: () => void})) => {
           setTimeout(() => {
             if (semver.satisfies(process.version, '>=9.4')) {
+              // Node 9.4 removed rstWithInternalError() and uses added close().
               s.close(http2.constants.NGHTTP2_INTERNAL_ERROR);
             } else {
               s.rstWithInternalError();

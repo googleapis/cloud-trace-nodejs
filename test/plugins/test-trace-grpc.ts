@@ -27,7 +27,7 @@ var common = require('./common'/*.js*/);
 
 var versions = {
   grpc1_6: './fixtures/grpc1.6',
-  grpc1_8: './fixtures/grpc1.8'
+  grpc1_7: './fixtures/grpc1.7'
 };
 
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';
@@ -573,9 +573,9 @@ Object.keys(versions).forEach(function(version) {
           assert(err);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
+            assert.ok(trace);
             assert.strictEqual(trace.labels.argument, '{"n":' + EMIT_ERROR + '}');
-            assert(trace.labels.error.indexOf('Error: test') !== -1);
+            assert.ok(trace.labels.error.indexOf('test') !== -1);
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
@@ -593,8 +593,8 @@ Object.keys(versions).forEach(function(version) {
           assert(err);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
-            assert(trace.labels.error.indexOf('Error: test') !== -1);
+            assert.ok(trace);
+            assert.ok(trace.labels.error.indexOf('test') !== -1);
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
@@ -615,8 +615,8 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
-            assert(trace.labels.error.indexOf('Error: test') !== -1);
+            assert.ok(trace);
+            assert.ok(trace.labels.error.indexOf('test') !== -1);
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
@@ -637,8 +637,8 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
-            assert(trace.labels.error.indexOf('Error: test') !== -1);
+            assert.ok(trace);
+            assert.ok(trace.labels.error.indexOf('test') !== -1);
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
