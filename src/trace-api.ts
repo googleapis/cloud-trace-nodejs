@@ -75,11 +75,11 @@ export class TraceAgent implements TraceAgentInterface {
   readonly labels = TraceLabels;
 
   private pluginName: string;
-  private logger: Logger;
-  private config: TraceAgentConfig;
+  private logger: Logger|null = null;
+  private config: TraceAgentConfig|null = null;
   // TODO(kjin): Make this private.
-  policy: TracingPolicy.TracePolicy;
-  private namespace: cls.Namespace|null;
+  policy: TracingPolicy.TracePolicy|null = null;
+  private namespace: cls.Namespace|null = null;
 
   /**
    * Constructs a new TraceAgent instance.
@@ -145,14 +145,14 @@ export class TraceAgent implements TraceAgentInterface {
     // TODO validate options
     // Don't create a root span if we are already in a root span
     if (cls.getRootContext()) {
-      this.logger.warn(this.pluginName + ': Cannot create nested root spans.');
+      this.logger!.warn(this.pluginName + ': Cannot create nested root spans.');
       return fn(null);
     }
 
     return namespace.runAndReturn(() => {
       // Attempt to read incoming trace context.
       let incomingTraceContext: IncomingTraceContext = {};
-      if (isString(options.traceContext) && !this.config.ignoreContextHeader) {
+      if (isString(options.traceContext) && !this.config!.ignoreContextHeader) {
         const parsedContext = util.parseContextFromHeader(options.traceContext);
         if (parsedContext) {
           incomingTraceContext = parsedContext;
@@ -162,7 +162,7 @@ export class TraceAgent implements TraceAgentInterface {
       // Consult the trace policy, and don't create a root span if the trace
       // policy disallows it.
       const locallyAllowed =
-          this.policy.shouldTrace(Date.now(), options.url || '');
+          this.policy!.shouldTrace(Date.now(), options.url || '');
       const remotelyAllowed = incomingTraceContext.options === undefined ||
           !!(incomingTraceContext.options &
              Constants.TRACE_OPTIONS_TRACE_ENABLED);
@@ -215,7 +215,7 @@ export class TraceAgent implements TraceAgentInterface {
     const rootSpan = cls.getRootContext();
     if (!rootSpan) {
       // Context was lost.
-      this.logger.warn(
+      this.logger!.warn(
           this.pluginName + ': Attempted to create child span ' +
           'without root');
       return null;
@@ -232,7 +232,7 @@ export class TraceAgent implements TraceAgentInterface {
         // with continuously growing number of child spans. The second case
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
-        this.logger.warn(
+        this.logger!.warn(
             this.pluginName + ': creating child for an already closed span',
             options.name, rootSpan.span.name);
         return null;
