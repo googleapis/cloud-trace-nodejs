@@ -1,5 +1,28 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-02-23, Version 2.5.0 (Beta), @kjin
+
+This version changes how span IDs are generated, and extends traced gRPC versions.
+
+### Notable Changes
+
+* [[`ca92e9fb0e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ca92e9fb0e)] - **feat**: expand grpc supported versions to \<2 (#668) (Kelvin Jin) [#668](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/668)
+* [[`a212d706cd`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a212d706cd)] - **fix**: change span ID to use random bytes (#654) (Dave Raffensperger) [#654](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/654)
+
+### Commits
+
+* [[`53614e4455`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/53614e4455)] - chore(package): update mocha to version 5.0.0 (#653) (greenkeeper[bot]) [#653](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/653)
+* [[`ca92e9fb0e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ca92e9fb0e)] - **feat**: expand grpc supported versions to \<2 (#668) (Kelvin Jin) [#668](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/668)
+* [[`72b493de02`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/72b493de02)] - **doc**: update broken references to source files (#663) (Kelvin Jin)
+* [[`54dd734064`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/54dd734064)] - **fix**: add web framework plugin types and script to fetch types (#621) (Kelvin Jin) [#621](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/621)
+* [[`a212d706cd`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a212d706cd)] - **fix**: change span ID to use random bytes (#654) (Dave Raffensperger) [#654](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/654)
+* [[`b52cde1751`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b52cde1751)] - **chore**: enable circleci cron and cover src/**/*.ts files only (#651) (Kelvin Jin) [#651](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/651)
+* [[`b811387b6c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b811387b6c)] - **doc**: add details about running tests locally in CONTRIBUTING.md (#655) (Kelvin Jin) [#655](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/655)
+* [[`74b9291abc`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/74b9291abc)] - chore(package): update js-green-licenses to version 0.4.0 (#652) (greenkeeper[bot])
+* [[`6ef8cda919`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6ef8cda919)] - **chore**: copy cached packages in appveyor (#642) (Kelvin Jin) [#642](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/642)
+* [[`0a3697934d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0a3697934d)] - **refactor**: types for http (#649) (Kelvin Jin) [#649](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/649)
+* [[`74b0724091`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/74b0724091)] - **chore**: add npm publish job to circle ci (#647) (Kelvin Jin) [#647](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/647)
+
 ## 2018-01-12, Version 2.4.1 (Beta), @kjin
 
 This change adds a patch to reduce the overhead introduced by the Trace Agent for outgoing HTTP requests.
