@@ -17,9 +17,28 @@
 import * as CLS from 'continuation-local-storage';
 import * as semver from 'semver';
 
-import {SpanData} from './span-data';
+import {SpanDataType} from './constants';
+import {UNCORRELATED_SPAN, UNTRACED_SPAN} from './span-data';
+import {Trace, TraceSpan} from './trace';
 
-export type RootContext = SpanData|{} /* null span */|null;
+/**
+ * This type represents the minimal information to store in continuation-local
+ * storage for a request. We store either a root span corresponding to the
+ * request, or a sentinel value (UNCORRELATED_SPAN or UNTRACED_SPAN) that tells
+ * us that the request is not being traced (with the exact sentinel value
+ * specifying whether this is on purpose or by accident, respectively).
+ *
+ * When we store an actual root span, the only information we need is its
+ * current trace/span fields.
+ */
+export type RootContext = ({
+  readonly span: TraceSpan;
+  readonly trace: Trace;
+  readonly type: SpanDataType.ROOT;
+}|{
+  readonly type: SpanDataType.UNCORRELATED|SpanDataType.UNTRACED;
+});
+
 export type Namespace = CLS.Namespace;
 export type Func<T> = CLS.Func<T>;
 
@@ -51,16 +70,47 @@ export function getNamespace(): CLS.Namespace {
   return cls.getNamespace(TRACE_NAMESPACE);
 }
 
+/**
+ * Get a RootContext object from continuation-local storage.
+ */
 export function getRootContext(): RootContext {
   // First getNamespace check is necessary in case any
   // patched closures escaped before the agent was stopped and the
   // namespace was destroyed.
-  if (getNamespace() && getNamespace().get('root')) {
-    return getNamespace().get('root');
+  const namespace = getNamespace();
+  if (namespace) {
+    // A few things can be going on here:
+    // 1. setRootContext has been called earlier to store a real root span
+    //    in continuation-local storage, so retrieve it.
+    // 2. setRootContext has been called earlier to explicitly specify that
+    //    the request corresponding to this continuation is _not_ being traced
+    //    (by being passed UNTRACED_SPAN), so retrieve it as well.
+    // 3. setRootContext has _never_ been called in this continuation. This
+    //    indicates that context was lost, and namespace.get('root') will
+    //    return null. Therefore, explicitly return UNCORRELATED_SPAN to
+    //    indicate that context was lost.
+    return namespace.get('root') || UNCORRELATED_SPAN;
+  } else {
+    // No namespace indicates that the Trace Agent is disabled. This is a
+    // special case where _all_ requests are explicitly not being traced,
+    // so return UNTRACED_SPAN to be consistent with that.
+    return UNTRACED_SPAN;
   }
-  return null;
 }
 
+/**
+ * Store a RootContext object in continuation-local storage.
+ * @param rootContext Either a root span or UNTRACED_SPAN. It doesn't make
+ * sense to pass UNCORRELATED_SPAN, which is a value specifically reserved for
+ * when getRootContext is known to give an unusable value.
+ */
 export function setRootContext(rootContext: RootContext): void {
   getNamespace().set('root', rootContext);
+}
+
+// This is only used in tests (and is temporary), so it doesn't apply in the
+// comment in getRootContext about the possible values of namespace.get('root').
+// It's functionally identical to setRootContext(null).
+export function clearRootContext(): void {
+  setRootContext(UNCORRELATED_SPAN);
 }

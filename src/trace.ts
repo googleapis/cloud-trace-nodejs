@@ -14,14 +14,27 @@
  * limitations under the License.
  */
 
-import {TraceSpan} from './trace-span';
+// Data model for Stackdriver Trace API
+// https://cloud.google.com/trace/docs/reference/v1/rest/v1/projects.traces
 
-export class Trace {
-  readonly spans: TraceSpan[] = [];
+export enum SpanKind {
+  SPAN_KIND_UNSPECIFIED = 'SPAN_KIND_UNSPECIFIED',
+  RPC_SERVER = 'RPC_SERVER',
+  RPC_CLIENT = 'RPC_CLIENT'
+}
 
-  /**
-   * Creates a trace object.
-   * @constructor
-   */
-  constructor(public projectId: string, readonly traceId: string) {}
+export interface TraceSpan {
+  labels: {[key: string]: string};
+  startTime: string;
+  endTime: string;
+  kind: SpanKind;
+  name: string;
+  spanId: string;
+  parentSpanId: string;
+}
+
+export interface Trace {
+  projectId: string;
+  traceId: string;
+  spans: TraceSpan[];
 }

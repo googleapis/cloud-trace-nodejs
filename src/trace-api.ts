@@ -20,10 +20,10 @@ import * as semver from 'semver';
 import * as uuid from 'uuid';
 
 import * as cls from './cls';
-import {Constants} from './constants';
-import {Func, RootSpanOptions, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
-import {SpanData} from './span-data';
-import {Trace} from './trace';
+import {Constants, SpanDataType} from './constants';
+import {Func, RootSpanOptions, SpanData, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
+import {ChildSpanData, RootSpanData, UNCORRELATED_SPAN, UNTRACED_SPAN} from './span-data';
+import {SpanKind, Trace} from './trace';
 import {TraceLabels} from './trace-labels';
 import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
@@ -53,26 +53,13 @@ function isString(obj: any): obj is string {
 }
 
 /**
- * Type guard that returns whether an object is a SpanData object or not.
- *
- * @param obj
- */
-function isSpanData(obj: cls.RootContext): obj is SpanData {
-  // The second condition ensures that obj is not nullSpan.
-  return !!obj && !!(obj as SpanData).span;
-}
-
-// A sentinal stored in CLS to indicate that the current request was not
-// sampled.
-const nullSpan = Object.freeze({});
-
-/**
  * TraceAgent exposes a number of methods to create trace spans and propagate
  * trace context across asynchronous boundaries.
  */
 export class TraceAgent implements TraceAgentInterface {
   readonly constants = Constants;
   readonly labels = TraceLabels;
+  readonly spanTypes = SpanDataType;
 
   private pluginName: string;
   private logger: Logger|null = null;
@@ -134,17 +121,16 @@ export class TraceAgent implements TraceAgentInterface {
     return !!this.config && this.config.enhancedDatabaseReporting;
   }
 
-  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData|null) => T):
-      T {
+  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData) => T): T {
     if (!this.isActive()) {
-      return fn(null);
+      return fn(UNTRACED_SPAN);
     }
 
     // TODO validate options
     // Don't create a root span if we are already in a root span
-    if (cls.getRootContext()) {
+    if (cls.getRootContext().type === SpanDataType.ROOT) {
       this.logger!.warn(this.pluginName + ': Cannot create nested root spans.');
-      return fn(null);
+      return fn(UNCORRELATED_SPAN);
     }
 
     return this.namespace!.runAndReturn(() => {
@@ -165,21 +151,19 @@ export class TraceAgent implements TraceAgentInterface {
           !!(incomingTraceContext.options &
              Constants.TRACE_OPTIONS_TRACE_ENABLED);
       if (!locallyAllowed || !remotelyAllowed) {
-        cls.setRootContext(nullSpan);
-        return fn(null);
+        cls.setRootContext(UNTRACED_SPAN);
+        return fn(UNTRACED_SPAN);
       }
 
       // Create a new root span, and invoke fn with it.
       const traceId =
           incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
       const parentId = incomingTraceContext.spanId || '0';
-      const rootContext = new SpanData(
-          new Trace('', traceId), /* Trace object */
-          options.name,           /* Span name */
-          parentId,               /* Parent's span ID */
-          true,                   /* Is root span */
+      const rootContext = new RootSpanData(
+          {projectId: '', traceId, spans: []}, /* Trace object */
+          options.name,                        /* Span name */
+          parentId,                            /* Parent's span ID */
           cls.ROOT_SPAN_STACK_OFFSET + (options.skipFrames || 0));
-      rootContext.span.kind = 'RPC_SERVER';
       cls.setRootContext(rootContext);
       return fn(rootContext);
     });
@@ -191,10 +175,10 @@ export class TraceAgent implements TraceAgentInterface {
     }
 
     const rootSpan = cls.getRootContext();
-    if (!isSpanData(rootSpan)) {
-      return null;
+    if (rootSpan.type === SpanDataType.ROOT) {
+      return rootSpan.trace.traceId;
     }
-    return rootSpan.trace.traceId;
+    return null;
   }
 
   getWriterProjectId(): string|null {
@@ -205,24 +189,14 @@ export class TraceAgent implements TraceAgentInterface {
     }
   }
 
-  createChildSpan(options: SpanOptions): SpanData|null {
+  createChildSpan(options: SpanOptions): SpanData {
     if (!this.isActive()) {
-      return null;
+      return UNTRACED_SPAN;
     }
 
     const rootSpan = cls.getRootContext();
-    if (!rootSpan) {
-      // Context was lost.
-      this.logger!.warn(
-          this.pluginName + ': Attempted to create child span ' +
-          'without root');
-      return null;
-    } else if (!isSpanData(rootSpan)) {
-      // Context wasn't lost, but there's no root span, indicating that this
-      // request should not be traced.
-      return null;
-    } else {
-      if (rootSpan.span.isClosed()) {
+    if (rootSpan.type === SpanDataType.ROOT) {
+      if (!!rootSpan.span.endTime) {
         // A closed root span suggests that we either have context confusion or
         // some work is being done after the root request has been completed.
         // The first case could lead to a memory leak, if somehow all spans end
@@ -233,18 +207,27 @@ export class TraceAgent implements TraceAgentInterface {
         this.logger!.warn(
             this.pluginName + ': creating child for an already closed span',
             options.name, rootSpan.span.name);
-        return null;
+        return UNCORRELATED_SPAN;
       }
       // Create a new child span and return it.
       options = options || {name: ''};
       const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-      const childContext = new SpanData(
+      const childContext = new ChildSpanData(
           rootSpan.trace,       /* Trace object */
           options.name,         /* Span name */
           rootSpan.span.spanId, /* Parent's span ID */
-          false,                /* Is root span */
           skipFrames);          /* # of frames to skip in stack trace */
       return childContext;
+    } else if (rootSpan.type === SpanDataType.UNTRACED) {
+      // Context wasn't lost, but there's no root span, indicating that this
+      // request should not be traced.
+      return UNTRACED_SPAN;
+    } else {
+      // Context was lost.
+      this.logger!.warn(
+          this.pluginName + ': Attempted to create child span ' +
+          'without root');
+      return UNCORRELATED_SPAN;
     }
   }
 

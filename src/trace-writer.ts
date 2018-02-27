@@ -20,8 +20,8 @@ import {OutgoingHttpHeaders} from 'http';
 import * as util from 'util';
 
 import {Constants} from './constants';
-import {SpanData} from './span-data';
-import {Trace} from './trace';
+import {RootSpanData} from './span-data';
+import {SpanKind, Trace} from './trace';
 import {TraceLabels} from './trace-labels';
 
 const pjson = require('../../package.json');
@@ -231,25 +231,25 @@ export class TraceWriter extends common.Service {
   }
 
   /**
-   * Ensures that all sub spans of the provided spanData are
+   * Ensures that all sub spans of the provided Trace object are
    * closed and then queues the span data to be published.
    *
-   * @param spanData The trace to be queued.
+   * @param trace The trace to be queued.
    */
-  writeSpan(spanData: SpanData) {
-    for (const span of spanData.trace.spans) {
+  writeSpan(trace: Trace) {
+    for (const span of trace.spans) {
       if (span.endTime === '') {
-        span.close();
+        span.endTime = (new Date()).toISOString();
       }
     }
 
-    // Copy properties from the default labels.
-    for (const k in this.defaultLabels) {
-      if (this.defaultLabels.hasOwnProperty(k)) {
-        spanData.addLabel(k, this.defaultLabels[k]);
+    trace.spans.forEach(spanData => {
+      if (spanData.kind === SpanKind.RPC_SERVER) {
+        // Copy properties from the default labels.
+        Object.assign(spanData.labels, this.defaultLabels);
       }
-    }
-    this.queueTrace(spanData.trace);
+    });
+    this.queueTrace(trace);
   }
 
   /**

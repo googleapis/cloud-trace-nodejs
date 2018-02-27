@@ -16,7 +16,7 @@
 
 // tslint:disable:no-any
 
-import {Constants} from './constants';
+import {Constants, SpanDataType} from './constants';
 import {TraceLabels} from './trace-labels';
 
 export type Func<T> = (...args: any[]) => T;
@@ -29,7 +29,8 @@ export interface TraceAgentExtension { _google_trace_patched: boolean; }
  */
 export interface SpanData {
   /**
-   * Gets the current trace context serialized as a string.
+   * Gets the current trace context serialized as a string, or an empty string
+   * if it can't be generated.
    * @return The stringified trace context.
    */
   getTraceContext(): string;
@@ -44,10 +45,17 @@ export interface SpanData {
   addLabel(key: string, value: any): void;
 
   /**
+   * The current span type. See `SpanDataType` for more information.
+   */
+  readonly type: SpanDataType;
+
+  /**
    * Ends the span. This method should only be called once.
    */
   endSpan(): void;
 }
+
+// export type SpanData = RootSpanData|ChildSpanData;
 
 /**
  * An interface that describes the available options for creating a span in
@@ -99,7 +107,7 @@ export interface TraceAgent {
    * null as an argument.
    * @returns The return value of calling fn.
    */
-  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData|null) => T): T;
+  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData) => T): T;
   /**
    * Returns a unique identifier for the currently active context. This can be
    * used to uniquely identify the current root span. If there is no current,
@@ -123,7 +131,7 @@ export interface TraceAgent {
    * span is created and propagated.
    * @returns A new SpanData object, or null if there is no active root span.
    */
-  createChildSpan(options: SpanOptions): SpanData|null;
+  createChildSpan(options: SpanOptions): SpanData;
 
   /**
    * Generates a stringified trace context that should be set as the trace
@@ -162,6 +170,7 @@ export interface TraceAgent {
 
   readonly constants: typeof Constants;
   readonly labels: typeof TraceLabels;
+  readonly spanTypes: typeof SpanDataType;
 }
 
 export interface Patch<T> {
