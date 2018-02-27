@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,22 @@ import {TraceSpan} from '../src/trace-span';
 export const DEFAULT_SPAN_DURATION = 200;
 // The acceptable window of variation in span duration
 export const ASSERT_SPAN_TIME_TOLERANCE_MS = 40;
-export const SERVER_SPAN_PREDICATE = (span: TraceSpan) =>
-    span.kind === 'RPC_SERVER' && span.name !== 'outer';
 
 /**
  * Helper Functions
  */
 
+export function isServerSpan(span: TraceSpan) {
+  return span.kind === 'RPC_SERVER' && span.name !== 'outer';
+}
+
 // Convenience function that, when awaited, stalls for a given duration of time
-export const wait = (ms: number) =>
-    new Promise(resolve => setTimeout(resolve, ms));
+export function wait (ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Assert that the given span's duration is within the given range.
-export const assertSpanDuration =
-    (span: TraceSpan, bounds: [number, number]) => {
+export function assertSpanDuration(span: TraceSpan, bounds: [number, number]) {
       const spanDuration =
           Date.parse(span.endTime) - Date.parse(span.startTime);
       assert.ok(
@@ -48,4 +51,4 @@ export const assertSpanDuration =
           `Span duration of ${
               spanDuration} ms is not in the acceptable expected range of [${
               bounds[0]}, ${bounds[1]}] ms`);
-    };
+    }

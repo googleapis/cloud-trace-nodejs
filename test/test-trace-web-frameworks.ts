@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import {TraceLabels} from '../src/trace-labels';
 import {TraceSpan} from '../src/trace-span';
 
 import * as trace from './trace';
-import {assertSpanDuration, DEFAULT_SPAN_DURATION, SERVER_SPAN_PREDICATE, wait} from './utils';
+import {assertSpanDuration, DEFAULT_SPAN_DURATION, isServerSpan, wait} from './utils';
 import {WebFramework, WebFrameworkConstructor} from './web-frameworks/base';
 import {Connect3} from './web-frameworks/connect';
 import {Express4} from './web-frameworks/express';
@@ -148,7 +148,7 @@ describe('Web framework tracing', () => {
           span!.endSpan();
         });
         assert.strictEqual(trace.getSpans().length, 3);
-        const serverSpan = trace.getOneSpan(SERVER_SPAN_PREDICATE);
+        const serverSpan = trace.getOneSpan(isServerSpan);
         assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
       });
 
@@ -163,7 +163,7 @@ describe('Web framework tracing', () => {
           span!.endSpan();
         });
         assert.strictEqual(trace.getSpans().length, 3);
-        const serverSpan = trace.getOneSpan(SERVER_SPAN_PREDICATE);
+        const serverSpan = trace.getOneSpan(isServerSpan);
         assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
       });
 
@@ -177,7 +177,7 @@ describe('Web framework tracing', () => {
           span!.endSpan();
         });
         assert.strictEqual(trace.getSpans().length, 3);
-        const serverSpan = trace.getOneSpan(SERVER_SPAN_PREDICATE);
+        const serverSpan = trace.getOneSpan(isServerSpan);
         assert.strictEqual(
             serverSpan.labels[TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
       });
@@ -190,7 +190,7 @@ describe('Web framework tracing', () => {
           span!.endSpan();
         });
         assert.strictEqual(trace.getSpans().length, 2);
-        assert.strictEqual(trace.getSpans(SERVER_SPAN_PREDICATE).length, 0);
+        assert.strictEqual(trace.getSpans(isServerSpan).length, 0);
       });
 
       it('ends span upon client abort', async () => {
@@ -239,7 +239,7 @@ describe('Web framework tracing', () => {
               await Promise.all(requests);
             });
         assert.strictEqual(
-            trace.getTraces(spans => spans.some(SERVER_SPAN_PREDICATE)).length,
+            trace.getTraces(spans => spans.some(isServerSpan)).length,
             requests!.length);
       });
 
@@ -291,7 +291,7 @@ describe('Web framework tracing', () => {
             span!.endSpan();
           });
           assert.strictEqual(trace.getSpans().length, 3);
-          serverSpan = trace.getOneSpan(SERVER_SPAN_PREDICATE);
+          serverSpan = trace.getOneSpan(isServerSpan);
         });
 
         it('applies the correct labels', () => {

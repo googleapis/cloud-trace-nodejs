@@ -6,7 +6,7 @@
  *   npm run script [step1] [step2 ... stepN]
  */
 
-const [bin, script, ...steps] = process.argv;
+const [, , ...steps] = process.argv;
 
 import { checkInstall } from './check-install';
 import { compile } from './compile';
@@ -39,7 +39,7 @@ async function run(steps: string[]) {
       );
       continue;
     } else if (step.startsWith('compile-')) {
-      const [_literalCompile, languageLevel, strict] = step.split('-');
+      const [, languageLevel, strict] = step.split('-');
       await compile({ strict: !!strict, languageLevel });
       continue;
     } else {

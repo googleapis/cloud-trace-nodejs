@@ -31,6 +31,12 @@ const cls: typeof CLS =
 
 const TRACE_NAMESPACE = 'com.google.cloud.trace';
 
+/**
+ * Stack traces are captured when a root span is started. Because the stack
+ * trace height varies on the context propagation mechanism, to keep published
+ * stack traces uniform we need to remove the top-most frames when using the
+ * c-l-s module. Keep track of this number here.
+ */
 export const ROOT_SPAN_STACK_OFFSET = useAsyncHooks ? 0 : 2;
 
 export function createNamespace(): CLS.Namespace {

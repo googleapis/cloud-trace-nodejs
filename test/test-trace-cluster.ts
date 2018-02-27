@@ -23,7 +23,7 @@ import * as cls from '../src/cls';
 import {express_4 as expressModule} from '../src/plugins/types';
 
 import * as trace from './trace';
-import {assertSpanDuration, DEFAULT_SPAN_DURATION, SERVER_SPAN_PREDICATE, wait} from './utils';
+import {assertSpanDuration, DEFAULT_SPAN_DURATION, isServerSpan, wait} from './utils';
 
 describe('test-trace-cluster', () => {
   let axios: typeof axiosModule;
@@ -66,7 +66,7 @@ describe('test-trace-cluster', () => {
       let recordedTime = Date.now();
       await axios.get(`http://localhost:${port}`);
       recordedTime = Date.now() - recordedTime;
-      const serverSpan = trace.getOneSpan(SERVER_SPAN_PREDICATE);
+      const serverSpan = trace.getOneSpan(isServerSpan);
       assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
       cluster.worker.disconnect();
       server.close();

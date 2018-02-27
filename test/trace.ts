@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,6 @@ const traces = new Map<string, TraceSpan[]>();
 const allSpans: TraceSpan[] = [];
 
 class TestTraceWriter extends TraceWriter {
-  constructor(logger: common.Logger, config: TraceWriterConfig) {
-    super(logger, config);
-  }
   initialize(cb: (err?: Error) => void): void {
     this.getConfig().projectId = '0';
     cb();
