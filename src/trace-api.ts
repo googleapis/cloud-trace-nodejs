@@ -66,8 +66,6 @@ function isSpanData(obj: cls.RootContext): obj is SpanData {
 // sampled.
 const nullSpan = Object.freeze({});
 
-const ROOT_SPAN_STACK_OFFSET = semver.satisfies(process.version, '>=8') ? 0 : 2;
-
 /**
  * TraceAgent exposes a number of methods to create trace spans and propagate
  * trace context across asynchronous boundaries.
@@ -182,7 +180,7 @@ export class TraceAgent implements TraceAgentInterface {
           options.name,           /* Span name */
           parentId,               /* Parent's span ID */
           true,                   /* Is root span */
-          ROOT_SPAN_STACK_OFFSET + (options.skipFrames || 0));
+          cls.ROOT_SPAN_STACK_OFFSET + (options.skipFrames || 0));
       rootContext.span.kind = 'RPC_SERVER';
       cls.setRootContext(rootContext);
       return fn(rootContext);

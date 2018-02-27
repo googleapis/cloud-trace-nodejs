@@ -140,19 +140,6 @@ function assertDurationCorrect(expectedDuration, predicate) {
   assertSpanDurationCorrect(span, expectedDuration);
 }
 
-function doRequest(method, done, tracePredicate, path) {
-  var start = Date.now();
-  http.get({port: SERVER_PORT, method: method, path: path || '/'}, function(res) {
-    var result = '';
-    res.on('data', function(data) { result += data; });
-    res.on('end', function() {
-      assert.equal(SERVER_RES, result);
-      assertDurationCorrect(Date.now() - start, tracePredicate);
-      done();
-    });
-  });
-}
-
 function runInTransaction(fn) {
   testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
     fn(function() {
@@ -208,7 +195,6 @@ module.exports = {
   cleanTraces: cleanTraces,
   getMatchingSpan: getMatchingSpan,
   getMatchingSpans: getMatchingSpans,
-  doRequest: doRequest,
   createChildSpan: createChildSpan,
   getTraces: getTraces,
   runInTransaction: runInTransaction,

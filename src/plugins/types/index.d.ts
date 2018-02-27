@@ -6,8 +6,12 @@ import * as restify_5 from 'restify'; // restify@5
 
 //---koa@1---//
 
-declare class koa_1 {
+import { EventEmitter } from 'events';
+import { Server } from 'http';
+
+declare class koa_1 extends EventEmitter {
   use(middleware: koa_1.Middleware): this;
+  listen(port?: number): Server;
 }
 
 declare namespace koa_1 {

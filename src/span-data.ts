@@ -35,7 +35,7 @@ import * as traceUtil from './util';
  * While the API doesn't expect a columnNumber at this point, it does accept,
  * and ignore it.
  */
-interface StackFrame {
+export interface StackFrame {
   class_name?: string;
   method_name?: string;
   file_name?: string;

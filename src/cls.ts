@@ -23,12 +23,21 @@ export type RootContext = SpanData|{} /* null span */|null;
 export type Namespace = CLS.Namespace;
 export type Func<T> = CLS.Func<T>;
 
-const cls: typeof CLS = semver.satisfies(process.version, '>=8') &&
-        process.env.GCLOUD_TRACE_NEW_CONTEXT ?
-    require('./cls-ah') :
-    require('continuation-local-storage');
+const useAsyncHooks: boolean = semver.satisfies(process.version, '>=8') &&
+    !!process.env.GCLOUD_TRACE_NEW_CONTEXT;
+
+const cls: typeof CLS =
+    useAsyncHooks ? require('./cls-ah') : require('continuation-local-storage');
 
 const TRACE_NAMESPACE = 'com.google.cloud.trace';
+
+/**
+ * Stack traces are captured when a root span is started. Because the stack
+ * trace height varies on the context propagation mechanism, to keep published
+ * stack traces uniform we need to remove the top-most frames when using the
+ * c-l-s module. Keep track of this number here.
+ */
+export const ROOT_SPAN_STACK_OFFSET = useAsyncHooks ? 0 : 2;
 
 export function createNamespace(): CLS.Namespace {
   return cls.createNamespace(TRACE_NAMESPACE);

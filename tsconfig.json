@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.full.json",
   "compilerOptions": {
-    "outDir": "build",
     "allowUnreachableCode": false,
     "noImplicitAny": true,
     "noImplicitThis": true,
@@ -17,6 +16,10 @@
     "src/plugins/plugin-https.ts",
     "src/plugins/plugin-koa.ts",
     "src/plugins/plugin-restify.ts",
-    "test/plugins/test-trace-http2.ts"
+    "test/plugins/test-trace-http2.ts",
+    "test/test-trace-cluster.ts",
+    "test/test-trace-web-frameworks.ts",
+    "test/trace.ts",
+    "test/web-frameworks/*.ts"
   ]
 }
