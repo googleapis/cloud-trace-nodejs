@@ -25,7 +25,7 @@ import * as path from 'path';
  * FRAMES := { "class_name" : CLASS_NAME, "file_name" : FILE_NAME,
  *             "line_number" : LINE_NUMBER, "method_name" : METHOD_NAME }*
  *
- * While the API doesn't expect a columnNumber at this point, it does accept,
+ * While the API doesn't expect a column_number at this point, it does accept,
  * and ignore it.
  */
 export interface StackFrame {
@@ -169,8 +169,15 @@ export function findModuleVersion(
   return process.version;
 }
 
+/**
+ * Creates a StackFrame object containing a structured stack trace.
+ * @param numFrames The number of frames to retain.
+ * @param skipFrames The number of top-most frames to remove.
+ * @param constructorOpt A function passed to Error.captureStackTrace, which
+ *   causes it to ignore the frames above the top-most call to this function.
+ */
 export function createStackTrace(
-    stackTraceLimit: number, skipFrames: number,
+    numFrames: number, skipFrames: number,
     constructorOpt?: Function): StackFrame[] {
   // This is a mechanism to get the structured stack trace out of V8.
   // prepareStackTrace is called the first time the Error#stack property is
@@ -179,12 +186,12 @@ export function createStackTrace(
   //
   // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
   //
-  if (stackTraceLimit === 0) {
+  if (numFrames === 0) {
     return [];
   }
 
   const origLimit = Error.stackTraceLimit;
-  Error.stackTraceLimit = stackTraceLimit + skipFrames;
+  Error.stackTraceLimit = numFrames + skipFrames;
 
   const origPrepare = Error.prepareStackTrace;
   Error.prepareStackTrace =
@@ -200,6 +207,8 @@ export function createStackTrace(
       if (i < skipFrames) {
         return;
       }
+      // TODO(kjin): Check if callSite getters actually return null or
+      // undefined. Docs say undefined but we guard it here just in case.
       const functionName = callSite.getFunctionName();
       const methodName = callSite.getMethodName();
       const name = (methodName && functionName) ?
@@ -211,8 +220,6 @@ export function createStackTrace(
         line_number: callSite.getLineNumber() || undefined,
         column_number: callSite.getColumnNumber() || undefined
       };
-      // TODO(kjin): Check if callSite getters actually return null or
-      // undefined. Docs say undefined but we guard it here just in case.
       stackFrames.push(stackFrame);
     });
   }
