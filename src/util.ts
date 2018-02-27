@@ -18,6 +18,24 @@ import * as fs from 'fs';
 import Module = require('module');
 import * as path from 'path';
 
+/**
+ * Trace API expects stack frames to be a JSON string with the following
+ * structure:
+ * STACK_TRACE := { "stack_frame" : [ FRAMES ] }
+ * FRAMES := { "class_name" : CLASS_NAME, "file_name" : FILE_NAME,
+ *             "line_number" : LINE_NUMBER, "method_name" : METHOD_NAME }*
+ *
+ * While the API doesn't expect a columnNumber at this point, it does accept,
+ * and ignore it.
+ */
+export interface StackFrame {
+  class_name?: string;
+  method_name?: string;
+  file_name?: string;
+  line_number?: number;
+  column_number?: number;
+}
+
 interface PackageJson {
   name: string;
   version: string;
@@ -149,4 +167,56 @@ export function findModuleVersion(
     }
   }
   return process.version;
+}
+
+export function createStackTrace(
+    stackTraceLimit: number, skipFrames: number,
+    constructorOpt?: Function): StackFrame[] {
+  // This is a mechanism to get the structured stack trace out of V8.
+  // prepareStackTrace is called the first time the Error#stack property is
+  // accessed. The original behavior is to format the stack as an exception
+  // throw, which is not what we like. We customize it.
+  //
+  // See: https://code.google.com/p/v8-wiki/wiki/JavaScriptStackTraceApi
+  //
+  if (stackTraceLimit === 0) {
+    return [];
+  }
+
+  const origLimit = Error.stackTraceLimit;
+  Error.stackTraceLimit = stackTraceLimit + skipFrames;
+
+  const origPrepare = Error.prepareStackTrace;
+  Error.prepareStackTrace =
+      (error: Error, structured: NodeJS.CallSite[]): NodeJS.CallSite[] => {
+        return structured;
+      };
+  const e: {stack?: NodeJS.CallSite[]} = {};
+  Error.captureStackTrace(e, constructorOpt);
+
+  const stackFrames: StackFrame[] = [];
+  if (e.stack) {
+    e.stack.forEach((callSite, i) => {
+      if (i < skipFrames) {
+        return;
+      }
+      const functionName = callSite.getFunctionName();
+      const methodName = callSite.getMethodName();
+      const name = (methodName && functionName) ?
+          functionName + ' [as ' + methodName + ']' :
+          functionName || methodName || '<anonymous function>';
+      const stackFrame: StackFrame = {
+        method_name: name,
+        file_name: callSite.getFileName() || undefined,
+        line_number: callSite.getLineNumber() || undefined,
+        column_number: callSite.getColumnNumber() || undefined
+      };
+      // TODO(kjin): Check if callSite getters actually return null or
+      // undefined. Docs say undefined but we guard it here just in case.
+      stackFrames.push(stackFrame);
+    });
+  }
+  Error.stackTraceLimit = origLimit;
+  Error.prepareStackTrace = origPrepare;
+  return stackFrames;
 }

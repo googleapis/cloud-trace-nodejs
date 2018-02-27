@@ -20,9 +20,9 @@ import * as semver from 'semver';
 
 import * as cls from '../src/cls';
 import {Constants} from '../src/constants';
-import {StackFrame} from '../src/span-data';
 import {TraceLabels} from '../src/trace-labels';
 import {TraceSpan} from '../src/trace-span';
+import {StackFrame} from '../src/util';
 
 import * as trace from './trace';
 import {assertSpanDuration, DEFAULT_SPAN_DURATION, isServerSpan, wait} from './utils';
