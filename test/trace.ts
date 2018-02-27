@@ -66,22 +66,21 @@ let singleton: TraceWriter|null = null;
 
 traceWriter.create =
     (logger: common.Logger, config: TraceWriterSingletonConfig,
-     cb?: (err?: Error) => void):
-        TraceWriter => {
-          if (singleton) {
-            throw new Error('Trace Writer already created.');
-          }
-          singleton = new TestTraceWriter(logger, config);
-          singleton.initialize(cb || (() => {}));
-          return singleton;
-        },
+     cb?: (err?: Error) => void): TraceWriter => {
+      if (singleton) {
+        throw new Error('Trace Writer already created.');
+      }
+      singleton = new TestTraceWriter(logger, config);
+      singleton.initialize(cb || (() => {}));
+      return singleton;
+    };
 
-        traceWriter.get = (): TraceWriter => {
-          if (!singleton) {
-            throw new Error('Trace Writer not initialized.');
-          }
-          return singleton;
-        };
+traceWriter.get = (): TraceWriter => {
+  if (!singleton) {
+    throw new Error('Trace Writer not initialized.');
+  }
+  return singleton;
+};
 
 export type Predicate<T> = (value: T) => boolean;
 
