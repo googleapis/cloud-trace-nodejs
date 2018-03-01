@@ -18,7 +18,7 @@
 
 // Loading this file patches gcpMetadata so requests don't time out.
 import './override-gcp-metadata';
-import { SpanData } from '../src/span-data';
+import { Trace, SpanKind } from '../src/trace';
 import { TraceLabels } from '../src/trace-labels';
 import { traceWriter, TraceWriter, TraceWriterConfig } from '../src/trace-writer';
 
@@ -55,24 +55,23 @@ var fakeLogger = {
   silly: () => {}
 };
 
-function createFakeSpan(name): SpanData {
+function createFakeTrace(name): Trace {
   // creates a fake span.
   return {
-    trace: {
-      spans: [
-        {
-          name: name,
-          startTime: 'fake startTime',
-          endTime: '',
-          closed_: false,
-          labels_: {},
-          close: function() { this.closed_ = true; },
-        }
-      ]
-    },
-    labels_: {},
-    addLabel: function(k, v) { this.labels_[k] = v; }
-  } as any as SpanData;
+    spans: [
+      {
+        labels: {},
+        name: name,
+        startTime: (new Date()).toISOString(),
+        endTime: '',
+        kind: SpanKind.RPC_SERVER,
+        spanId: '',
+        parentSpanId: ''
+      }
+    ],
+    projectId: '',
+    traceId: ''
+  };
 }
 
 describe('TraceWriter', function() {
@@ -109,7 +108,7 @@ describe('TraceWriter', function() {
         onUncaughtException: 'ignore',
         forceNewAgent_: true
       } as createTraceWriterOptions, function() {
-        var spanData = createFakeSpan('fake span');
+        var spanData = createFakeTrace('fake span');
         writer.defaultLabels = {
           fakeKey: 'value'
         };
@@ -117,8 +116,8 @@ describe('TraceWriter', function() {
           assert.ok(trace && trace.spans && trace.spans[0]);
           var span = trace.spans[0];
           assert.strictEqual(span.name, 'fake span');
-          assert.ok((span as any).closed_);
-          assert.strictEqual(((spanData as any).labels_ as any).fakeKey, 'value');
+          assert.ok(span.endTime);
+          assert.strictEqual(span.labels.fakeKey, 'value');
           // TODO(ofrobots): check serviceContext labels as well.
           done();
         };
@@ -180,7 +179,7 @@ describe('TraceWriter', function() {
       } as createTraceWriterOptions);
       writer.publish = function() { done(); };
       for (var i = 0; i < 4; i++) {
-        writer.writeSpan(createFakeSpan(i));
+        writer.writeSpan(createFakeTrace(i));
       }
     });
 
@@ -195,7 +194,7 @@ describe('TraceWriter', function() {
       } as createTraceWriterOptions);
       writer.publish = function() { published = true; };
       writer.initialize(function() {
-        writer.writeSpan(createFakeSpan('fake span'));
+        writer.writeSpan(createFakeTrace('fake span'));
         setTimeout(function() {
           assert.ok(published);
           done();

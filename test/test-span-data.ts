@@ -19,20 +19,19 @@
 import './override-gcp-metadata';
 import * as cls from '../src/cls';
 import { Constants } from '../src/constants';
-import { SpanData } from '../src/span-data';
+import {TraceLabels} from '../src/trace-labels';
+import { RootSpanData, ChildSpanData } from '../src/span-data';
 import { Trace } from '../src/trace';
-import { TraceLabels } from '../src/trace-labels';
 import { traceWriter } from '../src/trace-writer';
 
 var assert = require('assert');
 var common = require('./plugins/common'/*.js*/);
 
 function createRootSpanData(name, traceId?, parentId?, skipFrames?) {
-  return new SpanData(
-    new Trace('', traceId),
+  return new RootSpanData(
+    { projectId: '', traceId: traceId, spans: [] },
     name,
     parentId,
-    true,
     skipFrames
   );
 }
@@ -63,8 +62,8 @@ describe('SpanData', function() {
       var rootSpanData = createRootSpanData('hi');
       var numSpanIdsToCheck = 5;
       for (var i = 0; i < numSpanIdsToCheck; i++) {
-        var spanData = new SpanData(
-            rootSpanData.trace, 'child', rootSpanData.span.spanId, false, 0);
+        var spanData = new ChildSpanData(
+            rootSpanData.trace, 'child', rootSpanData.span.spanId, 0);
         var spanId = spanData.span.spanId;
         spanIds.add(spanId);
         // Check that the span IDs are numeric positive number strings
@@ -138,9 +137,9 @@ describe('SpanData', function() {
   it('closes when endSpan is called', function() {
     cls.getNamespace().run(function() {
       var spanData = createRootSpanData('name', 1, 2);
-      assert.ok(!spanData.span.isClosed());
+      assert.ok(!spanData.span.endTime);
       spanData.endSpan();
-      assert.ok(spanData.span.isClosed());
+      assert.ok(spanData.span.endTime);
     });
   });
 
@@ -148,7 +147,7 @@ describe('SpanData', function() {
     traceWriter.get().getConfig().stackTraceLimit = 25;
     cls.getNamespace().run(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
-      assert.ok(!spanData.span.isClosed());
+      assert.ok(!spanData.span.endTime);
       spanData.endSpan();
       var stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.ok(stack);
@@ -176,7 +175,7 @@ describe('SpanData', function() {
     cls.getNamespace().run(function() {
       var spanData = createRootSpanData('hi');
       // create a child span
-      new SpanData(spanData.trace, 'child', spanData.span.spanId, false, 0);
+      new ChildSpanData(spanData.trace, 'child', spanData.span.spanId, 0);
       spanData.endSpan();
       var traces = common.getTraces();
       for (var i = 0; i < traces.length; i++) {

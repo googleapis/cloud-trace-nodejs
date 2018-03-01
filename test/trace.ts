@@ -36,9 +36,8 @@ import * as shimmer from 'shimmer';
 
 import * as trace from '../src';
 import {Config, PluginTypes} from '../src';
-import {SpanData} from '../src/span-data';
-import {Trace} from '../src/trace';
-import {TraceSpan} from '../src/trace-span';
+import {RootSpanData} from '../src/span-data';
+import {Trace, TraceSpan} from '../src/trace';
 import {LabelObject, TraceWriter, traceWriter, TraceWriterConfig, TraceWriterSingletonConfig} from '../src/trace-writer';
 
 export {Config, PluginTypes};
@@ -51,12 +50,12 @@ class TestTraceWriter extends TraceWriter {
     this.getConfig().projectId = '0';
     cb();
   }
-  writeSpan(spanData: SpanData): void {
-    if (!traces.has(spanData.trace.traceId)) {
-      traces.set(spanData.trace.traceId, []);
+  writeSpan(trace: Trace): void {
+    if (!traces.has(trace.traceId)) {
+      traces.set(trace.traceId, []);
     }
-    const spans = traces.get(spanData.trace.traceId)!;
-    spanData.trace.spans.forEach(span => {
+    const spans = traces.get(trace.traceId)!;
+    trace.spans.forEach(span => {
       spans.push(span);
       allSpans.push(span);
     });

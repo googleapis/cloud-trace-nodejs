@@ -26,6 +26,11 @@ var Module = require('module');
 var semver = require('semver');
 var path = require('path');
 
+function notNull<T>(arg: T|null): T {
+  assert.ok(arg);
+  return arg as T;
+}
+
 describe('util.truncate', function() {
   it('should truncate objects larger than size', function() {
     assert.strictEqual(util.truncate('abcdefghijklmno', 5), 'ab...');
@@ -89,7 +94,7 @@ describe('util.findModuleVersion', function() {
 describe('util.parseContextFromHeader', function() {
   describe('valid inputs', function() {
     it('should return expected values: 123456/667;o=1', function() {
-      var result = common.notNull(util.parseContextFromHeader(
+      var result = notNull(util.parseContextFromHeader(
         '123456/667;o=1'));
       assert.strictEqual(result.traceId, '123456');
       assert.strictEqual(result.spanId, '667');
@@ -98,7 +103,7 @@ describe('util.parseContextFromHeader', function() {
 
     it('should return expected values:' +
         '123456/123456123456123456123456123456123456;o=1', function() {
-      var result = common.notNull(util.parseContextFromHeader(
+      var result = notNull(util.parseContextFromHeader(
         '123456/123456123456123456123456123456123456;o=1'));
       assert.strictEqual(result.traceId, '123456');
       assert.strictEqual(result.spanId, '123456123456123456123456123456123456');
@@ -106,7 +111,7 @@ describe('util.parseContextFromHeader', function() {
     });
 
     it('should return expected values: 123456/667', function() {
-      var result = common.notNull(util.parseContextFromHeader(
+      var result = notNull(util.parseContextFromHeader(
         '123456/667'));
       assert.strictEqual(result.traceId, '123456');
       assert.strictEqual(result.spanId, '667');

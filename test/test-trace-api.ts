@@ -22,6 +22,8 @@ import { defaultConfig } from '../src/config';
 import { TraceAgent } from '../src/trace-api';
 import { traceWriter } from '../src/trace-writer';
 import * as TracingPolicy from '../src/tracing-policy';
+import { asBaseSpanData } from './utils';
+import { SpanDataType } from '../src/constants';
 
 var assert = require('assert');
 var common = require('./plugins/common'/*.js*/);
@@ -121,8 +123,8 @@ describe('Trace Interface', function() {
     it('should produce real child spans', function(done) {
       var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root'}, function(root_) {
-        var root = common.notNull(root_);
-        var child = common.notNull(traceAPI.createChildSpan({name: 'sub'}));
+        var root = asBaseSpanData(root_);
+        var child = asBaseSpanData(traceAPI.createChildSpan({name: 'sub'}));
         setTimeout(function() {
           child.addLabel('key', 'val');
           child.endSpan();
@@ -143,9 +145,9 @@ describe('Trace Interface', function() {
     it('should produce real root spans runInRootSpan', function(done) {
       var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan_) {
-        var rootSpan = common.notNull(rootSpan_);
+        var rootSpan = asBaseSpanData(rootSpan_);
         rootSpan.addLabel('key', 'val');
-        var childSpan = common.notNull(traceAPI.createChildSpan({name: 'sub'}));
+        var childSpan = asBaseSpanData(traceAPI.createChildSpan({name: 'sub'}));
         setTimeout(function() {
           childSpan.endSpan();
           rootSpan.endSpan();
@@ -165,10 +167,10 @@ describe('Trace Interface', function() {
     it('should not allow nested root spans', function(done) {
       var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1_) {
-        var rootSpan1 = common.notNull(rootSpan1_);
+        var rootSpan1 = asBaseSpanData(rootSpan1_);
         setTimeout(function() {
           traceAPI.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
-            assert.strictEqual(rootSpan2, null);
+            assert.strictEqual(rootSpan2.type, SpanDataType.UNCORRELATED);
           });
           rootSpan1.endSpan();
           var span = common.getMatchingSpan(function() { return true; });
@@ -189,7 +191,7 @@ describe('Trace Interface', function() {
     it('should return the appropriate trace id', function() {
       var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan_) {
-        var rootSpan = common.notNull(rootSpan_);
+        var rootSpan = asBaseSpanData(rootSpan_);
         var id = traceAPI.getCurrentContextId();
         assert.strictEqual(id, rootSpan.trace.traceId);
       });
@@ -204,8 +206,8 @@ describe('Trace Interface', function() {
     it('should add labels to spans', function() {
       var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(root_) {
-        var root = common.notNull(root_);
-        var child = common.notNull(traceAPI.createChildSpan({name: 'sub'}));
+        var root = asBaseSpanData(root_);
+        var child = asBaseSpanData(traceAPI.createChildSpan({name: 'sub'}));
         child.addLabel('test1', 'value');
         child.endSpan();
         assert.equal(child.span.name, 'sub');
@@ -218,7 +220,7 @@ describe('Trace Interface', function() {
     it('should respect trace policy', function(done) {
       var traceAPI = createTraceAgent(new TracingPolicy.TraceNonePolicy());
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
-        assert.strictEqual(rootSpan, null);
+        assert.strictEqual(rootSpan.type, SpanDataType.UNTRACED);
         done();
       });
     });
@@ -229,10 +231,10 @@ describe('Trace Interface', function() {
         new TracingPolicy.TraceAllPolicy(),
         [url]));
       traceAPI.runInRootSpan({name: 'root1', url: url}, function(rootSpan) {
-        assert.strictEqual(rootSpan, null);
+        assert.strictEqual(rootSpan.type, SpanDataType.UNTRACED);
       });
       traceAPI.runInRootSpan({name: 'root2', url: 'alternativeUrl'}, function(rootSpan_) {
-        var rootSpan = common.notNull(rootSpan_);
+        var rootSpan = asBaseSpanData(rootSpan_);
         assert.strictEqual(rootSpan.span.name, 'root2');
       });
     });
