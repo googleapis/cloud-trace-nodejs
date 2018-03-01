@@ -140,8 +140,6 @@ export class TraceAgent implements TraceAgentInterface {
       return fn(null);
     }
 
-    // This is safe because isActive checks the value of this.namespace.
-    const namespace = this.namespace as cls.Namespace;
     // TODO validate options
     // Don't create a root span if we are already in a root span
     if (cls.getRootContext()) {
@@ -149,7 +147,7 @@ export class TraceAgent implements TraceAgentInterface {
       return fn(null);
     }
 
-    return namespace.runAndReturn(() => {
+    return this.namespace!.runAndReturn(() => {
       // Attempt to read incoming trace context.
       let incomingTraceContext: IncomingTraceContext = {};
       if (isString(options.traceContext) && !this.config!.ignoreContextHeader) {
@@ -269,9 +267,7 @@ export class TraceAgent implements TraceAgentInterface {
       return fn;
     }
 
-    // This is safe because isActive checks the value of this.namespace.
-    const namespace = this.namespace as cls.Namespace;
-    return namespace.bind<T>(fn);
+    return this.namespace!.bind<T>(fn);
   }
 
   wrapEmitter(emitter: NodeJS.EventEmitter): void {
@@ -279,8 +275,6 @@ export class TraceAgent implements TraceAgentInterface {
       return;
     }
 
-    // This is safe because isActive checks the value of this.namespace.
-    const namespace = this.namespace as cls.Namespace;
-    namespace.bindEmitter(emitter);
+    this.namespace!.bindEmitter(emitter);
   }
 }
