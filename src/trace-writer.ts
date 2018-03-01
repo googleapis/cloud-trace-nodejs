@@ -20,7 +20,6 @@ import {OutgoingHttpHeaders} from 'http';
 import * as util from 'util';
 
 import {Constants} from './constants';
-import {RootSpanData} from './span-data';
 import {SpanKind, Trace} from './trace';
 import {TraceLabels} from './trace-labels';
 

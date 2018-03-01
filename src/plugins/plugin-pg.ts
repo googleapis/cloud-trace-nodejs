@@ -30,7 +30,7 @@ module.exports = [
             name: 'pg-query'
           });
           var pgQuery = query.apply(this, arguments);
-          if (!span) {
+          if (span.type !== api.spanTypes.CHILD) {
             return pgQuery;
           }
           if (api.enhancedDatabaseReportingEnabled()) {

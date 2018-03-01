@@ -23,7 +23,7 @@ function createNextWrap(api) {
   return function nextWrap(next) {
     return function next_trace(cb) {
       var span = api.createChildSpan({ name: 'mongo-cursor' });
-      if (!span) {
+      if (span.type !== api.spanTypes.CHILD) {
         return next.apply(this, arguments);
       }
       span.addLabel('db', this.ns);
@@ -39,7 +39,7 @@ function wrapWithLabel(api, label) {
   return function(original) {
     return function mongo_operation_trace(ns, ops, options, callback) {
       var span = api.createChildSpan({ name: label });
-      if (!span) {
+      if (span.type !== api.spanTypes.CHILD) {
         return original.apply(this, arguments);
       }
       span.addLabel('db', ns);

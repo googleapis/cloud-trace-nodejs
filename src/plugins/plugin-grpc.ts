@@ -70,7 +70,7 @@ function patchClient(client, api) {
     return function clientMethodTrace() {
       // The span name will be of form "grpc:/[Service]/[MethodName]".
       var span = api.createChildSpan({ name: 'grpc:' + method.path });
-      if (!span) {
+      if (span.type !== api.spanTypes.CHILD) {
         // Span couldn't be created, either by policy or because a root span
         // doesn't exist.
         return method.apply(this, arguments);
@@ -218,7 +218,7 @@ function patchServer(server, api) {
           skipFrames: SKIP_FRAMES
         };
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
-          if (!rootSpan) {
+          if (rootSpan.type !== api.spanTypes.ROOT) {
             return serverMethod.call(that, call, callback);
           }
           if (api.enhancedDatabaseReportingEnabled()) {
@@ -269,7 +269,7 @@ function patchServer(server, api) {
           skipFrames: SKIP_FRAMES
         };
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
-          if (!rootSpan) {
+          if (rootSpan.type !== api.spanTypes.ROOT) {
             return serverMethod.call(that, stream);
           }
           if (api.enhancedDatabaseReportingEnabled()) {
@@ -329,7 +329,7 @@ function patchServer(server, api) {
           skipFrames: SKIP_FRAMES
         };
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
-          if (!rootSpan) {
+          if (rootSpan.type !== api.spanTypes.ROOT) {
             return serverMethod.call(that, stream, callback);
           }
           if (api.enhancedDatabaseReportingEnabled()) {
@@ -386,7 +386,7 @@ function patchServer(server, api) {
           skipFrames: SKIP_FRAMES
         };
         return api.runInRootSpan(rootSpanOptions, function(rootSpan) {
-          if (!rootSpan) {
+          if (rootSpan.type !== api.spanTypes.ROOT) {
             return serverMethod.call(that, stream);
           }
           if (api.enhancedDatabaseReportingEnabled()) {

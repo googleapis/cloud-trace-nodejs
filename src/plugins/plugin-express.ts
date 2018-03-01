@@ -43,13 +43,13 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.TraceAgent) {
     };
     api.runInRootSpan(options, (rootSpan) => {
       // Set response trace context.
-      const responseTraceContext =
-          api.getResponseTraceContext(options.traceContext || null, !!rootSpan);
+      const responseTraceContext = api.getResponseTraceContext(
+          options.traceContext || null, rootSpan.type === api.spanTypes.ROOT);
       if (responseTraceContext) {
         res.set(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
 
-      if (!rootSpan) {
+      if (rootSpan.type !== api.spanTypes.ROOT) {
         next();
         return;
       }

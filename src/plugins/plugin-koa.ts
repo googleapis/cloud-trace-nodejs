@@ -61,14 +61,14 @@ function startSpanForRequest<T>(
   };
   return api.runInRootSpan(options, root => {
     // Set response trace context.
-    const responseTraceContext =
-        api.getResponseTraceContext(options.traceContext || null, !!root);
+    const responseTraceContext = api.getResponseTraceContext(
+        options.traceContext || null, root.type === api.spanTypes.ROOT);
     if (responseTraceContext) {
       res.setHeader(
           api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
     }
 
-    if (!root) {
+    if (root.type !== api.spanTypes.ROOT) {
       return getNext(false);
     }
 

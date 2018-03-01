@@ -99,7 +99,7 @@ function makeRequestTrace(
     }
 
     const span = api.createChildSpan({name: getSpanName(options)});
-    if (!span) {
+    if (span.type !== api.spanTypes.CHILD) {
       return request(options, callback);
     }
 
