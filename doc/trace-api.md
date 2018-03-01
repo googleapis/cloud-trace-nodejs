@@ -15,20 +15,28 @@ These functions provide the capability to create trace spans, add labels to them
 
 * `TraceApi#runInRootSpan(options, fn)`
   * `options`: [`TraceOptions`](#trace-span-options)
-  * `fn`: `function(?Span): any`
+  * `fn`: `function(Span): any`
   * Returns `any` (return value of `fn`)
-  * Attempts to create a root span and runs the given callback, passing it a `Span` object if the root span was successfully created. Otherwise, the given function is run with `null` as an argument. This may be for one of two reasons:
-    * The trace policy, as specified by the user-given configuration, disallows a root span from being created under the current circumstances.
-    * The trace agent is disabled, either because it wasn't started at all, started in disabled mode, or encountered an initialization error.
+  * Creates a root span and runs the given callback, passing it a `Span` object. In some instances, this `Span` object doesn't correspond to an actual trace span; this can be checked by consulting the value of `Span#type`:
+    * `TraceApi#spanTypes.ROOT`: This object corresponds to a real trace span.
+    * `TraceApi#spanTypes.UNTRACED`: There isn't a real trace span corresponding to this object, for one of the following reasons:
+      * The trace policy, as specified by the user-given configuration, disallows a root span from being created under the current circumstances.
+      * The trace agent is disabled, either because it wasn't started at all, started in disabled mode, or encountered an initialization error.
+      * The incoming request had headers that explicitly specified that this request shouldn't be traced.
+    * `TraceApi#spanTypes.UNCORRELATED`: `runInRootSpan` was called for a request that already has a root span. This likely indicates a programmer error, as nested root spans are not allowed.
   * **Note:** You must call `endSpan` on the span object provided as an argument for the span to be recorded.
 * `TraceApi#createChildSpan(options)`
   * `options`: [`TraceOptions`](#trace-span-options)
-  * Returns `?Span`
-  * Attempts to create a child span, and returns a `Span` object if this is successful. Otherwise, it returns `null`. This may be for one of several reasons:
-    * A root span wasn't created beforehand because an earlier call to `runInRootSpan` didn't generate one.
-    * A root span wasn't created beforehand because `runInRootSpan` was not called at all. This likely indicates a programmer error, because child spans should always be nested within a root span.
-    * A root span was created beforehand, but context was lost between then and now. This may also be a programmer error, because child spans should always be created within the context of a root span. See [`Context Propagation`](#context-propagation) for details on properly propagating root span context.
+  * Returns `Span`
+  * Creates a child `Span` object and returns it. In some instances, this `Span` object doesn't correspond to an actual trace span; this can be checked by consulting the value of `Span#type`:
+    * `TraceApi#spanTypes.CHILD`: This object corresponds to a real trace span.
+    * `TraceApi#spanTypes.UNTRACED`: There isn't a real trace span corresponding to this object, because this span's parent is also an `UNTRACED` (root) span.
+    * `TraceApi#spanTypes.UNCORRELATED`: There isn't a real trace span corresponding to this object, for one of the following reasons:
+      * A root span wasn't created beforehand because `runInRootSpan` was not called at all. This likely indicates a programmer error, because child spans should always be nested within a root span.
+      * A root span was created beforehand, but context was lost between then and now. This may also be a programmer error, because child spans should always be created within the context of a root span. See [`Context Propagation`](#context-propagation) for details on properly propagating root span context.
   * **Note:** You must call `endSpan` on the returned span object for the span to be recorded.
+* `TraceApi#spanTypes`
+  * An enumeration of the types of spans: `ROOT`, `CHILD`, `UNTRACED`, `UNCORRELATED`
 * `Span#addLabel(key, value)`
   * `key`: `string`
   * `value`: `any`
