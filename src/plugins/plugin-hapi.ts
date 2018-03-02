@@ -105,14 +105,13 @@ const plugin: PluginTypes.Plugin = [{
   file: '',
   versions: SUPPORTED_VERSIONS,
   patch: (hapi, api) => {
-    shimmer.wrap<typeof hapi.Server.prototype.connection>(
-        hapi.Server.prototype, 'connection', (connection) => {
-          return function connectionTrace(this: {}) {
-            const server: hapi_16.Server = connection.apply(this, arguments);
-            server.ext('onRequest', createMiddleware(api));
-            return server;
-          };
-        });
+    shimmer.wrap(hapi.Server.prototype, 'connection', (connection) => {
+      return function connectionTrace(this: {}) {
+        const server: hapi_16.Server = connection.apply(this, arguments);
+        server.ext('onRequest', createMiddleware(api));
+        return server;
+      };
+    });
   },
   unpatch: (hapi) => {
     shimmer.unwrap(hapi.Server.prototype, 'connection');

@@ -23,6 +23,8 @@ import {URL} from 'url';
 
 import {TraceAgent} from '../plugin-types';
 
+type Http2Module = typeof http2;
+
 // type of ClientHttp2Session#request()
 type Http2SessionRequestFunction =
     (this: http2.ClientHttp2Session, headers?: http2.OutgoingHttpHeaders,
@@ -132,41 +134,35 @@ function makeRequestTrace(
     // will not observe data read by explicitly calling `read` on the
     // request. We expect this to be very uncommon as it is not mentioned in
     // any of the official documentation.
-    shimmer.wrap(
-        stream, 'on',
-        function(
-            this: http2.ClientHttp2Stream,
-            on: (this: EventEmitter, eventName: {}, listener: Function) =>
-                EventEmitter) {
-          return function(
-              this: http2.ClientHttp2Stream, eventName: {}, cb: Function) {
-            if (eventName === 'data' && !listenerAttached) {
-              listenerAttached = true;
-              on.call(this, 'data', (chunk: Buffer|string) => {
-                numBytes += chunk.length;
-              });
-            }
-            return on.apply(this, arguments);
-          };
-        });
+    shimmer.wrap(stream, 'on', (on) => {
+      return function(
+          this: http2.ClientHttp2Stream, eventName: {}, cb: Function) {
+        if (eventName === 'data' && !listenerAttached) {
+          listenerAttached = true;
+          on.call(this, 'data', (chunk: Buffer|string) => {
+            numBytes += chunk.length;
+          });
+        }
+        return on.apply(this, arguments);
+      };
+    });
     return stream;
   };
 }
 
 function patchHttp2Session(
-    session: http2.Http2Session, authority: string|URL, api: TraceAgent): void {
+    session: http2.ClientHttp2Session, authority: string|URL,
+    api: TraceAgent): void {
   api.wrapEmitter(session);
   shimmer.wrap(
       session, 'request',
-      (request: Http2SessionRequestFunction) =>
-          makeRequestTrace(request, authority, api));
+      (request) => makeRequestTrace(request, authority, api));
 }
 
-function patchHttp2(h2: NodeJS.Module, api: TraceAgent): void {
+function patchHttp2(h2: Http2Module, api: TraceAgent): void {
   shimmer.wrap(
       h2, 'connect',
-      (connect: typeof http2.connect): typeof http2.connect => function(
-          this: NodeJS.Module, authority: string|URL) {
+      (connect) => function(this: Http2Module, authority: string|URL) {
         const session: http2.ClientHttp2Session =
             connect.apply(this, arguments);
         patchHttp2Session(session, authority, api);
@@ -174,7 +170,7 @@ function patchHttp2(h2: NodeJS.Module, api: TraceAgent): void {
       });
 }
 
-function unpatchHttp2(h2: NodeJS.Module) {
+function unpatchHttp2(h2: Http2Module) {
   shimmer.unwrap(h2, 'connect');
 }
 

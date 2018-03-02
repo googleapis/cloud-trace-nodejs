@@ -138,7 +138,7 @@ function createMiddleware2x(api: PluginTypes.TraceAgent): koa_2.Middleware {
 function patchUse<T>(
     koa: KoaModule<T>, api: PluginTypes.TraceAgent,
     createMiddlewareFunction: CreateMiddlewareFn<T>) {
-  shimmer.wrap<typeof koa.prototype.use>(koa.prototype, 'use', (use) => {
+  shimmer.wrap(koa.prototype, 'use', (use) => {
     return function useTrace(this: typeof koa.prototype&
                              PluginTypes.TraceAgentExtension):
         typeof koa.prototype {

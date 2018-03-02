@@ -16,6 +16,7 @@
 
 import * as asyncHook from 'async_hooks';
 import {Context, Func, Namespace as CLSNamespace} from 'continuation-local-storage';
+import {EventEmitter} from 'events';
 import * as shimmer from 'shimmer';
 
 const wrappedSymbol = Symbol('context_wrapped');
@@ -24,8 +25,8 @@ let current: Context = {};
 
 asyncHook.createHook({init, before, destroy}).enable();
 
-const EVENT_EMITTER_METHODS =
-    ['addListener', 'on', 'once', 'prependListener', 'prependOncelistener'];
+const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> =
+    ['addListener', 'on', 'once', 'prependListener', 'prependOnceListener'];
 
 class AsyncHooksNamespace implements CLSNamespace {
   get name(): string {
@@ -96,16 +97,13 @@ class AsyncHooksNamespace implements CLSNamespace {
   bindEmitter(ee: NodeJS.EventEmitter): void {
     const ns = this;
     EVENT_EMITTER_METHODS.forEach((method) => {
-      // TODO(kjin): Presumably also dependent on MS/TS-#15473.
-      // tslint:disable:no-any
-      if ((ee as any)[method]) {
+      if (ee[method]) {
         shimmer.wrap(ee, method, (oldMethod) => {
           return function(this: {}, event: string, cb: Func<void>) {
             return oldMethod.call(this, event, ns.bind(cb));
           };
         });
       }
-      // tslint:enable:no-any
     });
   }
 }

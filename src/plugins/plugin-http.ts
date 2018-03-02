@@ -123,7 +123,7 @@ function makeRequestTrace(
       // not observe data read by explicitly calling `read` on the request. We
       // expect this to be very uncommon as it is not mentioned in any of the
       // official documentation.
-      shimmer.wrap<typeof res.on>(res, 'on', (on) => {
+      shimmer.wrap(res, 'on', (on) => {
         return function on_trace(this: {}, eventName: string) {
           if (eventName === 'data' && !listenerAttached) {
             listenerAttached = true;
@@ -156,14 +156,14 @@ function makeRequestTrace(
 }
 
 function patchHttp(http: HttpModule, api: TraceAgent) {
-  shimmer.wrap<typeof request>(http, 'request', (request) => {
+  shimmer.wrap(http, 'request', (request) => {
     return makeRequestTrace('http:', request, api);
   });
 
   if (semver.satisfies(process.version, '>=8.0.0')) {
     // http.get in Node 8 calls the private copy of request rather than the one
     // we have patched on module.export, so patch get as well.
-    shimmer.wrap<typeof get>(http, 'get', () => {
+    shimmer.wrap(http, 'get', (): typeof http.get => {
       // Re-implement http.get. This needs to be done (instead of using
       // makeRequestTrace to patch it) because we need to set the trace
       // context header before the returned ClientRequest is ended.
@@ -188,7 +188,7 @@ function patchHttps(https: HttpsModule, api: TraceAgent) {
   shimmer.wrap(https, 'request', (request) => {
     return makeRequestTrace('https:', request, api);
   });
-  shimmer.wrap(https, 'get', function getWrap() {
+  shimmer.wrap(https, 'get', function getWrap(): typeof httpsModule.get {
     return function getTrace(options, callback) {
       const req = https.request(options, callback);
       req.end();
