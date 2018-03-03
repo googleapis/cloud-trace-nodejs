@@ -87,7 +87,7 @@
     "nyc": "^11.4.1",
     "once": "^1.4.0",
     "pify": "^3.0.0",
-    "proxyquire": "^1.4.0",
+    "proxyquire": "^2.0.0",
     "request": "^2.83.0",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.0",
