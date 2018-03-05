@@ -101,7 +101,7 @@
     "@google-cloud/common": "^0.15.1",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
-    "gcp-metadata": "^0.4.1",
+    "gcp-metadata": "^0.6.2",
     "is": "^3.2.0",
     "lodash.findindex": "^4.4.0",
     "lodash.isequal": "^4.0.0",
