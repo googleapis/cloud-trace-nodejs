@@ -52,3 +52,19 @@ export function assertSpanDuration(span: TraceSpan, bounds: [number, number]) {
               spanDuration} ms is not in the acceptable expected range of [${
               bounds[0]}, ${bounds[1]}] ms`);
     }
+
+export function plan(done: MochaDone, num: number): MochaDone {
+  return (err?: Error) => {
+    if (err) {
+      num = 0;
+      setImmediate(done, err);
+    } else {
+      num--;
+      if (num === 0) {
+        setImmediate(done);
+      } else if (num < 0) {
+        throw new Error('done called too many times');
+      }
+    }
+  };
+}

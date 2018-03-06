@@ -35,7 +35,7 @@ function unpatchRestify(restify: Restify5) {
 }
 
 function patchRestify(restify: Restify5, api: PluginTypes.TraceAgent) {
-  shimmer.wrap<CreateServerFn>(restify, 'createServer', createServerWrap);
+  shimmer.wrap(restify, 'createServer', createServerWrap);
 
   function createServerWrap(createServer: CreateServerFn): CreateServerFn {
     return function createServerTrace(this: {}) {

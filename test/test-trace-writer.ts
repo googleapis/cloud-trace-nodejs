@@ -92,6 +92,7 @@ describe('TraceWriter', function() {
     const numListenersBeforeTraceWriter = process.listeners('uncaughtException').length;
     traceWriter.create(fakeLogger, {
       projectId: '0',
+      serviceContext: {},
       onUncaughtException: 'ignore',
       forceNewAgent_: true
     } as createTraceWriterOptions);
