@@ -33,8 +33,7 @@ describe('test-trace-datastore', function() {
   });
 
   // This does a gcloud.datastore.get() request that makes a gRPC 'lookup' call.
-  // It attempts to authenticate using Google Auth by connecting to
-  // 'accounts.google.com:443/o/oauth2/token', but fails because of Nock.
+  // It attempts to authenticate using Google Auth, but fails because of Nock.
   // An auth error is returned, and a trace span for the gRPC call is created
   // with an error.
   it('should create gRPC spans', function(done) {
@@ -53,8 +52,6 @@ describe('test-trace-datastore', function() {
         endTransaction();
         assert(err);
         assert.strictEqual(err.code, 16); // 16 = Status.UNAUTHENTICATED
-        assert.notStrictEqual(
-            err.message.indexOf('accounts.google.com:443/o/oauth2/token'), -1);
         var trace = common.getMatchingSpan(grpcPredicate);
         assert(trace);
         assert.notStrictEqual(trace.labels.argument.indexOf(

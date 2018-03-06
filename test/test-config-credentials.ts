@@ -13,138 +13,125 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-import * as cls from '../src/cls';
+import * as assert from 'assert';
+import * as nock from 'nock';
+import {disableNetConnect, enableNetConnect} from 'nock';
+import * as path from 'path';
 
-var path = require('path');
-var assert = require('assert');
-var nock = require('nock');
-var common = require('./plugins/common'/*.js*/);
+import {oauth2, patchTraces} from './nocks';
+import * as trace from './trace';
+import {plan} from './utils';
 
-var queueSpans = function(n, agent) {
-  for (var i = 0; i < n; i++) {
-    common.runInTransaction(function(end) {
-      end();
+interface TestCredentials {
+  client_id?: string;
+  client_secret?: string;
+  refresh_token?: string;
+  private_key?: string;
+  type?: string;
+}
+
+function queueSpans(n: number) {
+  const traceApi = trace.get();
+  for (let i = 0; i < n; i++) {
+    traceApi.runInRootSpan({name: `trace-${i}`}, (rootSpan) => {
+      assert.ok(rootSpan);
+      rootSpan!.endSpan();
     });
   }
-};
+}
 
-describe('test-config-credentials', function() {
-  var savedProject;
+describe('Credentials Configuration', () => {
+  let savedProject: string|undefined;
 
-  before(function() {
+  before(() => {
     savedProject = process.env.GCLOUD_PROJECT;
     process.env.GCLOUD_PROJECT = '0';
+    trace.enableTraceWriter();
+    disableNetConnect();
   });
 
-  after(function() {
+  after(() => {
     process.env.GCLOUD_PROJECT = savedProject;
+    enableNetConnect();
   });
 
-  it('should use the keyFilename field of the config object', function(done) {
-    var credentials = require('./fixtures/gcloud-credentials.json');
-    var config = {
+  it('should use the keyFilename field of the config object', (done) => {
+    const progress = plan(done, 2);
+    const credentials: TestCredentials =
+        require('./fixtures/gcloud-credentials.json');
+    const config = {
       bufferSize: 2,
-      samplingRate: 0,
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
       forceNewAgent_: true
     };
-    var agent = require('../..').start(config);
-    nock.disableNetConnect();
-    var scope = nock('https://accounts.google.com')
-      .intercept('/o/oauth2/token', 'POST', function(body) {
-        assert.equal(body.client_id, credentials.client_id);
-        assert.equal(body.client_secret, credentials.client_secret);
-        assert.equal(body.refresh_token, credentials.refresh_token);
-        return true;
-      }).reply(200, {
-        refresh_token: 'hello',
-        access_token: 'goodbye',
-        expiry_date: new Date(9999, 1, 1)
-      });
-    // Since we have to get an auth token, this always gets intercepted second
-    nock('https://cloudtrace.googleapis.com')
-      .intercept('/v1/projects/0/traces', 'PATCH', function() {
-        scope.done();
-        setImmediate(done);
-        return true;
-      }).reply(200);
-    cls.getNamespace().run(function() {
-      queueSpans(2, agent);
+    const agent = trace.start(config);
+    const scope = oauth2<TestCredentials>((body) => {
+      assert.strictEqual(body.client_id, credentials.client_id);
+      assert.strictEqual(body.client_secret, credentials.client_secret);
+      assert.strictEqual(body.refresh_token, credentials.refresh_token);
+      progress();
+      return true;
     });
+    // Since we have to get an auth token, this always gets intercepted second
+    patchTraces('0', () => {
+      scope.done();
+      progress();
+      return true;
+    });
+    queueSpans(2);
   });
 
-  it('should use the credentials field of the config object', function(done) {
-    var config = {
-      bufferSize: 2,
-      samplingRate: 0,
-      credentials: require('./fixtures/gcloud-credentials.json'),
-      forceNewAgent_: true
-    };
-    var agent = require('../..').start(config);
-    nock.disableNetConnect();
-    var scope = nock('https://accounts.google.com')
-      .intercept('/o/oauth2/token', 'POST', function(body) {
-        assert.equal(body.client_id, config.credentials.client_id);
-        assert.equal(body.client_secret, config.credentials.client_secret);
-        assert.equal(body.refresh_token, config.credentials.refresh_token);
-        return true;
-      }).reply(200, {
-        refresh_token: 'hello',
-        access_token: 'goodbye',
-        expiry_date: new Date(9999, 1, 1)
-      });
-    // Since we have to get an auth token, this always gets intercepted second
-    nock('https://cloudtrace.googleapis.com')
-      .intercept('/v1/projects/0/traces', 'PATCH', function() {
-        scope.done();
-        setImmediate(done);
-        return true;
-      }).reply(200);
-    cls.getNamespace().run(function() {
-      queueSpans(2, agent);
+  it('should use the credentials field of the config object', (done) => {
+    const progress = plan(done, 2);
+    const credentials: TestCredentials =
+        require('./fixtures/gcloud-credentials.json');
+    const config = {bufferSize: 2, credentials, forceNewAgent_: true};
+    const agent = trace.start(config);
+    const scope = oauth2<TestCredentials>((body) => {
+      assert.strictEqual(body.client_id, credentials.client_id);
+      assert.strictEqual(body.client_secret, credentials.client_secret);
+      assert.strictEqual(body.refresh_token, credentials.refresh_token);
+      progress();
+      return true;
     });
+    // Since we have to get an auth token, this always gets intercepted second
+    patchTraces('0', () => {
+      scope.done();
+      progress();
+      return true;
+    });
+    queueSpans(2);
   });
 
-  it('should ignore keyFilename if credentials is provided', function(done) {
-    var correctCredentials = {
+  it('should ignore keyFilename if credentials is provided', (done) => {
+    const progress = plan(done, 2);
+    const correctCredentials: TestCredentials = {
       client_id: 'a',
       client_secret: 'b',
       refresh_token: 'c',
       type: 'authorized_user'
     };
-    var config = {
+    const config = {
       bufferSize: 2,
-      samplingRate: 0,
       credentials: correctCredentials,
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
       forceNewAgent_: true
     };
-    var agent = require('../..').start(config);
-    nock.disableNetConnect();
-    var scope = nock('https://accounts.google.com')
-      .intercept('/o/oauth2/token', 'POST', function(body) {
-        assert.equal(body.client_id, correctCredentials.client_id);
-        assert.equal(body.client_secret, correctCredentials.client_secret);
-        assert.equal(body.refresh_token, correctCredentials.refresh_token);
-        return true;
-      }).reply(200, {
-        refresh_token: 'hello',
-        access_token: 'goodbye',
-        expiry_date: new Date(9999, 1, 1)
-      });
-    // Since we have to get an auth token, this always gets intercepted second
-    nock('https://cloudtrace.googleapis.com')
-      .intercept('/v1/projects/0/traces', 'PATCH', function() {
-        scope.done();
-        setImmediate(done);
-        return true;
-      }).reply(200);
-    cls.getNamespace().run(function() {
-      queueSpans(2, agent);
+    const agent = trace.start(config);
+    const scope = oauth2<TestCredentials>((body) => {
+      assert.strictEqual(body.client_id, correctCredentials.client_id);
+      assert.strictEqual(body.client_secret, correctCredentials.client_secret);
+      assert.strictEqual(body.refresh_token, correctCredentials.refresh_token);
+      progress();
+      return true;
     });
+    // Since we have to get an auth token, this always gets intercepted second
+    patchTraces('0', () => {
+      scope.done();
+      progress();
+      return true;
+    });
+    queueSpans(2);
   });
 });
-
-export default {};
