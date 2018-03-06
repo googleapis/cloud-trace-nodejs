@@ -46,7 +46,6 @@ function randomSpanId() {
  */
 export abstract class BaseSpanData implements SpanData {
   readonly span: TraceSpan;
-  readonly trace: Trace;
   abstract readonly type: SpanDataType;
 
   /**
@@ -59,9 +58,8 @@ export abstract class BaseSpanData implements SpanData {
    *                   when collecting the stack trace.
    */
   constructor(
-      trace: Trace, spanName: string, parentSpanId: string,
+      readonly trace: Trace, spanName: string, parentSpanId: string,
       skipFrames: number) {
-    this.trace = trace;
     this.span = {
       name:
           traceUtil.truncate(spanName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT),
