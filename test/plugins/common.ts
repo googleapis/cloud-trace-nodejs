@@ -25,7 +25,7 @@ declare global {
 }
 
 import '../override-gcp-metadata';
-import * as cls from '../../src/cls';
+import { cls } from '../../src/cls';
 import { TraceAgent } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import * as TracingPolicy from '../../src/tracing-policy';
@@ -36,10 +36,25 @@ var semver = require('semver');
 var logger = require('@google-cloud/common').logger;
 var trace = require('../../..');
 if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CONTEXT) {
-  // Monkeypatch the monkeypatcher
+  // Monkeypatch Mocha's it() to create a fresh context with each test case.
   var oldIt = global.it;
   global.it = Object.assign(function it(title, fn) {
-    return oldIt.call(this, title, cls.createNamespace().bind(fn));
+    function wrappedFn() {
+      if (cls.exists()) {
+        return cls.get().runWithNewContext(() => fn.apply(this, arguments));
+      } else {
+        return fn.apply(this, arguments);
+      }
+    };
+    // Mocha uses a function's length property to determine whether the
+    // test case is async or not.
+    Object.defineProperty(wrappedFn, 'length', {
+      enumerable: false,
+      configurable: true,
+      writable: false,
+      value: fn.length
+    });
+    return oldIt.call(this, title, wrappedFn);
   }, oldIt);
 }
 
@@ -179,7 +194,7 @@ function avoidTraceWriterAuth() {
 }
 
 function hasContext() {
-  return !!cls.getRootContext();
+  return cls.get().getContext().type !== SpanDataType.UNCORRELATED;
 }
 
 module.exports = {

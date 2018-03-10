@@ -15,7 +15,7 @@
  */
 'use strict';
 
-import * as cls from '../../src/cls';
+import { cls } from '../../src/cls';
 import { Constants, SpanDataType } from '../../src/constants';
 import { TraceLabels } from '../../src/trace-labels';
 import * as TracingPolicy from '../../src/tracing-policy';
@@ -55,7 +55,7 @@ function checkServerMetadata(metadata) {
     assert.ok(/[a-f0-9]{32}\/[0-9]+;o=1/.test(traceContext));
     var parsedContext = util.parseContextFromHeader(traceContext);
     assert.ok(parsedContext);
-    var root = asBaseSpanData(cls.getRootContext() as SpanData);
+    var root = asBaseSpanData(cls.get().getContext() as SpanData);
     assert.strictEqual(root.span.parentSpanId, parsedContext!.spanId);
   }
 }
@@ -296,8 +296,8 @@ Object.keys(versions).forEach(function(version) {
         var result = oldRegister.call(this, n, h, s, d, m);
         var oldFunc = this.handlers[n].func;
         this.handlers[n].func = function() {
-          if (cls.getRootContext().type === SpanDataType.ROOT) {
-            cls.clearRootContext();
+          if (cls.get().getContext().type === SpanDataType.ROOT) {
+            cls.get().setContext({ type: SpanDataType.UNCORRELATED });
           }
           return oldFunc.apply(this, arguments);
         };
@@ -454,7 +454,7 @@ Object.keys(versions).forEach(function(version) {
     it('should support distributed trace context', function(done) {
       function makeLink(fn, meta, next) {
         return function() {
-          cls.clearRootContext();
+          cls.get().setContext({ type: SpanDataType.UNCORRELATED });
           common.runInTransaction(function(terminate) {
             fn(client, grpc, meta, function() {
               terminate();
@@ -519,7 +519,7 @@ Object.keys(versions).forEach(function(version) {
                 // Clear root context so the next call to runInTransaction
                 // doesn't think we are still in one.
                 // TODO: Maybe we should do this automatically upon root.endSpan
-                cls.clearRootContext();
+                cls.get().setContext({ type: SpanDataType.UNCORRELATED });
                 setImmediate(prevNext);
               }
             };

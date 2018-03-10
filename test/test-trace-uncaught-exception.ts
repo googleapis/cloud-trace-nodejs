@@ -16,7 +16,7 @@
 
 'use strict';
 
-import * as cls from '../src/cls';
+import { cls } from '../src/cls';
 
 var assert = require('assert');
 var nock = require('nock');
@@ -75,7 +75,7 @@ describe('tracewriter publishing', function() {
         onUncaughtException: 'flush'
       });
       common.avoidTraceWriterAuth();
-      cls.getNamespace().run(function() {
+      cls.get().runWithNewContext(function() {
         queueSpans(2, agent);
         buf = common.getTraces();
         throw new Error(':(');

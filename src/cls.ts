@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-import * as CLS from 'continuation-local-storage';
+import {Logger} from '@google-cloud/common';
+import {EventEmitter} from 'events';
 import * as semver from 'semver';
 
+import {AsyncHooksCLS} from './cls/async-hooks';
+import {AsyncListenerCLS} from './cls/async-listener';
+import {CLS, Func} from './cls/base';
+import {UniversalCLS} from './cls/universal';
 import {SpanDataType} from './constants';
 import {UNCORRELATED_SPAN, UNTRACED_SPAN} from './span-data';
 import {Trace, TraceSpan} from './trace';
+import {Singleton} from './util';
 
 export interface RealRootContext {
   readonly span: TraceSpan;
@@ -43,78 +49,110 @@ export interface PhantomRootContext {
  */
 export type RootContext = RealRootContext|PhantomRootContext;
 
-export type Namespace = CLS.Namespace;
-export type Func<T> = CLS.Func<T>;
+const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 
-const useAsyncHooks: boolean = semver.satisfies(process.version, '>=8') &&
-    !!process.env.GCLOUD_TRACE_NEW_CONTEXT;
-
-const cls: typeof CLS =
-    useAsyncHooks ? require('./cls-ah') : require('continuation-local-storage');
-
-const TRACE_NAMESPACE = 'com.google.cloud.trace';
+export interface TraceCLSConfig { mechanism: 'async-listener'|'async-hooks'; }
 
 /**
- * Stack traces are captured when a root span is started. Because the stack
- * trace height varies on the context propagation mechanism, to keep published
- * stack traces uniform we need to remove the top-most frames when using the
- * c-l-s module. Keep track of this number here.
+ * An implementation of continuation-local storage for the Trace Agent.
+ * In addition to the underlying API, there is a guarantee that when an instance
+ * of this class is disabled, all context-manipulation methods will either be
+ * no-ops or pass-throughs.
  */
-export const ROOT_SPAN_STACK_OFFSET = useAsyncHooks ? 0 : 2;
+export class TraceCLS implements CLS<RootContext> {
+  private currentCLS: CLS<RootContext>;
+  private spareCLS: CLS<RootContext>;
+  private readonly logger: Logger;
+  private enabled = false;
 
-export function createNamespace(): CLS.Namespace {
-  return cls.createNamespace(TRACE_NAMESPACE);
-}
+  /**
+   * Stack traces are captured when a root span is started. Because the stack
+   * trace height varies on the context propagation mechanism, to keep published
+   * stack traces uniform we need to remove the top-most frames when using the
+   * c-l-s module. Keep track of this number here.
+   */
+  readonly rootSpanStackOffset: number;
 
-export function destroyNamespace(): void {
-  cls.destroyNamespace(TRACE_NAMESPACE);
-}
+  constructor(logger: Logger, config: TraceCLSConfig) {
+    this.logger = logger;
+    const uncorrelated: RootContext = {type: SpanDataType.UNCORRELATED};
+    const untraced: RootContext = {type: SpanDataType.UNTRACED};
+    const useAH = config.mechanism === 'async-hooks' && asyncHooksAvailable;
+    if (useAH) {
+      this.spareCLS = new AsyncHooksCLS(uncorrelated);
+      this.rootSpanStackOffset = 4;
+      this.logger.info(
+          'TraceCLS#constructor: Created [async-hooks] CLS instance.');
+    } else {
+      if (config.mechanism !== 'async-listener') {
+        if (config.mechanism === 'async-hooks') {
+          this.logger.warn(
+              'TraceCLS#constructor: [async-hooks]-based context',
+              `propagation is not available in Node ${process.version}.`,
+              'Falling back to using async-listener.');
+        } else {
+          this.logger.warn(
+              'TraceCLS#constructor: The specified CLS mechanism',
+              `[${config.mechanism}] was not recognized.`,
+              'Falling back to using async-listener.');
+        }
+      }
+      this.spareCLS = new AsyncListenerCLS(uncorrelated);
+      this.rootSpanStackOffset = 8;
+      this.logger.info(
+          'TraceCLS#constructor: Created [async-listener] CLS instance.');
+    }
+    this.currentCLS = new UniversalCLS(untraced);
+    this.currentCLS.enable();
+  }
 
-export function getNamespace(): CLS.Namespace {
-  return cls.getNamespace(TRACE_NAMESPACE);
-}
+  isEnabled(): boolean {
+    return this.enabled;
+  }
 
-/**
- * Get a RootContext object from continuation-local storage.
- */
-export function getRootContext(): RootContext {
-  // First getNamespace check is necessary in case any
-  // patched closures escaped before the agent was stopped and the
-  // namespace was destroyed.
-  const namespace = getNamespace();
-  if (namespace) {
-    // A few things can be going on here:
-    // 1. setRootContext has been called earlier to store a real root span
-    //    in continuation-local storage, so retrieve it.
-    // 2. setRootContext has been called earlier to explicitly specify that
-    //    the request corresponding to this continuation is _not_ being traced
-    //    (by being passed UNTRACED_SPAN), so retrieve it as well.
-    // 3. setRootContext has _never_ been called in this continuation. This
-    //    indicates that context was lost, and namespace.get('root') will
-    //    return null. Therefore, explicitly return UNCORRELATED_SPAN to
-    //    indicate that context was lost.
-    return namespace.get('root') || UNCORRELATED_SPAN;
-  } else {
-    // No namespace indicates that the Trace Agent is disabled. This is a
-    // special case where _all_ requests are explicitly not being traced,
-    // so return UNTRACED_SPAN to be consistent with that.
-    return UNTRACED_SPAN;
+  private rotate(): void {
+    this.currentCLS.disable();
+    const temp = this.currentCLS;
+    this.currentCLS = this.spareCLS;
+    this.spareCLS = temp;
+    this.currentCLS.enable();
+  }
+
+  enable(): void {
+    if (!this.enabled) {
+      this.logger.info('TraceCLS#enable: Enabling CLS.');
+      this.enabled = true;
+      this.rotate();
+    }
+  }
+
+  disable(): void {
+    if (this.enabled) {
+      this.logger.info('TraceCLS#disable: Disabling CLS.');
+      this.enabled = false;
+      this.rotate();
+    }
+  }
+
+  getContext(): RootContext {
+    return this.currentCLS.getContext();
+  }
+
+  setContext(value: RootContext): void {
+    this.currentCLS.setContext(value);
+  }
+
+  runWithNewContext<T>(fn: Func<T>): T {
+    return this.currentCLS.runWithNewContext(fn);
+  }
+
+  bindWithCurrentContext<T>(fn: Func<T>): Func<T> {
+    return this.currentCLS.bindWithCurrentContext(fn);
+  }
+
+  patchEmitterToPropagateContext<T>(ee: EventEmitter): void {
+    this.currentCLS.patchEmitterToPropagateContext(ee);
   }
 }
 
-/**
- * Store a RootContext object in continuation-local storage.
- * @param rootContext Either a root span or UNTRACED_SPAN. It doesn't make
- * sense to pass UNCORRELATED_SPAN, which is a value specifically reserved for
- * when getRootContext is known to give an unusable value.
- */
-export function setRootContext(rootContext: RootContext): void {
-  getNamespace().set('root', rootContext);
-}
-
-// This is only used in tests (and is temporary), so it doesn't apply in the
-// comment in getRootContext about the possible values of namespace.get('root').
-// It's functionally identical to setRootContext(null).
-export function clearRootContext(): void {
-  setRootContext(UNCORRELATED_SPAN);
-}
+export const cls = new Singleton(TraceCLS);

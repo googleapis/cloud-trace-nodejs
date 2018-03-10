@@ -81,6 +81,10 @@ export class Singleton<T, Config> {
     }
     return this[kSingleton]!;
   }
+
+  exists(): boolean {
+    return !!this[kSingleton];
+  }
 }
 
 /**

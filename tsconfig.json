@@ -8,6 +8,7 @@
   },
   "include": [
     "src/*.ts",
+    "src/cls/*.ts",
     "src/plugins/plugin-connect.ts",
     "src/plugins/plugin-express.ts",
     "src/plugins/plugin-hapi.ts",
@@ -22,6 +23,7 @@
     "test/plugins/test-trace-http2.ts",
     "test/logger.ts",
     "test/nocks.ts",
+    "test/test-cls.ts",
     "test/test-config-plugins.ts",
     "test/test-config-credentials.ts",
     "test/test-modules-loaded-before-agent.ts",
