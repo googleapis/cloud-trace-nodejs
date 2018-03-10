@@ -83,7 +83,7 @@ function startSpanFromArguments(api, cmd, args, cb, send_command) {
     }
   }
   var span = setupSpan(api, cmd, args, 1);
-  if (span.type !== api.spanTypes.CHILD) {
+  if (!api.isRealSpan(span)) {
     return send_command(cmd, args, cb);
   }
   return send_command(cmd, args, wrapCallback(api, span, cb));
@@ -96,7 +96,7 @@ function createInternalSendCommandWrap(api) {
         // New versions of redis (2.4+) use a single options object instead
         // of separate named arguments.
         var span = setupSpan(api, cmd.command, cmd.args, 0);
-        if (span.type !== api.spanTypes.CHILD) {
+        if (!api.isRealSpan(span)) {
           return internal_send_command.call(this, cmd);
         }
         cmd.callback = wrapCallback(api, span, cmd.callback);

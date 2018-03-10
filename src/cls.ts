@@ -21,6 +21,16 @@ import {SpanDataType} from './constants';
 import {UNCORRELATED_SPAN, UNTRACED_SPAN} from './span-data';
 import {Trace, TraceSpan} from './trace';
 
+export interface RealRootContext {
+  readonly span: TraceSpan;
+  readonly trace: Trace;
+  readonly type: SpanDataType.ROOT;
+}
+
+export interface PhantomRootContext {
+  readonly type: SpanDataType.UNCORRELATED|SpanDataType.UNTRACED;
+}
+
 /**
  * This type represents the minimal information to store in continuation-local
  * storage for a request. We store either a root span corresponding to the
@@ -31,13 +41,7 @@ import {Trace, TraceSpan} from './trace';
  * When we store an actual root span, the only information we need is its
  * current trace/span fields.
  */
-export type RootContext = ({
-  readonly span: TraceSpan;
-  readonly trace: Trace;
-  readonly type: SpanDataType.ROOT;
-}|{
-  readonly type: SpanDataType.UNCORRELATED|SpanDataType.UNTRACED;
-});
+export type RootContext = RealRootContext|PhantomRootContext;
 
 export type Namespace = CLS.Namespace;
 export type Func<T> = CLS.Func<T>;

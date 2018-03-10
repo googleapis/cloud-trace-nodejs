@@ -231,6 +231,10 @@ export class TraceAgent implements TraceAgentInterface {
     }
   }
 
+  isRealSpan(span: SpanData): boolean {
+    return span.type === SpanDataType.ROOT || span.type === SpanDataType.CHILD;
+  }
+
   getResponseTraceContext(incomingTraceContext: string|null, isTraced: boolean):
       string {
     if (!this.isActive() || !incomingTraceContext) {

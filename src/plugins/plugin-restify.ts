@@ -58,13 +58,13 @@ function patchRestify(restify: Restify5, api: PluginTypes.TraceAgent) {
     api.runInRootSpan(options, rootSpan => {
       // Set response trace context.
       const responseTraceContext = api.getResponseTraceContext(
-          options.traceContext, rootSpan.type === api.spanTypes.ROOT);
+          options.traceContext, api.isRealSpan(rootSpan));
       if (responseTraceContext) {
         res.header(
             api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
 
-      if (rootSpan.type !== api.spanTypes.ROOT) {
+      if (!api.isRealSpan(rootSpan)) {
         return next();
       }
 

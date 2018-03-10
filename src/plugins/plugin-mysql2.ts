@@ -26,7 +26,7 @@ function createCreateQueryWrap(api) {
         name: 'mysql-query'
       });
       var query = createQuery.apply(this, arguments);
-      if (span.type !== api.spanTypes.CHILD) {
+      if (!api.isRealSpan(span)) {
         return query;
       }
       if (api.enhancedDatabaseReportingEnabled()) {

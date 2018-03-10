@@ -30,7 +30,7 @@ export interface TraceSpan {
   kind: SpanKind;
   name: string;
   spanId: string;
-  parentSpanId: string;
+  parentSpanId?: string;
 }
 
 export interface Trace {

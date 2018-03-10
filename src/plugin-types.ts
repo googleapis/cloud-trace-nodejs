@@ -55,8 +55,6 @@ export interface SpanData {
   endSpan(): void;
 }
 
-// export type SpanData = RootSpanData|ChildSpanData;
-
 /**
  * An interface that describes the available options for creating a span in
  * general.
@@ -96,18 +94,19 @@ export interface TraceAgent {
 
   /**
    * Runs the given function in a root span corresponding to an incoming
-   * request, possibly passing it an object that exposes an interface for adding
+   * request, passing it an object that exposes an interface for adding
    * labels and closing the span.
    * @param options An object that specifies options for how the root
-   * span is created and propogated.
+   * span is created and propagated.
    * @param fn A function that will be called exactly
    * once. If the incoming request should be traced, a root span will be
-   * created, and this function will be called with a RootSpan object exposing
+   * created, and this function will be called with a SpanData object exposing
    * functions operating on the root span; otherwise, it will be called with
-   * null as an argument.
+   * a phantom SpanData object.
    * @returns The return value of calling fn.
    */
   runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData) => T): T;
+
   /**
    * Returns a unique identifier for the currently active context. This can be
    * used to uniquely identify the current root span. If there is no current,
@@ -117,6 +116,7 @@ export interface TraceAgent {
    * @returns an id for the current context, or null if there is none
    */
   getCurrentContextId(): string|null;
+
   /**
    * Returns the projectId that was either configured or auto-discovered by the
    * TraceWriter. Note that the auto-discovery is done asynchronously, so this
@@ -125,13 +125,19 @@ export interface TraceAgent {
   getWriterProjectId(): string|null;
 
   /**
-   * Creates and returns a new ChildSpan object nested within the root span. If
-   * there is no current RootSpan object, this function returns null.
+   * Creates and returns a new SpanData object nested within the root span.
+   * If there is no root span, a phantom SpanData object will be
+   * returned instead.
    * @param options An object that specifies options for how the child
    * span is created and propagated.
-   * @returns A new SpanData object, or null if there is no active root span.
+   * @returns A new SpanData object.
    */
   createChildSpan(options: SpanOptions): SpanData;
+
+  /**
+   * Returns whether a given span is real or not by checking its SpanDataType.
+   */
+  isRealSpan(span: SpanData): boolean;
 
   /**
    * Generates a stringified trace context that should be set as the trace

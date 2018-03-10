@@ -141,27 +141,29 @@ export class ChildSpanData extends BaseSpanData {
 }
 
 // Helper function to generate static virtual trace spans.
-const createDummySpanData =
-    <T extends SpanDataType>(spanType: T): SpanData&{readonly type: T} => {
-      return Object.freeze({
-        type: spanType,
+function createPhantomSpanData<T extends SpanDataType>(spanType: T): SpanData&
+    {readonly type: T} {
+  return Object.freeze(Object.assign(
+      {
         getTraceContext() {
           return '';
         },
         // tslint:disable-next-line:no-any
         addLabel(key: string, value: any) {},
         endSpan() {}
-      } as SpanData & {readonly type: T});
-    };
+      },
+      {type: spanType}));
+}
 
 /**
  * A virtual trace span that indicates that a real trace span couldn't be
  * created because context was lost.
  */
-export const UNCORRELATED_SPAN = createDummySpanData(SpanDataType.UNCORRELATED);
+export const UNCORRELATED_SPAN =
+    createPhantomSpanData(SpanDataType.UNCORRELATED);
 
 /**
  * A virtual trace span that indicates that a real trace span couldn't be
  * created because it was disallowed by user configuration.
  */
-export const UNTRACED_SPAN = createDummySpanData(SpanDataType.UNTRACED);
+export const UNTRACED_SPAN = createPhantomSpanData(SpanDataType.UNTRACED);
