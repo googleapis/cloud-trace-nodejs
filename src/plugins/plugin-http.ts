@@ -156,6 +156,28 @@ function makeRequestTrace(
 }
 
 function patchHttp(http: HttpModule, api: TraceAgent) {
+  shimmer.wrap(http.Server.prototype, 'listen', original => {
+    return function(this: null) {
+      const start = process.hrtime();
+      const onEnd = () => {
+        const duration = process.hrtime(start);
+        console.log(duration);
+      };
+      const args: Array<Function|number> =
+          Array.prototype.slice.call(arguments, 0);
+      if (args.some(a => typeof a === 'function')) {
+        const cb = args.pop() as Function;  // it's the last argument
+        args.push(() => {
+          onEnd();
+          cb();
+        });
+      } else {
+        args.push(onEnd);
+      }
+      return original.apply(this, args);
+    };
+  });
+
   shimmer.wrap(http, 'request', (request) => {
     return makeRequestTrace('http:', request, api);
   });
