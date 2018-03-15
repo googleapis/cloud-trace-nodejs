@@ -241,28 +241,37 @@ export function activate(logger: Logger, config: PluginLoaderConfig): void {
             this: any, request: string, parent?: NodeModule,
             isMain?: boolean): any {
           // tslint:enable:no-any
+          const start = process.hrtime();
+          let result;
           const instrumentation = plugins[request];
           if (instrumentation) {
             const moduleRoot = util.findModulePath(request, parent);
             const moduleVersion =
                 util.findModuleVersion(moduleRoot, originalModuleLoad);
             if (moduleAlreadyPatched(instrumentation, moduleRoot)) {
-              return originalModuleLoad.apply(this, arguments);
-            }
-            logger.info('Patching ' + request + ' at version ' + moduleVersion);
-            const patchedRoot =
-                loadAndPatch(instrumentation, moduleRoot, moduleVersion);
-            if (patchedRoot !== null) {
-              return patchedRoot;
+              result = originalModuleLoad.apply(this, arguments);
+            } else {
+              logger.info(
+                  'Patching ' + request + ' at version ' + moduleVersion);
+              const patchedRoot =
+                  loadAndPatch(instrumentation, moduleRoot, moduleVersion);
+              if (patchedRoot !== null) {
+                result = patchedRoot;
+              }
             }
           } else {
             const modulePath =
                 Module._resolveFilename(request, parent).replace('/', path.sep);
             if (intercepts[modulePath]) {
-              return intercepts[modulePath].interceptedValue;
+              result = intercepts[modulePath].interceptedValue;
             }
           }
-          return originalModuleLoad.apply(this, arguments);
+          if (!result) {
+            result = originalModuleLoad.apply(this, arguments);
+          }
+          const duration = process.hrtime(start);
+          console.log(request, duration);
+          return result;
         };
       });
 }
