@@ -109,6 +109,9 @@ async function run(steps: string[]) {
           });
           break;
         case 'run-system-tests':
+          await spawnP(
+            'npm', ['install'], { cwd: 'system-test' }
+          );
           if (CI_PULL_REQUEST && !(await existsP('node-team-test-d0b0be11c23d.json'))) {
             console.log('> Not running system tests in PRs');
           } else {
