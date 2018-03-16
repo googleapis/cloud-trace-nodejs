@@ -134,7 +134,7 @@ describe('express + datastore', () => {
       const trace = traces[0];
       if (usingAsyncHooks) {
         assert.equal(trace.spans.length, 3, 'should be 3 spans: parent, child, auth');
-        assert.equal(trace.spans[2].name, 'accounts.google.com');
+        assert.equal(trace.spans[2].name, 'www.googleapis.com');
       } else {
         assert.equal(trace.spans.length, 2, 'should be 2 spans: parent, child');
       }

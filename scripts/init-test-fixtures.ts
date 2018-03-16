@@ -1,13 +1,17 @@
 import * as path from 'path';
 import { BUILD_DIRECTORY, globP, statP, ncpP, spawnP, readFileP, writeFileP, mkdirP } from './utils';
 
-export async function initTestFixtures() {
+export async function initTestFixtures(installPlugins: boolean) {
   // Copy fixtures to build directory
   const fixtureDirectories = await globP('./test/**/fixtures');
   await Promise.all(fixtureDirectories.map(async (fixtureDirectory) => {
     const newLocation = `${BUILD_DIRECTORY}/${path.relative('.', fixtureDirectory)}`;
     await ncpP(fixtureDirectory, newLocation);
   }));
+
+  if (!installPlugins) {
+    return;
+  }
 
   // Run `npm install` for package fixtures
   const packageFixtures = JSON.parse(await readFileP('./test/fixtures/plugin-fixtures.json', 'utf8') as string);

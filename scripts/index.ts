@@ -7,6 +7,12 @@
  */
 
 const [, , ...steps] = process.argv;
+const {
+  CI_PULL_REQUEST,
+  TRACE_TEST_EXCLUDE_INTEGRATION,
+  TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY,
+  TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV
+} = process.env;
 
 import { checkInstall } from './check-install';
 import { compile } from './compile';
@@ -19,6 +25,17 @@ import { BUILD_DIRECTORY, existsP, spawnP } from './utils';
 
 // The identifying string in the service account credentials file path.
 const keyID = 'de480e4f9023';
+
+// Globs to exclude when running unit tests only.
+const unitTestExcludeGlobs: string[] = TRACE_TEST_EXCLUDE_INTEGRATION ? [
+  `${BUILD_DIRECTORY}/test/plugins/test-*`,
+  `${BUILD_DIRECTORY}/test/test-agent-stopped.js`,
+  `${BUILD_DIRECTORY}/test/test-grpc-context.js`,
+  `${BUILD_DIRECTORY}/test/test-mysql-pool.js`,
+  `${BUILD_DIRECTORY}/test/test-plugins-*`,
+  `${BUILD_DIRECTORY}/test/test-trace-web-frameworks.js`,
+  `${BUILD_DIRECTORY}/test/test-unpatch.js`
+] : [];
 
 /**
  * Sequentially runs a list of commands.
@@ -55,11 +72,8 @@ async function run(steps: string[]) {
           ].join('\n'));
           break;
         case 'decrypt-service-account-credentials':
-          const {
-            TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY: key,
-            TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV: iv,
-          } = process.env;
-        
+          const key = TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY;
+          const iv = TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV;
           if (!key || !iv) {
             console.log('> Environment insufficient to decrypt service account credentials');
             break;
@@ -68,14 +82,15 @@ async function run(steps: string[]) {
           await decryptCredentials({ key, iv }, `node-team-test-${keyID}.json`);
           break;
         case 'init-test-fixtures':
-          await initTestFixtures();
+          await initTestFixtures(!TRACE_TEST_EXCLUDE_INTEGRATION);
           break;
         case 'run-unit-tests':
           await runTests({
-            globs: [
+            includeGlobs: [
               `${BUILD_DIRECTORY}/test/test-*.js`,
               `${BUILD_DIRECTORY}/test/plugins/test-*.js`
             ],
+            excludeGlobs: unitTestExcludeGlobs,
             rootDir: BUILD_DIRECTORY,
             coverage: false,
             timeout: 4000
@@ -83,21 +98,25 @@ async function run(steps: string[]) {
           break;
         case 'run-unit-tests-with-coverage':
           await runTests({
-            globs: [
+            includeGlobs: [
               `${BUILD_DIRECTORY}/test/test-*.js`,
               `${BUILD_DIRECTORY}/test/plugins/test-*.js`
             ],
+            excludeGlobs: unitTestExcludeGlobs,
             rootDir: BUILD_DIRECTORY,
             coverage: true,
             timeout: 4000
           });
           break;
         case 'run-system-tests':
-          if (process.env.CI_PULL_REQUEST && !(await existsP('node-team-test-d0b0be11c23d.json'))) {
+          await spawnP(
+            'npm', ['install'], { cwd: 'system-test' }
+          );
+          if (CI_PULL_REQUEST && !(await existsP('node-team-test-d0b0be11c23d.json'))) {
             console.log('> Not running system tests in PRs');
           } else {
             await runTests({
-              globs: [
+              includeGlobs: [
                 `system-test/*.js`,
               ],
               rootDir: '.',

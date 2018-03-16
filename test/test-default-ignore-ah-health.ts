@@ -28,7 +28,7 @@ describe('test-default-ignore-ah-health', function() {
       projectId: '0',
       samplingRate: 0
     });
-    express = require('./plugins/fixtures/express4');
+    express = require('express');
   });
 
   it('should ignore /_ah/health traces by default', function(done) {
