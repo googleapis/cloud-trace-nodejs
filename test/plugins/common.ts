@@ -29,6 +29,7 @@ import * as cls from '../../src/cls';
 import { TraceAgent } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import * as TracingPolicy from '../../src/tracing-policy';
+import { SpanDataType } from '../../src/constants';
 
 var semver = require('semver');
 
@@ -143,7 +144,8 @@ function assertDurationCorrect(expectedDuration, predicate) {
 function runInTransaction(fn) {
   testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
     fn(function() {
-      notNull(span).endSpan();
+      assert.strictEqual(span.type, SpanDataType.ROOT);
+      span.endSpan();
     });
   });
 }
@@ -156,13 +158,14 @@ function createChildSpan(cb, duration) {
   var span = testTraceAgent.createChildSpan({ name: 'inner' });
   assert.ok(span);
   var t = setTimeout(function() {
-    notNull(span).endSpan();
+    assert.strictEqual(span.type, SpanDataType.CHILD);
     if (cb) {
       cb();
     }
   }, duration);
   return function() {
-    notNull(span).endSpan();
+    assert.strictEqual(span.type, SpanDataType.CHILD);
+    span.endSpan();
     clearTimeout(t);
   };
 }
@@ -177,16 +180,6 @@ function avoidTraceWriterAuth() {
 
 function hasContext() {
   return !!cls.getRootContext();
-}
-
-/**
- * Converts a nullable object to one that's guaranteed to be non-null.
- * Throws an assertion error if it is null.
- * @param arg The object to check.
- */
-function notNull<T>(arg: T | null) : T {
-  assert.notStrictEqual(arg, null);
-  return arg as T;
 }
 
 module.exports = {
@@ -208,7 +201,6 @@ module.exports = {
   serverPort: SERVER_PORT,
   serverKey: SERVER_KEY,
   serverCert: SERVER_CERT,
-  notNull
 };
 
 export default {};

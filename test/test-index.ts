@@ -18,6 +18,7 @@
 
 import './override-gcp-metadata';
 import { TraceAgent } from '../src/trace-api';
+import { SpanDataType } from '../src/constants';
 
 var assert = require('assert');
 var nock = require('nock');
@@ -31,14 +32,14 @@ describe('index.js', function() {
     assert.ok(!disabledAgent.isActive()); // ensure it's disabled first
     let ranInRootSpan = false;
     disabledAgent.runInRootSpan({ name: '' }, (span) => {
-      assert.strictEqual(span, null);
+      assert.strictEqual(span.type, SpanDataType.UNTRACED);
       ranInRootSpan = true;
     });
     assert.ok(ranInRootSpan);
     assert.strictEqual(disabledAgent.enhancedDatabaseReportingEnabled(), false);
     assert.strictEqual(disabledAgent.getCurrentContextId(), null);
     assert.strictEqual(disabledAgent.getWriterProjectId(), null);
-    assert.strictEqual(disabledAgent.createChildSpan({ name: '' }), null);
+    assert.strictEqual(disabledAgent.createChildSpan({ name: '' }).type, SpanDataType.UNTRACED);
     assert.strictEqual(disabledAgent.getResponseTraceContext('', false), '');
     const fn = () => {};
     assert.strictEqual(disabledAgent.wrap(fn), fn);

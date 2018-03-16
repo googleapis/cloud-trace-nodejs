@@ -16,7 +16,7 @@
 
 // tslint:disable:no-any
 
-import {Constants} from './constants';
+import {Constants, SpanDataType} from './constants';
 import {TraceLabels} from './trace-labels';
 
 export type Func<T> = (...args: any[]) => T;
@@ -29,7 +29,8 @@ export interface TraceAgentExtension { _google_trace_patched: boolean; }
  */
 export interface SpanData {
   /**
-   * Gets the current trace context serialized as a string.
+   * Gets the current trace context serialized as a string, or an empty string
+   * if it can't be generated.
    * @return The stringified trace context.
    */
   getTraceContext(): string;
@@ -42,6 +43,11 @@ export interface SpanData {
    * @param value The label's value.
    */
   addLabel(key: string, value: any): void;
+
+  /**
+   * The current span type. See `SpanDataType` for more information.
+   */
+  readonly type: SpanDataType;
 
   /**
    * Ends the span. This method should only be called once.
@@ -88,18 +94,19 @@ export interface TraceAgent {
 
   /**
    * Runs the given function in a root span corresponding to an incoming
-   * request, possibly passing it an object that exposes an interface for adding
+   * request, passing it an object that exposes an interface for adding
    * labels and closing the span.
    * @param options An object that specifies options for how the root
-   * span is created and propogated.
+   * span is created and propagated.
    * @param fn A function that will be called exactly
    * once. If the incoming request should be traced, a root span will be
-   * created, and this function will be called with a RootSpan object exposing
+   * created, and this function will be called with a SpanData object exposing
    * functions operating on the root span; otherwise, it will be called with
-   * null as an argument.
+   * a phantom SpanData object.
    * @returns The return value of calling fn.
    */
-  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData|null) => T): T;
+  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData) => T): T;
+
   /**
    * Returns a unique identifier for the currently active context. This can be
    * used to uniquely identify the current root span. If there is no current,
@@ -109,6 +116,7 @@ export interface TraceAgent {
    * @returns an id for the current context, or null if there is none
    */
   getCurrentContextId(): string|null;
+
   /**
    * Returns the projectId that was either configured or auto-discovered by the
    * TraceWriter. Note that the auto-discovery is done asynchronously, so this
@@ -117,13 +125,19 @@ export interface TraceAgent {
   getWriterProjectId(): string|null;
 
   /**
-   * Creates and returns a new ChildSpan object nested within the root span. If
-   * there is no current RootSpan object, this function returns null.
+   * Creates and returns a new SpanData object nested within the root span.
+   * If there is no root span, a phantom SpanData object will be
+   * returned instead.
    * @param options An object that specifies options for how the child
    * span is created and propagated.
-   * @returns A new SpanData object, or null if there is no active root span.
+   * @returns A new SpanData object.
    */
-  createChildSpan(options: SpanOptions): SpanData|null;
+  createChildSpan(options: SpanOptions): SpanData;
+
+  /**
+   * Returns whether a given span is real or not by checking its SpanDataType.
+   */
+  isRealSpan(span: SpanData): boolean;
 
   /**
    * Generates a stringified trace context that should be set as the trace
@@ -162,6 +176,7 @@ export interface TraceAgent {
 
   readonly constants: typeof Constants;
   readonly labels: typeof TraceLabels;
+  readonly spanTypes: typeof SpanDataType;
 }
 
 export interface Patch<T> {

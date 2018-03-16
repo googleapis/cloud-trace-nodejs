@@ -30,7 +30,7 @@ module.exports = [
             name: 'pg-query'
           });
           var pgQuery = query.apply(this, arguments);
-          if (!span) {
+          if (!api.isRealSpan(span)) {
             return pgQuery;
           }
           if (api.enhancedDatabaseReportingEnabled()) {

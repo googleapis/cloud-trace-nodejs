@@ -22,6 +22,7 @@
     "test/test-trace-cluster.ts",
     "test/test-trace-web-frameworks.ts",
     "test/trace.ts",
+    "test/utils.ts",
     "test/web-frameworks/*.ts"
   ]
 }

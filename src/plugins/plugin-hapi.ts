@@ -49,14 +49,14 @@ function createMiddleware(api: PluginTypes.TraceAgent):
     };
     api.runInRootSpan(options, (root) => {
       // Set response trace context.
-      const responseTraceContext =
-          api.getResponseTraceContext(options.traceContext || null, !!root);
+      const responseTraceContext = api.getResponseTraceContext(
+          options.traceContext || null, api.isRealSpan(root));
       if (responseTraceContext) {
         res.setHeader(
             api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
       }
 
-      if (!root) {
+      if (!api.isRealSpan(root)) {
         return reply.continue();
       }
 

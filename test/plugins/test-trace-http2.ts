@@ -30,7 +30,7 @@ import * as stream from 'stream';
 
 import {Constants} from '../../src/constants';
 import {TraceLabels} from '../../src/trace-labels';
-import {TraceSpan} from '../../src/trace-span';
+import {TraceSpan} from '../../src/trace';
 
 describe('test-trace-http2', () => {
   if (semver.satisfies(process.version, '<8')) {

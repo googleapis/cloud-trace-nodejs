@@ -89,7 +89,7 @@ function makeRequestTrace(
 
     const requestLifecycleSpan =
         api.createChildSpan({name: getSpanName(authority)});
-    if (!requestLifecycleSpan) {
+    if (!api.isRealSpan(requestLifecycleSpan)) {
       return request.apply(this, arguments);
     }
     // Node sets the :method pseudo-header to GET if not set by client.
