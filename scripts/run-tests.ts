@@ -20,7 +20,7 @@ export async function runTests(options: Options) {
   const includedFiles = ([] as string[])
     .concat(...await Promise.all(includeGlobs.map(glob => globP(glob))));
   // Take the difference
-  const files = includedFiles.filter(i => !excludedFiles.some(e => e === i));
+  const files = includedFiles.filter(i => excludedFiles.indexOf(i) < 0);
   for (const file of files) {
     const moduleAndArgs = [
       ...coverage ? [
