@@ -15,16 +15,11 @@
  */
 'use strict';
 
-// Prereqs:
-// Start docker daemon
-//   ex) docker -d
-// Run a mongo image binding the mongo port
-//   ex) docker run -p 27017:27017 -d mongo
 var common = require('./plugins/common'/*.js*/);
 var assert = require('assert');
 var http = require('http');
 
-describe('express + mongo with trace options header + sampling', function() {
+describe('express + http with trace options header + sampling', function() {
   var agent;
   var express;
   before(function() {
@@ -32,7 +27,7 @@ describe('express + mongo with trace options header + sampling', function() {
       projectId: '0',
       samplingRate: 1
     });
-    express = require('./plugins/fixtures/express4');
+    express = require('express');
   });
 
   it('should trace when enabled', function(done) {

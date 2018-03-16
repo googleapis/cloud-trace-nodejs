@@ -30,7 +30,7 @@ describe('test-trace-cluster', () => {
   let express: typeof expressModule;
   before(() => {
     trace.start();
-    express = require('./plugins/fixtures/express4');
+    express = require('express');
     axios = require('axios');
   });
 
