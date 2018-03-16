@@ -35,21 +35,21 @@ export function projectId(reply: () => string) {
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/project/project-id')
       .once()
-      .reply(reply);
+      .reply(200, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function instanceId(reply: () => string) {
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/instance/id')
       .once()
-      .reply(reply);
+      .reply(200, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function hostname(reply: () => string) {
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/instance/hostname')
       .once()
-      .reply(reply);
+      .reply(200, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function patchTraces<T extends {} = {}>(
