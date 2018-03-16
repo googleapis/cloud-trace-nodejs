@@ -2,21 +2,25 @@ import * as path from 'path';
 import { globP, forkP } from './utils';
 
 export interface Options {
-  globs: string[],
+  includeGlobs: string[],
+  excludeGlobs?: string[],
   rootDir: string,
   coverage?: boolean,
   timeout?: number
 }
 
 export async function runTests(options: Options) {
-  const { globs, rootDir, coverage, timeout } = options;
+  const { includeGlobs, excludeGlobs, rootDir, coverage, timeout } = options;
   function nodule(nodule: string) {
     return path.relative(rootDir, `node_modules/${nodule}`);
   }
   let testNum = 0;
-  const files = ([] as string[])
-    .concat(...await Promise.all(globs.map(glob => globP(glob))))
-    .filter(_ => true);
+  const excludedFiles = ([] as string[])
+    .concat(...await Promise.all((excludeGlobs || []).map(glob => globP(glob))));
+  const includedFiles = ([] as string[])
+    .concat(...await Promise.all(includeGlobs.map(glob => globP(glob))));
+  // Take the difference
+  const files = includedFiles.filter(i => !excludedFiles.some(e => e === i));
   for (const file of files) {
     const moduleAndArgs = [
       ...coverage ? [
