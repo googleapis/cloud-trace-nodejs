@@ -348,19 +348,13 @@ export type TraceWriterSingletonConfig = TraceWriterConfig&{
 let singleton: TraceWriter;
 
 export const traceWriter = {
-  create(
-      logger: common.Logger, config: TraceWriterSingletonConfig,
-      cb?: (err?: Error) => void): TraceWriter {
-    if (!cb) {
-      // tslint:disable-next-line:no-empty
-      cb = () => {};
-    }
-    if (!singleton || config.forceNewAgent_) {
-      singleton = new TraceWriter(logger, config);
-      singleton.initialize(cb);
-    }
-    return singleton;
-  },
+  create(logger: common.Logger, config: TraceWriterSingletonConfig):
+      TraceWriter {
+        if (!singleton || config.forceNewAgent_) {
+          singleton = new TraceWriter(logger, config);
+        }
+        return singleton;
+      },
 
   get(): TraceWriter {
     if (!singleton) {

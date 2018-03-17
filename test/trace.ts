@@ -95,7 +95,6 @@ export function disableTraceWriter() {
                 throw new Error('Trace Writer already created.');
               }
               singleton = new TestTraceWriter(logger, config);
-              singleton.initialize(cb || (() => {}));
               return singleton;
             });
 

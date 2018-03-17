@@ -162,7 +162,7 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
   }
   // CLS namespace for context propagation
   cls.createNamespace();
-  traceWriter.create(logger, config, (err) => {
+  traceWriter.create(logger, config).initialize((err) => {
     if (err) {
       stop();
     }

@@ -107,7 +107,8 @@ describe('TraceWriter', function() {
         serviceContext: {},
         onUncaughtException: 'ignore',
         forceNewAgent_: true
-      } as createTraceWriterOptions, function() {
+      } as createTraceWriterOptions);
+      writer.initialize(function() {
         var spanData = createFakeTrace('fake span');
         writer.defaultLabels = {
           fakeKey: 'value'
@@ -328,7 +329,7 @@ describe('TraceWriter', function() {
           forceNewAgent_: true,
           onUncaughtException: 'ignore',
           serviceContext: {}
-        }, testCase.config), function(err) {
+        }, testCase.config)).initialize(function(err) {
           testCase.assertResults(err, traceWriter.get());
           done();
         });
