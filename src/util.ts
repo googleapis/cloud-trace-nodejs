@@ -17,6 +17,7 @@
 import * as fs from 'fs';
 import Module = require('module');
 import * as path from 'path';
+import {Logger} from '@google-cloud/common';  // for types only.
 
 /**
  * Trace API expects stack frames to be a JSON string with the following
@@ -39,6 +40,38 @@ export interface StackFrame {
 interface PackageJson {
   name: string;
   version: string;
+}
+
+export interface ClassOf<T, Config> {
+  new(logger: Logger, config: Config): T;
+  prototype: T;
+  name: string;
+}
+
+/**
+ * An class that provides access to a singleton.
+ * Instances of this type should only be constructed in module scope.
+ */
+export class Singleton<T, Config> {
+  private singleton: T|null = null;
+
+  constructor(private implementation: ClassOf<T, Config>) {}
+
+  create(logger: Logger, config: Config&{forceNewAgent_: boolean}): T {
+    if (!this.singleton || config.forceNewAgent_) {
+      this.singleton = new this.implementation(logger, config);
+      return this.singleton;
+    } else {
+      throw new Error(`${this.implementation.name} has already been created.`);
+    }
+  }
+
+  get(): T {
+    if (!this.singleton) {
+      throw new Error(`${this.implementation.name} has not yet been created.`);
+    }
+    return this.singleton;
+  }
 }
 
 /**

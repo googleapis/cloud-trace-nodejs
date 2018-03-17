@@ -33,7 +33,7 @@ import * as PluginTypes from './plugin-types';
 import {PluginLoaderConfig} from './trace-plugin-loader';
 import * as pluginLoader from './trace-plugin-loader';
 import {TraceAgent} from './trace-api';
-import {traceWriter, TraceWriterSingletonConfig} from './trace-writer';
+import {traceWriter, TraceWriterConfig} from './trace-writer';
 import * as traceUtil from './util';
 
 export {Config, PluginTypes};
@@ -57,10 +57,9 @@ interface TopLevelConfig {
   forceNewAgent_: boolean;
 }
 
-// TraceWriterSingletonConfig = TraceWriterConfig & { forceNewAgent_: boolean }
 // PluginLoaderConfig extends TraceAgentConfig
-type NormalizedConfig =
-    TraceWriterSingletonConfig&PluginLoaderConfig&TopLevelConfig;
+type NormalizedConfig = TraceWriterConfig&PluginLoaderConfig&TopLevelConfig&
+    {forceNewAgent_: boolean};
 
 /**
  * Normalizes the user-provided configuration object by adding default values

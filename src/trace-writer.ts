@@ -22,6 +22,7 @@ import * as util from 'util';
 import {Constants} from './constants';
 import {SpanKind, Trace} from './trace';
 import {TraceLabels} from './trace-labels';
+import {Singleton} from './util';
 
 const pjson = require('../../package.json');
 
@@ -340,26 +341,4 @@ export class TraceWriter extends common.Service {
   }
 }
 
-export type TraceWriterSingletonConfig = TraceWriterConfig&{
-  forceNewAgent_: boolean;
-};
-
-// Singleton
-let singleton: TraceWriter;
-
-export const traceWriter = {
-  create(logger: common.Logger, config: TraceWriterSingletonConfig):
-      TraceWriter {
-        if (!singleton || config.forceNewAgent_) {
-          singleton = new TraceWriter(logger, config);
-        }
-        return singleton;
-      },
-
-  get(): TraceWriter {
-    if (!singleton) {
-      throw new Error('TraceWriter singleton was not initialized.');
-    }
-    return singleton;
-  }
-};
+export const traceWriter = new Singleton(TraceWriter);
