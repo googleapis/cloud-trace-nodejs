@@ -28,10 +28,12 @@ export class TestLogger implements Logger {
   private innerLogger = logger({level: logger.LEVELS[PASS_THROUGH_LOG_LEVEL]});
 
   private makeLoggerFn(logLevel: keyof Logger): LoggerFunction {
-    // tslint:disable-next-line:no-any
-    return (message: any, ...args: any[]) => {
-      this.logs[logLevel].push([message, ...args].join(' '));
-      this.innerLogger[logLevel](message, ...args);
+    // TODO(kjin): When we drop support for Node 4, use spread args.
+    const that = this;
+    return function(this: null) {
+      const args = Array.prototype.slice.call(arguments, 0);
+      that.logs[logLevel].push(args.join(' '));
+      that.innerLogger[logLevel].apply(this, args);
     };
   }
 
