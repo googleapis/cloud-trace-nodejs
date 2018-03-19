@@ -14,18 +14,32 @@
  * limitations under the License.
  */
 
-'use strict';
+import * as common from '@google-cloud/common';
+import * as assert from 'assert';
+import * as shimmer from 'shimmer';
 
-var assert = require('assert');
-var cp = require('child_process');
+import {TestLogger} from './logger';
+import * as trace from './trace';
 
-describe('modules loaded before agent', function() {
-  it('should log if modules were loaded before agent', function() {
-    var output =
-      cp.execSync('node test/fixtures/start-agent.js');
-    console.log(output.toString());
-    assert(output.toString().match(/Tracing might not work.*"glob".*/));
+describe('modules loaded before agent', () => {
+  const logger = new TestLogger();
+
+  before(() => {
+    const LEVELS = common.logger.LEVELS;
+    shimmer.wrap(common, 'logger', () => {
+      return Object.assign(() => logger, {LEVELS});
+    });
+  });
+
+  after(() => {
+    shimmer.unwrap(common, 'logger');
+  });
+
+  it('should log if modules were loaded before agent', () => {
+    trace.start();
+    assert.strictEqual(
+        logger.getNumLogsWith(
+            'error', /modules.*loaded.*before.*trace agent.*: .*"shimmer"/),
+        1);
   });
 });
-
-export default {};
