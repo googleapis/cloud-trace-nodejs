@@ -77,7 +77,7 @@ describe('Trace Interface', function() {
       Object.assign(defaultConfig, {
         projectId: '0',
         forceNewAgent_: false
-      }), function(err) {
+      })).initialize(function(err) {
         assert.ok(!err);
         done();
       });

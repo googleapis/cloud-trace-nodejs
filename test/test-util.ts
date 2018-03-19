@@ -18,6 +18,7 @@
 
 import { Constants } from '../src/constants';
 import * as util from '../src/util';
+import { Logger } from '@google-cloud/common';
 
 var assert = require('assert');
 var common = require('./plugins/common'/*.js*/);
@@ -30,6 +31,64 @@ function notNull<T>(arg: T|null): T {
   assert.ok(arg);
   return arg as T;
 }
+
+// TODO(kjin): Use TypeScript in the rest of this file. This is already done
+// in PR #686.
+describe('Singleton', () => {
+  // A real test logger class is also introduced as part of #686.
+  const logger = {} as any as Logger;
+  class MyClass {
+    constructor(public logger: Logger, public config: {}) {}
+  }
+
+  describe('create', () => {
+    it('creates an instance of the given class', () => {
+      const createResult = new util.Singleton(MyClass).create(logger, {});
+      assert.ok(createResult instanceof MyClass);
+    });
+
+    it('passes arguments to the underlying constructor', () => {
+      const config = {};
+      const createResult = new util.Singleton(MyClass).create(logger, config);
+      assert.strictEqual(createResult.logger, logger);
+      assert.strictEqual(createResult.config, config);
+    });
+
+    it('throws when used more than once, by default', () => {
+      const singleton = new util.Singleton(MyClass);
+      singleton.create(logger, {});
+      assert.throws(() => singleton.create(logger, {}));
+    });
+
+    it('creates a new instance when forceNewAgent_ is true in the config', () => {
+      const singleton = new util.Singleton(MyClass);
+      const createResult1 = singleton.create(logger, {});
+      const createResult2 = singleton.create(logger, { forceNewAgent_: true });
+      assert.notStrictEqual(createResult1, createResult2);
+    });
+  });
+
+  describe('get', () => {
+    it('throws if create was not called first', () => {
+      assert.throws(() => new util.Singleton(MyClass).get());
+    });
+
+    it('returns the same value returned by create function', () => {
+      const singleton = new util.Singleton(MyClass);
+      const createResult = singleton.create(logger, {});
+      const getResult = singleton.get();
+      assert.strictEqual(getResult, createResult);
+    });
+
+    it('does not return a stale value', () => {
+      const singleton = new util.Singleton(MyClass);
+      singleton.create(logger, {});
+      const createResult = singleton.create(logger, { forceNewAgent_: true });
+      const getResult = singleton.get();
+      assert.strictEqual(getResult, createResult);
+    });
+  });
+});
 
 describe('util.truncate', function() {
   it('should truncate objects larger than size', function() {

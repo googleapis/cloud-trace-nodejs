@@ -38,7 +38,7 @@ import * as trace from '../src';
 import {Config, PluginTypes} from '../src';
 import {RootSpanData} from '../src/span-data';
 import {Trace, TraceSpan} from '../src/trace';
-import {LabelObject, TraceWriter, traceWriter, TraceWriterConfig, TraceWriterSingletonConfig} from '../src/trace-writer';
+import {LabelObject, TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
 
 export {Config, PluginTypes};
 
@@ -61,9 +61,11 @@ class TestTraceWriter extends TraceWriter {
     });
   }
 }
+setTraceWriterEnabled(false);
 
-let singleton: TraceWriter|null = null;
-disableTraceWriter();
+export function setTraceWriterEnabled(enabled: boolean) {
+  traceWriter['implementation'] = enabled ? TraceWriter : TestTraceWriter;
+}
 
 export type Predicate<T> = (value: T) => boolean;
 
@@ -74,38 +76,6 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
 
 export function get(): PluginTypes.TraceAgent {
   return trace.get();
-}
-
-export function enableTraceWriter() {
-  if (traceWriter.get.__wrapped) {
-    assert.ok(!singleton);
-    shimmer.massUnwrap([traceWriter], ['create', 'get']);
-  }
-}
-
-export function disableTraceWriter() {
-  if (!traceWriter.get.__wrapped) {
-    assert.throws(traceWriter.get);
-    shimmer.wrap(
-        traceWriter, 'create',
-        () =>
-            (logger: common.Logger, config: TraceWriterSingletonConfig,
-             cb?: (err?: Error) => void): TraceWriter => {
-              if (singleton) {
-                throw new Error('Trace Writer already created.');
-              }
-              singleton = new TestTraceWriter(logger, config);
-              singleton.initialize(cb || (() => {}));
-              return singleton;
-            });
-
-    shimmer.wrap(traceWriter, 'get', () => (): TraceWriter => {
-      if (!singleton) {
-        throw new Error('Trace Writer not initialized.');
-      }
-      return singleton;
-    });
-  }
 }
 
 export function getTraces(predicate?: Predicate<TraceSpan[]>): string[] {
