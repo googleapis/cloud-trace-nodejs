@@ -193,9 +193,6 @@ export class ModulePluginWrapper implements PluginWrapper {
       } else if (instrumentation.intercept) {
         exportedValue = instrumentation.intercept(
             exportedValue, this.createTraceAgentInstance(file));
-      } else {
-        this.logger.warn(`PluginWrapper#applyPlugin: [${
-            logString}] Patch object has no known functions for patching this file.`);
       }
       return exportedValue;
     }, moduleExports as T);

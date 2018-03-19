@@ -324,13 +324,14 @@ describe('Trace Plugin Loader', () => {
 
     it('warns when a module is patched by a non-conformant plugin', () => {
       makePluginLoader({plugins: {'[core]': 'plugin-core'}}).activate();
-      // Reasons for warnings issued are listed as comments.
+      // Reasons for possible warnings issued are listed as comments.
       require('crypto');  // neither patch nor intercept
       require('os');      // both patch and intercept
       require('dns');     // two Patch objects for a single file
+      // Do not warn when there is no patch/intercept function.
       assert.strictEqual(
           logger.getNumLogsWith('warn', `[[core]@${PROCESS_VERSION}:crypto]`),
-          1);
+          0);
       assert.strictEqual(
           logger.getNumLogsWith('warn', `[[core]@${PROCESS_VERSION}:os]`), 1);
       assert.strictEqual(
