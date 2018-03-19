@@ -42,22 +42,24 @@ interface PackageJson {
   version: string;
 }
 
-export interface ClassOf<T, Config> {
+export interface Constructor<T, Config> {
   new(logger: Logger, config: Config): T;
   prototype: T;
   name: string;
 }
 
 /**
- * An class that provides access to a singleton.
+ * A class that provides access to a singleton.
+ * We assume that any such singleton is always constructed with two arguments:
+ * A logger and an arbitrary configuration object.
  * Instances of this type should only be constructed in module scope.
  */
 export class Singleton<T, Config> {
   private singleton: T|null = null;
 
-  constructor(private implementation: ClassOf<T, Config>) {}
+  constructor(private implementation: Constructor<T, Config>) {}
 
-  create(logger: Logger, config: Config&{forceNewAgent_: boolean}): T {
+  create(logger: Logger, config: Config&{forceNewAgent_?: boolean}): T {
     if (!this.singleton || config.forceNewAgent_) {
       this.singleton = new this.implementation(logger, config);
       return this.singleton;
