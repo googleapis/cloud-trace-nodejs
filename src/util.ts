@@ -19,6 +19,10 @@ import Module = require('module');
 import * as path from 'path';
 import {Logger} from '@google-cloud/common';  // for types only.
 
+// This symbol must be exported (for now).
+// See: https://github.com/Microsoft/TypeScript/issues/20080
+export const kSingleton = Symbol();
+
 /**
  * Trace API expects stack frames to be a JSON string with the following
  * structure:
@@ -55,24 +59,25 @@ export interface Constructor<T, Config> {
  * Instances of this type should only be constructed in module scope.
  */
 export class Singleton<T, Config> {
-  private singleton: T|null = null;
+  // Note: private[symbol] is enforced by clang-format.
+  private[kSingleton]: T|null = null;
 
   constructor(private implementation: Constructor<T, Config>) {}
 
   create(logger: Logger, config: Config&{forceNewAgent_?: boolean}): T {
-    if (!this.singleton || config.forceNewAgent_) {
-      this.singleton = new this.implementation(logger, config);
-      return this.singleton;
+    if (!this[kSingleton] || config.forceNewAgent_) {
+      this[kSingleton] = new this.implementation(logger, config);
+      return this[kSingleton]!;
     } else {
       throw new Error(`${this.implementation.name} has already been created.`);
     }
   }
 
   get(): T {
-    if (!this.singleton) {
+    if (!this[kSingleton]) {
       throw new Error(`${this.implementation.name} has not yet been created.`);
     }
-    return this.singleton;
+    return this[kSingleton]!;
   }
 }
 
