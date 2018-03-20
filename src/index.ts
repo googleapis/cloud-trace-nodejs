@@ -31,7 +31,7 @@ import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
 import {PluginLoaderConfig} from './trace-plugin-loader';
-import * as pluginLoader from './trace-plugin-loader';
+import {pluginLoader} from './trace-plugin-loader';
 import {TraceAgent} from './trace-api';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
 import * as traceUtil from './util';
@@ -116,7 +116,12 @@ function stop() {
   if (traceAgent && traceAgent.isActive()) {
     traceWriter.get().stop();
     traceAgent.disable();
-    pluginLoader.deactivate();
+    try {
+      const loader = pluginLoader.get();
+      loader.deactivate();
+    } catch (e) {
+      // Plugin loader wasn't even created. No need to de-activate
+    }
     cls.destroyNamespace();
   }
 }
@@ -168,7 +173,7 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
   });
 
   traceAgent.enable(logger, config);
-  pluginLoader.activate(logger, config);
+  pluginLoader.create(logger, config).activate();
 
   if (typeof config.projectId !== 'string' &&
       typeof config.projectId !== 'undefined') {
