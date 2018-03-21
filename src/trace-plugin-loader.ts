@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,19 +94,19 @@ export class ModulePluginWrapper implements PluginWrapper {
   // Sentinel value to indicate that a plugin has not been loaded into memory
   // yet.
   private static readonly NOT_LOADED: Plugin = [];
-  private unpatchFns: Array<() => void> = [];
+  private readonly unpatchFns: Array<() => void> = [];
   // A logger.
-  private logger: Logger;
+  private readonly logger: Logger;
   // Configuration for a TraceAgent instance.
-  private traceConfig: TraceAgentConfig;
+  private readonly traceConfig: TraceAgentConfig;
   // Display-friendly name of the module being patched by this plugin.
-  private name: string;
+  private readonly name: string;
   // The path to the plugin.
-  private path: string;
+  private readonly path: string;
   // The exported value of the plugin, or NOT_LOADED if it hasn't been
   // loaded yet.
   private pluginExportedValue: Plugin = ModulePluginWrapper.NOT_LOADED;
-  private traceApiInstances: TraceAgent[] = [];
+  private readonly traceApiInstances: TraceAgent[] = [];
 
   /**
    * Constructs a new PluginWrapper instance.
@@ -129,9 +129,9 @@ export class ModulePluginWrapper implements PluginWrapper {
     // Count the number of Patch/Intercept objects with compatible version
     // ranges
     let numFiles = 0;
-    plugin.forEach(instrumentation => {
-      const postLoadVersions = instrumentation.versions;
-      if (!postLoadVersions || semver.satisfies(version, postLoadVersions)) {
+    plugin.forEach(patch => {
+      const versionRange = patch.versions;
+      if (!versionRange || semver.satisfies(version, versionRange)) {
         numFiles++;
       }
     });
@@ -141,6 +141,9 @@ export class ModulePluginWrapper implements PluginWrapper {
   }
 
   unapplyAll() {
+    // Unpatch in reverse order of when patches were applied, because each
+    // unpatch function expects the state of the module to be as its associated
+    // patch function left it.
     this.unpatchFns.reverse().forEach(fn => fn());
     this.unpatchFns.length = 0;
     this.traceApiInstances.forEach(traceApi => traceApi.disable());
@@ -157,42 +160,40 @@ export class ModulePluginWrapper implements PluginWrapper {
     // plugin exported value with matching file/version fields.
     const supportedPatches: Array<Partial<Patch<T>&Intercept<T>>> =
         plugin.filter(
-            instrumentation =>
-                semver.satisfies(version, instrumentation.versions || '*') &&
-                (file === instrumentation.file ||
-                 (!file && !instrumentation.file)));
+            patch => semver.satisfies(version, patch.versions || '*') &&
+                (file === patch.file || (!file && !patch.file)));
     if (supportedPatches.length > 1) {
       this.logger.warn(`PluginWrapper#applyPlugin: [${
           logString}] Plugin has more than one patch/intercept object for this file. Applying all.`);
     }
 
     // Apply each patch object.
-    return supportedPatches.reduce<T>((exportedValue, instrumentation) => {
+    return supportedPatches.reduce<T>((exportedValue, patch) => {
       // TODO(kjin): The only benefit of creating a new TraceAgent object per
       // patched file is to give us granularity in log messages. See if we can
       // refactor the TraceAgent class to avoid this.
 
       this.logger.info(
           `PluginWrapper#applyPlugin: [${logString}] Applying plugin.`);
-      if (instrumentation.patch) {
-        instrumentation.patch(
-            exportedValue, this.createTraceAgentInstance(logString));
+      if (patch.patch) {
+        patch.patch(exportedValue, this.createTraceAgentInstance(logString));
         // Queue a function to run if the plugin gets disabled.
-        if (instrumentation.unpatch) {
+        if (patch.unpatch) {
+          const unpatch = patch.unpatch;
           this.unpatchFns.push(() => {
             this.logger.info(
                 `PluginWrapper#unapplyAll: [${logString}] Unpatching file.`);
-            instrumentation.unpatch!(exportedValue);
+            unpatch(exportedValue);
           });
         }
         // The patch object should only have either patch() or intercept().
-        if (instrumentation.intercept) {
+        if (patch.intercept) {
           this.logger.warn(`PluginWrapper#applyPlugin: [${
               logString}] Patch object has both patch() and intercept() for this file. Only applying patch().`);
         }
-      } else if (instrumentation.intercept) {
-        exportedValue = instrumentation.intercept(
-            exportedValue, this.createTraceAgentInstance(file));
+      } else if (patch.intercept) {
+        exportedValue =
+            patch.intercept(exportedValue, this.createTraceAgentInstance(file));
       }
       return exportedValue;
     }, moduleExports as T);
@@ -216,13 +217,13 @@ export class ModulePluginWrapper implements PluginWrapper {
 
 /**
  * A class that represents wrapper logic on top of plugins that patch core
- * modules. Core modules are different because (1) they can be required by the
- * plugins that patch them, and (2) the core module being patched doesn't
- * necessarily correspond to the name of the plugin.
+ * (built-in) modules. Core modules are different because (1) they can be
+ * required by the plugins that patch them, and (2) the core module being
+ * patched doesn't necessarily correspond to the name of the plugin.
  */
 export class CorePluginWrapper implements PluginWrapper {
-  private logger: Logger;
-  private children: ModulePluginWrapper[];
+  private readonly logger: Logger;
+  private readonly children: ModulePluginWrapper[];
 
   constructor(
       logger: Logger, config: CorePluginWrapperOptions,
@@ -257,9 +258,10 @@ export class CorePluginWrapper implements PluginWrapper {
    * @param version The module version.
    */
   applyPlugin<T>(moduleExports: T, file: string, version: string): T {
-    return this.children.reduce((exportedValue, child) => {
-      return child.applyPlugin(exportedValue, file, version);
-    }, moduleExports);
+    return this.children.reduce(
+        (exportedValue, child) =>
+            child.applyPlugin(exportedValue, file, version),
+        moduleExports);
   }
 }
 
@@ -279,12 +281,10 @@ export class PluginLoader {
   static readonly CORE_MODULE = '[core]';
   // The function to call to register a require hook.
   private enableRequireHook: (onRequire: hook.OnRequireFn) => void;
-  // A logger.
-  private logger: Logger;
   // A map mapping module names to their respective plugins.
-  private pluginMap: Map<string, PluginWrapper> = new Map();
+  private readonly pluginMap: Map<string, PluginWrapper> = new Map();
   // A map caching version strings for a module based on their base path.
-  private moduleVersionCache: Map<string, string|null> = new Map();
+  private readonly moduleVersionCache: Map<string, string|null> = new Map();
   // The current state of the plugin loader.
   private internalState: PluginLoaderState = PluginLoaderState.NO_HOOK;
 
@@ -293,9 +293,7 @@ export class PluginLoader {
    * @param logger The logger to use.
    * @param config The configuration for this instance.
    */
-  constructor(logger: Logger, config: PluginLoaderConfig) {
-    this.logger = logger;
-
+  constructor(private readonly logger: Logger, config: PluginLoaderConfig) {
     const nonCoreModules: string[] = [];
     // Initialize ALL of the PluginWrapper objects here.
     // See CorePluginWrapper docs for why core modules are processed
@@ -304,8 +302,8 @@ export class PluginLoader {
     Object.keys(config.plugins).forEach(key => {
       const value = config.plugins[key];
       // Core module plugins share a common key.
-      const coreModule = builtinModules.indexOf(key) !== -1 ||
-          key === PluginLoader.CORE_MODULE;
+      const coreModule = key === PluginLoader.CORE_MODULE ||
+          builtinModules.indexOf(key) !== -1;
 
       if (value) {
         // Convert the given string value to a PluginConfigEntry
@@ -430,6 +428,8 @@ export class PluginLoader {
       }
       this.internalState = PluginLoaderState.DEACTIVATED;
       this.logger.info(`PluginLoader#deactivate: Deactivated.`);
+    } else {
+      throw new Error('Plugin loader is not activated.');
     }
     return this;
   }
@@ -438,7 +438,7 @@ export class PluginLoader {
    * Adds a search path for plugin modules. Intended for testing purposes only.
    * @param searchPath The path to add.
    */
-  static setPluginSearchPath(searchPath: string) {
+  static setPluginSearchPathForTestingOnly(searchPath: string) {
     module.paths = [searchPath];
   }
 
@@ -451,10 +451,9 @@ export class PluginLoader {
   static parseModuleString(moduleStr: string): {name: string, file: string} {
     // Canonicalize the name by using only '/'.
     const parts = moduleStr.replace(/\\/g, '/').split('/');
-    let indexOfFile = 1;
-    if (parts[0].startsWith('@')) {  // for @org/package
-      indexOfFile = 2;
-    }
+    // The separation index between name/file depends on whether the module
+    // is namespaced.
+    const indexOfFile = parts[0].startsWith('@') ? 2 : 1;
     return {
       name: parts.slice(0, indexOfFile).join('/'),
       file: parts.slice(indexOfFile).join('/')

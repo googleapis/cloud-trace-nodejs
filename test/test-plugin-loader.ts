@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ describe('Trace Plugin Loader', () => {
 
   before(() => {
     module.paths.push(SEARCH_PATH);
-    PluginLoader.setPluginSearchPath(SEARCH_PATH);
+    PluginLoader.setPluginSearchPathForTestingOnly(SEARCH_PATH);
     logger = new TestLogger();
   });
 
@@ -137,23 +137,21 @@ describe('Trace Plugin Loader', () => {
            assert.ok(plugin.unapplyCalled);
          });
 
-      it('does nothing when already deactivated', () => {
+      it('throws when internal state is not ACTIVATED', () => {
         const pluginLoader = makePluginLoader({plugins: {}});
         assert.strictEqual(pluginLoader.state, PluginLoaderState.NO_HOOK);
         const plugin = new TestPluginWrapper();
         // TODO(kjin): Stop using index properties.
         pluginLoader['pluginMap'].set('foo', plugin);
-        pluginLoader.deactivate();
 
-        assert.strictEqual(pluginLoader.state, PluginLoaderState.NO_HOOK);
+        assert.throws(() => pluginLoader.deactivate());
         assert.ok(!plugin.unapplyCalled);
 
         pluginLoader.activate().deactivate();
         assert.strictEqual(pluginLoader.state, PluginLoaderState.DEACTIVATED);
 
         plugin.unapplyCalled = false;
-        pluginLoader.deactivate();
-        assert.strictEqual(pluginLoader.state, PluginLoaderState.DEACTIVATED);
+        assert.throws(() => pluginLoader.deactivate());
         assert.ok(!plugin.unapplyCalled);
       });
     });
@@ -189,12 +187,12 @@ describe('Trace Plugin Loader', () => {
       assert.strictEqual(require('my-version-2.0'), '2.0.0');
     });
 
-    it('doesn\'t patch before activation', () => {
+    it(`doesn't patch before activation`, () => {
       makePluginLoader({plugins: {'small-number': 'plugin-small-number'}});
       assert.strictEqual(require('small-number').value, 0);
     });
 
-    it('doesn\'t patch modules for which plugins aren\'t specified', () => {
+    it(`doesn't patch modules for which plugins aren't specified`, () => {
       makePluginLoader({plugins: {}}).activate();
       assert.strictEqual(require('small-number').value, 0);
     });
@@ -232,25 +230,6 @@ describe('Trace Plugin Loader', () => {
           logger.getNumLogsWith('info', '[small-number@0.0.1]'), 2);
     });
 
-    it('doesn\'t unpatch twice', () => {
-      const loader = makePluginLoader({
-                       plugins: {'small-number': 'plugin-small-number'}
-                     }).activate();
-      require('small-number');
-      loader.deactivate().deactivate();
-      assert.strictEqual(require('small-number').value, 0);
-      // One each for activate/deactivate
-      assert.strictEqual(
-          logger.getNumLogsWith('info', '[small-number@0.0.1]'), 2);
-    });
-
-    it('doesn\'t unpatch modules when deactivated immediately', () => {
-      makePluginLoader({
-        plugins: {'small-number': 'plugin-small-number'}
-      }).deactivate();
-      assert.strictEqual(require('small-number').value, 0);
-    });
-
     it('intercepts and patches internal files', () => {
       makePluginLoader({
         plugins: {'large-number': 'plugin-large-number'}
@@ -282,7 +261,7 @@ describe('Trace Plugin Loader', () => {
           'The lab-grown ketchup Fox jumps over the chili Dog');
     });
 
-    it('doesn\'t load plugins with falsey paths', () => {
+    it(`doesn't load plugins with falsey paths`, () => {
       makePluginLoader({plugins: {'small-number': ''}}).activate();
       assert.strictEqual(require('small-number').value, 0);
     });

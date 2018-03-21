@@ -55,6 +55,7 @@ module.exports = [
     unpatch: unpatchClient
   },
   {
+    // knex 0.10.x and 0.11.x do not need patching
     versions: '>=0.10 <=0.11'
   }
 ];

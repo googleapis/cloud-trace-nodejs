@@ -117,9 +117,8 @@ function stop() {
     traceWriter.get().stop();
     traceAgent.disable();
     try {
-      const loader = pluginLoader.get();
-      loader.deactivate();
-    } catch (e) {
+      const loader = pluginLoader.get().deactivate();
+    } catch {
       // Plugin loader wasn't even created. No need to de-activate
     }
     cls.destroyNamespace();
