@@ -96,7 +96,7 @@
     "typescript": "~2.7.2"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.16.2",
+    "@google-cloud/common": "^0.17.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
     "gcp-metadata": "^0.4.1",
