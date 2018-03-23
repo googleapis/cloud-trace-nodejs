@@ -219,6 +219,8 @@ describe('test-trace-http2', () => {
     server.on(
         'stream',
         (s: http2.ServerHttp2Stream&({rstWithInternalError: () => void})) => {
+          // In Node 9.9+, the error handler is not added by default.
+          s.on('error', () => {});
           setTimeout(() => {
             if (semver.satisfies(process.version, '>=9.4')) {
               // Node 9.4 removed rstWithInternalError() and uses added close().
