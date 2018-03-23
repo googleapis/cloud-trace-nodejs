@@ -39,7 +39,7 @@ export function projectId(status: number|(() => string), reply?: () => string) {
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/project/project-id')
       .once()
-      .reply(200, reply, {'Metadata-Flavor': 'Google'});
+      .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function instanceId(
@@ -51,7 +51,7 @@ export function instanceId(
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/instance/id')
       .once()
-      .reply(200, reply, {'Metadata-Flavor': 'Google'});
+      .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function hostname(status: number|(() => string), reply?: () => string) {
@@ -62,7 +62,7 @@ export function hostname(status: number|(() => string), reply?: () => string) {
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/instance/hostname')
       .once()
-      .reply(200, reply, {'Metadata-Flavor': 'Google'});
+      .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function patchTraces<T extends {} = {}>(

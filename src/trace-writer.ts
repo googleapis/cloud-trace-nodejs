@@ -15,6 +15,7 @@
  */
 
 import * as common from '@google-cloud/common';
+import {AxiosError} from 'axios';
 import * as gcpMetadata from 'gcp-metadata';
 import {OutgoingHttpHeaders} from 'http';
 import * as os from 'os';
@@ -178,7 +179,7 @@ export class TraceWriter extends common.Service {
         .then((res) => {
           cb(res.data);  // hostname
         })
-        .catch((err) => {
+        .catch((err: AxiosError) => {
           if (err.code !== 'ENOTFOUND') {
             // We are running on GCP.
             this.logger.warn('Unable to retrieve GCE hostname.', err);
@@ -192,7 +193,7 @@ export class TraceWriter extends common.Service {
         .then((res) => {
           cb(res.data);  // instance ID
         })
-        .catch((err) => {
+        .catch((err: AxiosError) => {
           if (err.code !== 'ENOTFOUND') {
             // We are running on GCP.
             this.logger.warn('Unable to retrieve GCE instance id.', err);
@@ -215,7 +216,11 @@ export class TraceWriter extends common.Service {
         .then((res) => {
           cb(null, res.data);  // project ID
         })
-        .catch((err) => {
+        .catch((err: AxiosError) => {
+          if (err.response && err.response.status === 503) {
+            err.message +=
+                ' This may be due to a temporary server error; please try again later.';
+          }
           cb(err);
         });
   }
