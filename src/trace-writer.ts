@@ -90,9 +90,10 @@ export class TraceWriter extends common.Service {
 
     if (onUncaughtExceptionValues.indexOf(config.onUncaughtException) === -1) {
       logger.error(
-          'The value of onUncaughtException ' + config.onUncaughtException +
-              ' should be one of ',
-          onUncaughtExceptionValues);
+          `TraceWriter#constructor: The value of config.onUncaughtException [${
+              config.onUncaughtException}] should be one of [${
+              onUncaughtExceptionValues.join(', ')}].`,
+      );
       // TODO(kjin): Either log an error or throw one, but not both
       throw new Error('Invalid value for onUncaughtException configuration.');
     }
@@ -123,9 +124,10 @@ export class TraceWriter extends common.Service {
     this.getProjectId((err: Error|null, project?: string) => {
       if (err) {
         this.logger.error(
-            'Unable to acquire the project number from metadata ' +
-            'service. Please provide a valid project number as an env. ' +
-            'variable, or through config.projectId passed to start(). ' + err);
+            'TraceWriter#initialize: Unable to acquire the project number',
+            'automatically from the GCP metadata service. Please provide a',
+            'valid project ID as environmental variable GCLOUD_PROJECT, or as',
+            `config.projectId passed to start. Original error: ${err}`);
         cb(err);
       } else {
         this.config.projectId = project;
@@ -182,7 +184,9 @@ export class TraceWriter extends common.Service {
         .catch((err: AxiosError) => {
           if (err.code !== 'ENOTFOUND') {
             // We are running on GCP.
-            this.logger.warn('Unable to retrieve GCE hostname.', err);
+            this.logger.warn(
+                'TraceWriter#getHostname: Unable to retrieve GCE hostname',
+                `from the GCP metadata service. Original error: ${err}`);
           }
           cb(os.hostname());
         });
@@ -196,7 +200,9 @@ export class TraceWriter extends common.Service {
         .catch((err: AxiosError) => {
           if (err.code !== 'ENOTFOUND') {
             // We are running on GCP.
-            this.logger.warn('Unable to retrieve GCE instance id.', err);
+            this.logger.warn(
+                'TraceWriter#getInstanceId: Unable to retrieve GCE instance ID',
+                `from the GCP metadata service. Original error: ${err}`);
           }
           cb();
         });
@@ -256,18 +262,21 @@ export class TraceWriter extends common.Service {
   queueTrace(trace: Trace) {
     this.getProjectId((err, projectId?) => {
       if (err || !projectId) {
-        this.logger.info('No project number, dropping trace.');
+        this.logger.info(
+            'TraceWriter#queueTrace: No project ID, dropping trace.');
         return;  // if we even reach this point, disabling traces is already
                  // imminent.
       }
 
       trace.projectId = projectId;
       this.buffer.push(JSON.stringify(trace));
-      this.logger.debug('queued trace. new size:', this.buffer.length);
+      this.logger.info(
+          `TraceWriter#queueTrace: buffer.size = ${this.buffer.length}`);
 
       // Publish soon if the buffer is getting big
       if (this.buffer.length >= this.config.bufferSize) {
-        this.logger.info('Flushing: trace buffer full');
+        this.logger.info(
+            'TraceWriter#queueTrace: Trace buffer full, flushing.');
         setImmediate(() => this.flushBuffer());
       }
     });
@@ -280,7 +289,7 @@ export class TraceWriter extends common.Service {
    * @private
    */
   scheduleFlush() {
-    this.logger.info('Flushing: performing periodic flush');
+    this.logger.info('TraceWriter#scheduleFlush: Performing periodic flush.');
     this.flushBuffer();
 
     // Do it again after delay
@@ -308,7 +317,7 @@ export class TraceWriter extends common.Service {
     // Privatize and clear the buffer.
     const buffer = this.buffer;
     this.buffer = [];
-    this.logger.debug('Flushing traces', buffer);
+    this.logger.debug('TraceWriter#flushBufffer: Flushing traces', buffer);
     this.publish(`{"traces":[${buffer.join()}]}`);
   }
 
@@ -320,17 +329,16 @@ export class TraceWriter extends common.Service {
   publish(json: string) {
     const uri = `https://cloudtrace.googleapis.com/v1/projects/${
         this.config.projectId}/traces`;
-
     const options = {method: 'PATCH', uri, body: json, headers};
-    this.logger.debug('TraceWriter: publishing to ' + uri);
+    this.logger.debug('TraceWriter#publish: Publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
+      const statusCode = (response && response.statusCode) || 'unknown';
       if (err) {
-        this.logger.error(
-            'TraceWriter: error: ',
-            ((response && response.statusCode) || '') + '\n' + err.stack);
+        this.logger.error(`TraceWriter#publish: Received error status code ${
+            statusCode}. Original error: ${err}`);
       } else {
         this.logger.info(
-            'TraceWriter: published. statusCode: ' + response.statusCode);
+            `TraceWriter#publish: Published w/ status code: ${statusCode}`);
       }
     });
   }

@@ -39,7 +39,7 @@ describe('modules loaded before agent', () => {
     trace.start();
     assert.strictEqual(
         logger.getNumLogsWith(
-            'error', /modules.*loaded.*before.*trace agent.*: .*"shimmer"/),
+            'error', /modules.*loaded.*before.*trace agent.*: .*shimmer/),
         1);
   });
 });

@@ -38,10 +38,9 @@ import * as traceUtil from './util';
 
 export {Config, PluginTypes};
 
-const modulesLoadedBeforeTrace: string[] = [];
-
 const traceAgent = new TraceAgent('Custom Span API');
 
+const modulesLoadedBeforeTrace: string[] = [];
 const traceModuleName = path.join('@google-cloud', 'trace-agent');
 for (let i = 0; i < filesLoadedBeforeTrace.length; i++) {
   const moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
@@ -159,9 +158,12 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
 
   if (modulesLoadedBeforeTrace.length > 0) {
     logger.error(
-        'Tracing might not work as the following modules ' +
-        'were loaded before the trace agent was initialized: ' +
-        JSON.stringify(modulesLoadedBeforeTrace));
+        'TraceAgent#start: Tracing might not work as the following modules',
+        'were loaded before the trace agent was initialized:',
+        `[${modulesLoadedBeforeTrace.sort().join(', ')}]`);
+    // Stop storing these entries in memory
+    filesLoadedBeforeTrace.length = 0;
+    modulesLoadedBeforeTrace.length = 0;
   }
   // CLS namespace for context propagation
   cls.createNamespace();
@@ -177,7 +179,7 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
   if (typeof config.projectId !== 'string' &&
       typeof config.projectId !== 'undefined') {
     logger.error(
-        'config.projectId, if provided, must be a string. ' +
+        'TraceAgent#start: config.projectId, if provided, must be a string.',
         'Disabling trace agent.');
     stop();
     return traceAgent;
@@ -186,7 +188,7 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
   // Make trace agent available globally without requiring package
   global._google_trace_agent = traceAgent;
 
-  logger.info('trace agent activated');
+  logger.info('TraceAgent#start: Trace Agent activated.');
   return traceAgent;
 }
 
