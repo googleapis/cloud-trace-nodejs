@@ -59,7 +59,7 @@
     "@types/is": "0.0.18",
     "@types/koa": "^2.0.43",
     "@types/methods": "^1.1.0",
-    "@types/mocha": "^2.2.44",
+    "@types/mocha": "^5.0.0",
     "@types/ncp": "^2.0.1",
     "@types/nock": "^9.1.2",
     "@types/node": "^9.4.6",
