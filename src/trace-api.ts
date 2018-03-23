@@ -129,7 +129,8 @@ export class TraceAgent implements TraceAgentInterface {
     // TODO validate options
     // Don't create a root span if we are already in a root span
     if (cls.getRootContext().type === SpanDataType.ROOT) {
-      this.logger!.warn(this.pluginName + ': Cannot create nested root spans.');
+      this.logger!.warn(`TraceApi#runInRootSpan: [${
+          this.pluginName}] Cannot create nested root spans.`);
       return fn(UNCORRELATED_SPAN);
     }
 
@@ -204,9 +205,10 @@ export class TraceAgent implements TraceAgentInterface {
         // with continuously growing number of child spans. The second case
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
-        this.logger!.warn(
-            this.pluginName + ': creating child for an already closed span',
-            options.name, rootSpan.span.name);
+        this.logger!.warn(`TraceApi#createChildspan: [${
+            this.pluginName}] Creating phantom child span [${
+            options.name}] because root span [${
+            rootSpan.span.name}] was already closed.`);
         return UNCORRELATED_SPAN;
       }
       // Create a new child span and return it.
@@ -224,9 +226,9 @@ export class TraceAgent implements TraceAgentInterface {
       return UNTRACED_SPAN;
     } else {
       // Context was lost.
-      this.logger!.warn(
-          this.pluginName + ': Attempted to create child span ' +
-          'without root');
+      this.logger!.warn(`TraceApi#createChildspan: [${
+          this.pluginName}] Creating phantom child span [${
+          options.name}] because there is no root span.`);
       return UNCORRELATED_SPAN;
     }
   }
