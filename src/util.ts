@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import Module = require('module');
-import * as path from 'path';
 import {Logger} from '@google-cloud/common';  // for types only.
+import * as path from 'path';
 
 // This symbol must be exported (for now).
 // See: https://github.com/Microsoft/TypeScript/issues/20080
@@ -167,46 +165,6 @@ export function generateTraceContext(traceContext: TraceContext): string {
 export function packageNameFromPath(importPath: string) {
   const matches = moduleRegex.exec(importPath);
   return matches && matches.length > 1 ? matches[1] : null;
-}
-
-/**
- * Determines the path at which the requested module will be loaded given
- * the provided parent module.
- *
- * @param request The name of the module to be loaded.
- * @param parent The module into which the requested module will be loaded.
- */
-export function findModulePath(request: string, parent?: NodeModule): string {
-  const mainScriptDir = path.dirname(Module._resolveFilename(request, parent));
-  const resolvedModule = Module._resolveLookupPaths(request, parent);
-  const paths = resolvedModule[1];
-  for (let i = 0, PL = paths.length; i < PL; i++) {
-    if (mainScriptDir.indexOf(paths[i]) === 0) {
-      return path.join(paths[i], request.replace('/', path.sep));
-    }
-  }
-  return '';
-}
-
-/**
- * Determines the version of the module located at `modulePath`.
- *
- * @param modulePath The absolute path to the root directory of the
- *    module being loaded. This may be an empty string if we are loading an
- *    internal module such as http.
- */
-export function findModuleVersion(
-    modulePath: string, load: (path: string) => {}): string {
-  if (!load) {
-    load = Module._load;
-  }
-  if (modulePath !== '') {
-    const pjson = path.join(modulePath, 'package.json');
-    if (fs.existsSync(pjson)) {
-      return (load(pjson) as PackageJson).version;
-    }
-  }
-  return process.version;
 }
 
 /**

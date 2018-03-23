@@ -143,7 +143,7 @@ function assertDurationCorrect(expectedDuration, predicate) {
 
 function runInTransaction(fn) {
   testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
-    fn(function() {
+    return fn(function() {
       assert.strictEqual(span.type, SpanDataType.ROOT);
       span.endSpan();
     });

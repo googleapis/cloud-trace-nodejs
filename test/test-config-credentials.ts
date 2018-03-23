@@ -47,13 +47,13 @@ describe('Credentials Configuration', () => {
   before(() => {
     savedProject = process.env.GCLOUD_PROJECT;
     process.env.GCLOUD_PROJECT = '0';
-    trace.setTraceWriterEnabled(true);
+    trace.setTraceWriter();
     disableNetConnect();
   });
 
   after(() => {
     process.env.GCLOUD_PROJECT = savedProject;
-    trace.setTraceWriterEnabled(false);
+    trace.setTraceWriter(trace.TestTraceWriter);
     enableNetConnect();
   });
 

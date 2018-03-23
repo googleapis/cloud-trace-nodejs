@@ -15,9 +15,17 @@
  */
 'use strict';
 
+// Trace agent must be started out of the loop over gRPC versions,
+// because express can't be re-patched.
+var agent = require('../..').start({
+  projectId: '0',
+  samplingRate: 0
+});
+
 var common = require('./plugins/common'/*.js*/);
 
 var assert = require('assert');
+var express = require('./plugins/fixtures/express4');
 var http = require('http');
 
 var versions = {
@@ -48,14 +56,6 @@ function requestAndSendHTTPStatus(res, expectedReqs) {
     res.sendStatus(200);
   }, expectedReqs);
 }
-
-// Trace agent must be started out of the loop over gRPC versions,
-// because express can't be re-patched.
-var agent = require('../..').start({
-  projectId: '0',
-  samplingRate: 0
-});
-var express = require('./plugins/fixtures/express4');
 
 Object.keys(versions).forEach(function(version) {
   var grpc;

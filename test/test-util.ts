@@ -14,29 +14,23 @@
  * limitations under the License.
  */
 
-'use strict';
+import {Logger} from '@google-cloud/common';
+import * as assert from 'assert';
+import {inspect} from 'util';
 
-import { Constants } from '../src/constants';
+import {Constants} from '../src/constants';
 import * as util from '../src/util';
-import { Logger } from '@google-cloud/common';
 
-var assert = require('assert');
-var common = require('./plugins/common'/*.js*/);
-var inspect = require('util').inspect;
-var Module = require('module');
-var semver = require('semver');
-var path = require('path');
+import {TestLogger} from './logger';
 
-function notNull<T>(arg: T|null): T {
-  assert.ok(arg);
-  return arg as T;
-}
+const notNull = <T>(x: T|null|undefined): T => {
+  assert.notStrictEqual(x, null);
+  assert.notStrictEqual(x, undefined);
+  return x as T;
+};
 
-// TODO(kjin): Use TypeScript in the rest of this file. This is already done
-// in PR #686.
 describe('Singleton', () => {
-  // A real test logger class is also introduced as part of #686.
-  const logger = {} as any as Logger;
+  const logger = new TestLogger();
   class MyClass {
     constructor(public logger: Logger, public config: {}) {}
   }
@@ -60,12 +54,13 @@ describe('Singleton', () => {
       assert.throws(() => singleton.create(logger, {}));
     });
 
-    it('creates a new instance when forceNewAgent_ is true in the config', () => {
-      const singleton = new util.Singleton(MyClass);
-      const createResult1 = singleton.create(logger, {});
-      const createResult2 = singleton.create(logger, { forceNewAgent_: true });
-      assert.notStrictEqual(createResult1, createResult2);
-    });
+    it('creates a new instance when forceNewAgent_ is true in the config',
+       () => {
+         const singleton = new util.Singleton(MyClass);
+         const createResult1 = singleton.create(logger, {});
+         const createResult2 = singleton.create(logger, {forceNewAgent_: true});
+         assert.notStrictEqual(createResult1, createResult2);
+       });
   });
 
   describe('get', () => {
@@ -83,148 +78,91 @@ describe('Singleton', () => {
     it('does not return a stale value', () => {
       const singleton = new util.Singleton(MyClass);
       singleton.create(logger, {});
-      const createResult = singleton.create(logger, { forceNewAgent_: true });
+      const createResult = singleton.create(logger, {forceNewAgent_: true});
       const getResult = singleton.get();
       assert.strictEqual(getResult, createResult);
     });
   });
 });
 
-describe('util.truncate', function() {
-  it('should truncate objects larger than size', function() {
+describe('util.truncate', () => {
+  it('should truncate objects larger than size', () => {
     assert.strictEqual(util.truncate('abcdefghijklmno', 5), 'ab...');
   });
 
-  it('should not truncate objects smaller than size', function() {
+  it('should not truncate objects smaller than size', () => {
     assert.strictEqual(util.truncate('abcdefghijklmno', 50), 'abcdefghijklmno');
   });
 
-  it('should handle unicode characters', function() {
-    var longName = Array(120).join('☃');
-    assert.strictEqual(util.truncate(longName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT),
-      Array(42).join('☃') + '...');
+  it('should handle unicode characters', () => {
+    const longName = new Array(120).join('☃');
+    assert.strictEqual(
+        util.truncate(longName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT),
+        `${new Array(42).join('☃')}...`);
   });
 });
 
-describe('util.packageNameFromPath', function() {
-  it('should work for standard packages', function() {
-    var p = path.join('.',
-               'appengine-sails',
-               'node_modules',
-               'testmodule',
-               'index.js');
-    assert.equal(util.packageNameFromPath(p),
-      'testmodule');
-  });
-
-  it('should work for namespaced packages', function() {
-    var p = path.join('.',
-               'appengine-sails',
-               'node_modules',
-               '@google',
-               'cloud-trace',
-               'index.js');
-    assert.equal(util.packageNameFromPath(p),
-      path.join('@google','cloud-trace'));
-  });
-});
-
-describe('util.findModuleVersion', function() {
-  it('should correctly find package.json for userspace packages', function() {
-    var pjson = require('../../package.json');
-    var modulePath = util.findModulePath('glob', module);
-    assert(semver.satisfies(util.findModuleVersion(modulePath, Module._load),
-        pjson.devDependencies.glob));
-  });
-
-  it('should not break for core packages', function() {
-    var modulePath = util.findModulePath('http', module);
-    assert.equal(util.findModuleVersion(modulePath, Module._load), process.version);
-  });
-
-  it('should work with namespaces', function() {
-    var modulePath = util.findModulePath('@google-cloud/common', module);
-    var truePackage =
-      require('../../node_modules/@google-cloud/common/package.json');
-    assert.equal(util.findModuleVersion(modulePath, Module._load), truePackage.version);
-  });
-});
-
-describe('util.parseContextFromHeader', function() {
-  describe('valid inputs', function() {
-    it('should return expected values: 123456/667;o=1', function() {
-      var result = notNull(util.parseContextFromHeader(
-        '123456/667;o=1'));
+describe('util.parseContextFromHeader', () => {
+  describe('valid inputs', () => {
+    it('should return expected values: 123456/667;o=1', () => {
+      const result = notNull(util.parseContextFromHeader('123456/667;o=1'));
       assert.strictEqual(result.traceId, '123456');
       assert.strictEqual(result.spanId, '667');
       assert.strictEqual(result.options, 1);
     });
 
     it('should return expected values:' +
-        '123456/123456123456123456123456123456123456;o=1', function() {
-      var result = notNull(util.parseContextFromHeader(
-        '123456/123456123456123456123456123456123456;o=1'));
-      assert.strictEqual(result.traceId, '123456');
-      assert.strictEqual(result.spanId, '123456123456123456123456123456123456');
-      assert.strictEqual(result.options, 1);
-    });
+           '123456/123456123456123456123456123456123456;o=1',
+       () => {
+         const result = notNull(util.parseContextFromHeader(
+             '123456/123456123456123456123456123456123456;o=1'));
+         assert.strictEqual(result.traceId, '123456');
+         assert.strictEqual(
+             result.spanId, '123456123456123456123456123456123456');
+         assert.strictEqual(result.options, 1);
+       });
 
-    it('should return expected values: 123456/667', function() {
-      var result = notNull(util.parseContextFromHeader(
-        '123456/667'));
+    it('should return expected values: 123456/667', () => {
+      const result = notNull(util.parseContextFromHeader('123456/667'));
       assert.strictEqual(result.traceId, '123456');
       assert.strictEqual(result.spanId, '667');
       assert.strictEqual(result.options, undefined);
     });
   });
 
-  describe('invalid inputs', function() {
-    var inputs = [
-      '',
-      null,
-      undefined,
-      '123456',
-      '123456;o=1',
-      'o=1;123456',
-      '123;456;o=1',
-      '123/o=1;456',
-      '123/abc/o=1'
+  describe('invalid inputs', () => {
+    const inputs = [
+      '', null, undefined, '123456', '123456;o=1', 'o=1;123456', '123;456;o=1',
+      '123/o=1;456', '123/abc/o=1'
     ];
-    inputs.forEach(function(s: any) {
-      it('should reject ' + s, function() {
-        var result = util.parseContextFromHeader(s);
+    inputs.forEach(s => {
+      it(`should reject ${s}`, () => {
+        // TS: Cast s as any rather than coerce it to a value
+        // tslint:disable-next-line:no-any
+        const result = util.parseContextFromHeader(s as any);
         assert.ok(!result);
       });
     });
   });
 });
 
-describe('util.generateTraceContext', function() {
-  var inputs = [
-    {
-      traceId: '123456',
-      spanId: '667',
-      options: 1
-    },
-    {
-      traceId: '123456',
-      spanId: '667',
-      options: undefined
-    }
+describe('util.generateTraceContext', () => {
+  const inputs: util.TraceContext[] = [
+    {traceId: '123456', spanId: '667', options: 1},
+    {traceId: '123456', spanId: '667', options: undefined}
   ];
 
-  inputs.forEach(function(s) {
-    it('returns well-formatted trace context for ' + inspect(s), function() {
-      var context = util.generateTraceContext(s);
-      var parsed = util.parseContextFromHeader(context);
+  inputs.forEach(s => {
+    it(`returns well-formatted trace context for ${inspect(s)}`, () => {
+      const context = util.generateTraceContext(s);
+      const parsed = util.parseContextFromHeader(context);
       assert.deepEqual(parsed, s);
     });
   });
 
-  it('returns an empty string if passed a falsy value', function() {
-    var context = util.generateTraceContext(null as any);
-    assert.equal(context, '');
+  it('returns an empty string if passed a falsy value', () => {
+    // tslint:disable-next-line:no-any
+    const context = util.generateTraceContext(null as any);
+    assert.strictEqual(context, '');
   });
 });
-
-export default {};

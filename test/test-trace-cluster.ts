@@ -29,9 +29,14 @@ describe('test-trace-cluster', () => {
   let axios: typeof axiosModule;
   let express: typeof expressModule;
   before(() => {
+    trace.setPluginLoader();
     trace.start();
     express = require('express');
     axios = require('axios');
+  });
+
+  after(() => {
+    trace.setPluginLoader(trace.TestPluginLoader);
   });
 
   it('should not interfere with express span', async () => {

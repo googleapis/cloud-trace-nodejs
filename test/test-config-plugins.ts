@@ -14,73 +14,65 @@
  * limitations under the License.
  */
 
-'use strict';
+import {Logger} from '@google-cloud/common';
+import * as assert from 'assert';
 
-import * as pluginLoader from '../src/trace-plugin-loader';
+import {defaultConfig} from '../src/config';
+import {PluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 
-var assert = require('assert');
-var shimmer = require('shimmer');
-var trace = require('../..');
+import * as trace from './trace';
 
-var instrumentedModules = [
-  'connect', 'express', 'generic-pool', 'grpc', 'hapi', 'http', 'http2',
-  'https', 'knex', 'koa', 'mongodb-core', 'mysql', 'mysql2', 'pg', 'redis',
-  'restify',
-];
+describe('Configuration: Plugins', () => {
+  const instrumentedModules = Object.keys(defaultConfig.plugins);
+  let plugins: {[pluginName: string]: string}|null;
 
-describe('plugin configuration', function() {
-  var plugins;
+  class ConfigTestPluginLoader extends PluginLoader {
+    constructor(logger: Logger, config: PluginLoaderConfig) {
+      super(logger, config);
+      plugins = config.plugins;
+    }
+  }
 
-  before(function() {
-    // When the plugin loader is activated, save the incoming value of plugins.
-    shimmer.wrap(pluginLoader, 'activate', function(original) {
-      return function(logger, config) {
-        plugins = config.plugins;
-        return original.apply(this, arguments);
-      };
-    });
+  before(() => {
+    trace.setPluginLoader(ConfigTestPluginLoader);
   });
 
-  after(function() {
-    shimmer.unwrap(pluginLoader, 'activate');
+  after(() => {
+    trace.setPluginLoader(trace.TestPluginLoader);
   });
 
-  afterEach(function() {
+  afterEach(() => {
     plugins = null;
   });
 
-  it('should have correct defaults', function() {
-    trace.start({forceNewAgent_: true});
-    assert.strictEqual(JSON.stringify(Object.keys(plugins)),
-      JSON.stringify(instrumentedModules));
-    for (var i = 0; i < instrumentedModules.length; i++) {
-      var name = instrumentedModules[i];
-      assert.ok(plugins[name].indexOf('plugin-' + name + '.js') !== -1);
-    }
+  it('should have correct defaults', () => {
+    trace.start();
+    assert.ok(plugins);
+    assert.strictEqual(
+        JSON.stringify(Object.keys(plugins!)),
+        JSON.stringify(instrumentedModules));
+    instrumentedModules.forEach(
+        e => assert.ok(plugins![e].includes(`plugin-${e}.js`)));
   });
 
-  it('should handle empty object', function() {
-    trace.start({forceNewAgent_: true, plugins: {}});
-    assert.strictEqual(JSON.stringify(Object.keys(plugins)),
-      JSON.stringify(instrumentedModules));
-    assert.ok(instrumentedModules.every(function(e) {
-      return plugins[e].indexOf('plugin-' + e + '.js') !== -1;
-    }));
+  it('should handle empty object', () => {
+    trace.start({plugins: {}});
+    assert.ok(plugins);
+    assert.strictEqual(
+        JSON.stringify(Object.keys(plugins!)),
+        JSON.stringify(instrumentedModules));
+    instrumentedModules.forEach(
+        e => assert.ok(plugins![e].includes(`plugin-${e}.js`)));
   });
 
-  it('should overwrite builtin plugins correctly', function() {
-    trace.start({forceNewAgent_: true, plugins: {
-      express: 'foo'
-    }});
-    assert.strictEqual(JSON.stringify(Object.keys(plugins)),
-      JSON.stringify(instrumentedModules));
-    assert.ok(instrumentedModules.filter(function(e) {
-      return e !== 'express';
-    }).every(function(e) {
-      return plugins[e].indexOf('plugin-' + e + '.js') !== -1;
-    }));
-    assert.strictEqual(plugins.express, 'foo');
+  it('should overwrite builtin plugins correctly', () => {
+    trace.start({plugins: {express: 'foo'}});
+    assert.ok(plugins);
+    assert.strictEqual(
+        JSON.stringify(Object.keys(plugins!)),
+        JSON.stringify(instrumentedModules));
+    instrumentedModules.filter(e => e !== 'express')
+        .forEach(e => assert.ok(plugins![e].includes(`plugin-${e}.js`)));
+    assert.strictEqual(plugins!.express, 'foo');
   });
 });
-
-export default {};

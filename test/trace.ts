@@ -19,9 +19,11 @@
  * for testing purposes. The differences are that:
  * - The Trace Writer singleton is mocked to make no network requests, writing
  * traces to a local store instead.
+ * - The Plugin Loader singleton is mocked to do nothing.
  * - When started, the Trace Agent is initialized with a samplingRate of zero by
  * default (but this can be overridden).
  * - Additional methods to query/delete spans written locally are exposed.
+ * - Additional methods to override singleton values are exposed.
  *
  * Most tests should include this file instead of the main module root.
  */
@@ -38,6 +40,7 @@ import * as trace from '../src';
 import {Config, PluginTypes} from '../src';
 import {RootSpanData} from '../src/span-data';
 import {Trace, TraceSpan} from '../src/trace';
+import {PluginLoader, pluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 import {LabelObject, TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
 
 export {Config, PluginTypes};
@@ -45,7 +48,7 @@ export {Config, PluginTypes};
 const traces = new Map<string, TraceSpan[]>();
 const allSpans: TraceSpan[] = [];
 
-class TestTraceWriter extends TraceWriter {
+export class TestTraceWriter extends TraceWriter {
   initialize(cb: (err?: Error) => void): void {
     this.getConfig().projectId = '0';
     cb();
@@ -61,21 +64,37 @@ class TestTraceWriter extends TraceWriter {
     });
   }
 }
-setTraceWriterEnabled(false);
 
-export function setTraceWriterEnabled(enabled: boolean) {
-  traceWriter['implementation'] = enabled ? TraceWriter : TestTraceWriter;
+export class TestPluginLoader extends PluginLoader {
+  activate(): PluginLoader {
+    return this;
+  }
+  deactivate(): PluginLoader {
+    return this;
+  }
 }
+
+setTraceWriter(TestTraceWriter);
+setPluginLoader(TestPluginLoader);
 
 export type Predicate<T> = (value: T) => boolean;
 
 export function start(projectConfig?: Config): PluginTypes.TraceAgent {
-  const agent = trace.start(Object.assign({samplingRate: 0}, projectConfig));
+  const agent = trace.start(
+      Object.assign({samplingRate: 0, forceNewAgent_: true}, projectConfig));
   return agent;
 }
 
 export function get(): PluginTypes.TraceAgent {
   return trace.get();
+}
+
+export function setTraceWriter(impl?: typeof TraceWriter) {
+  traceWriter['implementation'] = impl || TraceWriter;
+}
+
+export function setPluginLoader(impl?: typeof PluginLoader) {
+  pluginLoader['implementation'] = impl || PluginLoader;
 }
 
 export function getTraces(predicate?: Predicate<TraceSpan[]>): string[] {
