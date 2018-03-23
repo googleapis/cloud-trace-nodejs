@@ -16,16 +16,18 @@
 
 // Monkeypatch gcp-metadata to not ask for retries at all.
 
-import * as proxyquire from 'proxyquire';
-import * as request from 'request';
+import * as rax from 'retry-axios';
+import * as shimmer from 'shimmer';
+import { AxiosRequestConfig } from 'axios';
 
-proxyquire('gcp-metadata', {
-  'retry-request': (requestOpts, opts, callback?): any => {
-    // gcp-metadata 0.4+ supplies an extra options object to retry-request.
-    // Since we're substituting retry-request with request,
-    // omit this extra object to the substituted request call.
-    if (typeof opts === 'object') {
-      return (request as Function)(requestOpts, callback);
-    }
+shimmer.wrap(rax, 'attach', attach => {
+  return (arg) => {
+    shimmer.wrap(arg, 'request', request => {
+      return (config: AxiosRequestConfig) => {
+        delete config['raxConfig'];
+        return request(config);
+      }
+    });
+    return arg;
   }
 });

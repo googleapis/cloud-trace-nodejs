@@ -86,8 +86,8 @@
     "nyc": "^11.4.1",
     "once": "^1.4.0",
     "pify": "^3.0.0",
-    "proxyquire": "^1.4.0",
     "request": "^2.83.0",
+    "retry-axios": "^0.3.2",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.0",
     "standard-version": "^4.2.0",
@@ -97,11 +97,11 @@
     "typescript": "~2.7.2"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.16.2",
+    "@google-cloud/common": "^0.17.0",
     "builtin-modules": "^2.0.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
-    "gcp-metadata": "^0.4.1",
+    "gcp-metadata": "^0.6.3",
     "is": "^3.2.0",
     "lodash.findindex": "^4.4.0",
     "lodash.isequal": "^4.0.0",

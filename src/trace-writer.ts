@@ -15,8 +15,10 @@
  */
 
 import * as common from '@google-cloud/common';
+import {AxiosError} from 'axios';
 import * as gcpMetadata from 'gcp-metadata';
 import {OutgoingHttpHeaders} from 'http';
+import * as os from 'os';
 import * as util from 'util';
 
 import {Constants} from './constants';
@@ -173,24 +175,30 @@ export class TraceWriter extends common.Service {
   }
 
   getHostname(cb: (hostname: string) => void) {
-    gcpMetadata.instance(
-        {property: 'hostname', headers}, (err, response, hostname) => {
-          if (err && err.code !== 'ENOTFOUND') {
+    gcpMetadata.instance({property: 'hostname', headers})
+        .then((res) => {
+          cb(res.data);  // hostname
+        })
+        .catch((err: AxiosError) => {
+          if (err.code !== 'ENOTFOUND') {
             // We are running on GCP.
             this.logger.warn('Unable to retrieve GCE hostname.', err);
           }
-          cb(hostname || require('os').hostname());
+          cb(os.hostname());
         });
   }
 
   getInstanceId(cb: (instanceId?: string) => void) {
-    gcpMetadata.instance(
-        {property: 'id', headers}, (err, response, instanceId) => {
-          if (err && err.code !== 'ENOTFOUND') {
+    gcpMetadata.instance({property: 'id', headers})
+        .then((res) => {
+          cb(res.data);  // instance ID
+        })
+        .catch((err: AxiosError) => {
+          if (err.code !== 'ENOTFOUND') {
             // We are running on GCP.
             this.logger.warn('Unable to retrieve GCE instance id.', err);
           }
-          instanceId ? cb(instanceId) : cb();
+          cb();
         });
   }
 
@@ -198,35 +206,22 @@ export class TraceWriter extends common.Service {
    * Returns the project ID if it has been cached and attempts to load
    * it from the enviroment or network otherwise.
    */
-  getProjectId(callback: (err: Error|null, projectId?: string) => void) {
+  getProjectId(cb: (err: Error|null, projectId?: string) => void) {
     if (this.config.projectId) {
-      callback(null, this.config.projectId);
+      cb(null, this.config.projectId);
       return;
     }
 
-    gcpMetadata.project(
-        {property: 'project-id', headers}, (err, response, projectId) => {
-          if (response && response.statusCode !== 200) {
-            if (response.statusCode === 503) {
-              err = new Error(
-                  'Metadata service responded with a 503 status ' +
-                  'code. This may be due to a temporary server error; please try ' +
-                  'again later.');
-            } else {
-              err = new Error(
-                  'Metadata service responded with the following ' +
-                  'status code: ' + response.statusCode);
-            }
+    gcpMetadata.project({property: 'project-id', headers})
+        .then((res) => {
+          cb(null, res.data);  // project ID
+        })
+        .catch((err: AxiosError) => {
+          if (err.response && err.response.status === 503) {
+            err.message +=
+                ' This may be due to a temporary server error; please try again later.';
           }
-          if (err || !projectId) {
-            // We shouldn't observe a falsey projectId if there's no error
-            err = err || new Error('Project ID missing.');
-            callback(err);
-            return;
-          }
-          this.logger.info('Acquired ProjectId from metadata: ' + projectId);
-          this.config.projectId = projectId;
-          callback(null, projectId);
+          cb(err);
         });
   }
 

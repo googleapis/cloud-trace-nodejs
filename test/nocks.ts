@@ -31,25 +31,38 @@ export function oauth2<T extends {} = {}>(validator?: (body: T) => boolean):
       });
 }
 
-export function projectId(reply: () => string) {
+export function projectId(status: number|(() => string), reply?: () => string) {
+  if (typeof status === 'function') {
+    reply = status;
+    status = 200;
+  }
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/project/project-id')
       .once()
-      .reply(reply);
+      .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
 
-export function instanceId(reply: () => string) {
+export function instanceId(
+    status: number|(() => string), reply?: () => string) {
+  if (typeof status === 'function') {
+    reply = status;
+    status = 200;
+  }
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/instance/id')
       .once()
-      .reply(reply);
+      .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
 
-export function hostname(reply: () => string) {
+export function hostname(status: number|(() => string), reply?: () => string) {
+  if (typeof status === 'function') {
+    reply = status;
+    status = 200;
+  }
   return nock('http://metadata.google.internal')
       .get('/computeMetadata/v1/instance/hostname')
       .once()
-      .reply(reply);
+      .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function patchTraces<T extends {} = {}>(
