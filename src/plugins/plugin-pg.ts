@@ -44,16 +44,31 @@ const plugin: Plugin = [
       shimmer.wrap(Client.prototype, 'query', (query) => {
         return function query_trace(this: pg_6.Client) {
           const span = api.createChildSpan({name: 'pg-query'});
-          const pgQuery: pg_6.QueryReturnValue = query.apply(this, arguments);
           if (!api.isRealSpan(span)) {
-            return pgQuery;
+            return query.apply(this, arguments);
           }
-          if (api.enhancedDatabaseReportingEnabled()) {
-            span.addLabel('query', pgQuery.text);
-            if (pgQuery.values) {
-              span.addLabel('values', pgQuery.values);
+          const args: pg_6.QueryReturnValue[] =
+              Array.prototype.slice.call(arguments, 0);
+          if (args.length >= 1) {
+            // Extract query text and values, if needed.
+            if (api.enhancedDatabaseReportingEnabled()) {
+              const queryObj = args[0];
+              if (typeof queryObj === 'object') {
+                if (queryObj.text) {
+                  span.addLabel('query', queryObj.text);
+                }
+                if (queryObj.values) {
+                  span.addLabel('values', queryObj.values);
+                }
+              } else if (typeof queryObj === 'string') {
+                span.addLabel('query', queryObj);
+                if (args.length >= 2 && typeof args[1] !== 'function') {
+                  span.addLabel('values', args[1]);
+                }
+              }
             }
           }
+          const pgQuery: pg_6.QueryReturnValue = query.apply(this, arguments);
           api.wrapEmitter(pgQuery);
           const done = pgQuery.callback;
           pgQuery.callback = api.wrap((err, res) => {
