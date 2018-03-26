@@ -13,61 +13,70 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-var shimmer = require('shimmer');
+import * as shimmer from 'shimmer';
+import {Readable} from 'stream';
 
-var SUPPORTED_VERSIONS = '^6.x || ^7.x';
+import {Patch, Plugin} from '../plugin-types';
 
-module.exports = [
-  {
-    file: 'lib/client.js',
-    versions: SUPPORTED_VERSIONS,
-    patch: function(Client, api) {
-      function queryWrap(query) {
-        return function query_trace() {
-          var span = api.createChildSpan({
-            name: 'pg-query'
-          });
-          var pgQuery = query.apply(this, arguments);
-          if (!api.isRealSpan(span)) {
-            return pgQuery;
-          }
-          if (api.enhancedDatabaseReportingEnabled()) {
-            span.addLabel('query', pgQuery.text);
-            if (pgQuery.values) {
-              span.addLabel('values', pgQuery.values);
-            }
-          }
-          api.wrapEmitter(pgQuery);
-          var done = pgQuery.callback;
-          pgQuery.callback = api.wrap(function(err, res) {
-            if (api.enhancedDatabaseReportingEnabled()) {
-              if (err) {
-                span.addLabel('error', err);
-              }
-              if (res) {
-                span.addLabel('row_count', res.rowCount);
-                span.addLabel('oid', res.oid);
-                span.addLabel('rows', res.rows);
-                span.addLabel('fields', res.fields);
-              }
-            }
-            span.endSpan();
-            if (done) {
-              done(err, res);
-            }
-          });
+import {pg_6 as pg} from './types';
+
+const SUPPORTED_VERSIONS = '^6.x || ^7.x';
+
+// tslint:disable-next-line:no-any
+function isSubmittable(obj: any): obj is {submit: Function} {
+  return typeof obj.submit === 'function';
+}
+
+const plugin: Plugin = [{
+  file: 'lib/client.js',
+  versions: SUPPORTED_VERSIONS,
+  // TS: Client is a class name.
+  // tslint:disable-next-line:variable-name
+  patch: (Client, api) => {
+    shimmer.wrap(Client.prototype, 'query', (query) => {
+      return function query_trace(this: pg.Client) {
+        const span = api.createChildSpan({name: 'pg-query'});
+        const pgQuery: pg.QueryReturnValue = query.apply(this, arguments);
+        if (!api.isRealSpan(span)) {
           return pgQuery;
-        };
-      }
-
-      shimmer.wrap(Client.prototype, 'query', queryWrap);
-    },
-    unpatch: function(Client) {
-      shimmer.unwrap(Client.prototype, 'query');
-    }
+        }
+        if (api.enhancedDatabaseReportingEnabled()) {
+          if (pgQuery.text) {
+            span.addLabel('query', pgQuery.text);
+          }
+          if (pgQuery.values) {
+            span.addLabel('values', pgQuery.values);
+          }
+        }
+        api.wrapEmitter(pgQuery);
+        const done = pgQuery.callback;
+        pgQuery.callback = api.wrap((err, res) => {
+          if (api.enhancedDatabaseReportingEnabled()) {
+            if (err) {
+              span.addLabel('error', err);
+            }
+            if (res) {
+              span.addLabel('row_count', res.rowCount);
+              span.addLabel('oid', res.oid);
+              span.addLabel('rows', res.rows);
+              span.addLabel('fields', res.fields);
+            }
+          }
+          span.endSpan();
+          if (done) {
+            done(err, res);
+          }
+        });
+        return pgQuery;
+      };
+    });
+  },
+  // TS: Client is a class name.
+  // tslint:disable-next-line:variable-name
+  unpatch(Client) {
+    shimmer.unwrap(Client.prototype, 'query');
   }
-];
+} as Patch<typeof pg.Client>];
 
-export default {};
+export = plugin;
