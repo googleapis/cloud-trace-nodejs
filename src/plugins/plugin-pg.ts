@@ -17,7 +17,7 @@
 
 var shimmer = require('shimmer');
 
-var SUPPORTED_VERSIONS = '^6.x';
+var SUPPORTED_VERSIONS = '^6.x || ^7.x';
 
 module.exports = [
   {
