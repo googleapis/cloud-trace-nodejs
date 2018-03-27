@@ -13,52 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-var common = require('./common'/*.js*/);
-var assert = require('assert');
-var path = require('path');
-
-describe('google-gax', function() {
-  var agent;
-  var speech;
-
-  before(function() {
-    agent = require('../../..').start({
-      projectId: '0',
-      keyFilename: path.join(__dirname, '..', 'fixtures', 
-          'gcloud-credentials.json'),
-      enhancedDatabaseReporting: true,
-      samplingRate: 0
-    });
-    const SpeechClient = require('./fixtures/google-cloud-speech1').SpeechClient;
-    speech = new SpeechClient({
-      projectId: '0',
-      keyFilename: path.join(__dirname, '..', 'fixtures', 
-          'gcloud-credentials.json')
-    });
-  });
-
-  it('should not interfere with google-cloud api tracing', function(done) {
-    common.runInTransaction(function(endRootSpan) {
-      speech.recognize('./src/index.js', {
-        encoding: 'LINEAR16',
-        sampleRate: 16000
-      }, function(err, res) {
-        endRootSpan();
-        // Authentication will fail due to invalid credentials but a span will still be
-        // generated.
-        assert.equal(err.code, 16);
-        var span = common.getMatchingSpan(function(span) {
-          return span.kind === 'RPC_CLIENT' && span.name.indexOf('grpc:') === 0;
-        });
-        assert.ok(span);
-        assert.equal(span.name, 'grpc:/google.cloud.speech.v1.Speech/Recognize');
-        done();
-      });
-    });
-  });
-
-});
-
-export default {};
+// TODO(kjin): Test tracing client library calls with google-gax.
