@@ -22,6 +22,7 @@ import { defaultConfig } from '../src/config';
 import { TraceAgent } from '../src/trace-api';
 import { traceWriter } from '../src/trace-writer';
 import * as TracingPolicy from '../src/tracing-policy';
+import { FORCE_NEW } from '../src/util';
 import { asBaseSpanData } from './utils';
 import { SpanDataType } from '../src/constants';
 
@@ -76,7 +77,7 @@ describe('Trace Interface', function() {
     traceWriter.create(logger,
       Object.assign(defaultConfig, {
         projectId: '0',
-        forceNewAgent_: false
+        [FORCE_NEW]: false
       })).initialize(function(err) {
         assert.ok(!err);
         done();

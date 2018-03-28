@@ -16,6 +16,8 @@
 
 'use strict';
 
+import {FORCE_NEW} from '../src/util';
+
 var assert = require('assert');
 var gcloudCommon = require('@google-cloud/common');
 var shimmer = require('shimmer');
@@ -47,21 +49,21 @@ describe('should respect environment variables', function() {
   });
 
   it('should respect GCLOUD_TRACE_LOGLEVEL', function() {
-    trace.start({forceNewAgent_: true});
+    trace.start({[FORCE_NEW]: true});
     assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[4]);
   });
 
   it('should prefer env to config', function() {
-    trace.start({logLevel: 2, forceNewAgent_: true});
+    trace.start({logLevel: 2, [FORCE_NEW]: true});
     assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[4]);
   });
 
   it('should fix out of bounds log level', function() {
     process.env.GCLOUD_TRACE_LOGLEVEL = '-5';
-    trace.start({forceNewAgent_: true});
+    trace.start({[FORCE_NEW]: true});
     assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[0]);
     process.env.GCLOUD_TRACE_LOGLEVEL = '300';
-    trace.start({forceNewAgent_: true});
+    trace.start({[FORCE_NEW]: true});
     assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[5]);
   });
 });

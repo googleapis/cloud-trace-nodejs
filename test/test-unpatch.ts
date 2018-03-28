@@ -17,6 +17,7 @@
 'use strict';
 
 import './override-gcp-metadata';
+import {FORCE_NEW} from '../src/util';
 
 var assert = require('assert');
 var nock = require('nock');
@@ -43,7 +44,7 @@ describe('index.js', function() {
     // Set things up so that the trace agent won't be able to get a project id,
     // and stop.
     scope = nocks.projectId(404);
-    agent = trace.start({ forceNewAgent_: true });
+    agent = trace.start({ [FORCE_NEW]: true });
   });
 
   afterEach(function(done) {

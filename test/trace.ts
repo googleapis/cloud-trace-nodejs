@@ -48,6 +48,7 @@ import {RootSpanData} from '../src/span-data';
 import {Trace, TraceSpan} from '../src/trace';
 import {PluginLoader, pluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 import {LabelObject, TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
+import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
 
@@ -86,7 +87,7 @@ export type Predicate<T> = (value: T) => boolean;
 
 export function start(projectConfig?: Config): PluginTypes.TraceAgent {
   const agent = trace.start(Object.assign(
-      {samplingRate: 0, logLevel: 4, forceNewAgent_: true}, projectConfig));
+      {samplingRate: 0, logLevel: 4, [FORCE_NEW]: true}, projectConfig));
   return agent;
 }
 

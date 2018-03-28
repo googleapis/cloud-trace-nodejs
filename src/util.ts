@@ -50,6 +50,10 @@ export interface Constructor<T, Config> {
   name: string;
 }
 
+export const FORCE_NEW = Symbol();
+
+export type Forceable<T> = T&{[FORCE_NEW]?: boolean};
+
 /**
  * A class that provides access to a singleton.
  * We assume that any such singleton is always constructed with two arguments:
@@ -62,8 +66,8 @@ export class Singleton<T, Config> {
 
   constructor(private implementation: Constructor<T, Config>) {}
 
-  create(logger: Logger, config: Config&{forceNewAgent_?: boolean}): T {
-    if (!this[kSingleton] || config.forceNewAgent_) {
+  create(logger: Logger, config: Forceable<Config>): T {
+    if (!this[kSingleton] || config[FORCE_NEW]) {
       this[kSingleton] = new this.implementation(logger, config);
       return this[kSingleton]!;
     } else {

@@ -34,7 +34,7 @@ import {PluginLoaderConfig} from './trace-plugin-loader';
 import {pluginLoader} from './trace-plugin-loader';
 import {TraceAgent} from './trace-api';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
-import * as traceUtil from './util';
+import {Forceable, FORCE_NEW, packageNameFromPath} from './util';
 
 export {Config, PluginTypes};
 
@@ -43,7 +43,7 @@ const traceAgent = new TraceAgent('Custom Span API');
 const modulesLoadedBeforeTrace: string[] = [];
 const traceModuleName = path.join('@google-cloud', 'trace-agent');
 for (let i = 0; i < filesLoadedBeforeTrace.length; i++) {
-  const moduleName = traceUtil.packageNameFromPath(filesLoadedBeforeTrace[i]);
+  const moduleName = packageNameFromPath(filesLoadedBeforeTrace[i]);
   if (moduleName && moduleName !== traceModuleName &&
       modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
     modulesLoadedBeforeTrace.push(moduleName);
@@ -53,12 +53,10 @@ for (let i = 0; i < filesLoadedBeforeTrace.length; i++) {
 interface TopLevelConfig {
   enabled: boolean;
   logLevel: number;
-  forceNewAgent_: boolean;
 }
 
 // PluginLoaderConfig extends TraceAgentConfig
-type NormalizedConfig = TraceWriterConfig&PluginLoaderConfig&TopLevelConfig&
-    {forceNewAgent_: boolean};
+type NormalizedConfig = TraceWriterConfig&PluginLoaderConfig&TopLevelConfig;
 
 /**
  * Normalizes the user-provided configuration object by adding default values
@@ -67,7 +65,8 @@ type NormalizedConfig = TraceWriterConfig&PluginLoaderConfig&TopLevelConfig&
  * be modified.
  * @return A normalized configuration object.
  */
-function initConfig(projectConfig: Config): NormalizedConfig {
+function initConfig(projectConfig: Forceable<Config>):
+    Forceable<NormalizedConfig> {
   const envConfig = {
     logLevel: Number(process.env.GCLOUD_TRACE_LOGLEVEL) || undefined,
     projectId: process.env.GCLOUD_PROJECT,
@@ -89,8 +88,8 @@ function initConfig(projectConfig: Config): NormalizedConfig {
   // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
   // 4. Default Config (as specified in './config')
   const config = extend(
-      true, {forceNewAgent_: false}, defaultConfig, envSetConfig, projectConfig,
-      envConfig);
+      true, {[FORCE_NEW]: projectConfig[FORCE_NEW]}, defaultConfig,
+      envSetConfig, projectConfig, envConfig);
 
   // Enforce the upper limit for the label value size.
   if (config.maximumLabelValueSize >
@@ -137,9 +136,9 @@ function stop() {
  * trace.start();
  */
 export function start(projectConfig?: Config): PluginTypes.TraceAgent {
-  const config: NormalizedConfig = initConfig(projectConfig || {});
+  const config = initConfig(projectConfig || {});
 
-  if (traceAgent.isActive() && !config.forceNewAgent_) {  // already started.
+  if (traceAgent.isActive() && !config[FORCE_NEW]) {  // already started.
     throw new Error('Cannot call start on an already started agent.');
   } else if (traceAgent.isActive()) {
     // For unit tests only.

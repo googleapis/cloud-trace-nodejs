@@ -43,14 +43,6 @@ export interface PluginLoaderConfig extends TraceAgentConfig {
   plugins: {[pluginName: string]: string};
 }
 
-/**
- * An interface representing configuration passed to the plugin loader, which
- * includes TraceAgent configuration as well.
- */
-export interface PluginLoaderSingletonConfig extends PluginLoaderConfig {
-  forceNewAgent_: boolean;
-}
-
 export interface ModulePluginWrapperOptions {
   name: string;
   path: string;

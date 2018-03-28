@@ -16,6 +16,8 @@
 
 'use strict';
 
+import {FORCE_NEW} from '../src/util';
+
 var assert = require('assert');
 var nock = require('nock');
 var newWarn = function(error) {
@@ -35,7 +37,7 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
                 .get('/computeMetadata/v1/instance/id').reply(200)
                 .get('/computeMetadata/v1/project/project-id').reply(200);
-    require('../..').start({forceNewAgent_: true});
+    require('../..').start({[FORCE_NEW]: true});
     require('http'); // Must require http to force patching of the module
     var oldWarn = common.replaceWarnLogger(newWarn);
     setTimeout(function() {
@@ -54,7 +56,7 @@ describe('test-no-self-tracing', function() {
     require('../..').start({
       projectId: '0',
       bufferSize: 1,
-      forceNewAgent_: true
+      [FORCE_NEW]: true
     });
     common.avoidTraceWriterAuth();
     require('http'); // Must require http to force patching of the module

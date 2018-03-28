@@ -15,6 +15,8 @@
  */
 'use strict';
 
+import {FORCE_NEW} from '../../src/util';
+
 var assert = require('assert');
 var common = require('./common');
 var semver = require('semver');
@@ -30,7 +32,7 @@ describe('generic-pool2', function() {
     api = require('../../..').start({
       projectId: '0',
       samplingRate: 0,
-      forceNewAgent_: true
+      [FORCE_NEW]: true
     });
     genericPool = require('./fixtures/generic-pool2');
   });
@@ -89,7 +91,7 @@ describe('generic-pool3', function() {
     agent = require('../../..').start({
       projectId: '0',
       samplingRate: 0,
-      forceNewAgent_: true
+      [FORCE_NEW]: true
     });
     genericPool = require('./fixtures/generic-pool3');
   });

@@ -19,6 +19,7 @@ import * as nock from 'nock';
 import {disableNetConnect, enableNetConnect} from 'nock';
 import * as path from 'path';
 
+import {FORCE_NEW} from '../src/util';
 import {oauth2, patchTraces} from './nocks';
 import * as trace from './trace';
 import {plan} from './utils';
@@ -64,7 +65,7 @@ describe('Credentials Configuration', () => {
     const config = {
       bufferSize: 2,
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
-      forceNewAgent_: true
+      [FORCE_NEW]: true
     };
     const agent = trace.start(config);
     const scope = oauth2<TestCredentials>((body) => {
@@ -87,7 +88,7 @@ describe('Credentials Configuration', () => {
     const progress = plan(done, 2);
     const credentials: TestCredentials =
         require('./fixtures/gcloud-credentials.json');
-    const config = {bufferSize: 2, credentials, forceNewAgent_: true};
+    const config = {bufferSize: 2, credentials, [FORCE_NEW]: true};
     const agent = trace.start(config);
     const scope = oauth2<TestCredentials>((body) => {
       assert.strictEqual(body.client_id, credentials.client_id);
@@ -117,7 +118,7 @@ describe('Credentials Configuration', () => {
       bufferSize: 2,
       credentials: correctCredentials,
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
-      forceNewAgent_: true
+      [FORCE_NEW]: true
     };
     const agent = trace.start(config);
     const scope = oauth2<TestCredentials>((body) => {
