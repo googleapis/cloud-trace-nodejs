@@ -22,6 +22,12 @@
  * - The Plugin Loader singleton is mocked to do nothing.
  * - When started, the Trace Agent is initialized with a samplingRate of zero by
  * default (but this can be overridden).
+ * - The Trace Agent is also initialized with a TestLogger instance. The only
+ * observable difference is that GCLOUD_TEST_LOG_LEVEL now tweaks the verbosity.
+ * This is preferable to GCLOUD_LOG_LEVEL because the latter is a testable
+ * "API", and GCLOUD_TEST_LOG_LEVEL can also control console log level when we
+ * are testing isolated components such as _just_ the Trace Writer or the
+ * Plugin Loader.
  * - Additional methods to query/delete spans written locally are exposed.
  * - Additional methods to override singleton values are exposed.
  *
@@ -42,6 +48,8 @@ import {RootSpanData} from '../src/span-data';
 import {Trace, TraceSpan} from '../src/trace';
 import {PluginLoader, pluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 import {LabelObject, TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
+
+import {TestLogger} from './logger';
 
 export {Config, PluginTypes};
 
@@ -70,19 +78,48 @@ export class TestPluginLoader extends PluginLoader {
   }
 }
 
+setLogger(TestLogger);
 setTraceWriter(TestTraceWriter);
 setPluginLoader(TestPluginLoader);
 
 export type Predicate<T> = (value: T) => boolean;
 
 export function start(projectConfig?: Config): PluginTypes.TraceAgent {
-  const agent = trace.start(
-      Object.assign({samplingRate: 0, forceNewAgent_: true}, projectConfig));
+  const agent = trace.start(Object.assign(
+      {samplingRate: 0, logLevel: 4, forceNewAgent_: true}, projectConfig));
   return agent;
 }
 
 export function get(): PluginTypes.TraceAgent {
   return trace.get();
+}
+
+export type LoggerConstructor = new (logLevel?: keyof common.Logger) =>
+    common.Logger;
+export function setLogger(impl?: LoggerConstructor) {
+  if (common.logger.__wrapped) {
+    shimmer.unwrap(common, 'logger');
+  }
+  if (impl) {
+    const wrap = () => shimmer.wrap(
+        common, 'logger',
+        () => Object.assign((options?: common.LoggerOptions|string) => {
+          // sort of ugly, but needed to prevent possible circular constructor
+          // calls
+          shimmer.unwrap(common, 'logger');
+          let result;
+          if (typeof options === 'string') {
+            result = new impl(options as keyof common.Logger);
+          } else if (typeof options === 'object') {
+            result = new impl(options.level as keyof common.Logger);
+          } else {
+            result = new impl();
+          }
+          wrap();
+          return result;
+        }, {LEVELS: common.logger.LEVELS}));
+    wrap();
+  }
 }
 
 export function setTraceWriter(impl?: typeof TraceWriter) {

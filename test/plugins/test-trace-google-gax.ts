@@ -30,12 +30,13 @@
  * asynchronous work until the above mentioned Promise has been resolved,
  * createApiCall presents a possible source of context loss. The test in this
  * file ensures that spans corresponding to that asynchronous work and spans
- * created in its callback are created in the correct root span context, which
+ * created in its callback are created with the correct root span context, which
  * is the context in which the transformed function is called, *not* the context
  * in which createApiCall was called.
  */
 
 import * as assert from 'assert';
+
 import * as trace from '../trace';
 
 interface ApiCallSettings {
@@ -58,36 +59,32 @@ describe('Tracing with google-gax', () => {
   let googleGax: GaxModule;
 
   before(() => {
+    trace.setPluginLoader();
     trace.start();
     googleGax = require('./fixtures/google-gax0.16');
   });
 
   it(`doesn't break context`, (done) => {
-    let apiCall: OuterApiCall<{}, {}>;
+    const authPromise = Promise.resolve(
+        ((args, metadata, opts, cb) => {
+          // Simulate an RPC.
+          trace.get().createChildSpan({name: 'in-request'}).endSpan();
+          setImmediate(() => cb(null, {}));
+        }) as InnerApiCall<{}, {}>);
+    const apiCall =
+        googleGax.createApiCall(authPromise, {merge: () => ({otherArgs: {}})});
 
-    trace.get().runInRootSpan({name: 'incorrect'}, (root) => {
-      const authPromise = Promise.resolve(
-          ((args, metadata, opts, cb) => {
-            const child = trace.get().createChildSpan({name: 'in-request'});
-            child.endSpan();
-            cb(null, {});
-          }) as InnerApiCall<{}, {}>);
-      apiCall = googleGax.createApiCall(
-          authPromise, {merge: () => ({otherArgs: {}})});
-      root.endSpan();
-    });
-
-    trace.get().runInRootSpan({name: 'correct'}, (root) => {
+    trace.get().runInRootSpan({name: 'root'}, (root) => {
       apiCall({}, {timeout: 20}, (err) => {
         assert.ifError(err);
-        const child = trace.get().createChildSpan({name: 'in-callback'});
-        child.endSpan();
+        trace.get().createChildSpan({name: 'in-callback'}).endSpan();
         root.endSpan();
-        const incorrectTrace = trace.getOneTrace(
-            trace => trace.spans.some(trace => trace.name === 'incorrect'));
-        assert.strictEqual(incorrectTrace.spans.length, 1);
-        const correctTrace = trace.getOneTrace(
-            trace => trace.spans.some(trace => trace.name === 'correct'));
+
+        // Both children should be nested under the root span where the API call
+        // was made, instead of inheriting the (non-existent) context where
+        // createApiCall was called.
+        const correctTrace =
+            trace.getOneTrace(t => t.spans.some(span => span.name === 'root'));
         assert.strictEqual(correctTrace.spans.length, 3);
         done();
       });
