@@ -244,7 +244,7 @@ describe('Web framework tracing', () => {
               await Promise.all(requests);
             });
         assert.strictEqual(
-            trace.getTraces(spans => spans.some(isServerSpan)).length,
+            trace.getTraces(trace => trace.spans.some(isServerSpan)).length,
             requests!.length);
       });
 

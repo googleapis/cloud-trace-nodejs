@@ -45,8 +45,8 @@ import {LabelObject, TraceWriter, traceWriter, TraceWriterConfig} from '../src/t
 
 export {Config, PluginTypes};
 
-const traces = new Map<string, TraceSpan[]>();
-const allSpans: TraceSpan[] = [];
+const traces: Trace[] = [];
+const spans: TraceSpan[] = [];
 
 export class TestTraceWriter extends TraceWriter {
   initialize(cb: (err?: Error) => void): void {
@@ -54,13 +54,9 @@ export class TestTraceWriter extends TraceWriter {
     cb();
   }
   writeSpan(trace: Trace): void {
-    if (!traces.has(trace.traceId)) {
-      traces.set(trace.traceId, []);
-    }
-    const spans = traces.get(trace.traceId)!;
+    traces.push(trace);
     trace.spans.forEach(span => {
       spans.push(span);
-      allSpans.push(span);
     });
   }
 }
@@ -97,20 +93,24 @@ export function setPluginLoader(impl?: typeof PluginLoader) {
   pluginLoader['implementation'] = impl || PluginLoader;
 }
 
-export function getTraces(predicate?: Predicate<TraceSpan[]>): string[] {
+export function getTraces(predicate?: Predicate<Trace>): Trace[] {
   if (!predicate) {
     predicate = () => true;
   }
-  return Array.from(traces.entries())
-      .filter((entry: [string, TraceSpan[]]) => predicate!(entry[1]))
-      .map(entry => entry[0]);
+  return traces.filter(predicate);
+}
+
+export function getOneTrace(predicate?: Predicate<Trace>): Trace {
+  const traces = getTraces(predicate);
+  assert.strictEqual(traces.length, 1);
+  return traces[0];
 }
 
 export function getSpans(predicate?: Predicate<TraceSpan>): TraceSpan[] {
   if (!predicate) {
     predicate = () => true;
   }
-  return allSpans.filter(predicate);
+  return spans.filter(predicate);
 }
 
 export function getOneSpan(predicate?: Predicate<TraceSpan>): TraceSpan {
@@ -120,6 +120,6 @@ export function getOneSpan(predicate?: Predicate<TraceSpan>): TraceSpan {
 }
 
 export function clearTraceData(): void {
-  traces.clear();
-  allSpans.length = 0;
+  traces.length = 0;
+  spans.length = 0;
 }
