@@ -22,7 +22,7 @@
     "compile": "npm run script compile-auto compile-auto-strict",
     "fix": "gts fix",
     "prepare": "npm run script npm-clean compile-es2015 compile-es2015-strict",
-    "script": "ts-node -P ./scripts ./scripts",
+    "script": "ts-node -P ./scripts/tsconfig.json ./scripts",
     "license-check": "jsgl --local ."
   },
   "files": [
@@ -93,7 +93,7 @@
     "standard-version": "^4.2.0",
     "timekeeper": "^2.0.0",
     "tmp": "0.0.33",
-    "ts-node": "^4.0.0",
+    "ts-node": "^5.0.1",
     "typescript": "~2.7.2"
   },
   "dependencies": {
