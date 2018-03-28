@@ -23,6 +23,7 @@ import * as util from '../../src/util';
 import * as assert from 'assert';
 import { asBaseSpanData } from '../utils';
 import { SpanData } from '../../src/plugin-types';
+import { FORCE_NEW } from '../../src/util';
 
 var shimmer = require('shimmer');
 var common = require('./common'/*.js*/);
@@ -285,7 +286,7 @@ Object.keys(versions).forEach(function(version) {
         projectId: '0',
         samplingRate: 0,
         enhancedDatabaseReporting: true,
-        forceNewAgent_: true
+        [FORCE_NEW]: true
       });
 
       grpc = require(versions[version]);

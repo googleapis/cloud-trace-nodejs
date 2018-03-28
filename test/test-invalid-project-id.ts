@@ -16,6 +16,8 @@
 
 'use strict';
 
+import {FORCE_NEW} from '../src/util';
+
 delete process.env.GCLOUD_PROJECT;
 
 var assert = require('assert');
@@ -26,7 +28,7 @@ describe('index.js', function() {
       projectId: {test: false},
       enabled: true,
       logLevel: 0,
-      forceNewAgent_: true
+      [FORCE_NEW]: true
     });
     assert(!agent.isActive());
   });

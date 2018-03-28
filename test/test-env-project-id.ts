@@ -16,6 +16,8 @@
 
 'use strict';
 
+import {FORCE_NEW} from '../src/util';
+
 process.env.GCLOUD_PROJECT = '1729';
 
 var trace = require('../..');
@@ -24,12 +26,12 @@ var assert = require('assert');
 
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_PROJECT', function() {
-    var agent = trace.start({forceNewAgent_: true});
+    var agent = trace.start({[FORCE_NEW]: true});
     assert.equal(agent.config.projectId, 1729);
   });
 
   it('should prefer env to config', function() {
-    var agent = trace.start({projectId: 1927, forceNewAgent_: true});
+    var agent = trace.start({projectId: 1927, [FORCE_NEW]: true});
     assert.equal(agent.config.projectId, 1729);
   });
 });

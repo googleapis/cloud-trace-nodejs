@@ -54,13 +54,12 @@ describe('Singleton', () => {
       assert.throws(() => singleton.create(logger, {}));
     });
 
-    it('creates a new instance when forceNewAgent_ is true in the config',
-       () => {
-         const singleton = new util.Singleton(MyClass);
-         const createResult1 = singleton.create(logger, {});
-         const createResult2 = singleton.create(logger, {forceNewAgent_: true});
-         assert.notStrictEqual(createResult1, createResult2);
-       });
+    it('creates a new instance when [FORCE_NEW] is true in the config', () => {
+      const singleton = new util.Singleton(MyClass);
+      const createResult1 = singleton.create(logger, {});
+      const createResult2 = singleton.create(logger, {[util.FORCE_NEW]: true});
+      assert.notStrictEqual(createResult1, createResult2);
+    });
   });
 
   describe('get', () => {
@@ -78,7 +77,7 @@ describe('Singleton', () => {
     it('does not return a stale value', () => {
       const singleton = new util.Singleton(MyClass);
       singleton.create(logger, {});
-      const createResult = singleton.create(logger, {forceNewAgent_: true});
+      const createResult = singleton.create(logger, {[util.FORCE_NEW]: true});
       const getResult = singleton.get();
       assert.strictEqual(getResult, createResult);
     });

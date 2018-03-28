@@ -19,6 +19,7 @@
 import './override-gcp-metadata';
 import { TraceAgent } from '../src/trace-api';
 import { SpanDataType } from '../src/constants';
+import { FORCE_NEW } from '../src/util';
 
 var assert = require('assert');
 var nock = require('nock');
@@ -49,7 +50,7 @@ describe('index.js', function() {
   describe('in valid environment', function() {
     var agent;
     before(function() {
-      agent = trace.start({ projectId: '0', forceNewAgent_: true });
+      agent = trace.start({ projectId: '0', [FORCE_NEW]: true });
     });
 
     it('should get the agent with `Trace.get`', function() {
@@ -74,7 +75,7 @@ describe('index.js', function() {
                 .get('/computeMetadata/v1/project/project-id')
                 .times(1)
                 .reply(404, 'foo');
-    var agent = trace.start({logLevel: 0, forceNewAgent_: true});
+    var agent = trace.start({logLevel: 0, [FORCE_NEW]: true});
     setTimeout(function() {
       assert.ok(!agent.isActive());
       scope.done();
@@ -91,7 +92,7 @@ describe('index.js', function() {
     nocks.hostname(function() { return 'host1'; });
     nocks.instanceId(function() { return 'instance1'; });
 
-    var agent = trace.start({logLevel: 0, forceNewAgent_: true});
+    var agent = trace.start({logLevel: 0, [FORCE_NEW]: true});
 
     setTimeout(function() {
       assert.strictEqual(agent.getWriterProjectId(), 'project1');

@@ -18,6 +18,7 @@
 
 // Loading this file patches gcpMetadata so requests don't time out.
 import './override-gcp-metadata';
+import {FORCE_NEW} from '../src/util';
 import { Trace, SpanKind } from '../src/trace';
 import { TraceLabels } from '../src/trace-labels';
 import { traceWriter, TraceWriter, TraceWriterConfig } from '../src/trace-writer';
@@ -29,7 +30,7 @@ var nocks = require('./nocks'/*.js*/);
 var os = require('os');
 var Service = require('@google-cloud/common').Service;
 
-type createTraceWriterOptions = TraceWriterConfig & { forceNewAgent_: boolean };
+type createTraceWriterOptions = TraceWriterConfig & { [FORCE_NEW]: boolean };
 
 interface TestCase {
   description: string,
@@ -80,7 +81,7 @@ describe('TraceWriter', function() {
       projectId: 'fake project',
       serviceContext: {},
       onUncaughtException: 'ignore',
-      forceNewAgent_: true
+      [FORCE_NEW]: true
     } as createTraceWriterOptions);
     assert.ok(writer instanceof Service);
   });
@@ -93,7 +94,7 @@ describe('TraceWriter', function() {
       projectId: '0',
       serviceContext: {},
       onUncaughtException: 'ignore',
-      forceNewAgent_: true
+      [FORCE_NEW]: true
     } as createTraceWriterOptions);
     // Mocha attaches 1 exception handler
     assert.equal(process.listeners('uncaughtException').length, numListenersBeforeTraceWriter);
@@ -106,7 +107,7 @@ describe('TraceWriter', function() {
         bufferSize: 4,
         serviceContext: {},
         onUncaughtException: 'ignore',
-        forceNewAgent_: true
+        [FORCE_NEW]: true
       } as createTraceWriterOptions);
       writer.initialize(function() {
         var spanData = createFakeTrace('fake span');
@@ -137,7 +138,7 @@ describe('TraceWriter', function() {
         credentials: fakeCredentials,
         serviceContext: {},
         onUncaughtException: 'ignore',
-        forceNewAgent_: true
+        [FORCE_NEW]: true
       } as createTraceWriterOptions);
       writer.publish('{"valid": "json"}');
       setTimeout(function() {
@@ -157,7 +158,7 @@ describe('TraceWriter', function() {
         credentials: fakeCredentials,
         serviceContext: {},
         onUncaughtException: 'ignore',
-        forceNewAgent_: true
+        [FORCE_NEW]: true
       } as createTraceWriterOptions);
       writer.publish(JSON.stringify(MESSAGE));
       setTimeout(function() {
@@ -176,7 +177,7 @@ describe('TraceWriter', function() {
         flushDelaySeconds: 3600,
         serviceContext: {},
         onUncaughtException: 'ignore',
-        forceNewAgent_: true
+        [FORCE_NEW]: true
       } as createTraceWriterOptions);
       writer.publish = function() { done(); };
       for (var i = 0; i < 4; i++) {
@@ -191,7 +192,7 @@ describe('TraceWriter', function() {
         flushDelaySeconds: 0.01,
         serviceContext: {},
         onUncaughtException: 'ignore',
-        forceNewAgent_: true
+        [FORCE_NEW]: true
       } as createTraceWriterOptions);
       writer.publish = function() { published = true; };
       writer.initialize(function() {
@@ -326,7 +327,7 @@ describe('TraceWriter', function() {
         }
 
         traceWriter.create(fakeLogger, Object.assign({
-          forceNewAgent_: true,
+          [FORCE_NEW]: true,
           onUncaughtException: 'ignore',
           serviceContext: {}
         }, testCase.config)).initialize(function(err) {
