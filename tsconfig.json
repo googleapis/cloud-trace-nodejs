@@ -16,6 +16,7 @@
     "src/plugins/plugin-https.ts",
     "src/plugins/plugin-koa.ts",
     "src/plugins/plugin-restify.ts",
+    "test/plugins/test-trace-google-gax.ts",
     "test/plugins/test-trace-http2.ts",
     "test/logger.ts",
     "test/nocks.ts",

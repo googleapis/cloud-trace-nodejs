@@ -1,5 +1,5 @@
 /**
- * Copyright 2017 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,52 +13,81 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-var common = require('./common'/*.js*/);
-var assert = require('assert');
-var path = require('path');
+/**
+ * google-gax exports createApiCall, a transform on a function that accepts an
+ * argument and callback (representing arbitrary asynchronous work), as well as
+ * metadata and call options (details specific to gRPC). Internally, it does the
+ * necessary work to generate metadata and call options for each call to this
+ * function, as well as scheduling retries, etc. so that the caller doesn't
+ * have to be concerned with these details. The returned, transformed function
+ * has a different call signature as a result.
+ *
+ * There is a caveat to the above -- the input is not the pre-transformed
+ * function itself, but rather a *Promise* that will resolve to that function.
+ *
+ * Because every call of the transformed function must defer the actual
+ * asynchronous work until the above mentioned Promise has been resolved,
+ * createApiCall presents a possible source of context loss. The test in this
+ * file ensures that spans corresponding to that asynchronous work and spans
+ * created in its callback are created with the correct root span context, which
+ * is the context in which the transformed function is called, *not* the context
+ * in which createApiCall was called.
+ */
 
-describe('google-gax', function() {
-  var agent;
-  var speech;
+import * as assert from 'assert';
 
-  before(function() {
-    agent = require('../../..').start({
-      projectId: '0',
-      keyFilename: path.join(__dirname, '..', 'fixtures', 
-          'gcloud-credentials.json'),
-      enhancedDatabaseReporting: true,
-      samplingRate: 0
-    });
-    const SpeechClient = require('./fixtures/google-cloud-speech1').SpeechClient;
-    speech = new SpeechClient({
-      projectId: '0',
-      keyFilename: path.join(__dirname, '..', 'fixtures', 
-          'gcloud-credentials.json')
-    });
+import * as trace from '../trace';
+
+interface ApiCallSettings {
+  merge: () => {
+    otherArgs: {}
+  };
+}
+type Callback<T> = (err: Error|null, res?: T) => void;
+type InnerApiCall<I, O> =
+    (request: I, metadata: {}, options: {}, callback: Callback<O>) => void;
+type OuterApiCall<I, O> =
+    (request: I, options: {timeout: number}, callback: Callback<O>) => void;
+type GaxModule = {
+  createApiCall: <I, O>(
+      funcWithAuth: Promise<InnerApiCall<I, O>>, settings: ApiCallSettings) =>
+      OuterApiCall<I, O>;
+};
+
+describe('Tracing with google-gax', () => {
+  let googleGax: GaxModule;
+
+  before(() => {
+    trace.setPluginLoader();
+    trace.start();
+    googleGax = require('./fixtures/google-gax0.16');
   });
 
-  it('should not interfere with google-cloud api tracing', function(done) {
-    common.runInTransaction(function(endRootSpan) {
-      speech.recognize('./src/index.js', {
-        encoding: 'LINEAR16',
-        sampleRate: 16000
-      }, function(err, res) {
-        endRootSpan();
-        // Authentication will fail due to invalid credentials but a span will still be
-        // generated.
-        assert.equal(err.code, 16);
-        var span = common.getMatchingSpan(function(span) {
-          return span.kind === 'RPC_CLIENT' && span.name.indexOf('grpc:') === 0;
-        });
-        assert.ok(span);
-        assert.equal(span.name, 'grpc:/google.cloud.speech.v1.Speech/Recognize');
+  it(`doesn't break context`, (done) => {
+    const authPromise = Promise.resolve(
+        ((args, metadata, opts, cb) => {
+          // Simulate an RPC.
+          trace.get().createChildSpan({name: 'in-request'}).endSpan();
+          setImmediate(() => cb(null, {}));
+        }) as InnerApiCall<{}, {}>);
+    const apiCall =
+        googleGax.createApiCall(authPromise, {merge: () => ({otherArgs: {}})});
+
+    trace.get().runInRootSpan({name: 'root'}, (root) => {
+      apiCall({}, {timeout: 20}, (err) => {
+        assert.ifError(err);
+        trace.get().createChildSpan({name: 'in-callback'}).endSpan();
+        root.endSpan();
+
+        // Both children should be nested under the root span where the API call
+        // was made, instead of inheriting the (non-existent) context where
+        // createApiCall was called.
+        const correctTrace =
+            trace.getOneTrace(t => t.spans.some(span => span.name === 'root'));
+        assert.strictEqual(correctTrace.spans.length, 3);
         done();
       });
     });
   });
-
 });
-
-export default {};

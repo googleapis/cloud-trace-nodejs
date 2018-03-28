@@ -19,14 +19,9 @@
       "generic-pool": "^3.0.0"
     }
   },
-  "google-cloud-datastore1": {
+  "google-gax0.16": {
     "dependencies": {
-      "@google-cloud/datastore": "^1.0.2"
-    }
-  },
-  "google-cloud-speech1": {
-    "dependencies": {
-      "@google-cloud/speech": "^1.1.0"
+      "google-gax": "^0.16.0"
     }
   },
   "grpc1.6": {
