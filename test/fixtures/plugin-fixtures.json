@@ -39,29 +39,9 @@
       "hapi-plugin-mysql": "^3.1.3"
     }
   },
-  "hapi10": {
-    "dependencies": {
-      "hapi": "^10.5.0"
-    }
-  },
-  "hapi11": {
-    "dependencies": {
-      "hapi": "^11.1.4"
-    }
-  },
   "hapi12": {
     "dependencies": {
       "hapi": "^12.1.0"
-    }
-  },
-  "hapi13": {
-    "dependencies": {
-      "hapi": "^13.2.1"
-    }
-  },
-  "hapi14": {
-    "dependencies": {
-      "hapi": "^14.0.0"
     }
   },
   "hapi15": {
@@ -74,14 +54,14 @@
       "hapi": "^16.0.0"
     }
   },
+  "hapi17": {
+    "dependencies": {
+      "hapi": "^17.0.0"
+    }
+  },
   "hapi8": {
     "dependencies": {
       "hapi": "^8.8.1"
-    }
-  },
-  "hapi9": {
-    "dependencies": {
-      "hapi": "^9.5.1"
     }
   },
   "knex0.10": {

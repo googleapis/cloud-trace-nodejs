@@ -29,7 +29,8 @@ import {assertSpanDuration, DEFAULT_SPAN_DURATION, isServerSpan, wait} from './u
 import {WebFramework, WebFrameworkConstructor} from './web-frameworks/base';
 import {Connect3} from './web-frameworks/connect';
 import {Express4} from './web-frameworks/express';
-import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi';
+import {Hapi17} from './web-frameworks/hapi17';
+import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
 import {Koa1} from './web-frameworks/koa1';
 import {Koa2} from './web-frameworks/koa2';
 import {Restify3, Restify4, Restify5, Restify6} from './web-frameworks/restify';
@@ -44,8 +45,8 @@ type TraceSpanStackFrames = {
 const ABORTED_SPAN_RETRIES = 3;
 // The list of web frameworks to test.
 const FRAMEWORKS: WebFrameworkConstructor[] = [
-  Connect3, Express4, Hapi8, Hapi12, Hapi15, Hapi16, Koa1, Koa2, Restify3,
-  Restify4, Restify5, Restify6
+  Connect3, Express4, Hapi8, Hapi12, Hapi15, Hapi16, Hapi17, Koa1, Koa2,
+  Restify3, Restify4, Restify5, Restify6
 ];
 
 /**
@@ -146,7 +147,7 @@ describe('Web framework tracing', () => {
       it('accurately measures get time (1 handler)', async () => {
         let recordedTime = 0;
         await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(span);
+          assert.ok(trace.get().isRealSpan(span));
           recordedTime = Date.now();
           await axios.get(`http://localhost:${port}/one-handler`);
           recordedTime = Date.now() - recordedTime;
@@ -160,7 +161,7 @@ describe('Web framework tracing', () => {
       it('accurately measures get time (2 handlers)', async () => {
         let recordedTime = 0;
         await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(span);
+          assert.ok(trace.get().isRealSpan(span));
           recordedTime = Date.now();
           // Hit endpoint with two middlewares/handlers.
           await axios.get(`http://localhost:${port}/two-handlers`);
@@ -174,7 +175,7 @@ describe('Web framework tracing', () => {
 
       it('handles errors', async () => {
         await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(span);
+          assert.ok(trace.get().isRealSpan(span));
           // Hit endpoint which always throws an error.
           await axios.get(`http://localhost:${port}/error`, {
             validateStatus: () => true  // Obviates try/catch.
@@ -189,7 +190,7 @@ describe('Web framework tracing', () => {
 
       it('doesn\'t trace ignored urls', async () => {
         await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(span);
+          assert.ok(trace.get().isRealSpan(span));
           // Hit endpoint that always gets ignored.
           await axios.get(`http://localhost:${port}/ignore-me`);
           span!.endSpan();
@@ -200,7 +201,7 @@ describe('Web framework tracing', () => {
 
       it('ends span upon client abort', async () => {
         await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(span);
+          assert.ok(trace.get().isRealSpan(span));
           // Hit endpoint, but time out before it has a chance to respond.
           // To ensure that a trace is written, also waits
           await axios
@@ -250,7 +251,7 @@ describe('Web framework tracing', () => {
 
       it('propagates trace context', async () => {
         await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(span);
+          assert.ok(trace.get().isRealSpan(span));
           // Hits endpoint that will make an additional outgoing HTTP request
           // (to another endpoint on the same server).
           await axios.get(`http://localhost:${port}/propagate-hello`);
@@ -290,7 +291,7 @@ describe('Web framework tracing', () => {
 
         beforeEach(async () => {
           await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-            assert.ok(span);
+            assert.ok(trace.get().isRealSpan(span));
             // Hit an endpoint with a query parameter.
             await axios.get(`http://localhost:${port}/hello?this-is=dog`);
             span!.endSpan();
