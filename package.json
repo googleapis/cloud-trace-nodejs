@@ -56,7 +56,7 @@
     "@types/extend": "^3.0.0",
     "@types/glob": "^5.0.32",
     "@types/hapi": "^16.1.12",
-    "@types/is": "0.0.18",
+    "@types/is": "0.0.19",
     "@types/koa": "^2.0.43",
     "@types/methods": "^1.1.0",
     "@types/mocha": "^5.0.0",
