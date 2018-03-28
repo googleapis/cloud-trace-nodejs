@@ -50,7 +50,7 @@ export interface Constructor<T, Config> {
   name: string;
 }
 
-export const FORCE_NEW = Symbol();
+export const FORCE_NEW = Symbol('force-new');
 
 export type Forceable<T> = T&{[FORCE_NEW]?: boolean};
 
