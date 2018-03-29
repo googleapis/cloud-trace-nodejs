@@ -50,7 +50,7 @@ traceApi.runInRootSpan({ name: 'my-root-span' }, (rootSpan) => {
 });
 ```
 
-> **Note**: If you source code contains untranspiled [`async/await`][async-await-docs] (introduced in Node 7.6), please see [this section](#tracing-with-async/await) on enabling experimental tracing for `async` functions.
+> **Note**: If your source code contains untranspiled [`async/await`][async-await-docs] (introduced in Node 7.6), please see [this section](#tracing-with-async/await) on enabling experimental tracing for `async` functions.
 
 ## What gets traced
 
@@ -62,7 +62,7 @@ The trace agent can do automatic tracing of the following web frameworks:
 * [restify](https://www.npmjs.com/package/restify) (versions 3 - 6)
 
 The agent will also automatically trace RPCs from the following modules:
-* Outbound HTTP requests through the `http` and `https` core modules
+* Outbound HTTP requests through `http`, `https`, and `http2` core modules
 * [grpc](https://www.npmjs.com/package/grpc) client (version ^1.1)
 * [mongodb-core](https://www.npmjs.com/package/mongodb-core) (version 1)
 * [mongoose](https://www.npmjs.com/package/mongoose) (version 4)
@@ -122,7 +122,7 @@ The Trace Agent automatically patches well-known modules to insert calls to func
 
 `continuation-local-storage`, which relies on [`async-listener`][async-listener] to preserve continuations over asynchronous boundaries, works great in most cases. However, it does have some limitations that can prevent us from being able to properly propagate trace context:
 
-* It is possible that a module does its own queuing of callback functions – effectively merging asynchronous execution contexts. For example, one may write a http request buffering library that queues requests and then performs them in a batch in one shot. In such a case, when all the callbacks fire, they will execute in the context which flushed the queue instead of the context which added the callbacks to the queue. This problem is called the pooling problem or the [user-space queuing problem][queuing-problem], and is a fundamental limitation of JavaScript. If your application uses such code, you will notice that RPCs from many requests are showing up under a single trace, or that certain portions of your outbound RPCs do not get traced. In such cases we try to work around the problem through monkey patching, or by working with the library authors to fix the code to properly propagate context. However, finding problematic code is not always trivial.
+* It is possible that a module does its own queuing of callback functions – effectively merging asynchronous execution contexts. For example, one may write an http request buffering library that queues requests and then performs them in a batch in one shot. In such a case, when all the callbacks fire, they will execute in the context which flushed the queue instead of the context which added the callbacks to the queue. This problem is called the pooling problem or the [user-space queuing problem][queuing-problem], and is a fundamental limitation of JavaScript. If your application uses such code, you will notice that RPCs from many requests are showing up under a single trace, or that certain portions of your outbound RPCs do not get traced. In such cases we try to work around the problem through monkey patching, or by working with the library authors to fix the code to properly propagate context. However, finding problematic code is not always trivial.
 * Presently, it is not possible for `async-listener` to keep track of transitions across `await`-ed lines in ES7 [`async` functions][async-await-docs] that are available with Node 7.6+. If your application uses untranspiled `async` functions, we will not be properly track RPCs.
 
 ### Tracing with `async/await`
