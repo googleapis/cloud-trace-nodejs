@@ -152,6 +152,11 @@
       "pg": "^6.1.2"
     }
   },
+  "pg7": {
+    "dependencies": {
+      "pg": "^7.4.1"
+    }
+  },
   "redis0.12": {
     "dependencies": {
       "redis": "^0.12.1"
