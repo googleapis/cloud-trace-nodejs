@@ -43,7 +43,7 @@ declare namespace pg_6 {
   // https://github.com/brianc/node-postgres/blob/v6.4.2/lib/client.js#L355
   type QueryReturnValue = (
     pg_7.QueryConfig &
-    { callback?: (err: Error, res: pg_7.QueryResult) => void }
+    { callback?: (err: Error|null, res?: pg_7.QueryResult) => void }
   ) & (({ submit: Function } & Readable) | (pg_7.Query & PromiseLike<any>));
 
   class Client {

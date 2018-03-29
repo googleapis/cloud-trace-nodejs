@@ -18,13 +18,13 @@ import {EventEmitter} from 'events';
 import * as shimmer from 'shimmer';
 import {Readable} from 'stream';
 
-import {Patch, Plugin} from '../plugin-types';
+import {Patch, Plugin, SpanData} from '../plugin-types';
 
 import {pg_6, pg_7} from './types';
 
 // TS: Client#query also accepts a callback as a last argument, but TS cannot
 // detect this as it's a dependent type. So we don't specify it here.
-type PG7QueryArguments =
+type ClientQueryArguments =
     [{submit?: Function} & pg_7.QueryConfig]|[string]|[string, {}];
 type PG7QueryReturnValue = (pg_7.QueryConfig&({submit: Function}&EventEmitter)|
                             pg_7.Query)|Promise<pg_7.QueryResult>;
@@ -34,6 +34,38 @@ function isSubmittable(obj: any): obj is {submit: Function} {
   return typeof obj.submit === 'function';
 }
 
+const noOp = () => {};
+
+function populateLabelsFromInputs(span: SpanData, args: ClientQueryArguments) {
+  const queryObj = args[0];
+  if (typeof queryObj === 'object') {
+    if (queryObj.text) {
+      span.addLabel('query', queryObj.text);
+    }
+    if (queryObj.values) {
+      span.addLabel('values', queryObj.values);
+    }
+  } else if (typeof queryObj === 'string') {
+    span.addLabel('query', queryObj);
+    if (args.length >= 2 && typeof args[1] !== 'function') {
+      span.addLabel('values', args[1]);
+    }
+  }
+}
+
+function populateLabelsFromOutputs(
+    span: SpanData, err: Error|null, res?: pg_7.QueryResult) {
+  if (err) {
+    span.addLabel('error', err);
+  }
+  if (res) {
+    span.addLabel('row_count', res.rowCount);
+    span.addLabel('oid', res.oid);
+    span.addLabel('rows', res.rows);
+    span.addLabel('fields', res.fields);
+  }
+}
+
 const plugin: Plugin = [
   {
     file: 'lib/client.js',
@@ -41,53 +73,38 @@ const plugin: Plugin = [
     // TS: Client is a class name.
     // tslint:disable-next-line:variable-name
     patch: (Client, api) => {
+      const maybePopulateLabelsFromInputs =
+          api.enhancedDatabaseReportingEnabled() ? populateLabelsFromInputs :
+                                                   noOp;
+      const maybePopulateLabelsFromOutputs =
+          api.enhancedDatabaseReportingEnabled() ? populateLabelsFromOutputs :
+                                                   noOp;
       shimmer.wrap(Client.prototype, 'query', (query) => {
         return function query_trace(this: pg_6.Client) {
           const span = api.createChildSpan({name: 'pg-query'});
           if (!api.isRealSpan(span)) {
             return query.apply(this, arguments);
           }
-          const args: pg_6.QueryReturnValue[] =
-              Array.prototype.slice.call(arguments, 0);
-          if (args.length >= 1) {
+          const argLength = arguments.length;
+          if (argLength >= 1) {
+            const args: ClientQueryArguments =
+                Array.prototype.slice.call(arguments, 0);
             // Extract query text and values, if needed.
-            if (api.enhancedDatabaseReportingEnabled()) {
-              const queryObj = args[0];
-              if (typeof queryObj === 'object') {
-                if (queryObj.text) {
-                  span.addLabel('query', queryObj.text);
-                }
-                if (queryObj.values) {
-                  span.addLabel('values', queryObj.values);
-                }
-              } else if (typeof queryObj === 'string') {
-                span.addLabel('query', queryObj);
-                if (args.length >= 2 && typeof args[1] !== 'function') {
-                  span.addLabel('values', args[1]);
-                }
-              }
-            }
+            maybePopulateLabelsFromInputs(span, args);
           }
           const pgQuery: pg_6.QueryReturnValue = query.apply(this, arguments);
           api.wrapEmitter(pgQuery);
           const done = pgQuery.callback;
-          pgQuery.callback = api.wrap((err, res) => {
-            if (api.enhancedDatabaseReportingEnabled()) {
-              if (err) {
-                span.addLabel('error', err);
-              }
-              if (res) {
-                span.addLabel('row_count', res.rowCount);
-                span.addLabel('oid', res.oid);
-                span.addLabel('rows', res.rows);
-                span.addLabel('fields', res.fields);
-              }
-            }
-            span.endSpan();
-            if (done) {
-              done(err, res);
-            }
-          });
+          // TODO(kjin): Clean up this line a little bit by casting the function
+          // passed to api.wrap as a NonNullable<typeof done>.
+          pgQuery.callback =
+              api.wrap((err: Error|null, res?: pg_7.QueryResult) => {
+                maybePopulateLabelsFromOutputs(span, err, res);
+                span.endSpan();
+                if (done) {
+                  done(err, res);
+                }
+              });
           return pgQuery;
         };
       });
@@ -104,15 +121,20 @@ const plugin: Plugin = [
     // TS: Client is a class name.
     // tslint:disable-next-line:variable-name
     patch: (Client, api) => {
+      const maybePopulateLabelsFromInputs =
+          api.enhancedDatabaseReportingEnabled() ? populateLabelsFromInputs :
+                                                   noOp;
+      const maybePopulateLabelsFromOutputs =
+          api.enhancedDatabaseReportingEnabled() ? populateLabelsFromOutputs :
+                                                   noOp;
       shimmer.wrap(Client.prototype, 'query', (query) => {
         return function query_trace(this: pg_7.Client) {
           const span = api.createChildSpan({name: 'pg-query'});
           if (!api.isRealSpan(span)) {
             return query.apply(this, arguments);
           }
-          const args: PG7QueryArguments =
-              Array.prototype.slice.call(arguments, 0);
 
+          let pgQuery: PG7QueryReturnValue;
           // In 7.x, the value of pgQuery depends on how the query() was called.
           // It can be one of:
           // - (query: pg.Submittable) => EventEmitter
@@ -123,51 +145,35 @@ const plugin: Plugin = [
           // - ...[query: { text: string, values?: Array<any> }]
           // - ...[text: string, values?: Array<any>]
           // See: https://node-postgres.com/guides/upgrading
+          const argLength = arguments.length;
+          if (argLength >= 1) {
+            const args: ClientQueryArguments =
+                Array.prototype.slice.call(arguments, 0);
 
-          if (args.length >= 1) {
             // Extract query text and values, if needed.
-            if (api.enhancedDatabaseReportingEnabled()) {
-              const queryObj = args[0];
-              if (typeof queryObj === 'object') {
-                if (queryObj.text) {
-                  span.addLabel('query', queryObj.text);
-                }
-                if (queryObj.values) {
-                  span.addLabel('values', queryObj.values);
-                }
-              } else if (typeof queryObj === 'string') {
-                span.addLabel('query', queryObj);
-                if (args.length >= 2 && typeof args[1] !== 'function') {
-                  span.addLabel('values', args[1]);
-                }
-              }
-            }
+            maybePopulateLabelsFromInputs(span, args);
 
             // If we received a callback, bind it to the current context,
             // optionally adding labels as well.
             const callback = args[args.length - 1];
             if (typeof callback === 'function') {
-              args[args.length - 1] = api.wrap((err, res) => {
-                if (api.enhancedDatabaseReportingEnabled()) {
-                  if (err) {
-                    span.addLabel('error', err);
-                  }
-                  if (res) {
-                    span.addLabel('row_count', res.rowCount);
-                    span.addLabel('oid', res.oid);
-                    span.addLabel('rows', res.rows);
-                    span.addLabel('fields', res.fields);
-                  }
-                }
-                span.endSpan();
-                // TS: Type cast is safe as we know that callback is a Function.
-                (callback as (err: Error, res: pg_7.QueryArrayResult) => void)(
-                    err, res);
-              });
+              args[args.length - 1] =
+                  api.wrap((err: Error|null, res?: pg_7.QueryResult) => {
+                    maybePopulateLabelsFromOutputs(span, err, res);
+                    span.endSpan();
+                    // TS: Type cast is safe as we know that callback is a
+                    // Function.
+                    (callback as (err: Error|null, res?: pg_7.QueryResult) =>
+                         void)(err, res);
+                  });
+              pgQuery = query.apply(this, args);
+            } else {
+              pgQuery = query.apply(this, arguments);
             }
+          } else {
+            pgQuery = query.apply(this, arguments);
           }
 
-          let pgQuery: PG7QueryReturnValue = query.apply(this, args);
           if (pgQuery) {
             if (pgQuery instanceof EventEmitter) {
               api.wrapEmitter(pgQuery);
@@ -176,19 +182,12 @@ const plugin: Plugin = [
               // well.
               pgQuery = pgQuery.then(
                   (res) => {
-                    if (api.enhancedDatabaseReportingEnabled()) {
-                      span.addLabel('row_count', res.rowCount);
-                      span.addLabel('oid', res.oid);
-                      span.addLabel('rows', res.rows);
-                      span.addLabel('fields', res.fields);
-                    }
+                    maybePopulateLabelsFromOutputs(span, null, res);
                     span.endSpan();
                     return res;
                   },
                   (err) => {
-                    if (api.enhancedDatabaseReportingEnabled()) {
-                      span.addLabel('error', err);
-                    }
+                    maybePopulateLabelsFromOutputs(span, err);
                     span.endSpan();
                     throw err;
                   });
