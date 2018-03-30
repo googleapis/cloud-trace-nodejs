@@ -8,7 +8,7 @@ This version introduces non-null spans, a new plugin loading mechanism, revised 
 
 #### Non-Null Spans
 
-`SpanData` object passed by `traceApi.runInRootSpan` and returned by `traceApi.createChildSpan` are _guaranteed_ to be non-null, whereas they previously could be null if either (1) they weren't created because of tracing policy decisions (an __untraced__ span) or (2) an attempt to create the span was made in a place where it was impossible to determine on behalf of which incoming request they were tracing (an __uncorrelated__ span). In other words:
+`SpanData` objects passed by `traceApi.runInRootSpan` and returned by `traceApi.createChildSpan` are _guaranteed_ to be non-null, whereas they previously could be null if either (1) they weren't created because of tracing policy decisions (an __untraced__ span) or (2) an attempt to create the span was made in a place where it was impossible to determine on behalf of which incoming request they were tracing (an __uncorrelated__ span). In other words:
 
 ```js
 const traceApi = require('@google-cloud/trace-agent').start();
