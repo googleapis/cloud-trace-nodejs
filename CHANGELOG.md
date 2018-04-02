@@ -1,5 +1,13 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-04-02, Version 2.6.1 (Beta), @kjin
+
+This version fixes an issue where invalid trace labels were added when the Trace Agent auto-discovers GCP metadata from within a GCP instance.
+
+### Commits
+
+* [[`1434d5db7a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1434d5db7a)] - **fix**: treat instanceId metadata as a number (#713) (Kelvin Jin) [#713](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/713)
+
 ## 2018-03-30, Version 2.6.0 (Beta), @kjin
 
 This version introduces non-null spans, a new plugin loading mechanism, revised log messages and changes to `pg` tracing support (now including version 7).
