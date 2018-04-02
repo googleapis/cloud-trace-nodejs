@@ -140,7 +140,9 @@ export class TraceWriter extends common.Service {
 
     this.getHostname((hostname) => {
       this.getInstanceId((instanceId) => {
-        const labels: LabelObject = {};
+        this.defaultLabels = {};
+        // tslint:disable-next-line:no-any
+        const labels: {[key: string]: any} = {};
         labels[TraceLabels.AGENT_DATA] =
             'node ' + pjson.name + ' v' + pjson.version;
         labels[TraceLabels.GCE_HOSTNAME] = hostname;
@@ -163,8 +165,11 @@ export class TraceWriter extends common.Service {
             labels[TraceLabels.GAE_VERSION] = versionLabel;
           }
         }
-        Object.freeze(labels);
-        this.defaultLabels = labels;
+        // Coerce values to strings.
+        for (const key of Object.keys(labels)) {
+          this.defaultLabels[key] = `${labels[key]}`;
+        }
+        Object.freeze(this.defaultLabels);
         if (--pendingOperations === 0) {
           cb();
         }
@@ -192,7 +197,7 @@ export class TraceWriter extends common.Service {
         });
   }
 
-  getInstanceId(cb: (instanceId?: string) => void) {
+  getInstanceId(cb: (instanceId?: number) => void) {
     gcpMetadata.instance({property: 'id', headers})
         .then((res) => {
           cb(res.data);  // instance ID
