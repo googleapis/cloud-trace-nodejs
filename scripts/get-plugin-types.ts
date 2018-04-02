@@ -20,11 +20,12 @@ export async function getPluginTypes() {
   const indexTs = (await readFileP(`${TYPES_DIRECTORY}/index.d.ts`, 'utf8') as string)
     .split('\n');
   for (const line of indexTs) {
-    const matches = line.match(/^import \* as .* from '\.\/(.*)';\s*\/\/\s*(.*)@(.*)$/);
+    const matches = line.match(/^import \* as .* from '\.\/(.+)';\s*\/\/\s*(.+)@(.+)$/);
     if (!matches) {
       continue;
     }
-    const [_0, packageName, name, version] = matches;
+    console.log(matches);
+    const [, packageName, name, version] = matches;
     const installDir = `${TYPES_DIRECTORY}/${packageName}`;
     if (await mkdirSafeP(installDir)) {
       await spawnP('npm', ['init', '-y'], {
