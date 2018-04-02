@@ -140,21 +140,19 @@ export class TraceWriter extends common.Service {
 
     this.getHostname((hostname) => {
       this.getInstanceId((instanceId) => {
-        this.defaultLabels = {};
-        // tslint:disable-next-line:no-any
-        const labels: {[key: string]: any} = {};
+        const labels: LabelObject = {};
         labels[TraceLabels.AGENT_DATA] =
             'node ' + pjson.name + ' v' + pjson.version;
         labels[TraceLabels.GCE_HOSTNAME] = hostname;
         if (instanceId) {
-          labels[TraceLabels.GCE_INSTANCE_ID] = instanceId;
+          labels[TraceLabels.GCE_INSTANCE_ID] = `${instanceId}`;
         }
         const moduleName = this.config.serviceContext.service || hostname;
         labels[TraceLabels.GAE_MODULE_NAME] = moduleName;
 
         const moduleVersion = this.config.serviceContext.version;
         if (moduleVersion) {
-          labels[TraceLabels.GAE_MODULE_VERSION] = moduleVersion;
+          labels[TraceLabels.GAE_MODULE_VERSION] = `${moduleVersion}`;
           const minorVersion = this.config.serviceContext.minorVersion;
           if (minorVersion) {
             let versionLabel = '';
@@ -165,11 +163,8 @@ export class TraceWriter extends common.Service {
             labels[TraceLabels.GAE_VERSION] = versionLabel;
           }
         }
-        // Coerce values to strings.
-        for (const key of Object.keys(labels)) {
-          this.defaultLabels[key] = `${labels[key]}`;
-        }
-        Object.freeze(this.defaultLabels);
+        Object.freeze(labels);
+        this.defaultLabels = labels;
         if (--pendingOperations === 0) {
           cb();
         }
