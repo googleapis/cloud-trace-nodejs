@@ -140,19 +140,24 @@ export class TraceWriter extends common.Service {
 
     this.getHostname((hostname) => {
       this.getInstanceId((instanceId) => {
-        const labels: LabelObject = {};
-        labels[TraceLabels.AGENT_DATA] =
-            'node ' + pjson.name + ' v' + pjson.version;
-        labels[TraceLabels.GCE_HOSTNAME] = hostname;
+        // tslint:disable-next-line:no-any
+        const addDefaultLabel = (key: string, value: any) => {
+          this.defaultLabels[key] = `${value}`;
+        };
+
+        this.defaultLabels = {};
+        addDefaultLabel(
+            TraceLabels.AGENT_DATA, `node ${pjson.name} v${pjson.version}`);
+        addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname);
         if (instanceId) {
-          labels[TraceLabels.GCE_INSTANCE_ID] = `${instanceId}`;
+          addDefaultLabel(TraceLabels.GCE_INSTANCE_ID, instanceId);
         }
         const moduleName = this.config.serviceContext.service || hostname;
-        labels[TraceLabels.GAE_MODULE_NAME] = moduleName;
+        addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName);
 
         const moduleVersion = this.config.serviceContext.version;
         if (moduleVersion) {
-          labels[TraceLabels.GAE_MODULE_VERSION] = `${moduleVersion}`;
+          addDefaultLabel(TraceLabels.GAE_MODULE_VERSION, moduleVersion);
           const minorVersion = this.config.serviceContext.minorVersion;
           if (minorVersion) {
             let versionLabel = '';
@@ -160,11 +165,10 @@ export class TraceWriter extends common.Service {
               versionLabel = moduleName + ':';
             }
             versionLabel += moduleVersion + '.' + minorVersion;
-            labels[TraceLabels.GAE_VERSION] = versionLabel;
+            addDefaultLabel(TraceLabels.GAE_VERSION, versionLabel);
           }
         }
-        Object.freeze(labels);
-        this.defaultLabels = labels;
+        Object.freeze(this.defaultLabels);
         if (--pendingOperations === 0) {
           cb();
         }
