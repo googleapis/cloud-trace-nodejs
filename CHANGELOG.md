@@ -1,5 +1,94 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-03-30, Version 2.6.0 (Beta), @kjin
+
+This version introduces non-null spans, a new plugin loading mechanism, revised log messages and changes to `pg` tracing support (now including version 7).
+
+### Notable Changes
+
+#### Non-Null Spans
+
+`SpanData` objects passed by `traceApi.runInRootSpan` and returned by `traceApi.createChildSpan` are _guaranteed_ to be non-null, whereas they previously could be null if either (1) they weren't created because of tracing policy decisions (an __untraced__ span) or (2) an attempt to create the span was made in a place where it was impossible to determine on behalf of which incoming request they were tracing (an __uncorrelated__ span). In other words:
+
+```js
+const traceApi = require('@google-cloud/trace-agent').start();
+traceApi.runInRootSpan({ name: 'my-custom-span' }, (rootSpan) => {
+  if (!rootSpan) {
+    // This code path will no longer execute.
+  }
+  const childSpan = traceApi.createChildSpan({ name: 'my-custom-smaller-span' });
+  if (!childSpan) {
+    // This code path will no longer execute.
+  }
+  // ...
+});
+```
+
+Instead, "phantom" `SpanData` will be returned, which expose an identical, but non-functional API to that of a "real" `SpanData` object. The purpose of this change is to alleviate the burden of having branching code paths based on whether your code was being traced or not -- you may now assume that functions such as `addLabel` and `endSpan` are _always_ on the given `SpanData` object.
+
+If you _must_ execute a separate code path based on whether your code is being traced or not, you may now use `traceApi.isRealSpan`:
+
+```js
+const traceApi = require('@google-cloud/trace-agent').start();
+traceApi.runInRootSpan({ name: 'my-custom-span' }, (rootSpan) => {
+  if (!traceApi.isRealSpan(rootSpan)) {
+    // Some code that should be executed because this request is not being traced.
+  }
+  const childSpan = traceApi.createChildSpan({ name: 'my-custom-smaller-span' });
+  if (!traceApi.isRealSpan(childSpan)) {
+    // Alternatively, you may directly check whether a span is untraced or uncorrelated.
+    if (childSpan.type === traceApi.spanTypes.UNCORRELATED) {
+      // Some code that should be executed because we lost context.
+    } else if (childSpan.type === traceApi.spanTypes.UNTRACED) {
+      // Some code that should be executed because the request was not sampled
+      // (or otherwise disallowed by the tracing policy).
+    }
+  }
+  // ...
+});
+```
+
+This affects both plugins and the custom tracing API. All built-in tracing plugins have been changed correspondingly.
+
+#### Log Messages
+
+All logging output has been revised for consistency, and now include class/function names, as well as parameters in `[square brackets]`.
+
+#### Plugin Loader
+
+The plugin loading mechanism has been completely re-written. There should be no observable changes (please file an [issue](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues) if you encounter one.) The re-write fixes an issue where plugins can't patch modules with circular dependencies correctly ([#618](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues/618)).
+
+#### Tracing `pg`
+
+We now support tracing for `pg` versions 6 - 7.
+
+For consistency between tracing version 6 and 7, span labels in `pg` (when `config.enhancedDatabaseReporting` is enabled) now contain pre-processed query values rather than post-processed values.
+
+### Commits
+
+* [[`53d2b9684f`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/53d2b9684f)] - **doc**: update README.md (#706) (Kelvin Jin) [#706](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/706)
+* [[`f070636eb4`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/f070636eb4)] - **fix**: add support for pg 7 changes (#702) (Kelvin Jin) [#702](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/702)
+* [[`c13a3bf207`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c13a3bf207)] - **test**: privatize forceNewAgent_ (#705) (Kelvin Jin) [#705](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/705)
+* [[`87de955b00`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/87de955b00)] - **test**: rewrite google-gax test and remove datastore test (#703) (Kelvin Jin) [#703](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/703)
+* [[`5e3375b58c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5e3375b58c)] - chore(package): update ts-node to version 5.0.1 (#673) (greenkeeper[bot]) [#673](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/673)
+* [[`0807fae7ea`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/0807fae7ea)] - chore(package): update @types/is to version 0.0.19 (#704) (greenkeeper[bot]) [#704](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/704)
+* [[`c8c5bfc616`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c8c5bfc616)] - **feat**: expand version range for pg to 7.x (#701) (Matt Oakes) [#701](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/701)
+* [[`4d3d54e5db`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/4d3d54e5db)] - **fix**: rewrite all log messages (#700) (Kelvin Jin) [#700](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/700)
+* [[`1fb53a7d68`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1fb53a7d68)] - chore(package): update @types/mocha to version 5.0.0 (#698) (greenkeeper[bot]) [#698](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/698)
+* [[`fb344d665c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/fb344d665c)] - fix(package): update gcp-metadata to version 0.6.3 (#672) (Kelvin Jin) [#672](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/672)
+* [[`1604c48a52`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/1604c48a52)] - **fix**: rewrite plugin loader (#686) (Kelvin Jin) [#686](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/686)
+* [[`dca5cc0103`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/dca5cc0103)] - **test**: fixup issue stemming from testing http2 on node 9.9 (#699) (Kelvin Jin) [#699](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/699)
+* [[`770ab0840a`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/770ab0840a)] - **test**: don't use exec to test preloaded modules (#696) (Kelvin Jin) [#696](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/696)
+* [[`5338a9377e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5338a9377e)] - **refactor**: externalize singleton accessors from trace writer (#694) (Kelvin Jin) [#694](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/694)
+* [[`9d56e846a8`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/9d56e846a8)] - fix(package): update @google-cloud/common to version 0.16.2 (#692) (greenkeeper[bot]) [#692](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/692)
+* [[`49b2118ab8`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/49b2118ab8)] - **feat**: ensure spans are non-null (#680) (Kelvin Jin) [#680](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/680)
+* [[`6b8a82b2e9`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6b8a82b2e9)] - **test**: stop testing plugin functionality on appveyor (#693) (Kelvin Jin) [#693](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/693)
+* [[`a35d115e2c`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a35d115e2c)] - **chore**: upgrade typescript to 2.7 (#687) (Kelvin Jin) [#687](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/687)
+* [[`d43c28e0a3`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d43c28e0a3)] - chore(package): update js-green-licenses to version 0.5.0 (#685) (greenkeeper[bot]) [#685](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/685)
+* [[`ea9279af40`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/ea9279af40)] - **chore**: update @types/shimmer definitions (#681) (Kelvin Jin) [#681](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/681)
+* [[`d3cc125e8d`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d3cc125e8d)] - **refactor**: move stack frame creation to utils (#678) (Kelvin Jin) [#678](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/678)
+* [[`c8e2439863`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/c8e2439863)] - **test**: replace web framework tracing tests (#658) (Kelvin Jin) [#658](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/658)
+
 ## 2018-02-23, Version 2.5.0 (Beta), @kjin
 
 This version changes how span IDs are generated, and extends traced gRPC versions.
