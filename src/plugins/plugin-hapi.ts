@@ -111,16 +111,12 @@ const plugin: PluginTypes.Plugin = [
   {
     versions: '8 - 16',
     patch: (hapi, api) => {
-      function createMiddleware(): hapi_16.ServerExtRequestHandler {
-        return function handler(request, reply) {
-          return instrument(api, request, () => reply.continue());
-        };
-      }
-
       shimmer.wrap(hapi.Server.prototype, 'connection', (connection) => {
         return function connectionTrace(this: hapi_16.Server) {
           const server = connection.apply(this, arguments);
-          server.ext('onRequest', createMiddleware());
+          server.ext('onRequest', function handler(request, reply) {
+            return instrument(api, request, () => reply.continue());
+          } as hapi_16.ServerExtRequestHandler);
           return server;
         };
       });
