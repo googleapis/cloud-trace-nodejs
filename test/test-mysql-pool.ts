@@ -31,7 +31,7 @@ if (semver.satisfies(process.version, '>=4')) {
         samplingRate: 0,
         enhancedDatabaseReporting: true
       });
-      Hapi = require('./plugins/fixtures/hapi13');
+      Hapi = require('./plugins/fixtures/hapi16');
     });
 
     it('should work with connection pool access', function(done) {

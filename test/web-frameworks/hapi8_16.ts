@@ -85,7 +85,7 @@ export class Hapi implements WebFramework {
 
 const makeHapiClass = (version: number) => class extends Hapi {
   static commonName = `hapi@${version}`;
-  static expectedTopStackFrame = 'middleware';
+  static expectedTopStackFrame = 'handler';
   static versionRange = '*';
 
   constructor() {
