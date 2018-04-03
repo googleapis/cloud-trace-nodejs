@@ -26,10 +26,10 @@ import {hapi_16, hapi_17} from './types';
 const ORIGINAL = Symbol();
 
 type Hapi16Module = typeof hapi_16;
-type Hapi17RequestExecutePrivate = {
+interface Hapi17RequestExecutePrivate {
   (this: hapi_17.Request): Promise<void>;
-      [ORIGINAL]?: Hapi17RequestExecutePrivate;
-};
+  [ORIGINAL]?: Hapi17RequestExecutePrivate;
+}
 type Hapi17Request = hapi_17.Request&{
   _execute: Hapi17RequestExecutePrivate;
 };
@@ -110,7 +110,7 @@ function instrument<T>(
 const plugin: PluginTypes.Plugin = [
   {
     versions: '8 - 16',
-    patch(hapi, api) {
+    patch: (hapi, api) => {
       function createMiddleware(): hapi_16.ServerExtRequestHandler {
         return function handler(request, reply) {
           return instrument(api, request, () => reply.continue());
@@ -125,7 +125,7 @@ const plugin: PluginTypes.Plugin = [
         };
       });
     },
-    unpatch(hapi) {
+    unpatch: (hapi) => {
       shimmer.unwrap(hapi.Server.prototype, 'connection');
     }
   } as PluginTypes.Patch<Hapi16Module>,

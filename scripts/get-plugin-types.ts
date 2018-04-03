@@ -24,7 +24,6 @@ export async function getPluginTypes() {
     if (!matches) {
       continue;
     }
-    console.log(matches);
     const [, packageName, name, version] = matches;
     const installDir = `${TYPES_DIRECTORY}/${packageName}`;
     if (await mkdirSafeP(installDir)) {
