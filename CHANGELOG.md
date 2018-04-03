@@ -1,5 +1,14 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-04-03, Version 2.7.0 (Beta), @kjin
+
+This version introduces support for tracing Hapi 17.
+
+### Commits
+
+* [[`028032f945`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/028032f945)] - **feat**: hapi 17 tracing support (#710) (Kelvin Jin) [#710](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/710)
+* [[`b64661184b`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/b64661184b)] - **build**: add script to fetch plugin types (#711) (Kelvin Jin) [#711](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/711)
+
 ## 2018-04-02, Version 2.6.1 (Beta), @kjin
 
 This version fixes an issue where invalid trace labels were added when the Trace Agent auto-discovers GCP metadata from within a GCP instance.
