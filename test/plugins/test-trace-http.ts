@@ -74,35 +74,39 @@ class WaitForResponse {
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * A modification of the Express4 test server that uses HTTPS instead.
+ */
+class Express4Secure extends Express4 {
+  static key = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'));
+  static cert = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
+  private https: typeof httpsModule;
+
+  constructor() {
+    super();
+    this.https = require('https');
+  }
+
+  listen(port: number): number {
+    // The types of (http|https).Server are not compatible, but we don't
+    // access any properties that aren't present on both in the test.
+    this.server = this.https.createServer(
+                      {key: Express4Secure.key, cert: Express4Secure.cert},
+                      this.app) as {} as httpModule.Server;
+    this.server.listen(port);
+    return this.server.address().port;
+  }
+
+  shutdown() {
+    this.server!.close();
+  }
+}
+
 // Server abstraction class definitions. These are borrowed from web framework
 // tests -- which are useful because they already expose a Promise API.
 const servers = {
-  http: Express4, https: class Express4Secure extends Express4 {
-    static key = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'));
-    static cert = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
-    private https: typeof httpsModule;
-
-    constructor() {
-      super();
-      this.https = require('https');
-    }
-
-    listen(port: number): number {
-      // The types of (http|https).Server are not compatible, but we don't
-      // access any properties that aren't present on both in the test.
-      // tslint:disable:no-any
-      this.server = this.https.createServer(
-                        {key: Express4Secure.key, cert: Express4Secure.cert},
-                        this.app) as any as httpModule.Server;
-      // tslint:enable:no-any
-      this.server.listen(port);
-      return this.server.address().port;
-    }
-
-    shutdown() {
-      this.server!.close();
-    }
-  }
+  http: Express4,
+  https: Express4Secure
 };
 
 for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
