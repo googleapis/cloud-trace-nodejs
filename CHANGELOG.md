@@ -1,5 +1,13 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-04-05, Version 2.7.1 (Beta), @kjin
+
+This version fixes an issue with tracing HTTPS client requests in Node <=8 that was introduced in 2.6.0.
+
+### Commits
+
+* [[`a3ea16dc06`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/a3ea16dc06)] - **fix**: fix https tracing breakage in node \<9 and rewrite http tests (#717) (Kelvin Jin) [#717](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/717)
+
 ## 2018-04-03, Version 2.7.0 (Beta), @kjin
 
 This version introduces support for tracing Hapi 17.
