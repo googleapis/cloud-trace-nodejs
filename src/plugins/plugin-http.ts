@@ -183,7 +183,8 @@ function patchHttp(http: HttpModule, api: TraceAgent) {
   }
 }
 
-// https.get depends on https.request in <8.9 and >=8.9.1
+// https.get depends on Node http internals in 8.9.0 and 9+ instead of the
+// public http module.
 function patchHttps(https: HttpsModule, api: TraceAgent) {
   shimmer.wrap(https, 'request', (request) => {
     return makeRequestTrace('https:', request, api);
@@ -214,6 +215,13 @@ const plugin: Plugin = [
     file: 'http',
     patch: patchHttp,
     unpatch: unpatchHttp,
+  },
+  {
+    file: 'https',
+    versions: '<8.9.0 || ^8.9.1',
+    // require http if it wasn't patched yet, because the https client uses
+    // the public 'http' module.
+    patch: () => require('http')
   },
   {
     file: 'https',
