@@ -244,9 +244,15 @@ describe('test-trace-http2', () => {
           assert.equal(
               span.labels[TraceLabels.ERROR_DETAILS_NAME],
               'Error [ERR_HTTP2_STREAM_ERROR]');
-          assert.equal(
-              span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
-              'Stream closed with error code 2');
+          if (semver.satisfies(process.version, '>=9.11')) {
+            assert.equal(
+                span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
+                'Stream closed with error code NGHTTP2_INTERNAL_ERROR');
+          } else {
+            assert.equal(
+                span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
+                'Stream closed with error code 2');
+          }
           session.destroy();
           server.close();
           done();

@@ -89,7 +89,9 @@ function initConfig(projectConfig: Forceable<Config>):
   // 4. Default Config (as specified in './config')
   const config = extend(
       true, {[FORCE_NEW]: projectConfig[FORCE_NEW]}, defaultConfig,
-      envSetConfig, projectConfig, envConfig);
+      envSetConfig, projectConfig, envConfig, {plugins: {}});
+  // The empty plugins object guarantees that plugins is a plain object,
+  // even if it's explicitly specified in the config to be a non-object.
 
   // Enforce the upper limit for the label value size.
   if (config.maximumLabelValueSize >

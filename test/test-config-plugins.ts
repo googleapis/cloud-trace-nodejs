@@ -65,6 +65,11 @@ describe('Configuration: Plugins', () => {
         e => assert.ok(plugins![e].includes(`plugin-${e}.js`)));
   });
 
+  it('should handle non-object', () => {
+    trace.start({plugins: false as {}});
+    assert.deepStrictEqual(plugins, {});
+  });
+
   it('should overwrite builtin plugins correctly', () => {
     trace.start({plugins: {express: 'foo'}});
     assert.ok(plugins);
