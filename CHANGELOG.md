@@ -1,5 +1,13 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-04-10, Version 2.7.2 (Beta), @kjin
+
+This version adds support for completely disabling plugins by passing a non-object value (`false` recommended to convey intent) for `config.plugins`.
+
+### Commits
+
+* [[`068260c595`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/068260c595)] - **fix**: allow non-objects for plugins to disable automatic tracing (#720) (Kelvin Jin) [#720](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/720)
+
 ## 2018-04-05, Version 2.7.1 (Beta), @kjin
 
 This version fixes an issue with tracing HTTPS client requests in Node <=8 that was introduced in 2.6.0.
