@@ -76,7 +76,7 @@ export class AsyncListenerCLS<Context extends {}> implements CLS<Context> {
     return this.getNamespace().bind(fn) as Func<T>;
   }
 
-  patchEmitterToPropagateContext<T>(ee: EventEmitter): void {
+  patchEmitterToPropagateContext(ee: EventEmitter): void {
     return this.getNamespace().bindEmitter(ee);
   }
 }

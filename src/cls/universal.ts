@@ -57,5 +57,5 @@ export class UniversalCLS<Context> implements CLS<Context> {
     return fn;
   }
 
-  patchEmitterToPropagateContext<T>(ee: EventEmitter): void {}
+  patchEmitterToPropagateContext(ee: EventEmitter): void {}
 }

@@ -20,31 +20,33 @@ import * as shimmer from 'shimmer';
 
 import {CLS, Func} from './base';
 
+// A list of well-known EventEmitter methods that add event listeners.
 const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> =
     ['addListener', 'on', 'once', 'prependListener', 'prependOnceListener'];
-const WRAPPED = Symbol('context_wrapped');
+// A symbol used to check if a method has been wrapped for context.
+const WRAPPED = Symbol('@google-cloud/trace-agent::AsyncHooksCLS::WRAPPED');
+
+type ContextWrapped<T> = T&{[WRAPPED]?: boolean};
 
 /**
  * An implementation of continuation-local storage on top of the async_hooks
  * module.
  */
 export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
-  private current: {value: Context};
+  private currentContext: {value: Context};
   private contexts: {[id: number]: Context} = {};
-  private readonly defaultContext: Context;
   private hook: asyncHooksModule.AsyncHook;
   private enabled = false;
 
-  constructor(defaultContext: Context) {
-    this.defaultContext = defaultContext;
-    this.current = {value: this.defaultContext};
+  constructor(private readonly defaultContext: Context) {
+    this.currentContext = {value: this.defaultContext};
     this.hook = (require('async_hooks') as typeof asyncHooksModule).createHook({
       init: (id: number, type: string, triggerId: number, resource: {}) => {
-        this.contexts[id] = this.current.value;
+        this.contexts[id] = this.currentContext.value;
       },
       before: (id: number) => {
         if (this.contexts[id]) {
-          this.current.value = this.contexts[id];
+          this.currentContext.value = this.contexts[id];
         }
       },
       destroy: (id: number) => {
@@ -58,51 +60,52 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   }
 
   enable(): void {
-    this.current.value = this.defaultContext;
+    this.currentContext.value = this.defaultContext;
     this.hook.enable();
     this.enabled = true;
   }
 
   disable(): void {
-    this.current.value = this.defaultContext;
+    this.currentContext.value = this.defaultContext;
     this.hook.disable();
     this.enabled = false;
   }
 
   getContext(): Context {
-    return this.current.value;
+    return this.currentContext.value;
   }
 
   setContext(value: Context): void {
-    this.current.value = value;
+    this.currentContext.value = value;
   }
 
   runWithNewContext<T>(fn: Func<T>): T {
-    const oldContext = this.current.value;
-    this.current.value = this.defaultContext;
+    const oldContext = this.currentContext.value;
+    this.currentContext.value = this.defaultContext;
+    // TODO(kjin) Handle the case where fn throws. Context: PR #708
     const res = fn();
-    this.current.value = oldContext;
+    this.currentContext.value = oldContext;
     return res;
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {
     // TODO(kjin): Monitor https://github.com/Microsoft/TypeScript/pull/15473.
     // When it's landed and released, we can remove these `any` casts.
-    // tslint:disable-next-line:no-any
-    if (((fn as any)[WRAPPED] as boolean) || !this.current) {
+    if ((fn as ContextWrapped<Func<T>>)[WRAPPED] || !this.currentContext) {
       return fn;
     }
-    const current = this.current;
-    const boundContext = this.current.value;
-    const contextWrapper = function(this: {}) {
+    const current = this.currentContext;
+    const boundContext = this.currentContext.value;
+    const contextWrapper: ContextWrapped<Func<T>> = function(this: {}) {
       const oldContext = current.value;
       current.value = boundContext;
+      // TODO(kjin) Handle the case where fn throws. Context: PR #708
       const res = fn.apply(this, arguments) as T;
       current.value = oldContext;
       return res;
     };
     // tslint:disable-next-line:no-any
-    (contextWrapper as any)[WRAPPED] = true;
+    contextWrapper[WRAPPED] = true;
     Object.defineProperty(contextWrapper, 'length', {
       enumerable: false,
       configurable: true,

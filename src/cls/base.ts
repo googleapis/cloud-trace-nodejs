@@ -32,6 +32,8 @@ export type Func<T = void> = (...args: any[]) => T;
  * The exact definition of "trigger" is implementation-dependent.
  *
  * CLS stands for continuation-local storage.
+ *
+ *
  */
 export interface CLS<Context extends {}> {
   /**
@@ -91,5 +93,5 @@ export interface CLS<Context extends {}> {
    * path in which they were attached to the EventEmitter object.
    * @param ee The EventEmitter to bind. This instance will be mutated.
    */
-  patchEmitterToPropagateContext<T>(ee: EventEmitter): void;
+  patchEmitterToPropagateContext(ee: EventEmitter): void;
 }
