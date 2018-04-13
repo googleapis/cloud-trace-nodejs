@@ -23,7 +23,6 @@ import {AsyncListenerCLS} from './cls/async-listener';
 import {CLS, Func} from './cls/base';
 import {UniversalCLS} from './cls/universal';
 import {SpanDataType} from './constants';
-import {UNCORRELATED_SPAN, UNTRACED_SPAN} from './span-data';
 import {Trace, TraceSpan} from './trace';
 import {Singleton} from './util';
 
@@ -53,6 +52,10 @@ const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 
 export interface TraceCLSConfig { mechanism: 'async-listener'|'async-hooks'; }
 
+export interface CLSConstructor {
+  new(defaultContext: RootContext): CLS<RootContext>;
+}
+
 /**
  * An implementation of continuation-local storage for the Trace Agent.
  * In addition to the underlying API, there is a guarantee that when an instance
@@ -61,9 +64,14 @@ export interface TraceCLSConfig { mechanism: 'async-listener'|'async-hooks'; }
  */
 export class TraceCLS implements CLS<RootContext> {
   private currentCLS: CLS<RootContext>;
-  private spareCLS: CLS<RootContext>;
+  // CLSClass is a constructor.
+  // tslint:disable-next-line:variable-name
+  private CLSClass: CLSConstructor;
   private readonly logger: Logger;
   private enabled = false;
+
+  private static UNCORRELATED: RootContext = {type: SpanDataType.UNCORRELATED};
+  private static UNTRACED: RootContext = {type: SpanDataType.UNTRACED};
 
   /**
    * Stack traces are captured when a root span is started. Because the stack
@@ -75,34 +83,31 @@ export class TraceCLS implements CLS<RootContext> {
 
   constructor(logger: Logger, config: TraceCLSConfig) {
     this.logger = logger;
-    const uncorrelated: RootContext = {type: SpanDataType.UNCORRELATED};
-    const untraced: RootContext = {type: SpanDataType.UNTRACED};
     const useAH = config.mechanism === 'async-hooks' && asyncHooksAvailable;
     if (useAH) {
-      this.spareCLS = new AsyncHooksCLS(uncorrelated);
+      this.CLSClass = AsyncHooksCLS;
       this.rootSpanStackOffset = 4;
       this.logger.info(
           'TraceCLS#constructor: Created [async-hooks] CLS instance.');
     } else {
       if (config.mechanism !== 'async-listener') {
         if (config.mechanism === 'async-hooks') {
-          this.logger.warn(
+          this.logger.error(
               'TraceCLS#constructor: [async-hooks]-based context',
-              `propagation is not available in Node ${process.version}.`,
-              'Falling back to using async-listener.');
+              `propagation is not available in Node ${process.version}.`);
         } else {
-          this.logger.warn(
+          this.logger.error(
               'TraceCLS#constructor: The specified CLS mechanism',
-              `[${config.mechanism}] was not recognized.`,
-              'Falling back to using async-listener.');
+              `[${config.mechanism}] was not recognized.`);
         }
+        throw new Error(`CLS mechanism [${config.mechanism}] is invalid.`);
       }
-      this.spareCLS = new AsyncListenerCLS(uncorrelated);
+      this.CLSClass = AsyncListenerCLS;
       this.rootSpanStackOffset = 8;
       this.logger.info(
           'TraceCLS#constructor: Created [async-listener] CLS instance.');
     }
-    this.currentCLS = new UniversalCLS(untraced);
+    this.currentCLS = new UniversalCLS(TraceCLS.UNTRACED);
     this.currentCLS.enable();
   }
 
@@ -110,19 +115,13 @@ export class TraceCLS implements CLS<RootContext> {
     return this.enabled;
   }
 
-  private rotate(): void {
-    this.currentCLS.disable();
-    const temp = this.currentCLS;
-    this.currentCLS = this.spareCLS;
-    this.spareCLS = temp;
-    this.currentCLS.enable();
-  }
-
   enable(): void {
     if (!this.enabled) {
       this.logger.info('TraceCLS#enable: Enabling CLS.');
       this.enabled = true;
-      this.rotate();
+      this.currentCLS.disable();
+      this.currentCLS = new this.CLSClass(TraceCLS.UNCORRELATED);
+      this.currentCLS.enable();
     }
   }
 
@@ -130,7 +129,9 @@ export class TraceCLS implements CLS<RootContext> {
     if (this.enabled) {
       this.logger.info('TraceCLS#disable: Disabling CLS.');
       this.enabled = false;
-      this.rotate();
+      this.currentCLS.disable();
+      this.currentCLS = new UniversalCLS(TraceCLS.UNTRACED);
+      this.currentCLS.enable();
     }
   }
 
