@@ -194,30 +194,21 @@ describe('Continuation-Local Storage', () => {
   });
 
   describe('TraceCLS', () => {
-    const testCases = [
-      {
-        config: {mechanism: 'async-hooks'},
-        expectedImplementation: asyncAwaitSupported ? 'async-hooks' :
-                                                      'async-listener'
-      },
-      {
-        config: {mechanism: 'async-listener'},
-        expectedImplementation: 'async-listener'
-      },
-      {
-        // tslint:disable-next-line:no-any
-        config: {mechanism: 'unknown' as any},
-        expectedImplementation: 'async-listener'
-      }
-    ];
-    for (const testCase of testCases) {
-      describe(`with configuration ${inspect(testCase.config)}`, () => {
+    const validTestCases: TraceCLSConfig[] = asyncAwaitSupported ?
+        [{mechanism: 'async-hooks'}, {mechanism: 'async-listener'}] :
+        [{mechanism: 'async-listener'}];
+    for (const testCase of validTestCases) {
+      describe(`with configuration ${inspect(testCase)}`, () => {
         const logger = new TestLogger();
         let c: TraceCLS;
 
         beforeEach(() => {
-          c = new TraceCLS(logger, testCase.config);
-          c.enable();
+          try {
+            c = new TraceCLS(logger, testCase);
+            c.enable();
+          } catch {
+            c = {disable: () => {}} as TraceCLS;
+          }
         });
 
         afterEach(() => {
@@ -243,15 +234,7 @@ describe('Continuation-Local Storage', () => {
 
         it('constructs the correct underlying CLS mechanism', () => {
           assert.strictEqual(
-              logger.getNumLogsWith(
-                  'info', `[${testCase.expectedImplementation}]`),
-              1);
-          if (testCase.config.mechanism !== testCase.expectedImplementation) {
-            // We should warn if the above predicate is true.
-            assert.strictEqual(
-                logger.getNumLogsWith('warn', `[${testCase.config.mechanism}]`),
-                1);
-          }
+              logger.getNumLogsWith('info', `[${testCase.mechanism}]`), 1);
         });
 
         it('exposes the correct number of stack frames to remove', () => {
@@ -262,6 +245,25 @@ describe('Continuation-Local Storage', () => {
             });
           }
           myFunction();
+        });
+      });
+    }
+
+    const invalidTestCases: TraceCLSConfig[] = asyncAwaitSupported ?
+        [
+          {mechanism: 'unknown'} as any  // tslint:disable-line:no-any
+        ] :
+        [
+          {mechanism: 'unknown'} as any,  // tslint:disable-line:no-any
+          {mechanism: 'async-hooks'}
+        ];
+
+    for (const testCase of invalidTestCases) {
+      describe(`with configuration ${inspect(testCase)}`, () => {
+        const logger = new TestLogger();
+
+        it('throws', () => {
+          assert.throws(() => new TraceCLS(logger, testCase));
         });
       });
     }
