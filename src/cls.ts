@@ -50,7 +50,9 @@ export type RootContext = RealRootContext|PhantomRootContext;
 
 const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 
-export interface TraceCLSConfig { mechanism: 'async-listener'|'async-hooks'; }
+export interface TraceCLSConfig {
+  mechanism: 'async-listener'|'async-hooks'|'none';
+}
 
 export interface CLSConstructor {
   new(defaultContext: RootContext): CLS<RootContext>;
@@ -80,30 +82,34 @@ export class TraceCLS implements CLS<RootContext> {
   readonly rootSpanStackOffset: number;
 
   constructor(private readonly logger: Logger, config: TraceCLSConfig) {
-    const useAH = config.mechanism === 'async-hooks' && asyncHooksAvailable;
-    if (useAH) {
-      this.CLSClass = AsyncHooksCLS;
-      this.rootSpanStackOffset = 4;
-      this.logger.info(
-          'TraceCLS#constructor: Created [async-hooks] CLS instance.');
-    } else {
-      if (config.mechanism !== 'async-listener') {
-        if (config.mechanism === 'async-hooks') {
+    switch (config.mechanism) {
+      case 'async-hooks':
+        if (asyncHooksAvailable) {
+          this.CLSClass = AsyncHooksCLS;
+          this.rootSpanStackOffset = 4;
+          break;
+        } else {
           this.logger.error(
               'TraceCLS#constructor: [async-hooks]-based context',
               `propagation is not available in Node ${process.version}.`);
-        } else {
-          this.logger.error(
-              'TraceCLS#constructor: The specified CLS mechanism',
-              `[${config.mechanism}] was not recognized.`);
+          throw new Error(`CLS mechanism [${config.mechanism}] is invalid.`);
         }
+      case 'async-listener':
+        this.CLSClass = AsyncListenerCLS;
+        this.rootSpanStackOffset = 8;
+        break;
+      case 'none':
+        this.CLSClass = UniversalCLS;
+        this.rootSpanStackOffset = 4;
+        break;
+      default:
+        this.logger.error(
+            'TraceCLS#constructor: The specified CLS mechanism',
+            `[${config.mechanism}] was not recognized.`);
         throw new Error(`CLS mechanism [${config.mechanism}] is invalid.`);
-      }
-      this.CLSClass = AsyncListenerCLS;
-      this.rootSpanStackOffset = 8;
-      this.logger.info(
-          'TraceCLS#constructor: Created [async-listener] CLS instance.');
     }
+    this.logger.info(
+        `TraceCLS#constructor: Created [${config.mechanism}] CLS instance.`);
     this.currentCLS = new UniversalCLS(TraceCLS.UNTRACED);
     this.currentCLS.enable();
   }
