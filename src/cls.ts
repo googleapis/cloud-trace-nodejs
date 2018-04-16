@@ -64,10 +64,8 @@ export interface CLSConstructor {
  */
 export class TraceCLS implements CLS<RootContext> {
   private currentCLS: CLS<RootContext>;
-  // CLSClass is a constructor.
-  // tslint:disable-next-line:variable-name
+  // tslint:disable-next-line:variable-name CLSClass is a constructor.
   private CLSClass: CLSConstructor;
-  private readonly logger: Logger;
   private enabled = false;
 
   private static UNCORRELATED: RootContext = {type: SpanDataType.UNCORRELATED};
@@ -81,8 +79,7 @@ export class TraceCLS implements CLS<RootContext> {
    */
   readonly rootSpanStackOffset: number;
 
-  constructor(logger: Logger, config: TraceCLSConfig) {
-    this.logger = logger;
+  constructor(private readonly logger: Logger, config: TraceCLSConfig) {
     const useAH = config.mechanism === 'async-hooks' && asyncHooksAvailable;
     if (useAH) {
       this.CLSClass = AsyncHooksCLS;

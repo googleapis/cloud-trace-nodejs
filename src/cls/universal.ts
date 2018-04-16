@@ -24,8 +24,11 @@ import {CLS, Func} from './base';
  */
 export class UniversalCLS<Context> implements CLS<Context> {
   private enabled = false;
+  private currentContext: Context;
 
-  constructor(private defaultContext: Context) {}
+  constructor(private readonly defaultContext: Context) {
+    this.currentContext = this.defaultContext;
+  }
 
   isEnabled(): boolean {
     return this.enabled;
@@ -37,15 +40,16 @@ export class UniversalCLS<Context> implements CLS<Context> {
 
   disable(): void {
     this.enabled = false;
+    this.currentContext = this.defaultContext;
   }
 
   getContext(): Context {
-    return this.defaultContext;
+    return this.currentContext;
   }
 
   setContext(value: Context): void {
     if (this.enabled) {
-      this.defaultContext = value;
+      this.currentContext = value;
     }
   }
 

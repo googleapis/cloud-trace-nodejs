@@ -24,7 +24,7 @@ import {CLS, Func} from './base';
 const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> =
     ['addListener', 'on', 'once', 'prependListener', 'prependOnceListener'];
 // A symbol used to check if a method has been wrapped for context.
-const WRAPPED = Symbol('@google-cloud/trace-agent::AsyncHooksCLS::WRAPPED');
+const WRAPPED = Symbol('@google-cloud/trace-agent:AsyncHooksCLS:WRAPPED');
 
 type ContextWrapped<T> = T&{[WRAPPED]?: boolean};
 
@@ -89,8 +89,6 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {
-    // TODO(kjin): Monitor https://github.com/Microsoft/TypeScript/pull/15473.
-    // When it's landed and released, we can remove these `any` casts.
     if ((fn as ContextWrapped<Func<T>>)[WRAPPED] || !this.currentContext) {
       return fn;
     }
@@ -104,7 +102,6 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
       current.value = oldContext;
       return res;
     };
-    // tslint:disable-next-line:no-any
     contextWrapper[WRAPPED] = true;
     Object.defineProperty(contextWrapper, 'length', {
       enumerable: false,
