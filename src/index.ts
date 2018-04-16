@@ -67,6 +67,8 @@ type NormalizedConfig = TraceWriterConfig&PluginLoaderConfig&TopLevelConfig;
  */
 function initConfig(projectConfig: Forceable<Config>):
     Forceable<NormalizedConfig> {
+  // `|| undefined` prevents environmental variables that are empty strings
+  // from overriding values provided in the config object passed to start().
   const envConfig = {
     logLevel: Number(process.env.GCLOUD_TRACE_LOGLEVEL) || undefined,
     projectId: process.env.GCLOUD_PROJECT || undefined,
