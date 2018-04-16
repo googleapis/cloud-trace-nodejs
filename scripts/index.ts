@@ -8,7 +8,7 @@
 
 const [, , ...steps] = process.argv;
 const {
-  CI_PULL_REQUEST,
+  CIRCLE_PR_NUMBER,
   TRACE_TEST_EXCLUDE_INTEGRATION,
   TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY,
   TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV
@@ -113,12 +113,12 @@ async function run(steps: string[]) {
           });
           break;
         case 'run-system-tests':
-          await spawnP(
-            'npm', ['install'], { cwd: 'system-test' }
-          );
-          if (CI_PULL_REQUEST && !(await existsP('node-team-test-d0b0be11c23d.json'))) {
+          if (CIRCLE_PR_NUMBER && !(await existsP('node-team-test-${keyID}.json'))) {
             console.log('> Not running system tests in PRs');
           } else {
+            await spawnP(
+              'npm', ['install'], { cwd: 'system-test' }
+            );
             await runTests({
               includeGlobs: [
                 `system-test/*.js`,

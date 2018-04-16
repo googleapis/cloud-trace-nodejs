@@ -43,7 +43,8 @@ const uuid = require('uuid');
 const semver = require('semver');
 
 const usingAsyncHooks = semver.satisfies(process.version, '>=8') &&
-                        process.env.GCLOUD_TRACE_NEW_CONTEXT;
+                        !!process.env.GCLOUD_TRACE_NEW_CONTEXT;
+console.log(`Running system test with usingAsyncHooks=${usingAsyncHooks}`);
 
 // TODO(ofrobots): this code should be moved to a better location. Perhaps
 // google-auto-auth or google-auth-library.
@@ -120,7 +121,7 @@ describe('express + datastore', () => {
         });
     });
 
-    var server = app.listen(8080, () => {
+    const server = app.listen(8080, () => {
       console.log('server started');
       got.stream(`http://localhost:8080${testPath}`).pipe(process.stdout);
       setTimeout(() => {
@@ -129,21 +130,17 @@ describe('express + datastore', () => {
     });
 
     function verifyTraces(traces) {
-      assert.equal(traces.length, 1, 'there should be exactly one trace');
+      assert.strictEqual(traces.length, 1, 'there should be exactly one trace');
 
       const trace = traces[0];
-      if (usingAsyncHooks) {
-        assert.equal(trace.spans.length, 3, 'should be 3 spans: parent, child, auth');
-        assert.equal(trace.spans[2].name, 'www.googleapis.com');
-      } else {
-        assert.equal(trace.spans.length, 2, 'should be 2 spans: parent, child');
-      }
+      assert.ok(trace.spans.length >= 2, 'should be at least 2 spans: parent, child');
       const parent = trace.spans[0];
-      const child = trace.spans[1];
+      const child = trace.spans.find(span =>
+          span.name === 'grpc:/google.datastore.v1.Datastore/RunQuery');
 
-      assert.equal(parent.name, testPath, 'should match unique path');
-      assert.equal(child.name, 'grpc:/google.datastore.v1.Datastore/RunQuery');
-      assert.equal(child.parentSpanId, parent.spanId);
+      assert.strictEqual(parent.name, testPath, 'should match unique path');
+      assert.ok(child);
+      assert.strictEqual(child.parentSpanId, parent.spanId);
       server.close();
       done();
     }
