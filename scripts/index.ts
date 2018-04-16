@@ -43,6 +43,8 @@ const unitTestExcludeGlobs: string[] = TRACE_TEST_EXCLUDE_INTEGRATION ? [
  */
 async function run(steps: string[]) {
   for (const step of steps) {
+    console.log(process.env);
+    throw new Error('clearly, this test was never meant to succeed.');
     console.log(`> Running step: ${step}`);
     // If the step string is prefixed with "npm-", treat it as an "npm run"
     // command, and then short-circuit.
@@ -116,7 +118,7 @@ async function run(steps: string[]) {
           await spawnP(
             'npm', ['install'], { cwd: 'system-test' }
           );
-          if (CI_PULL_REQUEST && !(await existsP('node-team-test-d0b0be11c23d.json'))) {
+          if (CI_PULL_REQUEST && !(await existsP('node-team-test-${keyID}.json'))) {
             console.log('> Not running system tests in PRs');
           } else {
             await runTests({
