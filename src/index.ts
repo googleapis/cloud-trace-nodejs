@@ -120,15 +120,17 @@ function initConfig(projectConfig: Forceable<Config>):
  * Writer from publishing additional traces.
  */
 function stop() {
+  if (pluginLoader.exists()) {
+    pluginLoader.get().deactivate();
+  }
   if (traceAgent && traceAgent.isActive()) {
-    traceWriter.get().stop();
     traceAgent.disable();
-    if (cls.exists()) {
-      cls.get().disable();
-    }
-    if (pluginLoader.exists()) {
-      pluginLoader.get().deactivate();
-    }
+  }
+  if (cls.exists()) {
+    cls.get().disable();
+  }
+  if (traceWriter.exists()) {
+    traceWriter.get().stop();
   }
 }
 
@@ -174,22 +176,31 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
     modulesLoadedBeforeTrace.length = 0;
   }
 
-  // Initialize context propagation mechanism.
-  // TODO(kjin): Publicly expose this field.
-  cls.create(logger, {
-       mechanism: useAH ? 'async-hooks' : 'async-listener',
-       [FORCE_NEW]: config[FORCE_NEW]
-     })
-      .enable();
+  try {
+    // Initialize context propagation mechanism.
+    // TODO(kjin): Publicly expose this field.
+    cls.create(logger, {
+         mechanism: useAH ? 'async-hooks' : 'async-listener',
+         [FORCE_NEW]: config[FORCE_NEW]
+       })
+        .enable();
 
-  traceWriter.create(logger, config).initialize((err) => {
-    if (err) {
-      stop();
-    }
-  });
+    traceWriter.create(logger, config).initialize((err) => {
+      if (err) {
+        stop();
+      }
+    });
 
-  traceAgent.enable(logger, config);
-  pluginLoader.create(logger, config).activate();
+    traceAgent.enable(logger, config);
+
+    pluginLoader.create(logger, config).activate();
+  } catch (e) {
+    logger.error(
+        'TraceAgent#start: Disabling the Trace Agent for the',
+        `following reason: ${e.message}`);
+    stop();
+    return traceAgent;
+  }
 
   if (typeof config.projectId !== 'string' &&
       typeof config.projectId !== 'undefined') {
