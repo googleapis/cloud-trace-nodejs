@@ -21,7 +21,7 @@ import * as semver from 'semver';
 
 const useAH = !!process.env.GCLOUD_TRACE_NEW_CONTEXT &&
     semver.satisfies(process.version, '>=8');
-if (useAH) {
+if (!useAH) {
   // This should be loaded before any core modules.
   require('continuation-local-storage');
 }
