@@ -67,18 +67,22 @@ type NormalizedConfig = TraceWriterConfig&PluginLoaderConfig&TopLevelConfig;
  */
 function initConfig(projectConfig: Forceable<Config>):
     Forceable<NormalizedConfig> {
+  // `|| undefined` prevents environmental variables that are empty strings
+  // from overriding values provided in the config object passed to start().
   const envConfig = {
     logLevel: Number(process.env.GCLOUD_TRACE_LOGLEVEL) || undefined,
-    projectId: process.env.GCLOUD_PROJECT,
+    projectId: process.env.GCLOUD_PROJECT || undefined,
     serviceContext: {
-      service: process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME,
-      version: process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION,
-      minorVersion: process.env.GAE_MINOR_VERSION
+      service:
+          process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME || undefined,
+      version: process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION ||
+          undefined,
+      minorVersion: process.env.GAE_MINOR_VERSION || undefined
     }
   };
 
   let envSetConfig: Config = {};
-  if (process.env.hasOwnProperty('GCLOUD_TRACE_CONFIG')) {
+  if (!!process.env.GCLOUD_TRACE_CONFIG) {
     envSetConfig =
         require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
   }

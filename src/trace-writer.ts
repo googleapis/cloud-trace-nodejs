@@ -321,7 +321,7 @@ export class TraceWriter extends common.Service {
     // Privatize and clear the buffer.
     const buffer = this.buffer;
     this.buffer = [];
-    this.logger.debug('TraceWriter#flushBufffer: Flushing traces', buffer);
+    this.logger.debug('TraceWriter#flushBuffer: Flushing traces', buffer);
     this.publish(`{"traces":[${buffer.join()}]}`);
   }
 
@@ -334,7 +334,7 @@ export class TraceWriter extends common.Service {
     const uri = `https://cloudtrace.googleapis.com/v1/projects/${
         this.config.projectId}/traces`;
     const options = {method: 'PATCH', uri, body: json, headers};
-    this.logger.debug('TraceWriter#publish: Publishing to ' + uri);
+    this.logger.info('TraceWriter#publish: Publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
       const statusCode = (response && response.statusCode) || 'unknown';
       if (err) {

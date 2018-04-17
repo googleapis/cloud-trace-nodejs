@@ -135,6 +135,8 @@ export class TraceAgent implements TraceAgentInterface {
     }
 
     return this.namespace!.runAndReturn(() => {
+      this.logger!.info(`TraceApi#runInRootSpan: [${
+          this.pluginName}] Created root span [${options.name}]`);
       // Attempt to read incoming trace context.
       let incomingTraceContext: IncomingTraceContext = {};
       if (isString(options.traceContext) && !this.config!.ignoreContextHeader) {
@@ -205,7 +207,7 @@ export class TraceAgent implements TraceAgentInterface {
         // with continuously growing number of child spans. The second case
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
-        this.logger!.warn(`TraceApi#createChildspan: [${
+        this.logger!.warn(`TraceApi#createChildSpan: [${
             this.pluginName}] Creating phantom child span [${
             options.name}] because root span [${
             rootSpan.span.name}] was already closed.`);
@@ -219,6 +221,8 @@ export class TraceAgent implements TraceAgentInterface {
           options.name,         /* Span name */
           rootSpan.span.spanId, /* Parent's span ID */
           skipFrames);          /* # of frames to skip in stack trace */
+      this.logger!.info(`TraceApi#createChildSpan: [${
+          this.pluginName}] Created child span [${options.name}]`);
       return childContext;
     } else if (rootSpan.type === SpanDataType.UNTRACED) {
       // Context wasn't lost, but there's no root span, indicating that this
@@ -226,7 +230,7 @@ export class TraceAgent implements TraceAgentInterface {
       return UNTRACED_SPAN;
     } else {
       // Context was lost.
-      this.logger!.warn(`TraceApi#createChildspan: [${
+      this.logger!.warn(`TraceApi#createChildSpan: [${
           this.pluginName}] Creating phantom child span [${
           options.name}] because there is no root span.`);
       return UNCORRELATED_SPAN;
