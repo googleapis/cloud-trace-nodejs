@@ -121,66 +121,63 @@ describe('Trace Interface', function() {
       common.cleanTraces();
     });
 
-    it('should produce real child spans', function(done) {
+    it('should produce real child spans', function() {
       var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root'}, function(root_) {
         var root = asBaseSpanData(root_);
         var child = asBaseSpanData(traceAPI.createChildSpan({name: 'sub'}));
-        setTimeout(function() {
-          child.addLabel('key', 'val');
-          child.endSpan();
-          root.endSpan();
-          var spanPredicate = function(span) {
-            return span.name === 'sub';
-          };
-          var matchingSpan = common.getMatchingSpan(spanPredicate);
-          var duration = Date.parse(matchingSpan.endTime) - Date.parse(matchingSpan.startTime);
-          assert(duration > 190);
-          assert(duration < 300);
-          assert.equal(matchingSpan.labels.key, 'val');
-          done();
-        }, 200);
+        child.addLabel('key', 'val');
+        child.endSpan();
+        root.endSpan();
+        var spanPredicate = function(span) {
+          return span.name === 'sub';
+        };
+        var matchingSpan = common.getMatchingSpan(spanPredicate);
+        assert.equal(matchingSpan.labels.key, 'val');
       });
     });
 
-    it('should produce real root spans runInRootSpan', function(done) {
+    it('should produce real root spans runInRootSpan', function() {
       var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan_) {
         var rootSpan = asBaseSpanData(rootSpan_);
         rootSpan.addLabel('key', 'val');
         var childSpan = asBaseSpanData(traceAPI.createChildSpan({name: 'sub'}));
-        setTimeout(function() {
-          childSpan.endSpan();
-          rootSpan.endSpan();
-          var spanPredicate = function(span) {
-            return span.name === 'root';
-          };
-          var matchingSpan = common.getMatchingSpan(spanPredicate);
-          var duration = Date.parse(matchingSpan.endTime) - Date.parse(matchingSpan.startTime);
-          assert(duration > 190);
-          assert(duration < 300);
-          assert.equal(matchingSpan.labels.key, 'val');
-          done();
-        }, 200);
+        childSpan.endSpan();
+        rootSpan.endSpan();
+        var spanPredicate = function(span) {
+          return span.name === 'root';
+        };
+        var matchingSpan = common.getMatchingSpan(spanPredicate);
+        assert.equal(matchingSpan.labels.key, 'val');
       });
     });
 
-    it('should not allow nested root spans', function(done) {
+    it('should allow sequential root spans', function() {
       var traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1_) {
         var rootSpan1 = asBaseSpanData(rootSpan1_);
-        setTimeout(function() {
-          traceAPI.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
-            assert.strictEqual(rootSpan2.type, SpanDataType.UNCORRELATED);
-          });
-          rootSpan1.endSpan();
-          var span = common.getMatchingSpan(function() { return true; });
-          assert.equal(span.name, 'root');
-          var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
-          assert(duration > 190);
-          assert(duration < 300);
-          done();
-        }, 200);
+        rootSpan1.endSpan();
+      });
+      traceAPI.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
+        rootSpan2.endSpan();
+        var spans = common.getMatchingSpans(function() { return true; });
+        assert.equal(spans.length, 2);
+        assert.ok(spans.find(span => span.name === 'root'));
+        assert.ok(spans.find(span => span.name === 'root2'));
+      });
+    });
+
+    it('should not allow nested root spans', function() {
+      var traceAPI = createTraceAgent();
+      traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1_) {
+        var rootSpan1 = asBaseSpanData(rootSpan1_);
+        traceAPI.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
+          assert.strictEqual(rootSpan2.type, SpanDataType.UNCORRELATED);
+        });
+        rootSpan1.endSpan();
+        var span = common.getMatchingSpan(function() { return true; });
+        assert.equal(span.name, 'root');
       });
     });
 
