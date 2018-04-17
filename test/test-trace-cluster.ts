@@ -29,6 +29,7 @@ describe('test-trace-cluster', () => {
   let axios: typeof axiosModule;
   let express: typeof expressModule;
   before(() => {
+    trace.setCLS();
     trace.setPluginLoader();
     trace.start();
     express = require('express');
@@ -36,6 +37,7 @@ describe('test-trace-cluster', () => {
   });
 
   after(() => {
+    trace.setCLS(trace.TestCLS);
     trace.setPluginLoader(trace.TestPluginLoader);
   });
 

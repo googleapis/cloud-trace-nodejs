@@ -56,12 +56,14 @@ const FRAMEWORKS: WebFrameworkConstructor[] = [
 describe('Web framework tracing', () => {
   let axios: typeof axiosModule;
   before(() => {
+    trace.setCLS();
     trace.setPluginLoader();
     trace.start({ignoreUrls: [/ignore-me/]});
     axios = require('axios');
   });
 
   after(() => {
+    trace.setCLS(trace.TestCLS);
     trace.setPluginLoader(trace.TestPluginLoader);
   });
 

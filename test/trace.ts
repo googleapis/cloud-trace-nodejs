@@ -44,6 +44,7 @@ import * as shimmer from 'shimmer';
 
 import * as trace from '../src';
 import {Config, PluginTypes} from '../src';
+import {cls, TraceCLS, TraceCLSConfig} from '../src/cls';
 import {RootSpanData} from '../src/span-data';
 import {Trace, TraceSpan} from '../src/trace';
 import {PluginLoader, pluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
@@ -56,6 +57,12 @@ export {Config, PluginTypes};
 
 const traces: Trace[] = [];
 const spans: TraceSpan[] = [];
+
+export class TestCLS extends TraceCLS {
+  constructor(logger: common.Logger, config: {}) {
+    super(logger, {mechanism: 'none'});
+  }
+}
 
 export class TestTraceWriter extends TraceWriter {
   initialize(cb: (err?: Error) => void): void {
@@ -79,6 +86,7 @@ export class TestPluginLoader extends PluginLoader {
   }
 }
 
+setCLS(TestCLS);
 setLogger(TestLogger);
 setTraceWriter(TestTraceWriter);
 setPluginLoader(TestPluginLoader);
@@ -121,6 +129,10 @@ export function setLogger(impl?: LoggerConstructor) {
         }, {LEVELS: common.logger.LEVELS}));
     wrap();
   }
+}
+
+export function setCLS(impl?: typeof TraceCLS) {
+  cls['implementation'] = impl || TraceCLS;
 }
 
 export function setTraceWriter(impl?: typeof TraceWriter) {
