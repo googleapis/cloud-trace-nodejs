@@ -87,8 +87,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
     const oldContext = this.currentContext.value;
     this.currentContext.value = this.defaultContext;
     try {
-      const res = fn();
-      return res;
+      return fn();
     } finally {
       this.currentContext.value = oldContext;
     }
@@ -104,8 +103,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
       const oldContext = current.value;
       current.value = boundContext;
       try {
-        const res = fn.apply(this, arguments) as T;
-        return res;
+        return fn.apply(this, arguments) as T;
       } finally {
         current.value = oldContext;
       }
