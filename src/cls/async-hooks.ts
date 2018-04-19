@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
+// This file requires continuation-local-storage in the AsyncHooksCLS
+// constructor, rather than upon module load.
 import * as asyncHooksModule from 'async_hooks';
 import {EventEmitter} from 'events';
 import * as shimmer from 'shimmer';
 
 import {CLS, Func} from './base';
+
+type AsyncHooksModule = typeof asyncHooksModule;
 
 // A list of well-known EventEmitter methods that add event listeners.
 const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> =
@@ -40,7 +44,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
 
   constructor(private readonly defaultContext: Context) {
     this.currentContext = {value: this.defaultContext};
-    this.hook = (require('async_hooks') as typeof asyncHooksModule).createHook({
+    this.hook = (require('async_hooks') as AsyncHooksModule).createHook({
       init: (id: number, type: string, triggerId: number, resource: {}) => {
         this.contexts[id] = this.currentContext.value;
       },

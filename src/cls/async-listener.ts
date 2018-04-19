@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+// This module requires continuation-local-storage in the AsyncListenerCLS
+// constructor, rather than upon module load.
 import * as clsModule from 'continuation-local-storage';
 import {EventEmitter} from 'events';
 
 import {CLS, Func} from './base';
+
+type CLSModule = typeof clsModule;
 
 /**
  * An implementation of continuation-local storage that wraps the
@@ -26,7 +30,7 @@ import {CLS, Func} from './base';
 export class AsyncListenerCLS<Context extends {}> implements CLS<Context> {
   static readonly TRACE_NAMESPACE = 'com.google.cloud.trace';
   static readonly ROOT_CONTEXT_KEY = 'root';
-  private readonly cls: typeof clsModule;
+  private readonly cls: CLSModule;
   private readonly defaultContext: Context;
 
   constructor(defaultContext: Context) {
