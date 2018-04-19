@@ -16,15 +16,18 @@
 
 const filesLoadedBeforeTrace = Object.keys(require.cache);
 
-// Load continuation-local-storage first to ensure the core async APIs get
-// patched before any user-land modules get loaded.
-if (require('semver').satisfies(process.version, '<8') ||
-    !process.env.GCLOUD_TRACE_NEW_CONTEXT) {
+// semver does not require any core modules.
+import * as semver from 'semver';
+
+const useAH = !!process.env.GCLOUD_TRACE_NEW_CONTEXT &&
+    semver.satisfies(process.version, '>=8');
+if (!useAH) {
+  // This should be loaded before any core modules.
   require('continuation-local-storage');
 }
 
-import * as cls from './cls';
 import * as common from '@google-cloud/common';
+import {cls} from './cls';
 import {Constants} from './constants';
 import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
@@ -38,7 +41,7 @@ import {Forceable, FORCE_NEW, packageNameFromPath} from './util';
 
 export {Config, PluginTypes};
 
-const traceAgent = new TraceAgent('Custom Span API');
+const traceAgent: TraceAgent = new TraceAgent('Custom Trace API');
 
 const modulesLoadedBeforeTrace: string[] = [];
 const traceModuleName = path.join('@google-cloud', 'trace-agent');
@@ -117,15 +120,17 @@ function initConfig(projectConfig: Forceable<Config>):
  * Writer from publishing additional traces.
  */
 function stop() {
+  if (pluginLoader.exists()) {
+    pluginLoader.get().deactivate();
+  }
   if (traceAgent && traceAgent.isActive()) {
-    traceWriter.get().stop();
     traceAgent.disable();
-    try {
-      const loader = pluginLoader.get().deactivate();
-    } catch {
-      // Plugin loader wasn't even created. No need to de-activate
-    }
-    cls.destroyNamespace();
+  }
+  if (cls.exists()) {
+    cls.get().disable();
+  }
+  if (traceWriter.exists()) {
+    traceWriter.get().stop();
   }
 }
 
@@ -170,16 +175,32 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
     filesLoadedBeforeTrace.length = 0;
     modulesLoadedBeforeTrace.length = 0;
   }
-  // CLS namespace for context propagation
-  cls.createNamespace();
-  traceWriter.create(logger, config).initialize((err) => {
-    if (err) {
-      stop();
-    }
-  });
 
-  traceAgent.enable(logger, config);
-  pluginLoader.create(logger, config).activate();
+  try {
+    // Initialize context propagation mechanism.
+    // TODO(kjin): Publicly expose this field.
+    cls.create(logger, {
+         mechanism: useAH ? 'async-hooks' : 'async-listener',
+         [FORCE_NEW]: config[FORCE_NEW]
+       })
+        .enable();
+
+    traceWriter.create(logger, config).initialize((err) => {
+      if (err) {
+        stop();
+      }
+    });
+
+    traceAgent.enable(logger, config);
+
+    pluginLoader.create(logger, config).activate();
+  } catch (e) {
+    logger.error(
+        'TraceAgent#start: Disabling the Trace Agent for the',
+        `following reason: ${e.message}`);
+    stop();
+    return traceAgent;
+  }
 
   if (typeof config.projectId !== 'string' &&
       typeof config.projectId !== 'undefined') {

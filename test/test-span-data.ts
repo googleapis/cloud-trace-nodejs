@@ -17,7 +17,7 @@
 'use strict';
 
 import './override-gcp-metadata';
-import * as cls from '../src/cls';
+import { cls } from '../src/cls';
 import { Constants } from '../src/constants';
 import {TraceLabels} from '../src/trace-labels';
 import { RootSpanData, ChildSpanData } from '../src/span-data';
@@ -46,7 +46,7 @@ describe('SpanData', function() {
   });
 
   it('has correct default values', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData('name', 1, 2);
       assert.ok(spanData.trace);
       assert.strictEqual(spanData.trace.traceId, 1);
@@ -56,7 +56,7 @@ describe('SpanData', function() {
   });
 
   it('generates unique numeric span ID strings', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spans = [];
       var spanIds = new Set<string>();
       var rootSpanData = createRootSpanData('hi');
@@ -76,7 +76,7 @@ describe('SpanData', function() {
   });
 
   it('converts label values to strings', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData('name', 1, 2);
       spanData.addLabel('a', 'b');
       assert.strictEqual(spanData.span.labels.a, 'b');
@@ -86,7 +86,7 @@ describe('SpanData', function() {
   });
 
   it('serializes object labels correctly', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData('name', 1, 2);
       spanData.addLabel('a', [{i: 5}, {j: 6}]);
       assert.strictEqual(spanData.span.labels.a, '[ { i: 5 }, { j: 6 } ]');
@@ -94,7 +94,7 @@ describe('SpanData', function() {
   });
 
   it('serializes symbol labels correctly', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData('name', 1, 2);
       spanData.addLabel('a', Symbol('b'));
       assert.strictEqual(spanData.span.labels.a, 'Symbol(b)');
@@ -102,7 +102,7 @@ describe('SpanData', function() {
   });
 
   it('truncates large span names to limit', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData(Array(200).join('a'), 1, 2);
       assert.strictEqual(
         spanData.span.name,
@@ -111,7 +111,7 @@ describe('SpanData', function() {
   });
 
   it('truncates large label keys to limit', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData('name', 1, 2);
       var longLabelKey = Array(200).join('a');
       spanData.addLabel(longLabelKey, 5);
@@ -122,7 +122,7 @@ describe('SpanData', function() {
   });
 
   it('truncates large label values to limit', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData('name', 1, 2);
       var longLabelVal = Array(16550).join('a');
       spanData.addLabel('a', longLabelVal);
@@ -135,7 +135,7 @@ describe('SpanData', function() {
   // TODO Add addLabel test
 
   it('closes when endSpan is called', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData('name', 1, 2);
       assert.ok(!spanData.span.endTime);
       spanData.endSpan();
@@ -145,7 +145,7 @@ describe('SpanData', function() {
 
   it('captures stack traces', function() {
     traceWriter.get().getConfig().stackTraceLimit = 25;
-    cls.getNamespace().run(function awesome() {
+    cls.get().runWithNewContext(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
       assert.ok(!spanData.span.endTime);
       spanData.endSpan();
@@ -161,7 +161,7 @@ describe('SpanData', function() {
 
   it('does not limit stack trace', function() {
     traceWriter.get().getConfig().maximumLabelValueSize = 10;
-    cls.getNamespace().run(function awesome() {
+    cls.get().runWithNewContext(function awesome() {
       var spanData = createRootSpanData('name', 1, 2, 1);
       spanData.endSpan();
       var stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
@@ -172,7 +172,7 @@ describe('SpanData', function() {
   });
 
   it('should close nested spans', function() {
-    cls.getNamespace().run(function() {
+    cls.get().runWithNewContext(function() {
       var spanData = createRootSpanData('hi');
       // create a child span
       new ChildSpanData(spanData.trace, 'child', spanData.span.spanId, 0);
