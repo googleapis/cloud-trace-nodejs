@@ -221,8 +221,11 @@ describe('Continuation-Local Storage', () => {
 
   describe('TraceCLS', () => {
     const validTestCases: TraceCLSConfig[] = asyncAwaitSupported ?
-        [{mechanism: 'async-hooks'}, {mechanism: 'async-listener'}] :
-        [{mechanism: 'async-listener'}];
+        [
+          {mechanism: 'async-hooks'}, {mechanism: 'async-listener'},
+          {mechanism: 'none'}
+        ] :
+        [{mechanism: 'async-listener'}, {mechanism: 'none'}];
     for (const testCase of validTestCases) {
       describe(`with configuration ${inspect(testCase)}`, () => {
         const logger = new TestLogger();
