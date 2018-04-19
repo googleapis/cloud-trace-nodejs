@@ -71,6 +71,13 @@ export interface CLS<Context extends {}> {
   setContext(value: Context): void;
 
   /**
+   * Sets the current continuation-local value to a default value.
+   * If not called from within a continuation, behavior is implementation-
+   * dependent.
+   */
+  clearContext(): void;
+
+  /**
    * Runs the given function as the start of a new continuation.
    * @param fn The function to run synchronously.
    * @returns The return result of running `fn`.

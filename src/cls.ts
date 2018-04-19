@@ -146,6 +146,10 @@ export class TraceCLS implements CLS<RootContext> {
     this.currentCLS.setContext(value);
   }
 
+  clearContext(): void {
+    this.currentCLS.clearContext();
+  }
+
   runWithNewContext<T>(fn: Func<T>): T {
     return this.currentCLS.runWithNewContext(fn);
   }
