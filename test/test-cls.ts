@@ -130,6 +130,32 @@ describe('Continuation-Local Storage', () => {
           });
         });
 
+        it('Corrects context when function run with new context throws', () => {
+          try {
+            c.runWithNewContext(() => {
+              c.setContext('modified');
+              throw new Error();
+            });
+          } catch (e) {
+            assert.strictEqual(c.getContext(), 'default');
+          }
+        });
+
+        it('Corrects context when function bound to a context throws', () => {
+          let runLater = () => {
+            c.setContext('modified');
+            throw new Error();
+          };
+          c.runWithNewContext(() => {
+            runLater = c.bindWithCurrentContext(runLater);
+          });
+          try {
+            runLater();
+          } catch (e) {
+            assert.strictEqual(c.getContext(), 'default');
+          }
+        });
+
         it('Can be used to patch event emitters to propagate context', () => {
           const ee = new EventEmitter();
           assert.strictEqual(c.getContext(), 'default');

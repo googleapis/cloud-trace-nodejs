@@ -86,10 +86,11 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   runWithNewContext<T>(fn: Func<T>): T {
     const oldContext = this.currentContext.value;
     this.currentContext.value = this.defaultContext;
-    // TODO(kjin) Handle the case where fn throws. Context: PR #708
-    const res = fn();
-    this.currentContext.value = oldContext;
-    return res;
+    try {
+      return fn();
+    } finally {
+      this.currentContext.value = oldContext;
+    }
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {
@@ -101,10 +102,11 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
     const contextWrapper: ContextWrapped<Func<T>> = function(this: {}) {
       const oldContext = current.value;
       current.value = boundContext;
-      // TODO(kjin) Handle the case where fn throws. Context: PR #708
-      const res = fn.apply(this, arguments) as T;
-      current.value = oldContext;
-      return res;
+      try {
+        return fn.apply(this, arguments) as T;
+      } finally {
+        current.value = oldContext;
+      }
     };
     contextWrapper[WRAPPED] = true;
     Object.defineProperty(contextWrapper, 'length', {
