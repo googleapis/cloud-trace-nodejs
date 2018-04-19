@@ -27,7 +27,7 @@ if (!useAH) {
 }
 
 import * as common from '@google-cloud/common';
-import {cls, TraceCLSConfig} from './cls';
+import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
 import {Constants} from './constants';
 import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
@@ -181,7 +181,9 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
     // Initialize context propagation mechanism.
     const m = config.clsMechanism;
     const clsConfig: Forceable<TraceCLSConfig> = {
-      mechanism: m === 'auto' ? (useAH ? 'async-hooks' : 'async-listener') : m,
+      mechanism: m === 'auto' ? (useAH ? TraceCLSMechanism.ASYNC_HOOKS :
+                                         TraceCLSMechanism.ASYNC_LISTENER) :
+                                m as TraceCLSMechanism,
       [FORCE_NEW]: config[FORCE_NEW]
     };
     cls.create(logger, clsConfig).enable();

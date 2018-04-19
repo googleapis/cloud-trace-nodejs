@@ -24,7 +24,7 @@ import {ITestDefinition} from 'mocha';
 import * as semver from 'semver';
 import {inspect} from 'util';
 
-import {TraceCLS, TraceCLSConfig} from '../src/cls';
+import {TraceCLS, TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 import {AsyncHooksCLS} from '../src/cls/async-hooks';
 import {AsyncListenerCLS} from '../src/cls/async-listener';
 import {CLS} from '../src/cls/base';
@@ -222,10 +222,14 @@ describe('Continuation-Local Storage', () => {
   describe('TraceCLS', () => {
     const validTestCases: TraceCLSConfig[] = asyncAwaitSupported ?
         [
-          {mechanism: 'async-hooks'}, {mechanism: 'async-listener'},
-          {mechanism: 'none'}
+          {mechanism: TraceCLSMechanism.ASYNC_HOOKS},
+          {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
+          {mechanism: TraceCLSMechanism.NONE}
         ] :
-        [{mechanism: 'async-listener'}, {mechanism: 'none'}];
+        [
+          {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
+          {mechanism: TraceCLSMechanism.NONE}
+        ];
     for (const testCase of validTestCases) {
       describe(`with configuration ${inspect(testCase)}`, () => {
         const logger = new TestLogger();

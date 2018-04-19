@@ -17,7 +17,7 @@
 'use strict';
 
 import './override-gcp-metadata';
-import { cls } from '../src/cls';
+import { cls, TraceCLSMechanism } from '../src/cls';
 import { defaultConfig } from '../src/config';
 import { TraceAgent } from '../src/trace-api';
 import { traceWriter } from '../src/trace-writer';
@@ -74,7 +74,7 @@ function assertAPISurface(traceAPI) {
 
 describe('Trace Interface', function() {
   before(function(done) {
-    cls.create(logger, { mechanism: 'async-listener' }).enable();
+    cls.create(logger, { mechanism: TraceCLSMechanism.ASYNC_LISTENER }).enable();
     traceWriter.create(logger,
       Object.assign(defaultConfig, {
         projectId: '0',

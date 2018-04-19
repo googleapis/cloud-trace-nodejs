@@ -50,9 +50,25 @@ export type RootContext = RealRootContext|PhantomRootContext;
 
 const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 
-export interface TraceCLSConfig {
-  mechanism: 'async-listener'|'async-hooks'|'none';
+export enum TraceCLSMechanism {
+  /**
+   * Use the AsyncHooksCLS class to propagate root span context.
+   * Only available in Node 8+.
+   */
+  ASYNC_HOOKS = 'async-hooks',
+  /**
+   * Use the AsyncListenerCLS class to propagate root span context.
+   * Note that continuation-local-storage should be loaded as the first module.
+   */
+  ASYNC_LISTENER = 'async-listener',
+  /**
+   * Do not use any special mechanism to propagate root span context.
+   * Only a single root span can be open at a time.
+   */
+  NONE = 'none'
 }
+
+export interface TraceCLSConfig { mechanism: TraceCLSMechanism; }
 
 export interface CLSConstructor {
   new(defaultContext: RootContext): CLS<RootContext>;

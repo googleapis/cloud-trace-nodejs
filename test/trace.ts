@@ -44,7 +44,7 @@ import * as shimmer from 'shimmer';
 
 import * as trace from '../src';
 import {Config, PluginTypes} from '../src';
-import {cls, TraceCLS, TraceCLSConfig} from '../src/cls';
+import {cls, TraceCLS, TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 import {RootSpanData} from '../src/span-data';
 import {Trace, TraceSpan} from '../src/trace';
 import {PluginLoader, pluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
@@ -60,7 +60,7 @@ const spans: TraceSpan[] = [];
 
 export class TestCLS extends TraceCLS {
   constructor(logger: common.Logger, config: {}) {
-    super(logger, {mechanism: 'none'});
+    super(logger, {mechanism: TraceCLSMechanism.NONE});
   }
 }
 

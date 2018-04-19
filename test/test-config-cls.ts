@@ -19,14 +19,15 @@ import * as assert from 'assert';
 import * as semver from 'semver';
 import * as util from 'util';
 
-import {TraceCLSConfig} from '../src/cls';
+import {TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 
 import * as trace from './trace';
 
 describe('Behavior set by config for context propagation mechanism', () => {
   const useAH = semver.satisfies(process.version, '>=8') &&
       !!process.env.GCLOUD_TRACE_NEW_CONTEXT;
-  const autoMechanism = useAH ? 'async-hooks' : 'async-listener';
+  const autoMechanism =
+      useAH ? TraceCLSMechanism.ASYNC_HOOKS : TraceCLSMechanism.ASYNC_LISTENER;
   let capturedConfig: TraceCLSConfig|null;
 
   class CaptureConfigTestCLS extends trace.TestCLS {
