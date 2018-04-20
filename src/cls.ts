@@ -100,16 +100,13 @@ export class TraceCLS implements CLS<RootContext> {
   constructor(private readonly logger: Logger, config: TraceCLSConfig) {
     switch (config.mechanism) {
       case 'async-hooks':
-        if (asyncHooksAvailable) {
-          this.CLSClass = AsyncHooksCLS;
-          this.rootSpanStackOffset = 4;
-          break;
-        } else {
-          this.logger.error(
-              'TraceCLS#constructor: [async-hooks]-based context',
-              `propagation is not available in Node ${process.version}.`);
-          throw new Error(`CLS mechanism [${config.mechanism}] is invalid.`);
+        if (!asyncHooksAvailable) {
+          throw new Error(`CLS mechanism [${
+              config.mechanism}] is not compatible with Node <8.`);
         }
+        this.CLSClass = AsyncHooksCLS;
+        this.rootSpanStackOffset = 4;
+        break;
       case 'async-listener':
         this.CLSClass = AsyncListenerCLS;
         this.rootSpanStackOffset = 8;
@@ -119,10 +116,8 @@ export class TraceCLS implements CLS<RootContext> {
         this.rootSpanStackOffset = 4;
         break;
       default:
-        this.logger.error(
-            'TraceCLS#constructor: The specified CLS mechanism',
-            `[${config.mechanism}] was not recognized.`);
-        throw new Error(`CLS mechanism [${config.mechanism}] is invalid.`);
+        throw new Error(
+            `CLS mechanism [${config.mechanism}] was not recognized.`);
     }
     this.logger.info(
         `TraceCLS#constructor: Created [${config.mechanism}] CLS instance.`);

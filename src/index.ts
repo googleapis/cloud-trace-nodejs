@@ -29,7 +29,7 @@ if (!useAH) {
 import * as common from '@google-cloud/common';
 import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
 import {Constants} from './constants';
-import {Config, defaultConfig} from './config';
+import {Config, defaultConfig, CLSMechanism} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
@@ -56,7 +56,7 @@ for (let i = 0; i < filesLoadedBeforeTrace.length; i++) {
 interface TopLevelConfig {
   enabled: boolean;
   logLevel: number;
-  clsMechanism: 'none'|'auto';
+  clsMechanism: CLSMechanism;
 }
 
 // PluginLoaderConfig extends TraceAgentConfig
