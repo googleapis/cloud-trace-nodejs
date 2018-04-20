@@ -106,7 +106,7 @@ export class TraceCLS implements CLS<RootContext> {
 
   constructor(private readonly logger: Logger, config: TraceCLSConfig) {
     switch (config.mechanism) {
-      case 'async-hooks':
+      case TraceCLSMechanism.ASYNC_HOOKS:
         if (!asyncHooksAvailable) {
           throw new Error(`CLS mechanism [${
               config.mechanism}] is not compatible with Node <8.`);
@@ -114,11 +114,11 @@ export class TraceCLS implements CLS<RootContext> {
         this.CLSClass = AsyncHooksCLS;
         this.rootSpanStackOffset = 4;
         break;
-      case 'async-listener':
+      case TraceCLSMechanism.ASYNC_LISTENER:
         this.CLSClass = AsyncListenerCLS;
         this.rootSpanStackOffset = 8;
         break;
-      case 'none':
+      case TraceCLSMechanism.NONE:
         this.CLSClass = UniversalCLS;
         this.rootSpanStackOffset = 4;
         break;
