@@ -69,15 +69,8 @@ export class AsyncListenerCLS<Context extends {}> implements CLS<Context> {
     this.getNamespace().set(AsyncListenerCLS.ROOT_CONTEXT_KEY, value);
   }
 
-  clearContext(): void {
-    if (this.getContext() !== this.defaultContext) {
-      this.setContext(this.defaultContext);
-    }
-  }
-
   runWithNewContext<T>(fn: Func<T>): T {
     return this.getNamespace().runAndReturn(() => {
-      this.clearContext();
       return fn();
     });
   }

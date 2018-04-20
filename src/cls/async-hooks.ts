@@ -83,10 +83,6 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
     this.currentContext.value = value;
   }
 
-  clearContext(): void {
-    this.currentContext.value = this.defaultContext;
-  }
-
   runWithNewContext<T>(fn: Func<T>): T {
     const oldContext = this.currentContext.value;
     this.currentContext.value = this.defaultContext;

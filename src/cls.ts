@@ -26,6 +26,8 @@ import {SpanDataType} from './constants';
 import {Trace, TraceSpan} from './trace';
 import {Singleton} from './util';
 
+const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
+
 export interface RealRootContext {
   readonly span: TraceSpan;
   readonly trace: Trace;
@@ -48,8 +50,10 @@ export interface PhantomRootContext {
  */
 export type RootContext = RealRootContext|PhantomRootContext;
 
-const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
-
+/**
+ * An enumeration of the possible mechanisms for supporting context propagation
+ * through continuation-local storage.
+ */
 export enum TraceCLSMechanism {
   /**
    * Use the AsyncHooksCLS class to propagate root span context.
@@ -68,9 +72,12 @@ export enum TraceCLSMechanism {
   NONE = 'none'
 }
 
+/**
+ * Configuration options passed to the TraceCLS constructor.
+ */
 export interface TraceCLSConfig { mechanism: TraceCLSMechanism; }
 
-export interface CLSConstructor {
+interface CLSConstructor {
   new(defaultContext: RootContext): CLS<RootContext>;
 }
 
@@ -155,10 +162,6 @@ export class TraceCLS implements CLS<RootContext> {
 
   setContext(value: RootContext): void {
     this.currentCLS.setContext(value);
-  }
-
-  clearContext(): void {
-    this.currentCLS.clearContext();
   }
 
   runWithNewContext<T>(fn: Func<T>): T {

@@ -128,7 +128,8 @@ export class TraceAgent implements TraceAgentInterface {
 
     // TODO validate options
     // Don't create a root span if we are already in a root span
-    if (cls.get().getContext().type === SpanDataType.ROOT) {
+    const rootSpan = cls.get().getContext();
+    if (rootSpan.type === SpanDataType.ROOT && !rootSpan.span.endTime) {
       this.logger!.warn(`TraceApi#runInRootSpan: [${
           this.pluginName}] Cannot create nested root spans.`);
       return fn(UNCORRELATED_SPAN);
@@ -199,6 +200,20 @@ export class TraceAgent implements TraceAgentInterface {
 
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanDataType.ROOT) {
+      if (!!rootSpan.span.endTime) {
+        // A closed root span suggests that we either have context confusion or
+        // some work is being done after the root request has been completed.
+        // The first case could lead to a memory leak, if somehow all spans end
+        // up getting misattributed to the same root span – we get a root span
+        // with continuously growing number of child spans. The second case
+        // seems to have some value, but isn't representable. The user probably
+        // needs a custom outer span that encompasses the entirety of work.
+        this.logger!.warn(`TraceApi#createChildSpan: [${
+            this.pluginName}] Creating phantom child span [${
+            options.name}] because root span [${
+            rootSpan.span.name}] was already closed.`);
+        return UNCORRELATED_SPAN;
+      }
       // Create a new child span and return it.
       options = options || {name: ''};
       const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;

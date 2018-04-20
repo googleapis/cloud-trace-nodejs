@@ -123,7 +123,6 @@ export class RootSpanData extends BaseSpanData {
 
   endSpan() {
     super.endSpan();
-    cls.get().clearContext();
     traceWriter.get().writeSpan(this.trace);
   }
 }

@@ -40,7 +40,7 @@ export class UniversalCLS<Context> implements CLS<Context> {
 
   disable(): void {
     this.enabled = false;
-    this.clearContext();
+    this.setContext(this.defaultContext);
   }
 
   getContext(): Context {
@@ -51,10 +51,6 @@ export class UniversalCLS<Context> implements CLS<Context> {
     if (this.enabled) {
       this.currentContext = value;
     }
-  }
-
-  clearContext(): void {
-    this.currentContext = this.defaultContext;
   }
 
   runWithNewContext<T>(fn: Func<T>): T {
