@@ -19,8 +19,22 @@ import * as path from 'path';
 const pluginDirectory =
     path.join(path.resolve(__dirname, '..'), 'src', 'plugins');
 
+export type CLSMechanism = 'none'|'auto';
+
 /** Available configuration options. */
 export interface Config {
+  /**
+   * The trace context propagation mechanism to use. The following options are
+   * available:
+   * - 'auto' uses continuation-local-storage, unless async_hooks is available
+   *   _and_ the environment variable GCLOUD_TRACE_NEW_CONTEXT is set, in which
+   *   case async_hooks will be used instead.
+   * - 'none' disables CLS completely.
+   * The 'auto' mechanism is used by default if this configuration option is
+   * not explicitly set.
+   */
+  clsMechanism?: CLSMechanism;
+
   /**
    * Log levels: 0=disabled, 1=error, 2=warn, 3=info, 4=debug
    * The value of GCLOUD_TRACE_LOGLEVEL takes precedence over this value.
@@ -166,6 +180,7 @@ export interface Config {
  * user-provided value will be used to extend the default value.
  */
 export const defaultConfig = {
+  clsMechanism: 'auto' as CLSMechanism,
   logLevel: 1,
   enabled: true,
   enhancedDatabaseReporting: false,

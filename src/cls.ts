@@ -26,6 +26,8 @@ import {SpanDataType} from './constants';
 import {Trace, TraceSpan} from './trace';
 import {Singleton} from './util';
 
+const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
+
 export interface RealRootContext {
   readonly span: TraceSpan;
   readonly trace: Trace;
@@ -48,11 +50,34 @@ export interface PhantomRootContext {
  */
 export type RootContext = RealRootContext|PhantomRootContext;
 
-const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
+/**
+ * An enumeration of the possible mechanisms for supporting context propagation
+ * through continuation-local storage.
+ */
+export enum TraceCLSMechanism {
+  /**
+   * Use the AsyncHooksCLS class to propagate root span context.
+   * Only available in Node 8+.
+   */
+  ASYNC_HOOKS = 'async-hooks',
+  /**
+   * Use the AsyncListenerCLS class to propagate root span context.
+   * Note that continuation-local-storage should be loaded as the first module.
+   */
+  ASYNC_LISTENER = 'async-listener',
+  /**
+   * Do not use any special mechanism to propagate root span context.
+   * Only a single root span can be open at a time.
+   */
+  NONE = 'none'
+}
 
-export interface TraceCLSConfig { mechanism: 'async-listener'|'async-hooks'; }
+/**
+ * Configuration options passed to the TraceCLS constructor.
+ */
+export interface TraceCLSConfig { mechanism: TraceCLSMechanism; }
 
-export interface CLSConstructor {
+interface CLSConstructor {
   new(defaultContext: RootContext): CLS<RootContext>;
 }
 
@@ -80,30 +105,29 @@ export class TraceCLS implements CLS<RootContext> {
   readonly rootSpanStackOffset: number;
 
   constructor(private readonly logger: Logger, config: TraceCLSConfig) {
-    const useAH = config.mechanism === 'async-hooks' && asyncHooksAvailable;
-    if (useAH) {
-      this.CLSClass = AsyncHooksCLS;
-      this.rootSpanStackOffset = 4;
-      this.logger.info(
-          'TraceCLS#constructor: Created [async-hooks] CLS instance.');
-    } else {
-      if (config.mechanism !== 'async-listener') {
-        if (config.mechanism === 'async-hooks') {
-          this.logger.error(
-              'TraceCLS#constructor: [async-hooks]-based context',
-              `propagation is not available in Node ${process.version}.`);
-        } else {
-          this.logger.error(
-              'TraceCLS#constructor: The specified CLS mechanism',
-              `[${config.mechanism}] was not recognized.`);
+    switch (config.mechanism) {
+      case TraceCLSMechanism.ASYNC_HOOKS:
+        if (!asyncHooksAvailable) {
+          throw new Error(`CLS mechanism [${
+              config.mechanism}] is not compatible with Node <8.`);
         }
-        throw new Error(`CLS mechanism [${config.mechanism}] is invalid.`);
-      }
-      this.CLSClass = AsyncListenerCLS;
-      this.rootSpanStackOffset = 8;
-      this.logger.info(
-          'TraceCLS#constructor: Created [async-listener] CLS instance.');
+        this.CLSClass = AsyncHooksCLS;
+        this.rootSpanStackOffset = 4;
+        break;
+      case TraceCLSMechanism.ASYNC_LISTENER:
+        this.CLSClass = AsyncListenerCLS;
+        this.rootSpanStackOffset = 8;
+        break;
+      case TraceCLSMechanism.NONE:
+        this.CLSClass = UniversalCLS;
+        this.rootSpanStackOffset = 4;
+        break;
+      default:
+        throw new Error(
+            `CLS mechanism [${config.mechanism}] was not recognized.`);
     }
+    this.logger.info(
+        `TraceCLS#constructor: Created [${config.mechanism}] CLS instance.`);
     this.currentCLS = new UniversalCLS(TraceCLS.UNTRACED);
     this.currentCLS.enable();
   }

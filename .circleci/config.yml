@@ -74,7 +74,7 @@ postgres_service: &postgres_service
     POSTGRES_DB: test
 
 mysql_service: &mysql_service
-  image: mysql
+  image: mysql:5
   environment:
     MYSQL_ROOT_PASSWORD: Password12!
     MYSQL_DATABASE: test

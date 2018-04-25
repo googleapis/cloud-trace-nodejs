@@ -27,9 +27,9 @@ if (!useAH) {
 }
 
 import * as common from '@google-cloud/common';
-import {cls} from './cls';
+import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
 import {Constants} from './constants';
-import {Config, defaultConfig} from './config';
+import {Config, defaultConfig, CLSMechanism} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
@@ -56,6 +56,7 @@ for (let i = 0; i < filesLoadedBeforeTrace.length; i++) {
 interface TopLevelConfig {
   enabled: boolean;
   logLevel: number;
+  clsMechanism: CLSMechanism;
 }
 
 // PluginLoaderConfig extends TraceAgentConfig
@@ -178,12 +179,14 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
 
   try {
     // Initialize context propagation mechanism.
-    // TODO(kjin): Publicly expose this field.
-    cls.create(logger, {
-         mechanism: useAH ? 'async-hooks' : 'async-listener',
-         [FORCE_NEW]: config[FORCE_NEW]
-       })
-        .enable();
+    const m = config.clsMechanism;
+    const clsConfig: Forceable<TraceCLSConfig> = {
+      mechanism: m === 'auto' ? (useAH ? TraceCLSMechanism.ASYNC_HOOKS :
+                                         TraceCLSMechanism.ASYNC_LISTENER) :
+                                m as TraceCLSMechanism,
+      [FORCE_NEW]: config[FORCE_NEW]
+    };
+    cls.create(logger, clsConfig).enable();
 
     traceWriter.create(logger, config).initialize((err) => {
       if (err) {

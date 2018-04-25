@@ -128,7 +128,8 @@ export class TraceAgent implements TraceAgentInterface {
 
     // TODO validate options
     // Don't create a root span if we are already in a root span
-    if (cls.get().getContext().type === SpanDataType.ROOT) {
+    const rootSpan = cls.get().getContext();
+    if (rootSpan.type === SpanDataType.ROOT && !rootSpan.span.endTime) {
       this.logger!.warn(`TraceApi#runInRootSpan: [${
           this.pluginName}] Cannot create nested root spans.`);
       return fn(UNCORRELATED_SPAN);

@@ -71,7 +71,6 @@ export class AsyncListenerCLS<Context extends {}> implements CLS<Context> {
 
   runWithNewContext<T>(fn: Func<T>): T {
     return this.getNamespace().runAndReturn(() => {
-      this.setContext(this.defaultContext);
       return fn();
     });
   }

@@ -40,7 +40,7 @@ export class UniversalCLS<Context> implements CLS<Context> {
 
   disable(): void {
     this.enabled = false;
-    this.currentContext = this.defaultContext;
+    this.setContext(this.defaultContext);
   }
 
   getContext(): Context {
