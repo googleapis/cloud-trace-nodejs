@@ -17,7 +17,6 @@
 import * as crypto from 'crypto';
 import * as util from 'util';
 
-import {cls} from './cls';
 import {Constants, SpanDataType} from './constants';
 import {SpanData as SpanData} from './plugin-types';
 import {SpanKind, Trace, TraceSpan} from './trace';
