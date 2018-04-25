@@ -1,5 +1,22 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-04-25, Version 2.8.0 (Beta), @kjin
+
+This version adds a new configuration option [`config.clsMechanism`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/blob/v2.8.0/src/config.ts#L36), which can be used to disable automatic trace context propagation across asynchronous boundaries. This options should be considered advanced usage, and is intended to be used in conjunction with the custom span API with all automatic tracing plugins disabled.
+
+In addition, when a function passed to `traceApi.runInRootSpan` or `traceApi.wrap` throws, the trace context will correctly be reset to its original value before the function was run.
+
+This version also fixes a potential issue where the value of `config.projectId` isn't used if the environment variable `GCLOUD_PROJECT` is set to an empty string.
+
+### Commits
+
+* [[`5d000e95e2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5d000e95e2)] - **feat**: allow "disabling" cls, and relax requirements for creating root spans (#728) (Kelvin Jin) [#728](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/728)
+* [[`edb8135a79`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/edb8135a79)] - **fix**: restore context when a function run with a given context throws (#727) (Kelvin Jin) [#727](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/727)
+* [[`132db9b058`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/132db9b058)] - **fix**: class-ify cls implementations (#708) (Kelvin Jin) [#708](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/708)
+* [[`395a0c7b2e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/395a0c7b2e)] - chore(package): update ts-node to version 6.0.0 (#726) (greenkeeper[bot]) [#726](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/726)
+* [[`d0337fa7b0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d0337fa7b0)] - **fix**: fix log messages and ignore falsey env vars (#724) (Kelvin Jin) [#724](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/724)
+* [[`e5a4d765d2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e5a4d765d2)] - **test**: fix system test (#723) (Kelvin Jin) [#723](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/723)
+
 ## 2018-04-10, Version 2.7.2 (Beta), @kjin
 
 This version adds support for completely disabling plugins by passing a non-object value (`false` recommended to convey intent) for `config.plugins`.
