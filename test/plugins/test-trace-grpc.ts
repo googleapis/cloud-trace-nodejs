@@ -21,7 +21,7 @@ import { TraceLabels } from '../../src/trace-labels';
 import * as TracingPolicy from '../../src/tracing-policy';
 import * as util from '../../src/util';
 import * as assert from 'assert';
-import { asBaseSpanData } from '../utils';
+import { asRootSpanData } from '../utils';
 import { SpanData } from '../../src/plugin-types';
 import { FORCE_NEW } from '../../src/util';
 
@@ -55,7 +55,7 @@ function checkServerMetadata(metadata) {
     assert.ok(/[a-f0-9]{32}\/[0-9]+;o=1/.test(traceContext));
     var parsedContext = util.parseContextFromHeader(traceContext);
     assert.ok(parsedContext);
-    var root = asBaseSpanData(cls.get().getContext() as SpanData);
+    var root = asRootSpanData(cls.get().getContext() as SpanData);
     assert.strictEqual(root.span.parentSpanId, parsedContext!.spanId);
   }
 }

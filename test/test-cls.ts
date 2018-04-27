@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-// This is required for @google-cloud/common types.
-// tslint:disable-next-line:no-reference
-/// <reference path="../src/types.d.ts" />
-
 import * as assert from 'assert';
 import {EventEmitter} from 'events';
 import {ITestDefinition} from 'mocha';
@@ -28,6 +24,7 @@ import {TraceCLS, TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 import {AsyncHooksCLS} from '../src/cls/async-hooks';
 import {AsyncListenerCLS} from '../src/cls/async-listener';
 import {CLS} from '../src/cls/base';
+import {DefaultCLS} from '../src/cls/default';
 import {SpanDataType} from '../src/constants';
 import {createStackTrace, FORCE_NEW} from '../src/util';
 
@@ -40,6 +37,38 @@ type CLSConstructor = {
 
 describe('Continuation-Local Storage', () => {
   const asyncAwaitSupported = semver.satisfies(process.version, '>=8');
+
+  describe('No-op implementation', () => {
+    const clazz = DefaultCLS;
+    let instance: CLS<string>;
+
+    beforeEach(() => {
+      instance = new clazz('default');
+      instance.enable();
+    });
+
+    afterEach(() => {
+      instance.disable();
+    });
+
+    it('always returns the default value', () => {
+      assert.strictEqual(instance.getContext(), 'default');
+      instance.setContext('modified');
+      assert.strictEqual(instance.getContext(), 'default');
+      const result = instance.runWithNewContext(() => {
+        assert.strictEqual(instance.getContext(), 'default');
+        instance.setContext('modified');
+        return instance.getContext();
+      });
+      assert.strictEqual(result, 'default');
+      const boundFn = instance.bindWithCurrentContext(() => {
+        assert.strictEqual(instance.getContext(), 'default');
+        instance.setContext('modified');
+        return instance.getContext();
+      });
+      assert.strictEqual(boundFn(), 'default');
+    });
+  });
 
   describe('Implementations', () => {
     const testCases: Array<{clazz: CLSConstructor, testAsyncAwait: boolean}> =
@@ -220,15 +249,32 @@ describe('Continuation-Local Storage', () => {
   });
 
   describe('TraceCLS', () => {
-    const validTestCases: TraceCLSConfig[] = asyncAwaitSupported ?
+    const validTestCases:
+        Array<{config: TraceCLSConfig, expectedDefaultType: SpanDataType}> =
+            asyncAwaitSupported ?
         [
-          {mechanism: TraceCLSMechanism.ASYNC_HOOKS},
-          {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
-          {mechanism: TraceCLSMechanism.NONE}
+          {
+            config: {mechanism: TraceCLSMechanism.ASYNC_HOOKS},
+            expectedDefaultType: SpanDataType.UNCORRELATED
+          },
+          {
+            config: {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
+            expectedDefaultType: SpanDataType.UNCORRELATED
+          },
+          {
+            config: {mechanism: TraceCLSMechanism.NONE},
+            expectedDefaultType: SpanDataType.UNTRACED
+          }
         ] :
         [
-          {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
-          {mechanism: TraceCLSMechanism.NONE}
+          {
+            config: {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
+            expectedDefaultType: SpanDataType.UNCORRELATED
+          },
+          {
+            config: {mechanism: TraceCLSMechanism.NONE},
+            expectedDefaultType: SpanDataType.UNTRACED
+          }
         ];
     for (const testCase of validTestCases) {
       describe(`with configuration ${inspect(testCase)}`, () => {
@@ -237,7 +283,7 @@ describe('Continuation-Local Storage', () => {
 
         beforeEach(() => {
           try {
-            c = new TraceCLS(logger, testCase);
+            c = new TraceCLS(logger, testCase.config);
             c.enable();
           } catch {
             c = {disable: () => {}} as TraceCLS;
@@ -262,12 +308,13 @@ describe('Continuation-Local Storage', () => {
 
         it('[sanity check]', () => {
           assert.ok(c.isEnabled());
-          assert.strictEqual(c.getContext().type, SpanDataType.UNCORRELATED);
+          assert.strictEqual(c.getContext().type, testCase.expectedDefaultType);
         });
 
         it('constructs the correct underlying CLS mechanism', () => {
           assert.strictEqual(
-              logger.getNumLogsWith('info', `[${testCase.mechanism}]`), 1);
+              logger.getNumLogsWith('info', `[${testCase.config.mechanism}]`),
+              1);
         });
 
         it('exposes the correct number of stack frames to remove', () => {

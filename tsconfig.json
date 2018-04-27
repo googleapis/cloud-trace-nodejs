@@ -29,6 +29,7 @@
     "test/test-config-plugins.ts",
     "test/test-modules-loaded-before-agent.ts",
     "test/test-plugin-loader.ts",
+    "test/test-trace-api-none-cls.ts",
     "test/test-trace-cluster.ts",
     "test/test-trace-web-frameworks.ts",
     "test/test-util.ts",

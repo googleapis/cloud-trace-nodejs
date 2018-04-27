@@ -56,6 +56,22 @@ export interface SpanData {
 }
 
 /**
+ * Represents the root span within a trace.
+ */
+export interface RootSpanData extends SpanData {
+  /**
+   * Creates and starts a child span under this root span.
+   * If the root span is a real span (type = ROOT), the child span will be as
+   * well (type = CHILD).
+   * Otherwise, if the root span's type is UNTRACED or UNCORRELATED, the child
+   * span will be of the same type.
+   * @param options Options for creating the child span.
+   * @returns A new SpanData object.
+   */
+  createChildSpan(options: SpanOptions): SpanData;
+}
+
+/**
  * An interface that describes the available options for creating a span in
  * general.
  */
@@ -105,7 +121,7 @@ export interface TraceAgent {
    * a phantom SpanData object.
    * @returns The return value of calling fn.
    */
-  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData) => T): T;
+  runInRootSpan<T>(options: RootSpanOptions, fn: (span: RootSpanData) => T): T;
 
   /**
    * Returns a unique identifier for the currently active context. This can be
@@ -125,11 +141,11 @@ export interface TraceAgent {
   getWriterProjectId(): string|null;
 
   /**
-   * Creates and returns a new SpanData object nested within the root span.
-   * If there is no root span, a phantom SpanData object will be
-   * returned instead.
-   * @param options An object that specifies options for how the child
-   * span is created and propagated.
+   * Creates and returns a new SpanData object nested within the current root
+   * span, which is detected automatically.
+   * If the root span is a phantom span or doesn't exist, the child span will
+   * be a phantom span as well.
+   * @param options Options for creating the child span.
    * @returns A new SpanData object.
    */
   createChildSpan(options: SpanOptions): SpanData;
