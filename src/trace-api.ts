@@ -195,11 +195,12 @@ export class TraceAgent implements TraceAgentInterface {
     }
   }
 
-  createChildSpan(options: SpanOptions): SpanData {
+  createChildSpan(options?: SpanOptions): SpanData {
     if (!this.isActive()) {
       return UNTRACED_CHILD_SPAN;
     }
 
+    options = options || {name: ''};
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanDataType.ROOT) {
       if (!!rootSpan.span.endTime) {
@@ -217,7 +218,6 @@ export class TraceAgent implements TraceAgentInterface {
         return UNCORRELATED_CHILD_SPAN;
       }
       // Create a new child span and return it.
-      options = options || {name: ''};
       const childContext = rootSpan.createChildSpan({
         name: options.name,
         skipFrames: options.skipFrames ? options.skipFrames + 1 : 1

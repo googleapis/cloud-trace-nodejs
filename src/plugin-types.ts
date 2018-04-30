@@ -68,7 +68,7 @@ export interface RootSpanData extends SpanData {
    * @param options Options for creating the child span.
    * @returns A new SpanData object.
    */
-  createChildSpan(options: SpanOptions): SpanData;
+  createChildSpan(options?: SpanOptions): SpanData;
 }
 
 /**
@@ -148,7 +148,7 @@ export interface TraceAgent {
    * @param options Options for creating the child span.
    * @returns A new SpanData object.
    */
-  createChildSpan(options: SpanOptions): SpanData;
+  createChildSpan(options?: SpanOptions): SpanData;
 
   /**
    * Returns whether a given span is real or not by checking its SpanDataType.

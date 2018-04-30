@@ -121,7 +121,7 @@ export class RootSpanData extends BaseSpanData implements types.RootSpanData {
     this.span.kind = SpanKind.RPC_SERVER;
   }
 
-  createChildSpan(options: SpanOptions): SpanData {
+  createChildSpan(options?: SpanOptions): SpanData {
     options = options || {name: ''};
     const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
     return new ChildSpanData(
