@@ -45,7 +45,7 @@ function randomSpanId() {
 /**
  * Represents a real trace span.
  */
-export abstract class BaseSpanData implements types.SpanData {
+export abstract class BaseSpanData implements SpanData {
   readonly span: TraceSpan;
   abstract readonly type: SpanDataType;
 
