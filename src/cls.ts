@@ -21,7 +21,7 @@ import * as semver from 'semver';
 import {AsyncHooksCLS} from './cls/async-hooks';
 import {AsyncListenerCLS} from './cls/async-listener';
 import {CLS, Func} from './cls/base';
-import {DefaultCLS} from './cls/default';
+import {NullCLS} from './cls/null';
 import {SpanDataType} from './constants';
 import {SpanData, SpanOptions} from './plugin-types';
 import {Trace, TraceSpan} from './trace';
@@ -121,7 +121,7 @@ export class TraceCLS implements CLS<RootContext> {
         this.rootSpanStackOffset = 8;
         break;
       case TraceCLSMechanism.NONE:
-        this.CLSClass = DefaultCLS;
+        this.CLSClass = NullCLS;
         this.rootSpanStackOffset = 4;
         break;
       default:
@@ -130,7 +130,7 @@ export class TraceCLS implements CLS<RootContext> {
     }
     this.logger.info(
         `TraceCLS#constructor: Created [${config.mechanism}] CLS instance.`);
-    this.currentCLS = new DefaultCLS(TraceCLS.UNTRACED);
+    this.currentCLS = new NullCLS(TraceCLS.UNTRACED);
     this.currentCLS.enable();
   }
 
@@ -139,9 +139,9 @@ export class TraceCLS implements CLS<RootContext> {
   }
 
   enable(): void {
-    // if this.CLSClass = DefaultCLS, the user specifically asked not to use
+    // if this.CLSClass = NoneCLS, the user specifically asked not to use
     // any context propagation mechanism. So nothing should change.
-    if (!this.enabled && this.CLSClass !== DefaultCLS) {
+    if (!this.enabled && this.CLSClass !== NullCLS) {
       this.logger.info('TraceCLS#enable: Enabling CLS.');
       this.currentCLS.disable();
       this.currentCLS = new this.CLSClass(TraceCLS.UNCORRELATED);
@@ -151,10 +151,10 @@ export class TraceCLS implements CLS<RootContext> {
   }
 
   disable(): void {
-    if (this.enabled && this.CLSClass !== DefaultCLS) {
+    if (this.enabled && this.CLSClass !== NullCLS) {
       this.logger.info('TraceCLS#disable: Disabling CLS.');
       this.currentCLS.disable();
-      this.currentCLS = new DefaultCLS(TraceCLS.UNTRACED);
+      this.currentCLS = new NullCLS(TraceCLS.UNTRACED);
       this.currentCLS.enable();
     }
     this.enabled = false;

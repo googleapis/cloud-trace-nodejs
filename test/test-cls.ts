@@ -24,7 +24,7 @@ import {TraceCLS, TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 import {AsyncHooksCLS} from '../src/cls/async-hooks';
 import {AsyncListenerCLS} from '../src/cls/async-listener';
 import {CLS} from '../src/cls/base';
-import {DefaultCLS} from '../src/cls/default';
+import {NullCLS} from '../src/cls/null';
 import {SpanDataType} from '../src/constants';
 import {createStackTrace, FORCE_NEW} from '../src/util';
 
@@ -39,7 +39,7 @@ describe('Continuation-Local Storage', () => {
   const asyncAwaitSupported = semver.satisfies(process.version, '>=8');
 
   describe('No-op implementation', () => {
-    const clazz = DefaultCLS;
+    const clazz = NullCLS;
     let instance: CLS<string>;
 
     beforeEach(() => {
