@@ -26,6 +26,7 @@ export interface TraceAgentExtension { _google_trace_patched: boolean; }
 
 /**
  * Represents a trace span.
+ * TODO(kjin): This should be called `Span`.
  */
 export interface SpanData {
   /**

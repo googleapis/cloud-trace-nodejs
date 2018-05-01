@@ -139,7 +139,7 @@ export class TraceCLS implements CLS<RootContext> {
   }
 
   enable(): void {
-    // if this.CLSClass = NoneCLS, the user specifically asked not to use
+    // if this.CLSClass = NullCLS, the user specifically asked not to use
     // any context propagation mechanism. So nothing should change.
     if (!this.enabled && this.CLSClass !== NullCLS) {
       this.logger.info('TraceCLS#enable: Enabling CLS.');
