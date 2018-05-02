@@ -1,5 +1,32 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-05-02, Version 2.8.0 (Beta), @kjin
+
+This version adds a new configuration option, as well as minor changes to the custom span API.
+
+### Notable Changes
+
+#### Configuration
+
+  * A new configuration option `config.clsMechanism` is available, which can be used to disable automatic trace context propagation across asynchronous boundaries. This options should be considered advanced usage, and is intended to be used in conjunction with the custom span API with all automatic tracing plugins disabled.
+  * A potential issue was fixed where the value of `config.projectId` isn't used if the environment variable `GCLOUD_PROJECT` is set to an empty string.
+
+#### Custom Span API
+
+  * A new function `createChildSpan` has been added to `SpanData` objects passed to the user with `runInRootSpan` (the type of which is now `RootSpanData`). Under normal circumstances, creating a root span using `myRootSpan.createChildSpan` should be identical to `traceApi.createChildSpan` when `myRootSpan` is automatically detected from CLS to be the current root span. This API was added to facilitate creating child spans when the current root span can no longer be auto-detected from CLS because the user disabled CLS through `config.clsMechanism`.
+  * When a function passed to `traceApi.runInRootSpan` or `traceApi.wrap` throws, the trace context will correctly be reset to its original value before the function was run.
+
+### Commits
+
+* [[`d0009ff5ea`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d0009ff5ea)] - **feat**: add rootSpan.createChildSpan and change none CLS semantics (#731) (Kelvin Jin) [#731](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/731)
+* [[`6e46ed1772`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/6e46ed1772)] - **chore**: start running ci for node 10 (#729) (Kelvin Jin) [#729](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/729)
+* [[`5d000e95e2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/5d000e95e2)] - **feat**: allow "disabling" cls, and relax requirements for creating root spans (#728) (Kelvin Jin) [#728](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/728)
+* [[`edb8135a79`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/edb8135a79)] - **fix**: restore context when a function run with a given context throws (#727) (Kelvin Jin) [#727](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/727)
+* [[`132db9b058`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/132db9b058)] - **fix**: class-ify cls implementations (#708) (Kelvin Jin) [#708](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/708)
+* [[`395a0c7b2e`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/395a0c7b2e)] - chore(package): update ts-node to version 6.0.0 (#726) (greenkeeper[bot]) [#726](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/726)
+* [[`d0337fa7b0`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/d0337fa7b0)] - **fix**: fix log messages and ignore falsey env vars (#724) (Kelvin Jin) [#724](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/724)
+* [[`e5a4d765d2`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/e5a4d765d2)] - **test**: fix system test (#723) (Kelvin Jin) [#723](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/723)
+
 ## 2018-04-10, Version 2.7.2 (Beta), @kjin
 
 This version adds support for completely disabling plugins by passing a non-object value (`false` recommended to convey intent) for `config.plugins`.
