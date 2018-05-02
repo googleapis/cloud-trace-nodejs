@@ -2,18 +2,18 @@
 
 ## 2018-05-02, Version 2.8.0 (Beta), @kjin
 
-This version makes some changes to configuration options, as well as the custom span API.
+This version adds a new configuration option, as well as minor changes to the custom span API.
 
 ### Notable Changes
 
 #### Configuration
 
   * A new configuration option `config.clsMechanism` is available, which can be used to disable automatic trace context propagation across asynchronous boundaries. This options should be considered advanced usage, and is intended to be used in conjunction with the custom span API with all automatic tracing plugins disabled.
-  * A potential issue was fixed where the value of config.projectId isn't used if the environment variable `GCLOUD_PROJECT` is set to an empty string.
+  * A potential issue was fixed where the value of `config.projectId` isn't used if the environment variable `GCLOUD_PROJECT` is set to an empty string.
 
 #### Custom Span API
 
-  * A new function `createChildSpan` has been added to `SpanData` objects passed to the user with `runInRootSpan` (the type of which is now `RootSpanData`). Under normal circumstances, creating a root span using `myRootSpan.createChildSpan` should be identical to `traceApi.createChildSpan` when `myRootSpan` is automatically detected from CLS to be the current root span. This API was added to facilitate creating child spans when the current root span can no longer be auto-detected from CLS because the user disabled cLS through `config.clsMechanism`.
+  * A new function `createChildSpan` has been added to `SpanData` objects passed to the user with `runInRootSpan` (the type of which is now `RootSpanData`). Under normal circumstances, creating a root span using `myRootSpan.createChildSpan` should be identical to `traceApi.createChildSpan` when `myRootSpan` is automatically detected from CLS to be the current root span. This API was added to facilitate creating child spans when the current root span can no longer be auto-detected from CLS because the user disabled CLS through `config.clsMechanism`.
   * When a function passed to `traceApi.runInRootSpan` or `traceApi.wrap` throws, the trace context will correctly be reset to its original value before the function was run.
 
 ### Commits
