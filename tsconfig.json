@@ -24,6 +24,7 @@
     "test/logger.ts",
     "test/nocks.ts",
     "test/test-cls.ts",
+    "test/test-cls-ah.ts",
     "test/test-config-cls.ts",
     "test/test-config-credentials.ts",
     "test/test-config-plugins.ts",
