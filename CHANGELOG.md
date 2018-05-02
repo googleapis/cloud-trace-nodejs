@@ -1,5 +1,13 @@
 # Node.js Agent for Google Cloud Trace Changelog
 
+## 2018-05-02, Version 2.8.1 (Beta), @kjin
+
+This version adds missing source files in 2.8.0.
+
+### Commits
+
+* [[`49a900afa6`](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/commit/49a900afa6)] - **fix**: add build/src/cls in output files (#736) (Kelvin Jin) [#736](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/pull/736)
+
 ## 2018-05-02, Version 2.8.0 (Beta), @kjin
 
 This version adds a new configuration option, as well as minor changes to the custom span API.
