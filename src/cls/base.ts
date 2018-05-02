@@ -72,6 +72,7 @@ export interface CLS<Context extends {}> {
 
   /**
    * Runs the given function as the start of a new continuation.
+   * TODO(kjin): Determine a more accurate name for this function.
    * @param fn The function to run synchronously.
    * @returns The return result of running `fn`.
    */
@@ -82,6 +83,7 @@ export interface CLS<Context extends {}> {
    * the CLS implementation's propagating mechanism doesn't automatically do so.
    * If not called from within a continuation, behavior is implementation-
    * defined.
+   * TODO(kjin): Determine a more accurate name for this function.
    * @param fn The function to bind.
    * @returns A wrapped version of the given function with the same signature.
    */
@@ -91,6 +93,7 @@ export interface CLS<Context extends {}> {
    * Patches an EventEmitter to lazily bind all future event listeners on this
    * instance so that they belong in the same continuation as the execution
    * path in which they were attached to the EventEmitter object.
+   * TODO(kjin): Determine a more accurate name for this function.
    * @param ee The EventEmitter to bind. This instance will be mutated.
    */
   patchEmitterToPropagateContext(ee: EventEmitter): void;
