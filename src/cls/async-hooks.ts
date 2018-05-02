@@ -118,7 +118,13 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   }
 
   setContext(value: Context): void {
-    this.contexts[this.ah.executionAsyncId()].value = value;
+    const id = this.ah.executionAsyncId();
+    const current = this.contexts[id];
+    if (current) {
+      current.value = value;
+    } else {
+      this.contexts[id] = {value};
+    }
   }
 
   runWithNewContext<T>(fn: Func<T>): T {
@@ -139,28 +145,27 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {
-    const outerId = this.ah.executionAsyncId();
+    // Capture the context of the current AsyncResource.
+    const boundContext = this.contexts[this.ah.executionAsyncId()];
     // Return if we have already wrapped the function, or there is no current
     // context to bind.
-    if ((fn as ContextWrapped<Func<T>>)[WRAPPED] || !this.contexts[outerId]) {
+    if ((fn as ContextWrapped<Func<T>>)[WRAPPED] || !boundContext) {
       return fn;
     }
     const that = this;
-    // Capture the context of the current AsyncResource.
-    const boundContext = this.contexts[outerId];
     // Wrap fn so that any AsyncResource objects that are created in fn will
     // share context with that of the AsyncResource with the given ID.
     const contextWrapper: ContextWrapped<Func<T>> = function(this: {}) {
-      const innerId = that.ah.executionAsyncId();
-      const oldContext = that.contexts[innerId];
+      const id = that.ah.executionAsyncId();
+      const oldContext = that.contexts[id];
       // Restore the captured context.
-      that.contexts[innerId] = boundContext;
+      that.contexts[id] = boundContext;
       try {
         return fn.apply(this, arguments) as T;
       } finally {
         // Revert the current context to what it was before it was set to the
         // captured context.
-        that.contexts[innerId] = oldContext;
+        that.contexts[id] = oldContext;
       }
     };
     // Prevent re-wrapping.
