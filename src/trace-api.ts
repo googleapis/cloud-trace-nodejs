@@ -21,8 +21,8 @@ import * as uuid from 'uuid';
 
 import {cls} from './cls';
 import {Constants, SpanDataType} from './constants';
-import {Func, RootSpanOptions, SpanData, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
-import {ChildSpanData, RootSpanData, UNCORRELATED_SPAN, UNTRACED_SPAN} from './span-data';
+import {Func, RootSpanData as RootSpanDataInterface, RootSpanOptions, SpanData, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
+import {ChildSpanData, RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {SpanKind, Trace} from './trace';
 import {TraceLabels} from './trace-labels';
 import * as TracingPolicy from './tracing-policy';
@@ -121,18 +121,20 @@ export class TraceAgent implements TraceAgentInterface {
     return !!this.config && this.config.enhancedDatabaseReporting;
   }
 
-  runInRootSpan<T>(options: RootSpanOptions, fn: (span: SpanData) => T): T {
+  runInRootSpan<T>(
+      options: RootSpanOptions, fn: (span: RootSpanDataInterface) => T): T {
     if (!this.isActive()) {
-      return fn(UNTRACED_SPAN);
+      return fn(UNTRACED_ROOT_SPAN);
     }
 
-    // TODO validate options
+    options = options || {name: ''};
+
     // Don't create a root span if we are already in a root span
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanDataType.ROOT && !rootSpan.span.endTime) {
       this.logger!.warn(`TraceApi#runInRootSpan: [${
           this.pluginName}] Cannot create nested root spans.`);
-      return fn(UNCORRELATED_SPAN);
+      return fn(UNCORRELATED_ROOT_SPAN);
     }
 
     return cls.get().runWithNewContext(() => {
@@ -155,8 +157,8 @@ export class TraceAgent implements TraceAgentInterface {
           !!(incomingTraceContext.options &
              Constants.TRACE_OPTIONS_TRACE_ENABLED);
       if (!locallyAllowed || !remotelyAllowed) {
-        cls.get().setContext(UNTRACED_SPAN);
-        return fn(UNTRACED_SPAN);
+        cls.get().setContext(UNTRACED_ROOT_SPAN);
+        return fn(UNTRACED_ROOT_SPAN);
       }
 
       // Create a new root span, and invoke fn with it.
@@ -193,11 +195,12 @@ export class TraceAgent implements TraceAgentInterface {
     }
   }
 
-  createChildSpan(options: SpanOptions): SpanData {
+  createChildSpan(options?: SpanOptions): SpanData {
     if (!this.isActive()) {
-      return UNTRACED_SPAN;
+      return UNTRACED_CHILD_SPAN;
     }
 
+    options = options || {name: ''};
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanDataType.ROOT) {
       if (!!rootSpan.span.endTime) {
@@ -212,29 +215,26 @@ export class TraceAgent implements TraceAgentInterface {
             this.pluginName}] Creating phantom child span [${
             options.name}] because root span [${
             rootSpan.span.name}] was already closed.`);
-        return UNCORRELATED_SPAN;
+        return UNCORRELATED_CHILD_SPAN;
       }
       // Create a new child span and return it.
-      options = options || {name: ''};
-      const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-      const childContext = new ChildSpanData(
-          rootSpan.trace,       /* Trace object */
-          options.name,         /* Span name */
-          rootSpan.span.spanId, /* Parent's span ID */
-          skipFrames);          /* # of frames to skip in stack trace */
+      const childContext = rootSpan.createChildSpan({
+        name: options.name,
+        skipFrames: options.skipFrames ? options.skipFrames + 1 : 1
+      });
       this.logger!.info(`TraceApi#createChildSpan: [${
           this.pluginName}] Created child span [${options.name}]`);
       return childContext;
     } else if (rootSpan.type === SpanDataType.UNTRACED) {
       // Context wasn't lost, but there's no root span, indicating that this
       // request should not be traced.
-      return UNTRACED_SPAN;
+      return UNTRACED_CHILD_SPAN;
     } else {
       // Context was lost.
       this.logger!.warn(`TraceApi#createChildSpan: [${
           this.pluginName}] Creating phantom child span [${
           options.name}] because there is no root span.`);
-      return UNCORRELATED_SPAN;
+      return UNCORRELATED_CHILD_SPAN;
     }
   }
 

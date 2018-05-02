@@ -116,6 +116,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
   describe(`${nodule} client tracing`, () => {
     let http: {get: HttpRequest; request: HttpRequest;};
     before(() => {
+      trace.setCLS();
       trace.setPluginLoader();
       trace.start({
         plugins: {

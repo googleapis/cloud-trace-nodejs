@@ -20,7 +20,7 @@ import * as assert from 'assert';
 
 import {SpanDataType} from '../src/constants';
 import {SpanData} from '../src/plugin-types';
-import {BaseSpanData} from '../src/span-data';
+import {ChildSpanData, RootSpanData} from '../src/span-data';
 import {TraceSpan} from '../src/trace';
 
 /**
@@ -55,10 +55,14 @@ export function assertSpanDuration(span: TraceSpan, bounds: [number, number]) {
           bounds[0]}, ${bounds[1]}] ms`);
 }
 
-export function asBaseSpanData(arg: SpanData): BaseSpanData {
-  assert.notStrictEqual(arg.type, SpanDataType.UNCORRELATED);
-  assert.notStrictEqual(arg.type, SpanDataType.UNTRACED);
-  return arg as BaseSpanData;
+export function asRootSpanData(arg: SpanData): RootSpanData {
+  assert.strictEqual(arg.type, SpanDataType.ROOT);
+  return arg as RootSpanData;
+}
+
+export function asChildSpanData(arg: SpanData): ChildSpanData {
+  assert.strictEqual(arg.type, SpanDataType.CHILD);
+  return arg as ChildSpanData;
 }
 
 export function plan(done: MochaDone, num: number): MochaDone {

@@ -21,8 +21,9 @@ import * as semver from 'semver';
 import {AsyncHooksCLS} from './cls/async-hooks';
 import {AsyncListenerCLS} from './cls/async-listener';
 import {CLS, Func} from './cls/base';
-import {UniversalCLS} from './cls/universal';
+import {NullCLS} from './cls/null';
 import {SpanDataType} from './constants';
+import {SpanData, SpanOptions} from './plugin-types';
 import {Trace, TraceSpan} from './trace';
 import {Singleton} from './util';
 
@@ -31,6 +32,7 @@ const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 export interface RealRootContext {
   readonly span: TraceSpan;
   readonly trace: Trace;
+  createChildSpan(options: SpanOptions): SpanData;
   readonly type: SpanDataType.ROOT;
 }
 
@@ -119,7 +121,7 @@ export class TraceCLS implements CLS<RootContext> {
         this.rootSpanStackOffset = 8;
         break;
       case TraceCLSMechanism.NONE:
-        this.CLSClass = UniversalCLS;
+        this.CLSClass = NullCLS;
         this.rootSpanStackOffset = 4;
         break;
       default:
@@ -128,7 +130,7 @@ export class TraceCLS implements CLS<RootContext> {
     }
     this.logger.info(
         `TraceCLS#constructor: Created [${config.mechanism}] CLS instance.`);
-    this.currentCLS = new UniversalCLS(TraceCLS.UNTRACED);
+    this.currentCLS = new NullCLS(TraceCLS.UNTRACED);
     this.currentCLS.enable();
   }
 
@@ -137,23 +139,25 @@ export class TraceCLS implements CLS<RootContext> {
   }
 
   enable(): void {
-    if (!this.enabled) {
+    // if this.CLSClass = NullCLS, the user specifically asked not to use
+    // any context propagation mechanism. So nothing should change.
+    if (!this.enabled && this.CLSClass !== NullCLS) {
       this.logger.info('TraceCLS#enable: Enabling CLS.');
-      this.enabled = true;
       this.currentCLS.disable();
       this.currentCLS = new this.CLSClass(TraceCLS.UNCORRELATED);
       this.currentCLS.enable();
     }
+    this.enabled = true;
   }
 
   disable(): void {
-    if (this.enabled) {
+    if (this.enabled && this.CLSClass !== NullCLS) {
       this.logger.info('TraceCLS#disable: Disabling CLS.');
-      this.enabled = false;
       this.currentCLS.disable();
-      this.currentCLS = new UniversalCLS(TraceCLS.UNTRACED);
+      this.currentCLS = new NullCLS(TraceCLS.UNTRACED);
       this.currentCLS.enable();
     }
+    this.enabled = false;
   }
 
   getContext(): RootContext {

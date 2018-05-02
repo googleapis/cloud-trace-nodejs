@@ -19,16 +19,13 @@ import {EventEmitter} from 'events';
 import {CLS, Func} from './base';
 
 /**
- * A trivial implementation of continuation-local storage where everything is
- * in the same continuation.
+ * A trivial implementation of continuation-local storage where context takes on
+ * a default, immutable value.
  */
-export class UniversalCLS<Context> implements CLS<Context> {
+export class NullCLS<Context> implements CLS<Context> {
   private enabled = false;
-  private currentContext: Context;
 
-  constructor(private readonly defaultContext: Context) {
-    this.currentContext = this.defaultContext;
-  }
+  constructor(private readonly defaultContext: Context) {}
 
   isEnabled(): boolean {
     return this.enabled;
@@ -40,18 +37,13 @@ export class UniversalCLS<Context> implements CLS<Context> {
 
   disable(): void {
     this.enabled = false;
-    this.setContext(this.defaultContext);
   }
 
   getContext(): Context {
-    return this.currentContext;
+    return this.defaultContext;
   }
 
-  setContext(value: Context): void {
-    if (this.enabled) {
-      this.currentContext = value;
-    }
-  }
+  setContext(value: Context): void {}
 
   runWithNewContext<T>(fn: Func<T>): T {
     return fn();
