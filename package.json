@@ -27,13 +27,12 @@
     "license-check": "jsgl --local ."
   },
   "files": [
-    "build/src/*.js",
+    "build/src/**/*.js",
     "build/src/config.d.ts",
     "build/src/constants.d.ts",
     "build/src/index.d.ts",
     "build/src/plugin-types.d.ts",
     "build/src/trace-labels.d.ts",
-    "build/src/plugins/*.js",
     "doc",
     "CHANGELOG.md",
     "LICENSE",
