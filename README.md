@@ -21,6 +21,8 @@ The Trace Agent supports Node 4+.
 
 > **Note**: Using the Trace Agent requires a Google Cloud Project with the [Stackdriver Trace API enabled](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) and associated credentials. These values are auto-detected if the application is running on Google Cloud Platform. If your application is not running on GCP, you will need to specify the project ID and credentials either through the configuration object, or with environment variables. See [Setting Up Stackdriver Trace for Node.js][setting-up-stackdriver-trace] for more details.
 
+> **Note**: The Trace Agent does not currently work out-of-the-box with Google Cloud Functions (or Firebase Cloud Functions). See [#725](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues/725) for a tracking issue and details on how to work around this.
+
 Simply require and start the Trace Agent as the first module in your application:
 
 ```js
