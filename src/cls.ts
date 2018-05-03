@@ -22,6 +22,7 @@ import {AsyncHooksCLS} from './cls/async-hooks';
 import {AsyncListenerCLS} from './cls/async-listener';
 import {CLS, Func} from './cls/base';
 import {NullCLS} from './cls/null';
+import {SingularCLS} from './cls/singular';
 import {SpanDataType} from './constants';
 import {SpanData, SpanOptions} from './plugin-types';
 import {Trace, TraceSpan} from './trace';
@@ -71,6 +72,11 @@ export enum TraceCLSMechanism {
    * Do not use any special mechanism to propagate root span context.
    * Only a single root span can be open at a time.
    */
+  SINGULAR = 'singular',
+  /**
+   * Do not write root span context; in other words, querying the current root
+   * span context will always result in a default value.
+   */
   NONE = 'none'
 }
 
@@ -119,6 +125,10 @@ export class TraceCLS implements CLS<RootContext> {
       case TraceCLSMechanism.ASYNC_LISTENER:
         this.CLSClass = AsyncListenerCLS;
         this.rootSpanStackOffset = 8;
+        break;
+      case TraceCLSMechanism.SINGULAR:
+        this.CLSClass = SingularCLS;
+        this.rootSpanStackOffset = 4;
         break;
       case TraceCLSMechanism.NONE:
         this.CLSClass = NullCLS;
