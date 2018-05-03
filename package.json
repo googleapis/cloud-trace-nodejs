@@ -7,8 +7,8 @@
   "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
   "scripts": {
     "init-test-fixtures": "npm run script init-test-fixtures",
-    "test": "npm run script run-unit-tests",
-    "posttest": "npm run license-check",
+    "test": "npm run script npm-check npm-compile npm-init-test-fixtures npm-unit-test npm-license-check",
+    "unit-test": "npm run script run-unit-tests",
     "non-interference": "npm run script test-non-interference",
     "system-test": "npm run script decrypt-service-account-credentials run-system-tests",
     "changelog": "./bin/run-changelog.sh",

@@ -1,51 +1,20 @@
-# Building and Running Tests Locally
+# Contributing Guide
 
-To ensure that the Trace Agent works cross-platform, we use TypeScript build scripts located in the [`scripts`](scripts) directory. The entry point to these scripts is [`index.ts`](scripts/index.ts). The usage of this file is `ts-node -p ./scripts ./scripts/index.ts [command1] [...moreCommands]` (assuming that you are running in the repository root directory.)
+The Stackdriver Trace Agent is written in TypeScript. This means that when testing changes in your own application, you will need to run `npm run compile` to invoke the TypeScript compiler to compile your changes to JavaScript.
 
-The list of possible build commands is enumerated as `case` statements in `index.ts`, in addition to `npm-*` commands. See [`index.ts`](scripts/index.ts) for more details.
+The command `npm run test` tests code the same way that our CI will test it. This is a convenience command for a number of steps, which can run separately if needed:
 
-`npm run script` is an alias for `ts-node -p ./scripts ./scripts/index.ts`.
+- `npm run check` checks the code for linting/formatting issues.
+- `npm run compile` compiles the code, checking for type errors.
+- `npm run init-test-fixtures` initializes the test fixtures, some of which are packages to be installed. (See [`plugin-fixtures.json`](test/fixtures/plugin-fixtures.json) for the list of fixtures.)
+- `npm run unit-test` runs unit and integration tests.
+- `npm run license-check` checks that licenses for dependencies are compatible with Google's guidelines.
 
-For example, to compile all scripts and then initialize test fixtures, the command to use would be one of:
+There are a couple of environmental variables to note:
 
-```bash
-# Option 1
-ts-node -p ./scripts ./scripts/index.ts npm-compile-all init-test-fixtures
-
-# Option 2
-npm run script npm-compile-all init-test-fixtures
-
-# Option 3
-npm run compile-all
-npm run script init-test-fixtures
-```
-
-They are equivalent.
-
-## Unit Tests
-
-The minimum list of commands needed to run unit tests are:
-
-```bash
-npm install
-export GCLOUD_TRACE_NEW_CONTEXT=1 # This is required. See cloud-trace-nodejs #650
-npm run compile
-npm run init-test-fixtures
-npm test # Or "npm run script run-unit-tests"
-```
-
-A convenient one-liner for this (after `npm install`) is:
-
-```bash
-npm install
-GCLOUD_TRACE_NEW_CONTEXT=1 npm run script npm-compile-all init-test-fixtures run-unit-tests
-```
-
-You will need to have mysql, postgres, redis, and mongo instances listening on their corresponding canonical ports. When running locally, you can use `./bin/docker-trace.sh start` to start docker images that does this for you.
-
-### Why `init-test-fixtures`
-
-The Trace Agent unit tests rely on installing traced modules fixed at distinct version ranges. See [`plugin-fixtures.json`](test/fixtures/plugin-fixtures.json) for the list of fixtures.
+- Setting `GCLOUD_TRACE_NEW_CONTEXT` (to any string) activates `async_hooks`-based tracing on Node 8+. On versions of Node where `async_hooks` is available, tests should pass whether this variable is set or not.
+- Setting `TRACE_TEST_EXCLUDE_INTEGRATION` (to any string) disables plugin tests when the command `npm run unit-test` is run. This is recommended for changes that do not affect plugins.
+  - Some integration tests depend on locally running database services. On Unix, you can use `./bin/docker-trace.sh start` to start these services.
 
 # How to become a contributor and submit your own code
 
