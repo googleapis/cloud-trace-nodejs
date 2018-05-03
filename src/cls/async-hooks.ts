@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-// This file requires async_hooks in the AsyncHooksCLS constructor, rather than
-// upon module load.
-import * as asyncHooks from 'async_hooks';
+// This file calls require('async_hooks') in the AsyncHooksCLS constructor,
+// rather than upon module load.
+import * as asyncHooksModule from 'async_hooks';
 import {EventEmitter} from 'events';
 import * as shimmer from 'shimmer';
 
 import {CLS, Func} from './base';
 
-type AsyncHooksModule = typeof asyncHooks;
+type AsyncHooksModule = typeof asyncHooksModule;
 
 // A list of well-known EventEmitter methods that add event listeners.
 const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> =
@@ -46,7 +46,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   /** A map of AsyncResource IDs to Context objects. */
   private contexts: {[id: number]: Reference<Context>} = {};
   /** The AsyncHook that proactively populates entries in this.contexts. */
-  private hook: asyncHooks.AsyncHook;
+  private hook: asyncHooksModule.AsyncHook;
   /** Whether this instance is enabled. */
   private enabled = false;
 
@@ -145,14 +145,19 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {
+    // Return if we have already wrapped the function.
+    if ((fn as ContextWrapped<Func<T>>)[WRAPPED]) {
+      return fn;
+    }
     // Capture the context of the current AsyncResource.
     const boundContext = this.contexts[this.ah.executionAsyncId()];
-    // Return if we have already wrapped the function, or there is no current
-    // context to bind.
-    if ((fn as ContextWrapped<Func<T>>)[WRAPPED] || !boundContext) {
+    // Return if there is no current context to bind.
+    if (!boundContext) {
       return fn;
     }
     const that = this;
+    // TODO(kjin): This code is somewhat duplicated with runWithNewContext.
+    //             Can we merge this?
     // Wrap fn so that any AsyncResource objects that are created in fn will
     // share context with that of the AsyncResource with the given ID.
     const contextWrapper: ContextWrapped<Func<T>> = function(this: {}) {

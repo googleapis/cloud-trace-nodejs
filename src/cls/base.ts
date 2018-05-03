@@ -72,7 +72,7 @@ export interface CLS<Context extends {}> {
 
   /**
    * Runs the given function as the start of a new continuation.
-   * TODO(kjin): Determine a more accurate name for this function.
+   * TODO(kjin): Merge this with setContext.
    * @param fn The function to run synchronously.
    * @returns The return result of running `fn`.
    */

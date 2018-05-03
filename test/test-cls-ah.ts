@@ -15,26 +15,27 @@
  */
 
 import * as assert from 'assert';
-import * as asyncHooks from 'async_hooks';
+import * as asyncHooksModule from 'async_hooks';
 import {IContextDefinition} from 'mocha';
 import * as semver from 'semver';
 
 import {AsyncHooksCLS} from '../src/cls/async-hooks';
 
-type AsyncHooksModule = typeof asyncHooks;
+type AsyncHooksModule = typeof asyncHooksModule;
 
 const TEST_ASYNC_RESOURCE = '@google-cloud/trace-agent:test';
 const maybeSkip = (describe: IContextDefinition) =>
     semver.satisfies(process.version, '>=8.1') ? describe : describe.skip;
 
 maybeSkip(describe)('AsyncHooks-based CLS', () => {
+  let asyncHooks: AsyncHooksModule;
   // tslint:disable-next-line:variable-name
-  let AsyncResource: typeof asyncHooks.AsyncResource;
+  let AsyncResource: typeof asyncHooksModule.AsyncResource;
   let cls: AsyncHooksCLS<string>;
 
   before(() => {
-    const ah = require('async_hooks') as AsyncHooksModule;
-    AsyncResource = class extends ah.AsyncResource {
+    asyncHooks = require('async_hooks') as AsyncHooksModule;
+    AsyncResource = class extends asyncHooks.AsyncResource {
       // tslint:disable:no-any
       runInAsyncScope<This, Result>(
           fn: (this: This, ...args: any[]) => Result, thisArg?: This): Result {
@@ -60,6 +61,26 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
     cls.enable();
   });
 
+  it('Correctly assumes the type of Promise resources', () => {
+    const actual: Array<Promise<void>> = [];
+    const expected: Array<Promise<void>> = [];
+    const hook = asyncHooks
+                     .createHook({
+                       init:
+                           (uid: number, type: string, tid: number,
+                            resource: {promise: Promise<void>}) => {
+                             if (type === 'PROMISE') {
+                               actual.push(resource.promise);
+                             }
+                           }
+                     })
+                     .enable();
+    expected.push(Promise.resolve());
+    expected.push(actual[0].then(() => {}));
+    assert.deepStrictEqual(actual, expected);
+    hook.disable();
+  });
+
   it('Supports basic context propagation across async-await boundaries', () => {
     return cls.runWithNewContext(async () => {
       cls.setContext('modified');
@@ -72,7 +93,7 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
 
   describe('Using AsyncResource API', () => {
     it('Supports context propagation without trigger ID', async () => {
-      let res!: asyncHooks.AsyncResource;
+      let res!: asyncHooksModule.AsyncResource;
       await cls.runWithNewContext(async () => {
         res = new AsyncResource(TEST_ASYNC_RESOURCE);
         cls.setContext('modified');
@@ -84,7 +105,7 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
 
     it('Supports context propagation with trigger ID', async () => {
       let triggerId!: number;
-      let res!: asyncHooks.AsyncResource;
+      let res!: asyncHooksModule.AsyncResource;
       await cls.runWithNewContext(async () => {
         triggerId = new AsyncResource(TEST_ASYNC_RESOURCE).asyncId();
         cls.setContext('correct');
