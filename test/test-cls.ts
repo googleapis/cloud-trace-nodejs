@@ -71,22 +71,16 @@ describe('Continuation-Local Storage', () => {
   });
 
   describe('Implementations', () => {
-    const testCases: Array<{clazz: CLSConstructor, testAsyncAwait: boolean}> =
-        asyncAwaitSupported ?
-        [
-          {clazz: AsyncHooksCLS, testAsyncAwait: true},
-          {clazz: AsyncListenerCLS, testAsyncAwait: false}
-        ] :
-        [{clazz: AsyncListenerCLS, testAsyncAwait: false}];
+    const testCases: CLSConstructor[] = asyncAwaitSupported ?
+        [AsyncHooksCLS, AsyncListenerCLS] :
+        [AsyncListenerCLS];
 
     for (const testCase of testCases) {
-      describe(`CLS for class ${testCase.clazz.name}`, () => {
-        const maybeSkip = (it: ITestDefinition) =>
-            testCase.testAsyncAwait ? it : it.skip;
+      describe(`CLS for class ${testCase.name}`, () => {
         let c!: CLS<string>;
 
         beforeEach(() => {
-          c = new testCase.clazz('default');
+          c = new testCase('default');
           c.enable();
         });
 
@@ -157,6 +151,12 @@ describe('Continuation-Local Storage', () => {
             runLater();
             assert.strictEqual(c.getContext(), 'default');
           });
+          c.runWithNewContext(() => {
+            c.setContext('modified-but-different');
+            // bind it again
+            runLater = c.bindWithCurrentContext(runLater);
+          });
+          runLater();
         });
 
         it('Corrects context when function run with new context throws', () => {
@@ -234,16 +234,6 @@ describe('Continuation-Local Storage', () => {
                });
              });
            });
-
-        maybeSkip(it)(
-            'Supports basic context propagation across await boundaries',
-            () => {
-              return c.runWithNewContext(async () => {
-                c.setContext('modified');
-                await Promise.resolve();
-                assert.strictEqual(c.getContext(), 'modified');
-              });
-            });
       });
     }
   });
