@@ -44,8 +44,8 @@ interface PackageJson {
   version: string;
 }
 
-export interface Constructor<T, Config> {
-  new(config: Config, logger: Logger): T;
+export interface Constructor<T, ConfigType, LoggerType> {
+  new(config: ConfigType, logger: LoggerType): T;
   prototype: T;
   name: string;
 }
@@ -60,13 +60,13 @@ export type Forceable<T> = T&{[FORCE_NEW]?: boolean};
  * An arbitrary configuration object and a logger.
  * Instances of this type should only be constructed in module scope.
  */
-export class Singleton<T, Config> {
+export class Singleton<T, ConfigType, LoggerType> {
   // Note: private[symbol] is enforced by clang-format.
   private[kSingleton]: T|null = null;
 
-  constructor(private implementation: Constructor<T, Config>) {}
+  constructor(private implementation: Constructor<T, ConfigType, LoggerType>) {}
 
-  create(config: Forceable<Config>, logger: Logger): T {
+  create(config: Forceable<ConfigType>, logger: LoggerType): T {
     if (!this[kSingleton] || config[FORCE_NEW]) {
       this[kSingleton] = new this.implementation(config, logger);
       return this[kSingleton]!;
