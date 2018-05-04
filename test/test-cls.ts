@@ -151,6 +151,12 @@ describe('Continuation-Local Storage', () => {
             runLater();
             assert.strictEqual(c.getContext(), 'default');
           });
+          c.runWithNewContext(() => {
+            c.setContext('modified-but-different');
+            // bind it again
+            runLater = c.bindWithCurrentContext(runLater);
+          });
+          runLater();
         });
 
         it('Corrects context when function run with new context throws', () => {
