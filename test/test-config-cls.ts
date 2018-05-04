@@ -31,8 +31,8 @@ describe('Behavior set by config for context propagation mechanism', () => {
   let capturedConfig: TraceCLSConfig|null;
 
   class CaptureConfigTestCLS extends trace.TestCLS {
-    constructor(logger: Logger, config: TraceCLSConfig) {
-      super(logger, config);
+    constructor(config: TraceCLSConfig, logger: Logger) {
+      super(config, logger);
       // Capture the config object passed into this constructor.
       capturedConfig = config;
     }

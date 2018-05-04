@@ -186,17 +186,17 @@ export function start(projectConfig?: Config): PluginTypes.TraceAgent {
                                 m as TraceCLSMechanism,
       [FORCE_NEW]: config[FORCE_NEW]
     };
-    cls.create(logger, clsConfig).enable();
+    cls.create(clsConfig, logger).enable();
 
-    traceWriter.create(logger, config).initialize((err) => {
+    traceWriter.create(config, logger).initialize((err) => {
       if (err) {
         stop();
       }
     });
 
-    traceAgent.enable(logger, config);
+    traceAgent.enable(config, logger);
 
-    pluginLoader.create(logger, config).activate();
+    pluginLoader.create(config, logger).activate();
   } catch (e) {
     logger.error(
         'TraceAgent#start: Disabling the Trace Agent for the',

@@ -66,12 +66,12 @@ export class TraceWriter extends common.Service {
 
   /**
    * Constructs a new TraceWriter instance.
-   * @param logger The Trace Agent's logger object.
    * @param config A config object containing information about
    *   authorization credentials.
+   * @param logger The Trace Agent's logger object.
    * @constructor
    */
-  constructor(logger: common.Logger, config: TraceWriterConfig) {
+  constructor(config: TraceWriterConfig, logger: common.Logger) {
     super(
         {
           packageJson: pjson,

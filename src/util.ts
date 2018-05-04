@@ -45,7 +45,7 @@ interface PackageJson {
 }
 
 export interface Constructor<T, Config> {
-  new(logger: Logger, config: Config): T;
+  new(config: Config, logger: Logger): T;
   prototype: T;
   name: string;
 }
@@ -57,7 +57,7 @@ export type Forceable<T> = T&{[FORCE_NEW]?: boolean};
 /**
  * A class that provides access to a singleton.
  * We assume that any such singleton is always constructed with two arguments:
- * A logger and an arbitrary configuration object.
+ * An arbitrary configuration object and a logger.
  * Instances of this type should only be constructed in module scope.
  */
 export class Singleton<T, Config> {
@@ -66,9 +66,9 @@ export class Singleton<T, Config> {
 
   constructor(private implementation: Constructor<T, Config>) {}
 
-  create(logger: Logger, config: Forceable<Config>): T {
+  create(config: Forceable<Config>, logger: Logger): T {
     if (!this[kSingleton] || config[FORCE_NEW]) {
-      this[kSingleton] = new this.implementation(logger, config);
+      this[kSingleton] = new this.implementation(config, logger);
       return this[kSingleton]!;
     } else {
       throw new Error(`${this.implementation.name} has already been created.`);

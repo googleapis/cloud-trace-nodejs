@@ -40,7 +40,6 @@ describe('Trace Plugin Loader', () => {
   let logger: TestLogger;
   const makePluginLoader = (config: SimplePluginLoaderConfig) => {
     return new PluginLoader(
-        logger,
         Object.assign(
             {
               samplingRate: 0,
@@ -49,7 +48,8 @@ describe('Trace Plugin Loader', () => {
               ignoreContextHeader: false,
               projectId: '0'
             },
-            config));
+            config),
+        logger);
   };
 
   before(() => {

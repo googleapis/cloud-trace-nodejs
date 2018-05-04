@@ -283,7 +283,7 @@ describe('Continuation-Local Storage', () => {
 
         beforeEach(() => {
           try {
-            c = new TraceCLS(logger, testCase.config);
+            c = new TraceCLS(testCase.config, logger);
             c.enable();
           } catch {
             c = {disable: () => {}} as TraceCLS;
@@ -343,7 +343,7 @@ describe('Continuation-Local Storage', () => {
         const logger = new TestLogger();
 
         it('throws', () => {
-          assert.throws(() => new TraceCLS(logger, testCase));
+          assert.throws(() => new TraceCLS(testCase, logger));
         });
       });
     }

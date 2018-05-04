@@ -59,8 +59,8 @@ const traces: Trace[] = [];
 const spans: TraceSpan[] = [];
 
 export class TestCLS extends TraceCLS {
-  constructor(logger: common.Logger, config: {}) {
-    super(logger, {mechanism: TraceCLSMechanism.NONE});
+  constructor(config: {}, logger: common.Logger) {
+    super({mechanism: TraceCLSMechanism.NONE}, logger);
   }
 }
 

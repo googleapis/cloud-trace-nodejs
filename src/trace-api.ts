@@ -81,12 +81,12 @@ export class TraceAgent implements TraceAgentInterface {
    * Enables this instance. This function is only for internal use and
    * unit tests. A separate TraceWriter instance should be initialized
    * beforehand.
-   * @param logger A logger object.
    * @param config An object specifying how this instance should
    * be configured.
+   * @param logger A logger object.
    * @private
    */
-  enable(logger: Logger, config: TraceAgentConfig) {
+  enable(config: TraceAgentConfig, logger: Logger) {
     this.logger = logger;
     this.config = config;
     this.policy = TracingPolicy.createTracePolicy(config);

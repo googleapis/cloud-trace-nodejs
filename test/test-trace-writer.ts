@@ -77,12 +77,12 @@ function createFakeTrace(name): Trace {
 
 describe('TraceWriter', function() {
   it('should be a Service instance', function() {
-    var writer = traceWriter.create(fakeLogger, {
+    var writer = traceWriter.create({
       projectId: 'fake project',
       serviceContext: {},
       onUncaughtException: 'ignore',
       [FORCE_NEW]: true
-    } as createTraceWriterOptions);
+    } as createTraceWriterOptions, fakeLogger);
     assert.ok(writer instanceof Service);
   });
   
@@ -90,25 +90,25 @@ describe('TraceWriter', function() {
     // In Node 9+, this should be 1.
     // Otherwise, it should be 0.
     const numListenersBeforeTraceWriter = process.listeners('uncaughtException').length;
-    traceWriter.create(fakeLogger, {
+    traceWriter.create({
       projectId: '0',
       serviceContext: {},
       onUncaughtException: 'ignore',
       [FORCE_NEW]: true
-    } as createTraceWriterOptions);
+    } as createTraceWriterOptions, fakeLogger);
     // Mocha attaches 1 exception handler
     assert.equal(process.listeners('uncaughtException').length, numListenersBeforeTraceWriter);
   });
 
   describe('writeSpan', function() {
     it('should close spans, add defaultLabels and queue', function(done) {
-      var writer = traceWriter.create(fakeLogger, {
+      var writer = traceWriter.create({
         projectId: PROJECT,
         bufferSize: 4,
         serviceContext: {},
         onUncaughtException: 'ignore',
         [FORCE_NEW]: true
-      } as createTraceWriterOptions);
+      } as createTraceWriterOptions, fakeLogger);
       writer.initialize(function() {
         var spanData = createFakeTrace('fake span');
         writer.defaultLabels = {
@@ -133,13 +133,13 @@ describe('TraceWriter', function() {
       nocks.oauth2();
       var scope = nocks.patchTraces(PROJECT);
 
-      var writer = traceWriter.create(fakeLogger, {
+      var writer = traceWriter.create({
         projectId: PROJECT,
         credentials: fakeCredentials,
         serviceContext: {},
         onUncaughtException: 'ignore',
         [FORCE_NEW]: true
-      } as createTraceWriterOptions);
+      } as createTraceWriterOptions, fakeLogger);
       writer.publish('{"valid": "json"}');
       setTimeout(function() {
         assert.ok(scope.isDone());
@@ -153,13 +153,13 @@ describe('TraceWriter', function() {
       var scope = nocks.patchTraces(PROJECT, null, 'Simulated Network Error',
                                     true /* withError */);
 
-      var writer = traceWriter.create(fakeLogger, {
+      var writer = traceWriter.create({
         projectId: PROJECT,
         credentials: fakeCredentials,
         serviceContext: {},
         onUncaughtException: 'ignore',
         [FORCE_NEW]: true
-      } as createTraceWriterOptions);
+      } as createTraceWriterOptions, fakeLogger);
       writer.publish(JSON.stringify(MESSAGE));
       setTimeout(function() {
         assert.ok(scope.isDone());
@@ -171,14 +171,14 @@ describe('TraceWriter', function() {
 
   describe('publishing', function() {
     it('should publish when the queue fills', function(done) {
-      var writer = traceWriter.create(fakeLogger, {
+      var writer = traceWriter.create({
         projectId: PROJECT,
         bufferSize: 4,
         flushDelaySeconds: 3600,
         serviceContext: {},
         onUncaughtException: 'ignore',
         [FORCE_NEW]: true
-      } as createTraceWriterOptions);
+      } as createTraceWriterOptions, fakeLogger);
       writer.publish = function() { done(); };
       for (var i = 0; i < 4; i++) {
         writer.writeSpan(createFakeTrace(i));
@@ -187,13 +187,13 @@ describe('TraceWriter', function() {
 
     it('should publish after timeout', function(done) {
       var published = false;
-      var writer = traceWriter.create(fakeLogger, {
+      var writer = traceWriter.create({
         projectId: PROJECT,
         flushDelaySeconds: 0.01,
         serviceContext: {},
         onUncaughtException: 'ignore',
         [FORCE_NEW]: true
-      } as createTraceWriterOptions);
+      } as createTraceWriterOptions, fakeLogger);
       writer.publish = function() { published = true; };
       writer.initialize(function() {
         writer.writeSpan(createFakeTrace('fake span'));
@@ -326,11 +326,11 @@ describe('TraceWriter', function() {
           nocks.instanceId(function() { return testCase.metadata.instanceId; });
         }
 
-        traceWriter.create(fakeLogger, Object.assign({
+        traceWriter.create(Object.assign({
           [FORCE_NEW]: true,
           onUncaughtException: 'ignore',
           serviceContext: {}
-        }, testCase.config)).initialize(function(err) {
+        }, testCase.config), fakeLogger).initialize(function(err) {
           testCase.assertResults(err, traceWriter.get());
           done();
         });

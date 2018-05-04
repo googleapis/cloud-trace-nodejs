@@ -74,12 +74,12 @@ function assertAPISurface(traceAPI) {
 
 describe('Trace Interface', function() {
   before(function(done) {
-    cls.create(logger, { mechanism: TraceCLSMechanism.ASYNC_LISTENER }).enable();
-    traceWriter.create(logger,
+    cls.create({ mechanism: TraceCLSMechanism.ASYNC_LISTENER }, logger).enable();
+    traceWriter.create(
       Object.assign(defaultConfig, {
         projectId: '0',
         [FORCE_NEW]: false
-      })).initialize(function(err) {
+      }), logger).initialize(function(err) {
         assert.ok(!err);
         done();
       });

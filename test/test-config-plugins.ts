@@ -27,8 +27,8 @@ describe('Configuration: Plugins', () => {
   let plugins: {[pluginName: string]: string}|null;
 
   class ConfigTestPluginLoader extends PluginLoader {
-    constructor(logger: Logger, config: PluginLoaderConfig) {
-      super(logger, config);
+    constructor(config: PluginLoaderConfig, logger: Logger) {
+      super(config, logger);
       plugins = config.plugins;
     }
   }
