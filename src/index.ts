@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Google Inc. All Rights Reserved.
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,130 +16,25 @@
 
 const filesLoadedBeforeTrace = Object.keys(require.cache);
 
-// semver does not require any core modules.
+// This file's top-level imports must not transitively depend on modules that
+// do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-
-const useAH = !!process.env.GCLOUD_TRACE_NEW_CONTEXT &&
-    semver.satisfies(process.version, '>=8');
-if (!useAH) {
-  // This should be loaded before any core modules.
-  require('continuation-local-storage');
-}
-
-import * as common from '@google-cloud/common';
-import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
-import {Constants} from './constants';
-import {Config, defaultConfig, CLSMechanism} from './config';
-import * as extend from 'extend';
+import {Config} from './config';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
-import {PluginLoaderConfig} from './trace-plugin-loader';
-import {pluginLoader} from './trace-plugin-loader';
-import {TraceAgent} from './trace-api';
-import {traceWriter, TraceWriterConfig} from './trace-writer';
-import {Forceable, FORCE_NEW, packageNameFromPath} from './util';
+import {tracing, Tracing} from './tracing';
+import {Singleton} from './util';
 
 export {Config, PluginTypes};
 
-const traceAgent: TraceAgent = new TraceAgent('Custom Trace API');
-
-const modulesLoadedBeforeTrace: string[] = [];
-const traceModuleName = path.join('@google-cloud', 'trace-agent');
-for (let i = 0; i < filesLoadedBeforeTrace.length; i++) {
-  const moduleName = packageNameFromPath(filesLoadedBeforeTrace[i]);
-  if (moduleName && moduleName !== traceModuleName &&
-      modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
-    modulesLoadedBeforeTrace.push(moduleName);
-  }
-}
-
-interface TopLevelConfig {
-  enabled: boolean;
-  logLevel: number;
-  clsMechanism: CLSMechanism;
-}
-
-// PluginLoaderConfig extends TraceAgentConfig
-type NormalizedConfig = TraceWriterConfig&PluginLoaderConfig&TopLevelConfig;
+let tracingSingleton: typeof tracing;
 
 /**
- * Normalizes the user-provided configuration object by adding default values
- * and overriding with env variables when they are provided.
- * @param projectConfig The user-provided configuration object. It will not
- * be modified.
- * @return A normalized configuration object.
- */
-function initConfig(projectConfig: Forceable<Config>):
-    Forceable<NormalizedConfig> {
-  // `|| undefined` prevents environmental variables that are empty strings
-  // from overriding values provided in the config object passed to start().
-  const envConfig = {
-    logLevel: Number(process.env.GCLOUD_TRACE_LOGLEVEL) || undefined,
-    projectId: process.env.GCLOUD_PROJECT || undefined,
-    serviceContext: {
-      service:
-          process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME || undefined,
-      version: process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION ||
-          undefined,
-      minorVersion: process.env.GAE_MINOR_VERSION || undefined
-    }
-  };
-
-  let envSetConfig: Config = {};
-  if (!!process.env.GCLOUD_TRACE_CONFIG) {
-    envSetConfig =
-        require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
-  }
-  // Configuration order of precedence:
-  // 1. Environment Variables
-  // 2. Project Config
-  // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
-  // 4. Default Config (as specified in './config')
-  const config = extend(
-      true, {[FORCE_NEW]: projectConfig[FORCE_NEW]}, defaultConfig,
-      envSetConfig, projectConfig, envConfig, {plugins: {}});
-  // The empty plugins object guarantees that plugins is a plain object,
-  // even if it's explicitly specified in the config to be a non-object.
-
-  // Enforce the upper limit for the label value size.
-  if (config.maximumLabelValueSize >
-      Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
-    config.maximumLabelValueSize = Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
-  }
-  // Clamp the logger level.
-  if (config.logLevel < 0) {
-    config.logLevel = 0;
-  } else if (config.logLevel >= common.logger.LEVELS.length) {
-    config.logLevel = common.logger.LEVELS.length - 1;
-  }
-  return config;
-}
-
-/**
- * Stops the Trace Agent. This disables the publicly exposed agent instance,
- * as well as any instances passed to plugins. This also prevents the Trace
- * Writer from publishing additional traces.
- */
-function stop() {
-  if (pluginLoader.exists()) {
-    pluginLoader.get().deactivate();
-  }
-  if (traceAgent && traceAgent.isActive()) {
-    traceAgent.disable();
-  }
-  if (cls.exists()) {
-    cls.get().disable();
-  }
-  if (traceWriter.exists()) {
-    traceWriter.get().stop();
-  }
-}
-
-/**
- * Start the Trace agent that will make your application available for
- * tracing with Stackdriver Trace.
- *
- * @param config - Trace configuration
+ * Start the Stackdriver Trace Agent with the given configuration (if provided).
+ * This function should only be called once, and before any other modules are
+ * loaded.
+ * @param config A configuration object.
+ * @returns An object exposing functions for creating custom spans.
  *
  * @resource [Introductory video]{@link
  * https://www.youtube.com/watch?v=NCFDqeo7AeY}
@@ -147,82 +42,66 @@ function stop() {
  * @example
  * trace.start();
  */
-export function start(projectConfig?: Config): PluginTypes.TraceAgent {
-  const config = initConfig(projectConfig || {});
-
-  if (traceAgent.isActive() && !config[FORCE_NEW]) {  // already started.
-    throw new Error('Cannot call start on an already started agent.');
-  } else if (traceAgent.isActive()) {
-    // For unit tests only.
-    // Undoes initialization that occurred last time start() was called.
-    stop();
+export function start(config?: Config): PluginTypes.TraceAgent {
+  // Determine the preferred context propagation mechanism, as
+  // continuation-local-storage should be loaded before any modules that do I/O.
+  const ahAvailable = semver.satisfies(process.version, '>=8') &&
+      process.env.GCLOUD_TRACE_NEW_CONTEXT;
+  const agentEnabled = !config || config.enabled !== false;
+  const alAutoPreferred =
+      !ahAvailable && (!config || config.clsMechanism === 'auto');
+  const alUserPreferred = config && (config.clsMechanism === 'async-listener');
+  if (agentEnabled && (alAutoPreferred || alUserPreferred)) {
+    // This is the earliest we can load continuation-local-storage.
+    require('continuation-local-storage');
   }
-
-  if (!config.enabled) {
-    return traceAgent;
-  }
-
-  const logger = common.logger({
-    level: common.logger.LEVELS[config.logLevel],
-    tag: '@google-cloud/trace-agent'
-  });
-
-  if (modulesLoadedBeforeTrace.length > 0) {
-    logger.error(
-        'TraceAgent#start: Tracing might not work as the following modules',
-        'were loaded before the trace agent was initialized:',
-        `[${modulesLoadedBeforeTrace.sort().join(', ')}]`);
-    // Stop storing these entries in memory
-    filesLoadedBeforeTrace.length = 0;
-    modulesLoadedBeforeTrace.length = 0;
+  if (!tracingSingleton) {
+    tracingSingleton = require('./tracing').tracing;
   }
 
   try {
-    // Initialize context propagation mechanism.
-    const m = config.clsMechanism;
-    const clsConfig: Forceable<TraceCLSConfig> = {
-      mechanism: m === 'auto' ? (useAH ? TraceCLSMechanism.ASYNC_HOOKS :
-                                         TraceCLSMechanism.ASYNC_LISTENER) :
-                                m as TraceCLSMechanism,
-      [FORCE_NEW]: config[FORCE_NEW]
-    };
-    cls.create(clsConfig, logger).enable();
-
-    traceWriter.create(config, logger).initialize((err) => {
-      if (err) {
-        stop();
-      }
-    });
-
-    traceAgent.enable(config, logger);
-
-    pluginLoader.create(config, logger).activate();
+    let tracing: Tracing;
+    try {
+      tracing = tracingSingleton.create(config || {}, {});
+    } catch (e) {
+      // An error could be thrown if create() is called multiple times.
+      // It's not a helpful error message for the end user, so make it more
+      // useful here.
+      throw new Error('Cannot call start on an already created agent.');
+    }
+    tracing.enable();
+    tracing.logModulesLoadedBeforeTrace(filesLoadedBeforeTrace);
+    return tracingSingleton.get().traceAgent;
   } catch (e) {
-    logger.error(
-        'TraceAgent#start: Disabling the Trace Agent for the',
-        `following reason: ${e.message}`);
-    stop();
-    return traceAgent;
+    throw e;
+  } finally {
+    // Stop storing these entries in memory
+    filesLoadedBeforeTrace.length = 0;
   }
-
-  if (typeof config.projectId !== 'string' &&
-      typeof config.projectId !== 'undefined') {
-    logger.error(
-        'TraceAgent#start: config.projectId, if provided, must be a string.',
-        'Disabling trace agent.');
-    stop();
-    return traceAgent;
-  }
-
-  // Make trace agent available globally without requiring package
-  global._google_trace_agent = traceAgent;
-
-  logger.info('TraceAgent#start: Trace Agent activated.');
-  return traceAgent;
 }
 
+/**
+ * Get the previously created TraceAgent object.
+ * @returns An object exposing functions for creating custom spans.
+ */
 export function get(): PluginTypes.TraceAgent {
-  return traceAgent;
+  if (!tracingSingleton) {
+    tracingSingleton = require('./tracing').tracing;
+  }
+  if (tracingSingleton.exists()) {
+    return tracingSingleton.get().traceAgent;
+  } else {
+    // This code path maintains the current contract that calling get() before
+    // start() yields a disabled custom span API. It assumes that the use case
+    // for doing so (instead of returning null) is when get() is called in
+    // a file where it is unknown whether start() has been called.
+
+    // Based on this assumption, and because we document that start() must be
+    // called first in an application, it's OK to create a permanently disabled
+    // Trace Agent here and assume that start() will never be called to enable
+    // it.
+    return tracingSingleton.create({enabled: false}, {}).traceAgent;
+  }
 }
 
 // If the module was --require'd from the command line, start the agent.
