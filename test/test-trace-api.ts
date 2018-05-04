@@ -38,10 +38,10 @@ nock.disableNetConnect();
 
 function createTraceAgent(policy?, config?) {
   var result = new TraceAgent('test');
-  result.enable(logger, config || {
+  result.enable(config || {
     enhancedDatabaseReporting: false,
     ignoreContextHeader: false
-  });
+  }, logger);
   result.policy = policy || new TracingPolicy.TraceAllPolicy();
   return result;
 }
