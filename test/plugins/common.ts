@@ -70,11 +70,11 @@ shimmer.wrap(trace, 'start', function(original) {
   return function() {
     var result = original.apply(this, arguments);
     testTraceAgent = new TraceAgent('test');
-    testTraceAgent.enable(logger(), {
+    testTraceAgent.enable({
       enhancedDatabaseReporting: false,
       ignoreContextHeader: false,
       samplingRate: 0
-    });
+    }, logger());
     testTraceAgent.policy = new TracingPolicy.TraceAllPolicy();
     return result;
   };

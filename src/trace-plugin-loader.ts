@@ -102,13 +102,13 @@ export class ModulePluginWrapper implements PluginWrapper {
 
   /**
    * Constructs a new PluginWrapper instance.
-   * @param logger The logger to use.
    * @param options Initialization fields for this object.
    * @param traceConfig Configuration for a TraceAgent instance.
+   * @param logger The logger to use.
    */
   constructor(
-      logger: Logger, options: ModulePluginWrapperOptions,
-      traceConfig: TraceAgentConfig) {
+      options: ModulePluginWrapperOptions, traceConfig: TraceAgentConfig,
+      logger: Logger) {
     this.logger = logger;
     this.name = options.name;
     this.path = options.path;
@@ -201,7 +201,7 @@ export class ModulePluginWrapper implements PluginWrapper {
 
   private createTraceAgentInstance(file: string) {
     const traceApi = new TraceAgent(file);
-    traceApi.enable(this.logger, this.traceConfig);
+    traceApi.enable(this.traceConfig, this.logger);
     this.traceApiInstances.push(traceApi);
     return traceApi;
   }
@@ -218,11 +218,11 @@ export class CorePluginWrapper implements PluginWrapper {
   private readonly children: ModulePluginWrapper[];
 
   constructor(
-      logger: Logger, config: CorePluginWrapperOptions,
-      traceConfig: TraceAgentConfig) {
+      config: CorePluginWrapperOptions, traceConfig: TraceAgentConfig,
+      logger: Logger) {
     this.logger = logger;
     this.children = config.children.map(
-        config => new ModulePluginWrapper(logger, config, traceConfig));
+        config => new ModulePluginWrapper(config, traceConfig, logger));
     // Eagerly load core plugins into memory.
     // This prevents issues related to circular dependencies.
     this.children.forEach(child => child.getPluginExportedValue());
@@ -282,10 +282,10 @@ export class PluginLoader {
 
   /**
    * Constructs a new PluginLoader instance.
-   * @param logger The logger to use.
    * @param config The configuration for this instance.
+   * @param logger The logger to use.
    */
-  constructor(private readonly logger: Logger, config: PluginLoaderConfig) {
+  constructor(config: PluginLoaderConfig, private readonly logger: Logger) {
     const nonCoreModules: string[] = [];
     // Initialize ALL of the PluginWrapper objects here.
     // See CorePluginWrapper docs for why core modules are processed
@@ -306,7 +306,7 @@ export class PluginLoader {
           this.pluginMap.set(
               key,
               new ModulePluginWrapper(
-                  logger, {name: key, path: value}, config));
+                  {name: key, path: value}, config, logger));
         }
         nonCoreModules.push(key);
       }
@@ -314,7 +314,7 @@ export class PluginLoader {
     if (coreWrapperConfig.children.length > 0) {
       this.pluginMap.set(
           PluginLoader.CORE_MODULE,
-          new CorePluginWrapper(logger, coreWrapperConfig, config));
+          new CorePluginWrapper(coreWrapperConfig, config, logger));
     }
 
     // Define the function that will attach a require hook upon activate.

@@ -32,32 +32,32 @@ const notNull = <T>(x: T|null|undefined): T => {
 describe('Singleton', () => {
   const logger = new TestLogger();
   class MyClass {
-    constructor(public logger: Logger, public config: {}) {}
+    constructor(public config: {}, public logger: Logger) {}
   }
 
   describe('create', () => {
     it('creates an instance of the given class', () => {
-      const createResult = new util.Singleton(MyClass).create(logger, {});
+      const createResult = new util.Singleton(MyClass).create({}, logger);
       assert.ok(createResult instanceof MyClass);
     });
 
     it('passes arguments to the underlying constructor', () => {
       const config = {};
-      const createResult = new util.Singleton(MyClass).create(logger, config);
+      const createResult = new util.Singleton(MyClass).create(config, logger);
       assert.strictEqual(createResult.logger, logger);
       assert.strictEqual(createResult.config, config);
     });
 
     it('throws when used more than once, by default', () => {
       const singleton = new util.Singleton(MyClass);
-      singleton.create(logger, {});
-      assert.throws(() => singleton.create(logger, {}));
+      singleton.create({}, logger);
+      assert.throws(() => singleton.create({}, logger));
     });
 
     it('creates a new instance when [FORCE_NEW] is true in the config', () => {
       const singleton = new util.Singleton(MyClass);
-      const createResult1 = singleton.create(logger, {});
-      const createResult2 = singleton.create(logger, {[util.FORCE_NEW]: true});
+      const createResult1 = singleton.create({}, logger);
+      const createResult2 = singleton.create({[util.FORCE_NEW]: true}, logger);
       assert.notStrictEqual(createResult1, createResult2);
     });
   });
@@ -69,15 +69,15 @@ describe('Singleton', () => {
 
     it('returns the same value returned by create function', () => {
       const singleton = new util.Singleton(MyClass);
-      const createResult = singleton.create(logger, {});
+      const createResult = singleton.create({}, logger);
       const getResult = singleton.get();
       assert.strictEqual(getResult, createResult);
     });
 
     it('does not return a stale value', () => {
       const singleton = new util.Singleton(MyClass);
-      singleton.create(logger, {});
-      const createResult = singleton.create(logger, {[util.FORCE_NEW]: true});
+      singleton.create({}, logger);
+      const createResult = singleton.create({[util.FORCE_NEW]: true}, logger);
       const getResult = singleton.get();
       assert.strictEqual(getResult, createResult);
     });

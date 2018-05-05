@@ -38,10 +38,10 @@ nock.disableNetConnect();
 
 function createTraceAgent(policy?, config?) {
   var result = new TraceAgent('test');
-  result.enable(logger, config || {
+  result.enable(config || {
     enhancedDatabaseReporting: false,
     ignoreContextHeader: false
-  });
+  }, logger);
   result.policy = policy || new TracingPolicy.TraceAllPolicy();
   return result;
 }
@@ -74,12 +74,12 @@ function assertAPISurface(traceAPI) {
 
 describe('Trace Interface', function() {
   before(function(done) {
-    cls.create(logger, { mechanism: TraceCLSMechanism.ASYNC_LISTENER }).enable();
-    traceWriter.create(logger,
+    cls.create({ mechanism: TraceCLSMechanism.ASYNC_LISTENER }, logger).enable();
+    traceWriter.create(
       Object.assign(defaultConfig, {
         projectId: '0',
         [FORCE_NEW]: false
-      })).initialize(function(err) {
+      }), logger).initialize(function(err) {
         assert.ok(!err);
         done();
       });
