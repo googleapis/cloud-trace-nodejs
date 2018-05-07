@@ -21,18 +21,19 @@ install:
 
 # Post-install test scripts.
 test_script:
-  # install modules
-  - npm install
-  # check code style and linting
-  - npm run check
-  # compile the code
-  - npm run compile
-  # check that installing this module is OK
-  - npm run check-install
-  # initialize test fixtures
-  - npm run init-test-fixtures
-  # run tests
-  - npm run test
+  - ps: type C:\Users\appveyor\AppData\Roaming\npm\etc\npmrc
+  # # install modules
+  # - npm install
+  # # check code style and linting
+  # - npm run check
+  # # compile the code
+  # - npm run compile
+  # # check that installing this module is OK
+  # - npm run check-install
+  # # initialize test fixtures
+  # - npm run init-test-fixtures
+  # # run tests
+  # - npm run test
 
 # Don't actually build using MSBuild
 build: off
