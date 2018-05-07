@@ -420,8 +420,6 @@ export class PluginLoader {
       }
       this.internalState = PluginLoaderState.DEACTIVATED;
       this.logger.info(`PluginLoader#deactivate: Deactivated.`);
-    } else {
-      throw new Error('Plugin loader is not activated.');
     }
     return this;
   }
