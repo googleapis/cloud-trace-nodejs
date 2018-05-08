@@ -1,8 +1,8 @@
 # Contributing Guide
 
-The Stackdriver Trace Agent is written in TypeScript. This means that when testing changes in your own application, you will need to run `npm run compile` to invoke the TypeScript compiler to compile your changes to JavaScript.
+The Stackdriver Trace Agent is written in TypeScript. This means that when testing local changes to the Trace Agent, you will need to run `npm run compile` to invoke the TypeScript compiler to compile your changes to JavaScript.
 
-The command `npm run test` tests code the same way that our CI will test it. This is a convenience command for a number of steps, which can run separately if needed:
+The command `npm test` tests code the same way that our CI will test it. This is a convenience command for a number of steps, which can run separately if needed:
 
 - `npm run check` checks the code for linting/formatting issues.
 - `npm run compile` compiles the code, checking for type errors.
