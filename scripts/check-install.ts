@@ -45,4 +45,9 @@ export async function checkInstall() {
     cwd: installDir
   });
   console.log('`npm install` + `tsc` test was successful.');
+  // Evaluate require('..').start() in Node.
+  await spawnP(`node`, ['-e', `"require('@google-cloud/trace-agent').start()"`], {
+    cwd: installDir
+  });
+  console.log('require + start test was successful.');
 }

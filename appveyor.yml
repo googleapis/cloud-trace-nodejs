@@ -32,7 +32,7 @@ test_script:
   # initialize test fixtures
   - npm run init-test-fixtures
   # run tests
-  - npm run test
+  - npm run unit-test
 
 # Don't actually build using MSBuild
 build: off
