@@ -15,7 +15,6 @@
  */
 
 import * as common from '@google-cloud/common';
-import * as extend from 'extend';
 import * as path from 'path';
 import * as semver from 'semver';
 
@@ -28,14 +27,15 @@ import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
 import {Component, FORCE_NEW, Forceable, packageNameFromPath, Singleton} from './util';
 
-interface TopLevelConfig {
+export interface TopLevelConfig {
   enabled: boolean;
   logLevel: number;
   clsMechanism: CLSMechanism;
 }
 
 // PluginLoaderConfig extends TraceAgentConfig
-type NormalizedConfig = TraceWriterConfig&PluginLoaderConfig&TopLevelConfig;
+export type NormalizedConfig =
+    (TraceWriterConfig&PluginLoaderConfig&TopLevelConfig)|{enabled: false};
 
 /**
  * A class that represents automatic tracing.
@@ -50,66 +50,22 @@ export class Tracing implements Component {
    * Constructs a new Tracing instance.
    * @param config The configuration for this instance.
    */
-  constructor(config: Config) {
-    this.config = Tracing.initConfig(config);
+  constructor(config: NormalizedConfig) {
+    this.config = config;
+    let logLevel = config.enabled ? config.logLevel : 0;
+    // Clamp the logger level.
+    if (logLevel < 0) {
+      logLevel = 0;
+    } else if (logLevel >= common.logger.LEVELS.length) {
+      logLevel = common.logger.LEVELS.length - 1;
+    }
     this.logger = common.logger({
-      level: common.logger.LEVELS[this.config.logLevel],
+      level: common.logger.LEVELS[logLevel],
       tag: '@google-cloud/trace-agent'
     });
   }
 
-  /**
-   * Normalizes the user-provided configuration object by adding default values
-   * and overriding with env variables when they are provided.
-   * @param projectConfig The user-provided configuration object. It will not
-   * be modified.
-   * @return A normalized configuration object.
-   */
-  private static initConfig(projectConfig: Forceable<Config>):
-      Forceable<NormalizedConfig> {
-    // `|| undefined` prevents environmental variables that are empty strings
-    // from overriding values provided in the config object passed to start().
-    const envConfig = {
-      logLevel: Number(process.env.GCLOUD_TRACE_LOGLEVEL) || undefined,
-      projectId: process.env.GCLOUD_PROJECT || undefined,
-      serviceContext: {
-        service:
-            process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME || undefined,
-        version: process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION ||
-            undefined,
-        minorVersion: process.env.GAE_MINOR_VERSION || undefined
-      }
-    };
 
-    let envSetConfig: Config = {};
-    if (!!process.env.GCLOUD_TRACE_CONFIG) {
-      envSetConfig =
-          require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
-    }
-    // Configuration order of precedence:
-    // 1. Environment Variables
-    // 2. Project Config
-    // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
-    // 4. Default Config (as specified in './config')
-    const config = extend(
-        true, {[FORCE_NEW]: projectConfig[FORCE_NEW]}, defaultConfig,
-        envSetConfig, projectConfig, envConfig, {plugins: {}});
-    // The empty plugins object guarantees that plugins is a plain object,
-    // even if it's explicitly specified in the config to be a non-object.
-
-    // Enforce the upper limit for the label value size.
-    if (config.maximumLabelValueSize >
-        Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
-      config.maximumLabelValueSize = Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
-    }
-    // Clamp the logger level.
-    if (config.logLevel < 0) {
-      config.logLevel = 0;
-    } else if (config.logLevel >= common.logger.LEVELS.length) {
-      config.logLevel = common.logger.LEVELS.length - 1;
-    }
-    return config;
-  }
 
   /**
    * Logs an error message detailing the list of modules that were loaded before
@@ -152,14 +108,8 @@ export class Tracing implements Component {
 
     try {
       // Initialize context propagation mechanism.
-      const m = this.config.clsMechanism;
-      const ahAvailable = semver.satisfies(process.version, '>=8') &&
-          process.env.GCLOUD_TRACE_NEW_CONTEXT;
       const clsConfig: Forceable<TraceCLSConfig> = {
-        mechanism: m === 'auto' ?
-            (ahAvailable ? TraceCLSMechanism.ASYNC_HOOKS :
-                           TraceCLSMechanism.ASYNC_LISTENER) :
-            m as TraceCLSMechanism,
+        mechanism: this.config.clsMechanism as TraceCLSMechanism,
         [FORCE_NEW]: this.config[FORCE_NEW]
       };
       cls.create(clsConfig, this.logger).enable();
