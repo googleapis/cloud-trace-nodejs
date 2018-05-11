@@ -24,14 +24,16 @@ import {traceWriter, TraceWriter, TraceWriterConfig} from '../src/trace-writer';
 
 import {TestLogger} from './logger';
 import * as traceAgentModule from './trace';
+import {wait} from './utils';
 
 describe('SpanData', () => {
   class CaptureSpanTraceWriter extends TraceWriter {
     writeSpan(trace: Trace) {
+      assert.strictEqual(capturedTrace, null);
       capturedTrace = trace;
     }
   }
-  let capturedTrace: Trace;
+  let capturedTrace: Trace|null;
   let trace: Trace;
 
   before(() => {
@@ -40,7 +42,7 @@ describe('SpanData', () => {
         {
           onUncaughtException: 'ignore',
           maximumLabelValueSize: 16,
-          stackTraceLimit: 5
+          stackTraceLimit: 2
         } as TraceWriterConfig,
         new TestLogger());
   });
@@ -51,6 +53,7 @@ describe('SpanData', () => {
 
   beforeEach(() => {
     trace = {projectId: '0', traceId: 'trace-id', spans: []};
+    capturedTrace = null;
   });
 
   describe('BaseSpanData', () => {
@@ -81,11 +84,12 @@ describe('SpanData', () => {
       assert.strictEqual(spanIds.size, numSpans);
     });
 
-    it('accurately records timestamps', () => {
+    it('accurately records timestamps', async () => {
       // Create another span, to determine start time correctness
       const startLowerBound = Date.now();
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
       const startUpperBound = Date.now();
+      await wait(100);
       const endLowerBound = Date.now();
       spanData.endSpan();
       const endUpperBound = Date.now();
@@ -97,11 +101,13 @@ describe('SpanData', () => {
       ];
       assert.ok(spanData.span.startTime);
       assert.ok(spanData.span.endTime);
-      assert.deepStrictEqual(expectedTimes.map(x => x).sort(), expectedTimes);
+      const ascending = (a: number, b: number) => a - b;
+      assert.deepStrictEqual(
+          expectedTimes.slice().sort(ascending), expectedTimes);
     });
 
     it('truncates large span names to limit', () => {
-      const name = new Array(200).fill('a').join('');
+      const name = 'a'.repeat(200);
       const spanData = new CommonSpanData(trace, name, '0', 0);
       assert.strictEqual(
           spanData.span.name,
@@ -122,7 +128,7 @@ describe('SpanData', () => {
 
     it('truncates long keys', () => {
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
-      const longKey = new Array(200).fill('a').join('');
+      const longKey = 'a'.repeat(200);
       spanData.addLabel(longKey, 'val');
       delete spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.deepStrictEqual(spanData.span.labels, {
