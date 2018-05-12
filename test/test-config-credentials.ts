@@ -21,7 +21,7 @@ import * as path from 'path';
 
 import {FORCE_NEW} from '../src/util';
 import {oauth2, patchTraces} from './nocks';
-import * as trace from './trace';
+import * as testTraceModule from './trace';
 import {plan} from './utils';
 
 interface TestCredentials {
@@ -33,7 +33,7 @@ interface TestCredentials {
 }
 
 function queueSpans(n: number) {
-  const traceApi = trace.get();
+  const traceApi = testTraceModule.get();
   for (let i = 0; i < n; i++) {
     traceApi.runInRootSpan({name: `trace-${i}`}, (rootSpan) => {
       assert.ok(rootSpan);
@@ -48,13 +48,13 @@ describe('Credentials Configuration', () => {
   before(() => {
     savedProject = process.env.GCLOUD_PROJECT;
     process.env.GCLOUD_PROJECT = '0';
-    trace.setTraceWriterForTest();
+    testTraceModule.setTraceWriterForTest();
     disableNetConnect();
   });
 
   after(() => {
     process.env.GCLOUD_PROJECT = savedProject;
-    trace.setTraceWriterForTest(trace.TestTraceWriter);
+    testTraceModule.setTraceWriterForTest(testTraceModule.TestTraceWriter);
     enableNetConnect();
   });
 
@@ -67,7 +67,7 @@ describe('Credentials Configuration', () => {
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
       [FORCE_NEW]: true
     };
-    const agent = trace.start(config);
+    const agent = testTraceModule.start(config);
     const scope = oauth2<TestCredentials>((body) => {
       assert.strictEqual(body.client_id, credentials.client_id);
       assert.strictEqual(body.client_secret, credentials.client_secret);
@@ -89,7 +89,7 @@ describe('Credentials Configuration', () => {
     const credentials: TestCredentials =
         require('./fixtures/gcloud-credentials.json');
     const config = {bufferSize: 2, credentials, [FORCE_NEW]: true};
-    const agent = trace.start(config);
+    const agent = testTraceModule.start(config);
     const scope = oauth2<TestCredentials>((body) => {
       assert.strictEqual(body.client_id, credentials.client_id);
       assert.strictEqual(body.client_secret, credentials.client_secret);
@@ -120,7 +120,7 @@ describe('Credentials Configuration', () => {
       keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
       [FORCE_NEW]: true
     };
-    const agent = trace.start(config);
+    const agent = testTraceModule.start(config);
     const scope = oauth2<TestCredentials>((body) => {
       assert.strictEqual(body.client_id, correctCredentials.client_id);
       assert.strictEqual(body.client_secret, correctCredentials.client_secret);

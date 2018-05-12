@@ -18,7 +18,7 @@ import * as http from 'http';
 import {AddressInfo} from 'net';
 
 import {koa_1} from '../../src/plugins/types';
-import * as trace from '../trace';
+import * as testTraceModule from '../trace';
 
 import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkResponse} from './base';
 
@@ -39,7 +39,7 @@ export class Koa1 implements WebFramework {
     this.app.use(function*(next) {
       if (this.request.path === options.path) {
         // Context doesn't automatically get propagated to yielded functions.
-        yield trace.get().wrap(async (cb: Function) => {
+        yield testTraceModule.get().wrap(async (cb: Function) => {
           let response: WebFrameworkResponse|void;
           try {
             response = await options.fn();

@@ -19,7 +19,7 @@ import * as assert from 'assert';
 import {SpanDataType} from '../src/constants';
 import {TraceAgent} from '../src/plugin-types';
 
-import * as trace from './trace';
+import * as testTraceModule from './trace';
 import {asChildSpanData, asRootSpanData} from './utils';
 
 const identity = <T>(x: T) => x;
@@ -28,19 +28,19 @@ describe('Custom Trace API with CLS disabled', () => {
   let traceApi: TraceAgent;
 
   before(() => {
-    trace.setCLSForTest();
+    testTraceModule.setCLSForTest();
   });
 
   after(() => {
-    trace.setCLSForTest(trace.TestCLS);
+    testTraceModule.setCLSForTest(testTraceModule.TestCLS);
   });
 
   beforeEach(() => {
-    traceApi = trace.start({clsMechanism: 'none'});
+    traceApi = testTraceModule.start({clsMechanism: 'none'});
   });
 
   afterEach(() => {
-    trace.clearTraceData();
+    testTraceModule.clearTraceData();
   });
 
   it('should allow root spans to be created without constraints', () => {

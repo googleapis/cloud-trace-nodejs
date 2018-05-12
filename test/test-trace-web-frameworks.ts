@@ -24,7 +24,7 @@ import {TraceSpan} from '../src/trace';
 import {TraceLabels} from '../src/trace-labels';
 import {StackFrame} from '../src/util';
 
-import * as trace from './trace';
+import * as testTraceModule from './trace';
 import {assertSpanDuration, DEFAULT_SPAN_DURATION, isServerSpan, wait} from './utils';
 import {WebFramework, WebFrameworkConstructor} from './web-frameworks/base';
 import {Connect3} from './web-frameworks/connect';
@@ -56,15 +56,15 @@ const FRAMEWORKS: WebFrameworkConstructor[] = [
 describe('Web framework tracing', () => {
   let axios: typeof axiosModule;
   before(() => {
-    trace.setCLSForTest();
-    trace.setPluginLoaderForTest();
-    trace.start({ignoreUrls: [/ignore-me/]});
+    testTraceModule.setCLSForTest();
+    testTraceModule.setPluginLoaderForTest();
+    testTraceModule.start({ignoreUrls: [/ignore-me/]});
     axios = require('axios');
   });
 
   after(() => {
-    trace.setCLSForTest(trace.TestCLS);
-    trace.setPluginLoaderForTest(trace.TestPluginLoader);
+    testTraceModule.setCLSForTest(testTraceModule.TestCLS);
+    testTraceModule.setPluginLoaderForTest(testTraceModule.TestPluginLoader);
   });
 
   FRAMEWORKS.forEach((webFrameworkConstructor) => {
@@ -143,85 +143,90 @@ describe('Web framework tracing', () => {
       });
 
       afterEach(() => {
-        trace.clearTraceData();
+        testTraceModule.clearTraceData();
       });
 
       it('accurately measures get time (1 handler)', async () => {
         let recordedTime = 0;
-        await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(trace.get().isRealSpan(span));
-          recordedTime = Date.now();
-          await axios.get(`http://localhost:${port}/one-handler`);
-          recordedTime = Date.now() - recordedTime;
-          span!.endSpan();
-        });
-        assert.strictEqual(trace.getSpans().length, 3);
-        const serverSpan = trace.getOneSpan(isServerSpan);
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (span) => {
+              assert.ok(testTraceModule.get().isRealSpan(span));
+              recordedTime = Date.now();
+              await axios.get(`http://localhost:${port}/one-handler`);
+              recordedTime = Date.now() - recordedTime;
+              span!.endSpan();
+            });
+        assert.strictEqual(testTraceModule.getSpans().length, 3);
+        const serverSpan = testTraceModule.getOneSpan(isServerSpan);
         assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
       });
 
       it('accurately measures get time (2 handlers)', async () => {
         let recordedTime = 0;
-        await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(trace.get().isRealSpan(span));
-          recordedTime = Date.now();
-          // Hit endpoint with two middlewares/handlers.
-          await axios.get(`http://localhost:${port}/two-handlers`);
-          recordedTime = Date.now() - recordedTime;
-          span!.endSpan();
-        });
-        assert.strictEqual(trace.getSpans().length, 3);
-        const serverSpan = trace.getOneSpan(isServerSpan);
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (span) => {
+              assert.ok(testTraceModule.get().isRealSpan(span));
+              recordedTime = Date.now();
+              // Hit endpoint with two middlewares/handlers.
+              await axios.get(`http://localhost:${port}/two-handlers`);
+              recordedTime = Date.now() - recordedTime;
+              span!.endSpan();
+            });
+        assert.strictEqual(testTraceModule.getSpans().length, 3);
+        const serverSpan = testTraceModule.getOneSpan(isServerSpan);
         assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
       });
 
       it('handles errors', async () => {
-        await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(trace.get().isRealSpan(span));
-          // Hit endpoint which always throws an error.
-          await axios.get(`http://localhost:${port}/error`, {
-            validateStatus: () => true  // Obviates try/catch.
-          });
-          span!.endSpan();
-        });
-        assert.strictEqual(trace.getSpans().length, 3);
-        const serverSpan = trace.getOneSpan(isServerSpan);
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (span) => {
+              assert.ok(testTraceModule.get().isRealSpan(span));
+              // Hit endpoint which always throws an error.
+              await axios.get(`http://localhost:${port}/error`, {
+                validateStatus: () => true  // Obviates try/catch.
+              });
+              span!.endSpan();
+            });
+        assert.strictEqual(testTraceModule.getSpans().length, 3);
+        const serverSpan = testTraceModule.getOneSpan(isServerSpan);
         assert.strictEqual(
             serverSpan.labels[TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY], '500');
       });
 
       it('doesn\'t trace ignored urls', async () => {
-        await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(trace.get().isRealSpan(span));
-          // Hit endpoint that always gets ignored.
-          await axios.get(`http://localhost:${port}/ignore-me`);
-          span!.endSpan();
-        });
-        assert.strictEqual(trace.getSpans().length, 2);
-        assert.strictEqual(trace.getSpans(isServerSpan).length, 0);
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (span) => {
+              assert.ok(testTraceModule.get().isRealSpan(span));
+              // Hit endpoint that always gets ignored.
+              await axios.get(`http://localhost:${port}/ignore-me`);
+              span!.endSpan();
+            });
+        assert.strictEqual(testTraceModule.getSpans().length, 2);
+        assert.strictEqual(testTraceModule.getSpans(isServerSpan).length, 0);
       });
 
       it('ends span upon client abort', async () => {
-        await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(trace.get().isRealSpan(span));
-          // Hit endpoint, but time out before it has a chance to respond.
-          // To ensure that a trace is written, also waits
-          await axios
-              .get(
-                  `http://localhost:${port}/one-handler`,
-                  {timeout: DEFAULT_SPAN_DURATION / 2})
-              .catch(() => {/* swallow */});
-          // Wait remainder of server response time to ensure that trace is
-          // written.
-          await wait(DEFAULT_SPAN_DURATION / 2);
-          span!.endSpan();
-        });
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (span) => {
+              assert.ok(testTraceModule.get().isRealSpan(span));
+              // Hit endpoint, but time out before it has a chance to respond.
+              // To ensure that a trace is written, also waits
+              await axios
+                  .get(
+                      `http://localhost:${port}/one-handler`,
+                      {timeout: DEFAULT_SPAN_DURATION / 2})
+                  .catch(() => {/* swallow */});
+              // Wait remainder of server response time to ensure that trace is
+              // written.
+              await wait(DEFAULT_SPAN_DURATION / 2);
+              span!.endSpan();
+            });
         // Check that the aborted span is written.
         // Retry in intervals because to minimize flakes -- there is no way for
         // us to be notified client-side when the server has completed the
         // client-aborted request.
         for (let i = 0; i < ABORTED_SPAN_RETRIES; i++) {
-          if (trace.getSpans().length === 3) {
+          if (testTraceModule.getSpans().length === 3) {
             break;
           }
           if (i === ABORTED_SPAN_RETRIES - 1) {
@@ -238,7 +243,7 @@ describe('Web framework tracing', () => {
         let requests: Array<Promise<any>>;
         // Setting the URL allows us not to record this root span, but also
         // not get warnings for child spans.
-        await trace.get().runInRootSpan(
+        await testTraceModule.get().runInRootSpan(
             {name: 'outer', url: '/ignore-me'}, async (span) => {
               requests = [
                 axios.get(`http://localhost:${port}/hello?this-is=dog`),
@@ -247,37 +252,39 @@ describe('Web framework tracing', () => {
               await Promise.all(requests);
             });
         assert.strictEqual(
-            trace.getTraces(trace => trace.spans.some(isServerSpan)).length,
+            testTraceModule.getTraces(trace => trace.spans.some(isServerSpan))
+                .length,
             requests!.length);
       });
 
       it('propagates trace context', async () => {
-        await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-          assert.ok(trace.get().isRealSpan(span));
-          // Hits endpoint that will make an additional outgoing HTTP request
-          // (to another endpoint on the same server).
-          await axios.get(`http://localhost:${port}/propagate-hello`);
-          span!.endSpan();
-        });
-        assert.strictEqual(trace.getSpans().length, 5);
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (span) => {
+              assert.ok(testTraceModule.get().isRealSpan(span));
+              // Hits endpoint that will make an additional outgoing HTTP
+              // request (to another endpoint on the same server).
+              await axios.get(`http://localhost:${port}/propagate-hello`);
+              span!.endSpan();
+            });
+        assert.strictEqual(testTraceModule.getSpans().length, 5);
         const spans = [
           // outer
-          trace.getOneSpan(s => s.name === 'outer'),
+          testTraceModule.getOneSpan(s => s.name === 'outer'),
           // /propagate-hello client
-          trace.getOneSpan(
+          testTraceModule.getOneSpan(
               s => s.kind === 'RPC_CLIENT' &&
                   s.labels[TraceLabels.HTTP_URL_LABEL_KEY].includes(
                       '/propagate-hello')),
           // /propagate-hello server
-          trace.getOneSpan(
+          testTraceModule.getOneSpan(
               s => s.kind === 'RPC_SERVER' &&
                   s.name.includes('/propagate-hello')),
           // /hello client
-          trace.getOneSpan(
+          testTraceModule.getOneSpan(
               s => s.kind === 'RPC_CLIENT' &&
                   s.labels[TraceLabels.HTTP_URL_LABEL_KEY].includes('/hello')),
           // /hello server
-          trace.getOneSpan(
+          testTraceModule.getOneSpan(
               s => s.kind === 'RPC_SERVER' && s.name.includes('/hello'))
         ];
         for (let i = 0; i < spans.length - 1; i++) {
@@ -292,14 +299,15 @@ describe('Web framework tracing', () => {
         let serverSpan: TraceSpan;
 
         beforeEach(async () => {
-          await trace.get().runInRootSpan({name: 'outer'}, async (span) => {
-            assert.ok(trace.get().isRealSpan(span));
-            // Hit an endpoint with a query parameter.
-            await axios.get(`http://localhost:${port}/hello?this-is=dog`);
-            span!.endSpan();
-          });
-          assert.strictEqual(trace.getSpans().length, 3);
-          serverSpan = trace.getOneSpan(isServerSpan);
+          await testTraceModule.get().runInRootSpan(
+              {name: 'outer'}, async (span) => {
+                assert.ok(testTraceModule.get().isRealSpan(span));
+                // Hit an endpoint with a query parameter.
+                await axios.get(`http://localhost:${port}/hello?this-is=dog`);
+                span!.endSpan();
+              });
+          assert.strictEqual(testTraceModule.getSpans().length, 3);
+          serverSpan = testTraceModule.getOneSpan(isServerSpan);
         });
 
         it('applies the correct labels', () => {
