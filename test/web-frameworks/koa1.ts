@@ -15,6 +15,7 @@
  */
 
 import * as http from 'http';
+import {AddressInfo} from 'net';
 
 import {koa_1} from '../../src/plugins/types';
 import * as trace from '../trace';
@@ -63,7 +64,7 @@ export class Koa1 implements WebFramework {
       throw new Error('Server already running.');
     }
     this.server = this.app.listen(port);
-    return this.server!.address().port;
+    return (this.server!.address() as AddressInfo).port;
   }
 
   shutdown(): void {

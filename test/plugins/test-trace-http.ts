@@ -19,6 +19,7 @@ import {EventEmitter} from 'events';
 import * as fs from 'fs';
 import * as httpModule from 'http';
 import * as httpsModule from 'https';
+import {AddressInfo} from 'net';
 import * as path from 'path';
 import * as semver from 'semver';
 import * as stream from 'stream';
@@ -94,7 +95,7 @@ class Express4Secure extends Express4 {
                       {key: Express4Secure.key, cert: Express4Secure.cert},
                       this.app) as {} as httpModule.Server;
     this.server.listen(port);
-    return this.server.address().port;
+    return (this.server.address() as AddressInfo).port;
   }
 
   shutdown() {

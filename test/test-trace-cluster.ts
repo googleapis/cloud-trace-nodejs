@@ -18,6 +18,7 @@ import * as assert from 'assert';
 import axiosModule from 'axios';
 import * as cluster from 'cluster';
 import {Server} from 'http';
+import {AddressInfo} from 'net';
 
 import * as cls from '../src/cls';
 import {express_4 as expressModule} from '../src/plugins/types';
@@ -60,7 +61,7 @@ describe('test-trace-cluster', () => {
       const server = await new Promise<Server>(resolve => {
         const server = app.listen(0, () => resolve(server));
       });
-      const port = server.address().port;
+      const port = (server.address() as AddressInfo).port;
 
       // TODO(kjin): This fails because context is incorrectly propagated to
       // the request handler. See issue #659
