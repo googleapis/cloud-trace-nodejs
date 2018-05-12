@@ -28,11 +28,11 @@ describe('Custom Trace API with CLS disabled', () => {
   let traceApi: TraceAgent;
 
   before(() => {
-    trace.setCLS();
+    trace.setCLSForTest();
   });
 
   after(() => {
-    trace.setCLS(trace.TestCLS);
+    trace.setCLSForTest(trace.TestCLS);
   });
 
   beforeEach(() => {

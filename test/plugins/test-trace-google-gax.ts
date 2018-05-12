@@ -59,15 +59,15 @@ describe('Tracing with google-gax', () => {
   let googleGax: GaxModule;
 
   before(() => {
-    trace.setCLS();
-    trace.setPluginLoader();
+    trace.setCLSForTest();
+    trace.setPluginLoaderForTest();
     trace.start();
     googleGax = require('./fixtures/google-gax0.16');
   });
 
   after(() => {
-    trace.setCLS(trace.TestCLS);
-    trace.setPluginLoader(trace.TestPluginLoader);
+    trace.setCLSForTest(trace.TestCLS);
+    trace.setPluginLoaderForTest(trace.TestPluginLoader);
   });
 
   it(`doesn't break context`, (done) => {

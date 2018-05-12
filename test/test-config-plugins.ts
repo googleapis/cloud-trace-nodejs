@@ -34,11 +34,11 @@ describe('Configuration: Plugins', () => {
   }
 
   before(() => {
-    trace.setPluginLoader(ConfigTestPluginLoader);
+    trace.setPluginLoaderForTest(ConfigTestPluginLoader);
   });
 
   after(() => {
-    trace.setPluginLoader(trace.TestPluginLoader);
+    trace.setPluginLoaderForTest(trace.TestPluginLoader);
   });
 
   afterEach(() => {

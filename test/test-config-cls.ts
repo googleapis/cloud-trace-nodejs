@@ -43,11 +43,11 @@ describe('Behavior set by config for context propagation mechanism', () => {
   });
 
   before(() => {
-    trace.setCLS(CaptureConfigTestCLS);
+    trace.setCLSForTest(CaptureConfigTestCLS);
   });
 
   after(() => {
-    trace.setCLS(trace.TestCLS);
+    trace.setCLSForTest(trace.TestCLS);
   });
 
   const testCases: Array<

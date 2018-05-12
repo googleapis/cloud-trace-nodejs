@@ -30,16 +30,16 @@ describe('test-trace-cluster', () => {
   let axios: typeof axiosModule;
   let express: typeof expressModule;
   before(() => {
-    trace.setCLS();
-    trace.setPluginLoader();
+    trace.setCLSForTest();
+    trace.setPluginLoaderForTest();
     trace.start();
     express = require('express');
     axios = require('axios');
   });
 
   after(() => {
-    trace.setCLS(trace.TestCLS);
-    trace.setPluginLoader(trace.TestPluginLoader);
+    trace.setCLSForTest(trace.TestCLS);
+    trace.setPluginLoaderForTest(trace.TestPluginLoader);
   });
 
   it('should not interfere with express span', async () => {

@@ -86,10 +86,10 @@ export class TestPluginLoader extends PluginLoader {
   }
 }
 
-setCLS(TestCLS);
-setLogger(TestLogger);
-setTraceWriter(TestTraceWriter);
-setPluginLoader(TestPluginLoader);
+setCLSForTest(TestCLS);
+setLoggerForTest(TestLogger);
+setTraceWriterForTest(TestTraceWriter);
+setPluginLoaderForTest(TestPluginLoader);
 
 export type Predicate<T> = (value: T) => boolean;
 
@@ -105,7 +105,7 @@ export function get(): PluginTypes.TraceAgent {
 
 export type LoggerConstructor = new (logLevel?: keyof common.Logger) =>
     common.Logger;
-export function setLogger(impl?: LoggerConstructor) {
+export function setLoggerForTest(impl?: LoggerConstructor) {
   if (common.logger.__wrapped) {
     shimmer.unwrap(common, 'logger');
   }
@@ -131,15 +131,15 @@ export function setLogger(impl?: LoggerConstructor) {
   }
 }
 
-export function setCLS(impl?: typeof TraceCLS) {
+export function setCLSForTest(impl?: typeof TraceCLS) {
   cls['implementation'] = impl || TraceCLS;
 }
 
-export function setTraceWriter(impl?: typeof TraceWriter) {
+export function setTraceWriterForTest(impl?: typeof TraceWriter) {
   traceWriter['implementation'] = impl || TraceWriter;
 }
 
-export function setPluginLoader(impl?: typeof PluginLoader) {
+export function setPluginLoaderForTest(impl?: typeof PluginLoader) {
   pluginLoader['implementation'] = impl || PluginLoader;
 }
 
