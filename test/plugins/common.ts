@@ -29,7 +29,7 @@ import { cls } from '../../src/cls';
 import { TraceAgent } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import * as TracingPolicy from '../../src/tracing-policy';
-import { SpanDataType } from '../../src/constants';
+import { SpanType } from '../../src/constants';
 
 var semver = require('semver');
 
@@ -159,7 +159,7 @@ function assertDurationCorrect(expectedDuration, predicate) {
 function runInTransaction(fn) {
   testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
     return fn(function() {
-      assert.strictEqual(span.type, SpanDataType.ROOT);
+      assert.strictEqual(span.type, SpanType.ROOT);
       span.endSpan();
     });
   });
@@ -173,13 +173,13 @@ function createChildSpan(cb, duration) {
   var span = testTraceAgent.createChildSpan({ name: 'inner' });
   assert.ok(span);
   var t = setTimeout(function() {
-    assert.strictEqual(span.type, SpanDataType.CHILD);
+    assert.strictEqual(span.type, SpanType.CHILD);
     if (cb) {
       cb();
     }
   }, duration);
   return function() {
-    assert.strictEqual(span.type, SpanDataType.CHILD);
+    assert.strictEqual(span.type, SpanType.CHILD);
     span.endSpan();
     clearTimeout(t);
   };
@@ -194,7 +194,7 @@ function avoidTraceWriterAuth() {
 }
 
 function hasContext() {
-  return cls.get().getContext().type !== SpanDataType.UNCORRELATED;
+  return cls.get().getContext().type !== SpanType.UNCORRELATED;
 }
 
 module.exports = {

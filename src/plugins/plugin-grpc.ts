@@ -41,7 +41,7 @@ function patchClient(client, api) {
   /**
    * Wraps a callback so that the current span for this trace is also ended when
    * the callback is invoked.
-   * @param {SpanData} span - The span that should end after this callback.
+   * @param {Span} span - The span that should end after this callback.
    * @param {function(?Error, value=)} done - The callback to be wrapped.
    */
   function wrapCallback(span, done) {

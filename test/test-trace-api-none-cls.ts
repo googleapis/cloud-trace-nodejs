@@ -16,7 +16,7 @@
 
 import * as assert from 'assert';
 
-import {SpanDataType} from '../src/constants';
+import {SpanType} from '../src/constants';
 import {TraceAgent} from '../src/plugin-types';
 
 import * as testTraceModule from './trace';
@@ -45,9 +45,9 @@ describe('Custom Trace API with CLS disabled', () => {
 
   it('should allow root spans to be created without constraints', () => {
     traceApi.runInRootSpan({name: 'root1'}, root1 => {
-      assert.strictEqual(root1.type, SpanDataType.ROOT);
+      assert.strictEqual(root1.type, SpanType.ROOT);
       traceApi.runInRootSpan({name: 'root2'}, root2 => {
-        assert.strictEqual(root2.type, SpanDataType.ROOT);
+        assert.strictEqual(root2.type, SpanType.ROOT);
         assert.notStrictEqual(
             asRootSpanData(root2).trace.traceId,
             asRootSpanData(root1).trace.traceId);
@@ -71,7 +71,7 @@ describe('Custom Trace API with CLS disabled', () => {
     const root =
         asRootSpanData(traceApi.runInRootSpan({name: 'root'}, identity));
     const child = traceApi.createChildSpan({name: 'child'});
-    assert.strictEqual(child.type, SpanDataType.UNTRACED);
+    assert.strictEqual(child.type, SpanType.UNTRACED);
     child.endSpan();
     root.endSpan();
   });

@@ -24,7 +24,7 @@ import { traceWriter } from '../src/trace-writer';
 import * as TracingPolicy from '../src/tracing-policy';
 import { FORCE_NEW } from '../src/util';
 import { asRootSpanData, asChildSpanData } from './utils';
-import { SpanDataType } from '../src/constants';
+import { SpanType } from '../src/constants';
 
 var assert = require('assert');
 var common = require('./plugins/common'/*.js*/);
@@ -190,9 +190,9 @@ describe('Trace Interface', function() {
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan1_) {
         var rootSpan1 = asRootSpanData(rootSpan1_);
         traceAPI.runInRootSpan({name: 'root2', url: 'root2'}, function(rootSpan2) {
-          assert.strictEqual(rootSpan2.type, SpanDataType.UNCORRELATED);
+          assert.strictEqual(rootSpan2.type, SpanType.UNCORRELATED);
           const childSpan = rootSpan2.createChildSpan({ name: 'child' });
-          assert.strictEqual(childSpan.type, SpanDataType.UNCORRELATED);
+          assert.strictEqual(childSpan.type, SpanType.UNCORRELATED);
         });
         rootSpan1.endSpan();
         var span = common.getMatchingSpan(function() { return true; });
@@ -237,9 +237,9 @@ describe('Trace Interface', function() {
     it('should respect trace policy', function(done) {
       var traceAPI = createTraceAgent(new TracingPolicy.TraceNonePolicy());
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, function(rootSpan) {
-        assert.strictEqual(rootSpan.type, SpanDataType.UNTRACED);
+        assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
         const childSpan = rootSpan.createChildSpan({ name: 'child' });
-        assert.strictEqual(childSpan.type, SpanDataType.UNTRACED);
+        assert.strictEqual(childSpan.type, SpanType.UNTRACED);
         done();
       });
     });
@@ -250,7 +250,7 @@ describe('Trace Interface', function() {
         new TracingPolicy.TraceAllPolicy(),
         [url]));
       traceAPI.runInRootSpan({name: 'root1', url: url}, function(rootSpan) {
-        assert.strictEqual(rootSpan.type, SpanDataType.UNTRACED);
+        assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
       });
       traceAPI.runInRootSpan({name: 'root2', url: 'alternativeUrl'}, function(rootSpan_) {
         var rootSpan = asRootSpanData(rootSpan_);

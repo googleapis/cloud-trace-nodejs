@@ -26,7 +26,7 @@ import {AsyncListenerCLS} from '../src/cls/async-listener';
 import {CLS} from '../src/cls/base';
 import {NullCLS} from '../src/cls/null';
 import {SingularCLS} from '../src/cls/singular';
-import {SpanDataType} from '../src/constants';
+import {SpanType} from '../src/constants';
 import {createStackTrace, FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
@@ -255,24 +255,24 @@ describe('Continuation-Local Storage', () => {
 
   describe('TraceCLS', () => {
     const validTestCases:
-        Array<{config: TraceCLSConfig, expectedDefaultType: SpanDataType}> = [
+        Array<{config: TraceCLSConfig, expectedDefaultType: SpanType}> = [
           {
             config: {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
-            expectedDefaultType: SpanDataType.UNCORRELATED
+            expectedDefaultType: SpanType.UNCORRELATED
           },
           {
             config: {mechanism: TraceCLSMechanism.SINGULAR},
-            expectedDefaultType: SpanDataType.UNCORRELATED
+            expectedDefaultType: SpanType.UNCORRELATED
           },
           {
             config: {mechanism: TraceCLSMechanism.NONE},
-            expectedDefaultType: SpanDataType.UNTRACED
+            expectedDefaultType: SpanType.UNTRACED
           }
         ];
     if (asyncAwaitSupported) {
       validTestCases.push({
         config: {mechanism: TraceCLSMechanism.ASYNC_HOOKS},
-        expectedDefaultType: SpanDataType.UNCORRELATED
+        expectedDefaultType: SpanType.UNCORRELATED
       });
     }
     for (const testCase of validTestCases) {
@@ -298,7 +298,7 @@ describe('Continuation-Local Storage', () => {
            () => {
              c.disable();
              assert.ok(!c.isEnabled());
-             assert.ok(c.getContext().type, SpanDataType.UNTRACED);
+             assert.ok(c.getContext().type, SpanType.UNTRACED);
              assert.ok(c.runWithNewContext(() => 'hi'), 'hi');
              const fn = () => {};
              assert.strictEqual(c.bindWithCurrentContext(fn), fn);

@@ -23,8 +23,8 @@ import {AsyncListenerCLS} from './cls/async-listener';
 import {CLS, Func} from './cls/base';
 import {NullCLS} from './cls/null';
 import {SingularCLS} from './cls/singular';
-import {SpanDataType} from './constants';
-import {SpanData, SpanOptions} from './plugin-types';
+import {SpanType} from './constants';
+import {Span, SpanOptions} from './plugin-types';
 import {Trace, TraceSpan} from './trace';
 import {Singleton} from './util';
 
@@ -33,12 +33,12 @@ const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 export interface RealRootContext {
   readonly span: TraceSpan;
   readonly trace: Trace;
-  createChildSpan(options: SpanOptions): SpanData;
-  readonly type: SpanDataType.ROOT;
+  createChildSpan(options: SpanOptions): Span;
+  readonly type: SpanType.ROOT;
 }
 
 export interface PhantomRootContext {
-  readonly type: SpanDataType.UNCORRELATED|SpanDataType.UNTRACED;
+  readonly type: SpanType.UNCORRELATED|SpanType.UNTRACED;
 }
 
 /**
@@ -101,8 +101,8 @@ export class TraceCLS implements CLS<RootContext> {
   private CLSClass: CLSConstructor;
   private enabled = false;
 
-  private static UNCORRELATED: RootContext = {type: SpanDataType.UNCORRELATED};
-  private static UNTRACED: RootContext = {type: SpanDataType.UNTRACED};
+  private static UNCORRELATED: RootContext = {type: SpanType.UNCORRELATED};
+  private static UNTRACED: RootContext = {type: SpanType.UNTRACED};
 
   /**
    * Stack traces are captured when a root span is started. Because the stack
