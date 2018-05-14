@@ -49,23 +49,16 @@ function createTraceAgent(policy?, config?) {
 function assertAPISurface(traceAPI) {
   assert.strictEqual(typeof traceAPI.enhancedDatabaseReportingEnabled(), 'boolean');
   traceAPI.runInRootSpan({ name: 'root' }, function(root) {
-    // TODO: Once NullSpans are in the functional implementation,
-    // remove the conditional check
-    if (root) {
-      assert.strictEqual(typeof root.addLabel, 'function');
-      assert.strictEqual(typeof root.endSpan, 'function');
-      assert.strictEqual(typeof root.getTraceContext(), 'string');
-    }
-  });
-  assert.strictEqual(typeof traceAPI.getCurrentContextId, 'function');
-  assert.strictEqual(typeof traceAPI.getWriterProjectId, 'function');
-  var child = traceAPI.createChildSpan({ name: 'child' });
-  // TODO: Ditto but with child spans
-  if (child) {
+    assert.strictEqual(typeof root.addLabel, 'function');
+    assert.strictEqual(typeof root.endSpan, 'function');
+    assert.strictEqual(typeof root.getTraceContext(), 'string');
+    var child = traceAPI.createChildSpan({ name: 'child' });
     assert.strictEqual(typeof child.addLabel, 'function');
     assert.strictEqual(typeof child.endSpan, 'function');
     assert.strictEqual(typeof child.getTraceContext(), 'string');
-  }
+  });
+  assert.strictEqual(typeof traceAPI.getCurrentContextId, 'function');
+  assert.strictEqual(typeof traceAPI.getWriterProjectId, 'function');
   assert.strictEqual(typeof traceAPI.wrap(function() {}), 'function');
   assert.strictEqual(typeof traceAPI.wrapEmitter(new EventEmitter()), 'undefined');
   assert.strictEqual(typeof traceAPI.constants, 'object');
