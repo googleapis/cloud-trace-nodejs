@@ -85,7 +85,6 @@ describe('SpanData', () => {
     });
 
     it('accurately records timestamps', async () => {
-      // Create another span, to determine start time correctness
       const startLowerBound = Date.now();
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
       const startUpperBound = Date.now();
@@ -104,6 +103,16 @@ describe('SpanData', () => {
       const ascending = (a: number, b: number) => a - b;
       assert.deepStrictEqual(
           expectedTimes.slice().sort(ascending), expectedTimes);
+    });
+
+    it('accepts a custom span end time', () => {
+      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      const startTime = new Date(spanData.span.startTime).getTime();
+      // This input Date is far enough in the future that it's unlikely that the
+      // timethis function was called could be close to it.
+      spanData.endSpan(new Date(startTime + 1000000));
+      const endTime = new Date(spanData.span.endTime).getTime();
+      assert.strictEqual(endTime - startTime, 1000000);
     });
 
     it('truncates large span names to limit', () => {
