@@ -127,21 +127,24 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
     }
   }
 
-  runWithNewContext<T>(fn: Func<T>): T {
+  private runWithContext<T>(fn: Func<T>, context: Reference<Context>): T {
     // Run fn() so that any AsyncResource objects that are created in
     // fn will have the context set by this.setContext.
     const id = this.ah.executionAsyncId();
     const oldContext = this.contexts[id];
     // Reset the current context. This prevents this.getContext from returning
     // a stale value.
-    this.contexts[id] = {value: this.defaultContext};
+    this.contexts[id] = context;
     try {
       return fn();
     } finally {
-      // Revert the current context to what it was before any calls to
-      // this.setContext from within fn.
+      // Revert the current context to what it was before fn was called.
       this.contexts[id] = oldContext;
     }
+  }
+
+  runWithNewContext<T>(fn: Func<T>): T {
+    return this.runWithContext(fn, {value: this.defaultContext});
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {
@@ -156,22 +159,11 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
       return fn;
     }
     const that = this;
-    // TODO(kjin): This code is somewhat duplicated with runWithNewContext.
-    //             Can we merge this?
     // Wrap fn so that any AsyncResource objects that are created in fn will
     // share context with that of the AsyncResource with the given ID.
     const contextWrapper: ContextWrapped<Func<T>> = function(this: {}) {
-      const id = that.ah.executionAsyncId();
-      const oldContext = that.contexts[id];
-      // Restore the captured context.
-      that.contexts[id] = boundContext;
-      try {
-        return fn.apply(this, arguments) as T;
-      } finally {
-        // Revert the current context to what it was before it was set to the
-        // captured context.
-        that.contexts[id] = oldContext;
-      }
+      return that.runWithContext(
+          () => fn.apply(this, arguments) as T, boundContext);
     };
     // Prevent re-wrapping.
     contextWrapper[WRAPPED] = true;
