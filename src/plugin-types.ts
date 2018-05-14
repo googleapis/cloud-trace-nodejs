@@ -16,7 +16,7 @@
 
 // tslint:disable:no-any
 
-import {Constants, SpanDataType} from './constants';
+import {Constants, SpanType} from './constants';
 import {TraceLabels} from './trace-labels';
 
 export type Func<T> = (...args: any[]) => T;
@@ -26,9 +26,8 @@ export interface TraceAgentExtension { _google_trace_patched: boolean; }
 
 /**
  * Represents a trace span.
- * TODO(kjin): This should be called `Span`.
  */
-export interface SpanData {
+export interface Span {
   /**
    * Gets the current trace context serialized as a string, or an empty string
    * if it can't be generated.
@@ -46,9 +45,9 @@ export interface SpanData {
   addLabel(key: string, value: any): void;
 
   /**
-   * The current span type. See `SpanDataType` for more information.
+   * The current span type. See `SpanType` for more information.
    */
-  readonly type: SpanDataType;
+  readonly type: SpanType;
 
   /**
    * Ends the span. This method should only be called once.
@@ -61,7 +60,7 @@ export interface SpanData {
 /**
  * Represents the root span within a trace.
  */
-export interface RootSpanData extends SpanData {
+export interface RootSpan extends Span {
   /**
    * Creates and starts a child span under this root span.
    * If the root span is a real span (type = ROOT), the child span will be as
@@ -69,9 +68,9 @@ export interface RootSpanData extends SpanData {
    * Otherwise, if the root span's type is UNTRACED or UNCORRELATED, the child
    * span will be of the same type.
    * @param options Options for creating the child span.
-   * @returns A new SpanData object.
+   * @returns A new Span object.
    */
-  createChildSpan(options?: SpanOptions): SpanData;
+  createChildSpan(options?: SpanOptions): Span;
 }
 
 /**
@@ -119,12 +118,12 @@ export interface TraceAgent {
    * span is created and propagated.
    * @param fn A function that will be called exactly
    * once. If the incoming request should be traced, a root span will be
-   * created, and this function will be called with a SpanData object exposing
+   * created, and this function will be called with a Span object exposing
    * functions operating on the root span; otherwise, it will be called with
-   * a phantom SpanData object.
+   * a phantom Span object.
    * @returns The return value of calling fn.
    */
-  runInRootSpan<T>(options: RootSpanOptions, fn: (span: RootSpanData) => T): T;
+  runInRootSpan<T>(options: RootSpanOptions, fn: (span: RootSpan) => T): T;
 
   /**
    * Returns a unique identifier for the currently active context. This can be
@@ -144,19 +143,19 @@ export interface TraceAgent {
   getWriterProjectId(): string|null;
 
   /**
-   * Creates and returns a new SpanData object nested within the current root
+   * Creates and returns a new Span object nested within the current root
    * span, which is detected automatically.
    * If the root span is a phantom span or doesn't exist, the child span will
    * be a phantom span as well.
    * @param options Options for creating the child span.
-   * @returns A new SpanData object.
+   * @returns A new Span object.
    */
-  createChildSpan(options?: SpanOptions): SpanData;
+  createChildSpan(options?: SpanOptions): Span;
 
   /**
-   * Returns whether a given span is real or not by checking its SpanDataType.
+   * Returns whether a given span is real or not by checking its SpanType.
    */
-  isRealSpan(span: SpanData): boolean;
+  isRealSpan(span: Span): boolean;
 
   /**
    * Generates a stringified trace context that should be set as the trace
@@ -195,7 +194,7 @@ export interface TraceAgent {
 
   readonly constants: typeof Constants;
   readonly labels: typeof TraceLabels;
-  readonly spanTypes: typeof SpanDataType;
+  readonly spanTypes: typeof SpanType;
 }
 
 export interface Patch<T> {

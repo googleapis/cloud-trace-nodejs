@@ -18,8 +18,8 @@
 
 import * as assert from 'assert';
 
-import {SpanDataType} from '../src/constants';
-import {SpanData} from '../src/plugin-types';
+import {SpanType} from '../src/constants';
+import {Span} from '../src/plugin-types';
 import {ChildSpanData, RootSpanData} from '../src/span-data';
 import {TraceSpan} from '../src/trace';
 
@@ -55,13 +55,13 @@ export function assertSpanDuration(span: TraceSpan, bounds: [number, number]) {
           bounds[0]}, ${bounds[1]}] ms`);
 }
 
-export function asRootSpanData(arg: SpanData): RootSpanData {
-  assert.strictEqual(arg.type, SpanDataType.ROOT);
+export function asRootSpanData(arg: Span): RootSpanData {
+  assert.strictEqual(arg.type, SpanType.ROOT);
   return arg as RootSpanData;
 }
 
-export function asChildSpanData(arg: SpanData): ChildSpanData {
-  assert.strictEqual(arg.type, SpanDataType.CHILD);
+export function asChildSpanData(arg: Span): ChildSpanData {
+  assert.strictEqual(arg.type, SpanType.CHILD);
   return arg as ChildSpanData;
 }
 

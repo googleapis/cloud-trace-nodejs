@@ -16,7 +16,7 @@
 
 import * as assert from 'assert';
 
-import {Constants, SpanDataType} from '../src/constants';
+import {Constants, SpanType} from '../src/constants';
 import {BaseSpanData, ChildSpanData, RootSpanData} from '../src/span-data';
 import {Trace} from '../src/trace';
 import {TraceLabels} from '../src/trace-labels';

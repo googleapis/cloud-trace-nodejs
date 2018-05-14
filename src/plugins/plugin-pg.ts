@@ -18,7 +18,7 @@ import {EventEmitter} from 'events';
 import * as shimmer from 'shimmer';
 import {Readable} from 'stream';
 
-import {Patch, Plugin, SpanData} from '../plugin-types';
+import {Patch, Plugin, Span} from '../plugin-types';
 
 import {pg_6, pg_7} from './types';
 
@@ -36,7 +36,7 @@ function isSubmittable(obj: any): obj is {submit: Function} {
 
 const noOp = () => {};
 
-function populateLabelsFromInputs(span: SpanData, args: ClientQueryArguments) {
+function populateLabelsFromInputs(span: Span, args: ClientQueryArguments) {
   const queryObj = args[0];
   if (typeof queryObj === 'object') {
     if (queryObj.text) {
@@ -54,7 +54,7 @@ function populateLabelsFromInputs(span: SpanData, args: ClientQueryArguments) {
 }
 
 function populateLabelsFromOutputs(
-    span: SpanData, err: Error|null, res?: pg_7.QueryResult) {
+    span: Span, err: Error|null, res?: pg_7.QueryResult) {
   if (err) {
     span.addLabel('error', err);
   }

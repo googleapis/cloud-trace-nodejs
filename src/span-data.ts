@@ -17,9 +17,9 @@
 import * as crypto from 'crypto';
 import * as util from 'util';
 
-import {Constants, SpanDataType} from './constants';
+import {Constants, SpanType} from './constants';
 import * as types from './plugin-types';
-import {SpanData, SpanOptions} from './plugin-types';
+import {Span, SpanOptions} from './plugin-types';
 import {SpanKind, Trace, TraceSpan} from './trace';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
@@ -45,9 +45,9 @@ function randomSpanId() {
 /**
  * Represents a real trace span.
  */
-export abstract class BaseSpanData implements SpanData {
+export abstract class BaseSpanData implements Span {
   readonly span: TraceSpan;
-  abstract readonly type: SpanDataType;
+  abstract readonly type: SpanType;
 
   /**
    * Creates a trace context object.
@@ -112,8 +112,8 @@ export abstract class BaseSpanData implements SpanData {
 /**
  * Represents a real root span, which corresponds to an incoming request.
  */
-export class RootSpanData extends BaseSpanData implements types.RootSpanData {
-  readonly type = SpanDataType.ROOT;
+export class RootSpanData extends BaseSpanData implements types.RootSpan {
+  readonly type = SpanType.ROOT;
 
   constructor(
       trace: Trace, spanName: string, parentSpanId: string,
@@ -122,7 +122,7 @@ export class RootSpanData extends BaseSpanData implements types.RootSpanData {
     this.span.kind = SpanKind.RPC_SERVER;
   }
 
-  createChildSpan(options?: SpanOptions): SpanData {
+  createChildSpan(options?: SpanOptions): Span {
     options = options || {name: ''};
     const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
     return new ChildSpanData(
@@ -142,7 +142,7 @@ export class RootSpanData extends BaseSpanData implements types.RootSpanData {
  * Represents a real child span, which corresponds to an outgoing RPC.
  */
 export class ChildSpanData extends BaseSpanData {
-  readonly type = SpanDataType.CHILD;
+  readonly type = SpanType.CHILD;
 
   constructor(
       trace: Trace, spanName: string, parentSpanId: string,
@@ -153,7 +153,7 @@ export class ChildSpanData extends BaseSpanData {
 }
 
 // Helper function to generate static virtual trace spans.
-function createPhantomSpanData<T extends SpanDataType>(spanType: T): SpanData&
+function createPhantomSpanData<T extends SpanType>(spanType: T): Span&
     {readonly type: T} {
   return Object.freeze(Object.assign(
       {
@@ -172,14 +172,14 @@ function createPhantomSpanData<T extends SpanDataType>(spanType: T): SpanData&
  * created because the correct root span couldn't be determined.
  */
 export const UNCORRELATED_CHILD_SPAN =
-    createPhantomSpanData(SpanDataType.UNCORRELATED);
+    createPhantomSpanData(SpanType.UNCORRELATED);
 
 /**
  * A virtual trace span that indicates that a real child span couldn't be
  * created because the corresponding root span was disallowed by user
  * configuration.
  */
-export const UNTRACED_CHILD_SPAN = createPhantomSpanData(SpanDataType.UNTRACED);
+export const UNTRACED_CHILD_SPAN = createPhantomSpanData(SpanType.UNTRACED);
 
 /**
  * A virtual trace span that indicates that a real root span couldn't be

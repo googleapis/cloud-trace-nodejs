@@ -45,7 +45,7 @@ export const Constants = {
 /**
  * An enumeration of the possible "types" of spans.
  */
-export enum SpanDataType {
+export enum SpanType {
   /**
    * This span object was created in circumstances where it is impossible to
    * determine the associated request, and does not represent a real trace span.
