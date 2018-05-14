@@ -109,7 +109,7 @@ describe('SpanData', () => {
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
       const startTime = new Date(spanData.span.startTime).getTime();
       // This input Date is far enough in the future that it's unlikely that the
-      // timethis function was called could be close to it.
+      // time this function was called could be close to it.
       spanData.endSpan(new Date(startTime + 1000000));
       const endTime = new Date(spanData.span.endTime).getTime();
       assert.strictEqual(endTime - startTime, 1000000);
