@@ -3,8 +3,8 @@
 [![Greenkeeper badge](https://badges.greenkeeper.io/GoogleCloudPlatform/cloud-trace-nodejs.svg)](https://greenkeeper.io/)
 
 [![NPM Version][npm-image]][npm-url]
-[![Build Status][travis-image]][travis-url]
-[![Test Coverage][coveralls-image]][coveralls-url]
+[![Build Status][circle-image]][circle-url]
+[![Test Coverage][codecov-image]][codecov-url]
 [![Dependency Status][david-image]][david-url]
 [![devDependency Status][david-dev-image]][david-dev-url]
 [![Known Vulnerabilities][snyk-image]][snyk-url]
@@ -151,8 +151,8 @@ We are actively looking for feedback on this new implementation. Please file an 
 [async-listener]: https://www.npmjs.com/package/async-listener
 [cloud-console]: https://console.cloud.google.com
 [continuation-local-storage]: https://www.npmjs.com/package/continuation-local-storage
-[coveralls-image]: https://coveralls.io/repos/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/GoogleCloudPlatform/cloud-trace-nodejs?branch=master
+[codecov-image]: https://codecov.io/gh/GoogleCloudPlatform/cloud-trace-nodejs/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/GoogleCloudPlatform/cloud-trace-nodejs
 [david-dev-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs/dev-status.svg
 [david-dev-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs?type=dev
 [david-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs.svg
@@ -163,5 +163,5 @@ We are actively looking for feedback on this new implementation. Please file an 
 [setting-up-stackdriver-trace]: https://cloud.google.com/trace/docs/setup/nodejs
 [snyk-image]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg
 [snyk-url]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs
-[travis-image]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs.svg?branch=master
-[travis-url]: https://travis-ci.org/GoogleCloudPlatform/cloud-trace-nodejs
+[circle-image]: https://circleci.com/gh/GoogleCloudPlatform/cloud-trace-nodejs.svg?style=svg
+[circle-url]: https://circleci.com/gh/GoogleCloudPlatform/cloud-trace-nodejs
