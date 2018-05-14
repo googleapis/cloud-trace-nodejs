@@ -37,7 +37,7 @@
 
 import * as assert from 'assert';
 
-import * as trace from '../trace';
+import * as testTraceModule from '../trace';
 
 interface ApiCallSettings {
   merge: () => {
@@ -59,38 +59,38 @@ describe('Tracing with google-gax', () => {
   let googleGax: GaxModule;
 
   before(() => {
-    trace.setCLS();
-    trace.setPluginLoader();
-    trace.start();
+    testTraceModule.setCLSForTest();
+    testTraceModule.setPluginLoaderForTest();
+    testTraceModule.start();
     googleGax = require('./fixtures/google-gax0.16');
   });
 
   after(() => {
-    trace.setCLS(trace.TestCLS);
-    trace.setPluginLoader(trace.TestPluginLoader);
+    testTraceModule.setCLSForTest(testTraceModule.TestCLS);
+    testTraceModule.setPluginLoaderForTest(testTraceModule.TestPluginLoader);
   });
 
   it(`doesn't break context`, (done) => {
     const authPromise = Promise.resolve(
         ((args, metadata, opts, cb) => {
           // Simulate an RPC.
-          trace.get().createChildSpan({name: 'in-request'}).endSpan();
+          testTraceModule.get().createChildSpan({name: 'in-request'}).endSpan();
           setImmediate(() => cb(null, {}));
         }) as InnerApiCall<{}, {}>);
     const apiCall =
         googleGax.createApiCall(authPromise, {merge: () => ({otherArgs: {}})});
 
-    trace.get().runInRootSpan({name: 'root'}, (root) => {
+    testTraceModule.get().runInRootSpan({name: 'root'}, (root) => {
       apiCall({}, {timeout: 20}, (err) => {
         assert.ifError(err);
-        trace.get().createChildSpan({name: 'in-callback'}).endSpan();
+        testTraceModule.get().createChildSpan({name: 'in-callback'}).endSpan();
         root.endSpan();
 
         // Both children should be nested under the root span where the API call
         // was made, instead of inheriting the (non-existent) context where
         // createApiCall was called.
-        const correctTrace =
-            trace.getOneTrace(t => t.spans.some(span => span.name === 'root'));
+        const correctTrace = testTraceModule.getOneTrace(
+            t => t.spans.some(span => span.name === 'root'));
         assert.strictEqual(correctTrace.spans.length, 3);
         done();
       });

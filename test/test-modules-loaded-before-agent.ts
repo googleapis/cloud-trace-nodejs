@@ -19,7 +19,7 @@ import * as assert from 'assert';
 import * as shimmer from 'shimmer';
 
 import {TestLogger} from './logger';
-import * as trace from './trace';
+import * as testTraceModule from './trace';
 
 describe('modules loaded before agent', () => {
   const logger = new TestLogger();
@@ -36,7 +36,7 @@ describe('modules loaded before agent', () => {
   });
 
   it('should log if modules were loaded before agent', () => {
-    trace.start();
+    testTraceModule.start();
     assert.strictEqual(
         logger.getNumLogsWith(
             'error', /modules.*loaded.*before.*trace agent.*: .*shimmer/),

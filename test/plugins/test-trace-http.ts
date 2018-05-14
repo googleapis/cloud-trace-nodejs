@@ -26,7 +26,7 @@ import * as stream from 'stream';
 import {URL} from 'url';
 
 import {TraceSpan} from '../../src/trace';
-import * as trace from '../trace';
+import * as testTraceModule from '../trace';
 import {ASSERT_SPAN_TIME_TOLERANCE_MS, assertSpanDuration, DEFAULT_SPAN_DURATION} from '../utils';
 import {Express4} from '../web-frameworks/express';
 
@@ -117,9 +117,9 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
   describe(`${nodule} client tracing`, () => {
     let http: {get: HttpRequest; request: HttpRequest;};
     before(() => {
-      trace.setCLS();
-      trace.setPluginLoader();
-      trace.start({
+      testTraceModule.setCLSForTest();
+      testTraceModule.setPluginLoaderForTest();
+      testTraceModule.start({
         plugins: {
           express: ''  // we are not interested in tracing express.
         }
@@ -128,7 +128,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
     });
 
     afterEach(() => {
-      trace.clearTraceData();
+      testTraceModule.clearTraceData();
     });
 
     describe('in various usage scenarios', () => {
@@ -225,16 +225,16 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
         it(`creates spans with accurate timespans when ${testCase.description}`,
            async () => {
              let recordedTime = 0;
-             await trace.get().runInRootSpan(
+             await testTraceModule.get().runInRootSpan(
                  {name: 'outer'}, async (rootSpan) => {
-                   assert.ok(trace.get().isRealSpan(rootSpan));
+                   assert.ok(testTraceModule.get().isRealSpan(rootSpan));
                    recordedTime = Date.now();
                    await testCase.fn();
                    recordedTime = Date.now() - recordedTime;
                    rootSpan.endSpan();
                  });
              const clientSpan =
-                 trace.getOneSpan(span => span.kind === 'RPC_CLIENT');
+                 testTraceModule.getOneSpan(span => span.kind === 'RPC_CLIENT');
              assertSpanDuration(
                  clientSpan,
                  [recordedTime - ASSERT_SPAN_TIME_TOLERANCE_MS, recordedTime]);
@@ -256,15 +256,18 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       });
       const port = server.listen(0);
       try {
-        await trace.get().runInRootSpan({name: 'outer'}, async (rootSpan) => {
-          assert.ok(trace.get().isRealSpan(rootSpan));
-          const waitForResponse = new WaitForResponse();
-          http.get(`http://localhost:${port}`, waitForResponse.handleResponse);
-          await waitForResponse.done;
-          rootSpan.endSpan();
-        });
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (rootSpan) => {
+              assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+              const waitForResponse = new WaitForResponse();
+              http.get(
+                  `http://localhost:${port}`, waitForResponse.handleResponse);
+              await waitForResponse.done;
+              rootSpan.endSpan();
+            });
         assert.doesNotThrow(
-            () => trace.getOneSpan(span => span.kind === 'RPC_CLIENT'));
+            () =>
+                testTraceModule.getOneSpan(span => span.kind === 'RPC_CLIENT'));
       } finally {
         server.shutdown();
       }
@@ -281,19 +284,20 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       });
       const port = server.listen(0);
       try {
-        await trace.get().runInRootSpan({name: 'outer'}, async (rootSpan) => {
-          assert.ok(trace.get().isRealSpan(rootSpan));
-          const waitForResponse = new WaitForResponse();
-          http.get(
-              {port, rejectUnauthorized: false},
-              waitForResponse.handleResponse);
-          await waitForResponse.done;
-          const afterHttpSpan =
-              trace.get().createChildSpan({name: 'after-http'});
-          assert.ok(trace.get().isRealSpan(afterHttpSpan));
-          afterHttpSpan.endSpan();
-          rootSpan.endSpan();
-        });
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (rootSpan) => {
+              assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+              const waitForResponse = new WaitForResponse();
+              http.get(
+                  {port, rejectUnauthorized: false},
+                  waitForResponse.handleResponse);
+              await waitForResponse.done;
+              const afterHttpSpan =
+                  testTraceModule.get().createChildSpan({name: 'after-http'});
+              assert.ok(testTraceModule.get().isRealSpan(afterHttpSpan));
+              afterHttpSpan.endSpan();
+              rootSpan.endSpan();
+            });
       } finally {
         server.shutdown();
       }
@@ -310,19 +314,22 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       });
       const port = server.listen(0);
       try {
-        await trace.get().runInRootSpan({name: 'outer'}, async (rootSpan) => {
-          assert.ok(trace.get().isRealSpan(rootSpan));
-          const waitForResponse = new WaitForResponse();
-          const headers: httpModule.OutgoingHttpHeaders = {};
-          headers[trace.get().constants.TRACE_AGENT_REQUEST_HEADER] = 'yay';
-          http.get(
-              {port, rejectUnauthorized: false, headers},
-              waitForResponse.handleResponse);
-          await waitForResponse.done;
-          rootSpan.endSpan();
-        });
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (rootSpan) => {
+              assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+              const waitForResponse = new WaitForResponse();
+              const headers: httpModule.OutgoingHttpHeaders = {};
+              headers[testTraceModule.get()
+                          .constants.TRACE_AGENT_REQUEST_HEADER] = 'yay';
+              http.get(
+                  {port, rejectUnauthorized: false, headers},
+                  waitForResponse.handleResponse);
+              await waitForResponse.done;
+              rootSpan.endSpan();
+            });
         assert.strictEqual(
-            trace.getSpans(span => span.kind === 'RPC_CLIENT').length, 0);
+            testTraceModule.getSpans(span => span.kind === 'RPC_CLIENT').length,
+            0);
       } finally {
         server.shutdown();
       }
@@ -330,13 +337,15 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
 
     it('should not break with no target', () => {
       return new Promise(
-          resolve => trace.get().runInRootSpan({name: 'outer'}, (rootSpan) => {
-            assert.ok(trace.get().isRealSpan(rootSpan));
-            (http.get as (arg?: {}) => EventEmitter)().on('error', (err) => {
-              resolve();
-            });
-            rootSpan.endSpan();
-          }));
+          resolve => testTraceModule.get().runInRootSpan(
+              {name: 'outer'}, (rootSpan) => {
+                assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+                (http.get as (arg?: {}) => EventEmitter)().on(
+                    'error', (err) => {
+                      resolve();
+                    });
+                rootSpan.endSpan();
+              }));
     });
 
     it('should handle concurrent requests', async () => {
@@ -352,22 +361,23 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       });
       const port = server.listen(0);
       try {
-        await trace.get().runInRootSpan({name: 'outer'}, async (rootSpan) => {
-          await Promise.all([0, 1, 2, 3, 4].map(async i => {
-            assert.ok(trace.get().isRealSpan(rootSpan));
-            const waitForResponse = new WaitForResponse();
-            http.get(
-                {port, rejectUnauthorized: false},
-                waitForResponse.handleResponse);
-            await waitForResponse.done;
-          }));
-          rootSpan.endSpan();
-        });
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (rootSpan) => {
+              await Promise.all([0, 1, 2, 3, 4].map(async i => {
+                assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+                const waitForResponse = new WaitForResponse();
+                http.get(
+                    {port, rejectUnauthorized: false},
+                    waitForResponse.handleResponse);
+                await waitForResponse.done;
+              }));
+              rootSpan.endSpan();
+            });
         assert.strictEqual(
-            trace.getSpans(span => span.kind === 'RPC_CLIENT')
+            testTraceModule.getSpans(span => span.kind === 'RPC_CLIENT')
                 .map(
                     span => Number(
-                        span.labels[trace.get()
+                        span.labels[testTraceModule.get()
                                         .labels.HTTP_RESPONSE_CODE_LABEL_KEY]))
                 .reduce((a, b) => a + b, 0),
             1010);
@@ -377,8 +387,10 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
     });
 
     describe('trace spans', () => {
-      const ERROR_DETAILS_NAME = trace.get().labels.ERROR_DETAILS_NAME;
-      const ERROR_DETAILS_MESSAGE = trace.get().labels.ERROR_DETAILS_MESSAGE;
+      const ERROR_DETAILS_NAME =
+          testTraceModule.get().labels.ERROR_DETAILS_NAME;
+      const ERROR_DETAILS_MESSAGE =
+          testTraceModule.get().labels.ERROR_DETAILS_MESSAGE;
       let port: number;
       let successSpan: TraceSpan;
       let errorSpan: TraceSpan;
@@ -394,25 +406,26 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           }
         });
         port = server.listen(0);
-        await trace.get().runInRootSpan({name: 'outer'}, async (rootSpan) => {
-          assert.ok(trace.get().isRealSpan(rootSpan));
-          let waitForResponse = new WaitForResponse();
-          http.get(
-              {port, rejectUnauthorized: false, path: '/?foo=bar'},
-              waitForResponse.handleResponse);
-          await waitForResponse.done;
-          server.server!.timeout = DEFAULT_SPAN_DURATION / 2;
-          waitForResponse = new WaitForResponse();
-          http.get({port, rejectUnauthorized: false}).on('error', () => {
-            waitForResponse.handleDone();
-          });
-          await waitForResponse.done;
-          rootSpan.endSpan();
-        });
-        successSpan = trace.getOneSpan(
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (rootSpan) => {
+              assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+              let waitForResponse = new WaitForResponse();
+              http.get(
+                  {port, rejectUnauthorized: false, path: '/?foo=bar'},
+                  waitForResponse.handleResponse);
+              await waitForResponse.done;
+              server.server!.timeout = DEFAULT_SPAN_DURATION / 2;
+              waitForResponse = new WaitForResponse();
+              http.get({port, rejectUnauthorized: false}).on('error', () => {
+                waitForResponse.handleDone();
+              });
+              await waitForResponse.done;
+              rootSpan.endSpan();
+            });
+        successSpan = testTraceModule.getOneSpan(
             span =>
                 span.kind === 'RPC_CLIENT' && !span.labels[ERROR_DETAILS_NAME]);
-        errorSpan = trace.getOneSpan(
+        errorSpan = testTraceModule.getOneSpan(
             span => span.kind === 'RPC_CLIENT' &&
                 !!span.labels[ERROR_DETAILS_NAME]);
         server.shutdown();
@@ -424,7 +437,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
 
       it('should include custom port number in the url label', () => {
         assert.strictEqual(
-            successSpan.labels[trace.get().labels.HTTP_URL_LABEL_KEY],
+            successSpan.labels[testTraceModule.get().labels.HTTP_URL_LABEL_KEY],
             `${nodule}://localhost:${port}/?foo=bar`);
       });
 

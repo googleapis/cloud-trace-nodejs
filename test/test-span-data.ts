@@ -37,7 +37,7 @@ describe('SpanData', () => {
   let trace: Trace;
 
   before(() => {
-    traceAgentModule.setTraceWriter(CaptureSpanTraceWriter);
+    traceAgentModule.setTraceWriterForTest(CaptureSpanTraceWriter);
     traceWriter.create(
         {
           onUncaughtException: 'ignore',
@@ -48,7 +48,7 @@ describe('SpanData', () => {
   });
 
   after(() => {
-    traceAgentModule.setTraceWriter(traceAgentModule.TestTraceWriter);
+    traceAgentModule.setTraceWriterForTest(traceAgentModule.TestTraceWriter);
   });
 
   beforeEach(() => {

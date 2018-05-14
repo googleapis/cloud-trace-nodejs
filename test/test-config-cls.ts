@@ -21,7 +21,7 @@ import * as util from 'util';
 
 import {TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 
-import * as trace from './trace';
+import * as testTraceModule from './trace';
 
 describe('Behavior set by config for context propagation mechanism', () => {
   const useAH = semver.satisfies(process.version, '>=8') &&
@@ -30,7 +30,7 @@ describe('Behavior set by config for context propagation mechanism', () => {
       useAH ? TraceCLSMechanism.ASYNC_HOOKS : TraceCLSMechanism.ASYNC_LISTENER;
   let capturedConfig: TraceCLSConfig|null;
 
-  class CaptureConfigTestCLS extends trace.TestCLS {
+  class CaptureConfigTestCLS extends testTraceModule.TestCLS {
     constructor(config: TraceCLSConfig, logger: Logger) {
       super(config, logger);
       // Capture the config object passed into this constructor.
@@ -43,15 +43,17 @@ describe('Behavior set by config for context propagation mechanism', () => {
   });
 
   before(() => {
-    trace.setCLS(CaptureConfigTestCLS);
+    testTraceModule.setCLSForTest(CaptureConfigTestCLS);
   });
 
   after(() => {
-    trace.setCLS(trace.TestCLS);
+    testTraceModule.setCLSForTest(testTraceModule.TestCLS);
   });
 
-  const testCases: Array<
-      {tracingConfig: trace.Config, contextPropagationConfig: TraceCLSConfig}> =
+  const testCases: Array<{
+    tracingConfig: testTraceModule.Config,
+    contextPropagationConfig: TraceCLSConfig
+  }> =
       [
         {
           tracingConfig: {clsMechanism: 'none'},
@@ -77,7 +79,7 @@ describe('Behavior set by config for context propagation mechanism', () => {
     it(`should be as expected for config: ${
            util.inspect(testCase.tracingConfig)}`,
        () => {
-         trace.start(testCase.tracingConfig);
+         testTraceModule.start(testCase.tracingConfig);
          assert.ok(capturedConfig);
          assert.strictEqual(
              capturedConfig!.mechanism,

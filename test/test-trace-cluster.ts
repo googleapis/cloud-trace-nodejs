@@ -23,23 +23,23 @@ import {AddressInfo} from 'net';
 import * as cls from '../src/cls';
 import {express_4 as expressModule} from '../src/plugins/types';
 
-import * as trace from './trace';
+import * as testTraceModule from './trace';
 import {assertSpanDuration, DEFAULT_SPAN_DURATION, isServerSpan, wait} from './utils';
 
 describe('test-trace-cluster', () => {
   let axios: typeof axiosModule;
   let express: typeof expressModule;
   before(() => {
-    trace.setCLS();
-    trace.setPluginLoader();
-    trace.start();
+    testTraceModule.setCLSForTest();
+    testTraceModule.setPluginLoaderForTest();
+    testTraceModule.start();
     express = require('express');
     axios = require('axios');
   });
 
   after(() => {
-    trace.setCLS(trace.TestCLS);
-    trace.setPluginLoader(trace.TestPluginLoader);
+    testTraceModule.setCLSForTest(testTraceModule.TestCLS);
+    testTraceModule.setPluginLoaderForTest(testTraceModule.TestPluginLoader);
   });
 
   it('should not interfere with express span', async () => {
@@ -74,7 +74,7 @@ describe('test-trace-cluster', () => {
       let recordedTime = Date.now();
       await axios.get(`http://localhost:${port}`);
       recordedTime = Date.now() - recordedTime;
-      const serverSpan = trace.getOneSpan(isServerSpan);
+      const serverSpan = testTraceModule.getOneSpan(isServerSpan);
       assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
       cluster.worker.disconnect();
       server.close();
