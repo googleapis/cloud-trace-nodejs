@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Google LLC
+ * Copyright 2015 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,11 @@ import * as PluginTypes from './plugin-types';
 import {tracing, Tracing, NormalizedConfig} from './tracing';
 import {Singleton, FORCE_NEW, Forceable} from './util';
 import {Constants} from './constants';
+import {TraceAgent} from './trace-api';
 
 export {Config, PluginTypes};
 
-let tracingSingleton: typeof tracing;
+let traceAgent: TraceAgent;
 
 /**
  * Normalizes the user-provided configuration object by adding default values
@@ -110,14 +111,15 @@ export function start(config?: Config): PluginTypes.TraceAgent {
     require('continuation-local-storage');
   }
 
-  if (!tracingSingleton) {
-    tracingSingleton = require('./tracing').tracing;
+  if (!traceAgent) {
+    traceAgent = new (require('./trace-api').TraceAgent)();
   }
 
   try {
     let tracing: Tracing;
     try {
-      tracing = tracingSingleton.create(normalizedConfig, {});
+      tracing =
+          require('./tracing').tracing.create(normalizedConfig, traceAgent);
     } catch (e) {
       // An error could be thrown if create() is called multiple times.
       // It's not a helpful error message for the end user, so make it more
@@ -126,9 +128,7 @@ export function start(config?: Config): PluginTypes.TraceAgent {
     }
     tracing.enable();
     tracing.logModulesLoadedBeforeTrace(filesLoadedBeforeTrace);
-    return tracingSingleton.get().traceAgent;
-  } catch (e) {
-    throw e;
+    return traceAgent;
   } finally {
     // Stop storing these entries in memory
     filesLoadedBeforeTrace.length = 0;
@@ -140,23 +140,10 @@ export function start(config?: Config): PluginTypes.TraceAgent {
  * @returns An object exposing functions for creating custom spans.
  */
 export function get(): PluginTypes.TraceAgent {
-  if (!tracingSingleton) {
-    tracingSingleton = require('./tracing').tracing;
+  if (!traceAgent) {
+    traceAgent = new (require('./trace-api').TraceAgent)();
   }
-  if (tracingSingleton.exists()) {
-    return tracingSingleton.get().traceAgent;
-  } else {
-    // This code path maintains the current contract that calling get() before
-    // start() yields a disabled custom span API. It assumes that the use case
-    // for doing so (instead of returning null) is when get() is called in
-    // a file where it is unknown whether start() has been called.
-
-    // Based on this assumption, and because we document that start() must be
-    // called first in an application, it's OK to create a permanently disabled
-    // Trace Agent here and assume that start() will never be called to enable
-    // it.
-    return tracingSingleton.create({enabled: false}, {}).traceAgent;
-  }
+  return traceAgent;
 }
 
 // If the module was --require'd from the command line, start the agent.

@@ -42,16 +42,19 @@ export type NormalizedConfig =
  */
 export class Tracing implements Component {
   /** An object representing the custom span API. */
-  readonly traceAgent: TraceAgent = new TraceAgent('Custom Trace API');
-  private logger: common.Logger;
-  private config: Forceable<NormalizedConfig>;
+  private readonly traceAgent: TraceAgent;
+  /** A logger. */
+  private readonly logger: common.Logger;
+  /** The configuration object for this instance. */
+  private readonly config: Forceable<NormalizedConfig>;
 
   /**
    * Constructs a new Tracing instance.
    * @param config The configuration for this instance.
    */
-  constructor(config: NormalizedConfig) {
+  constructor(config: NormalizedConfig, traceAgent: TraceAgent) {
     this.config = config;
+    this.traceAgent = traceAgent;
     let logLevel = config.enabled ? config.logLevel : 0;
     // Clamp the logger level.
     if (logLevel < 0) {
