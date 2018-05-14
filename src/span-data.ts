@@ -103,8 +103,9 @@ export abstract class BaseSpanData implements SpanData {
     this.span.labels[k] = v;
   }
 
-  endSpan() {
-    this.span.endTime = (new Date()).toISOString();
+  endSpan(timestamp?: Date) {
+    timestamp = timestamp || new Date();
+    this.span.endTime = timestamp.toISOString();
   }
 }
 
@@ -131,8 +132,8 @@ export class RootSpanData extends BaseSpanData implements types.RootSpanData {
         skipFrames);      /* # of frames to skip in stack trace */
   }
 
-  endSpan() {
-    super.endSpan();
+  endSpan(timestamp?: Date) {
+    super.endSpan(timestamp);
     traceWriter.get().writeSpan(this.trace);
   }
 }

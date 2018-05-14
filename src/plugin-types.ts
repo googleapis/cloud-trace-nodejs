@@ -52,8 +52,10 @@ export interface SpanData {
 
   /**
    * Ends the span. This method should only be called once.
+   * @param timestamp A custom span end time; defaults to the time when endSpan
+   * was called if not provided.
    */
-  endSpan(): void;
+  endSpan(timestamp?: Date): void;
 }
 
 /**
