@@ -68,6 +68,10 @@ describe('Behavior set by config for context propagation mechanism', () => {
           contextPropagationConfig: {mechanism: autoMechanism}
         },
         {
+          tracingConfig: {clsMechanism: 'singular'},
+          contextPropagationConfig: {mechanism: 'singular'}
+        },
+        {
           // tslint:disable:no-any
           tracingConfig: {clsMechanism: 'unknown' as any},
           contextPropagationConfig: {mechanism: 'unknown' as any}

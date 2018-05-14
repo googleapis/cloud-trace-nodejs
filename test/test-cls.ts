@@ -25,6 +25,7 @@ import {AsyncHooksCLS} from '../src/cls/async-hooks';
 import {AsyncListenerCLS} from '../src/cls/async-listener';
 import {CLS} from '../src/cls/base';
 import {NullCLS} from '../src/cls/null';
+import {SingularCLS} from '../src/cls/singular';
 import {SpanDataType} from '../src/constants';
 import {createStackTrace, FORCE_NEW} from '../src/util';
 
@@ -236,29 +237,31 @@ describe('Continuation-Local Storage', () => {
            });
       });
     }
+
+    describe('SingularCLS', () => {
+      it('uses a single global context', async () => {
+        const cls = new SingularCLS('default');
+        cls.enable();
+        cls.runWithNewContext(() => {
+          cls.setContext('modified');
+        });
+        await Promise.resolve();
+        cls.runWithNewContext(() => {
+          assert.strictEqual(cls.getContext(), 'modified');
+        });
+      });
+    });
   });
 
   describe('TraceCLS', () => {
     const validTestCases:
-        Array<{config: TraceCLSConfig, expectedDefaultType: SpanDataType}> =
-            asyncAwaitSupported ?
-        [
-          {
-            config: {mechanism: TraceCLSMechanism.ASYNC_HOOKS},
-            expectedDefaultType: SpanDataType.UNCORRELATED
-          },
+        Array<{config: TraceCLSConfig, expectedDefaultType: SpanDataType}> = [
           {
             config: {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
             expectedDefaultType: SpanDataType.UNCORRELATED
           },
           {
-            config: {mechanism: TraceCLSMechanism.NONE},
-            expectedDefaultType: SpanDataType.UNTRACED
-          }
-        ] :
-        [
-          {
-            config: {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
+            config: {mechanism: TraceCLSMechanism.SINGULAR},
             expectedDefaultType: SpanDataType.UNCORRELATED
           },
           {
@@ -266,6 +269,12 @@ describe('Continuation-Local Storage', () => {
             expectedDefaultType: SpanDataType.UNTRACED
           }
         ];
+    if (asyncAwaitSupported) {
+      validTestCases.push({
+        config: {mechanism: TraceCLSMechanism.ASYNC_HOOKS},
+        expectedDefaultType: SpanDataType.UNCORRELATED
+      });
+    }
     for (const testCase of validTestCases) {
       describe(`with configuration ${inspect(testCase)}`, () => {
         const logger = new TestLogger();

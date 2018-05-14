@@ -19,7 +19,7 @@ import * as path from 'path';
 const pluginDirectory =
     path.join(path.resolve(__dirname, '..'), 'src', 'plugins');
 
-export type CLSMechanism = 'none'|'auto';
+export type CLSMechanism = 'auto'|'none'|'singular';
 
 /** Available configuration options. */
 export interface Config {
@@ -30,6 +30,10 @@ export interface Config {
    *   _and_ the environment variable GCLOUD_TRACE_NEW_CONTEXT is set, in which
    *   case async_hooks will be used instead.
    * - 'none' disables CLS completely.
+   * - 'singular' allows one root span to exist at a time. This option is meant
+   *   to be used internally by Google Cloud Functions, or in any other
+   *   environment where it is guaranteed that only one request is being served
+   *   at a time.
    * The 'auto' mechanism is used by default if this configuration option is
    * not explicitly set.
    */
