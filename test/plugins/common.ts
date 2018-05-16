@@ -25,7 +25,7 @@ declare global {
 }
 
 import '../override-gcp-metadata';
-import { cls } from '../../src/cls';
+import { cls, TraceCLS } from '../../src/cls';
 import { TraceAgent } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import * as TracingPolicy from '../../src/tracing-policy';
@@ -41,7 +41,7 @@ if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CON
   global.it = Object.assign(function it(title, fn) {
     function wrappedFn() {
       if (cls.exists()) {
-        return cls.get().runWithNewContext(() => fn.apply(this, arguments));
+        return cls.get().runWithContext(() => fn.apply(this, arguments), TraceCLS.UNCORRELATED);
       } else {
         return fn.apply(this, arguments);
       }

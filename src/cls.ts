@@ -101,8 +101,8 @@ export class TraceCLS implements CLS<RootContext> {
   private CLSClass: CLSConstructor;
   private enabled = false;
 
-  private static UNCORRELATED: RootContext = {type: SpanType.UNCORRELATED};
-  private static UNTRACED: RootContext = {type: SpanType.UNTRACED};
+  static UNCORRELATED: RootContext = {type: SpanType.UNCORRELATED};
+  static UNTRACED: RootContext = {type: SpanType.UNTRACED};
 
   /**
    * Stack traces are captured when a root span is started. Because the stack
@@ -174,12 +174,8 @@ export class TraceCLS implements CLS<RootContext> {
     return this.currentCLS.getContext();
   }
 
-  setContext(value: RootContext): void {
-    this.currentCLS.setContext(value);
-  }
-
-  runWithNewContext<T>(fn: Func<T>): T {
-    return this.currentCLS.runWithNewContext(fn);
+  runWithContext<T>(fn: Func<T>, value: RootContext): T {
+    return this.currentCLS.runWithContext(fn, value);
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {

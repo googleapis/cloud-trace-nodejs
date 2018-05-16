@@ -41,20 +41,15 @@ export class SingularCLS<Context> implements CLS<Context> {
 
   disable(): void {
     this.enabled = false;
-    this.setContext(this.defaultContext);
+    this.currentContext = this.defaultContext;
   }
 
   getContext(): Context {
     return this.currentContext;
   }
 
-  setContext(value: Context): void {
-    if (this.enabled) {
-      this.currentContext = value;
-    }
-  }
-
-  runWithNewContext<T>(fn: Func<T>): T {
+  runWithContext<T>(fn: Func<T>, value: Context): T {
+    this.currentContext = value;
     return fn();
   }
 

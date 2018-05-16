@@ -31,9 +31,6 @@ const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> =
 const WRAPPED = Symbol('@google-cloud/trace-agent:AsyncHooksCLS:WRAPPED');
 
 type ContextWrapped<T> = T&{[WRAPPED]?: boolean};
-type Reference<T> = {
-  value: T
-};
 
 /**
  * An implementation of continuation-local storage on top of the async_hooks
@@ -44,7 +41,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   private ah: AsyncHooksModule;
 
   /** A map of AsyncResource IDs to Context objects. */
-  private contexts: {[id: number]: Reference<Context>} = {};
+  private contexts: {[id: number]: Context} = {};
   /** The AsyncHook that proactively populates entries in this.contexts. */
   private hook: asyncHooksModule.AsyncHook;
   /** Whether this instance is enabled. */
@@ -113,38 +110,23 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
     // We don't store this.defaultContext directly in this.contexts.
     // Getting undefined when looking up this.contexts means that it wasn't
     // set, so return the default context.
-    const current = this.contexts[this.ah.executionAsyncId()];
-    return current ? current.value : this.defaultContext;
+    return this.contexts[this.ah.executionAsyncId()] || this.defaultContext;
   }
 
-  setContext(value: Context): void {
-    const id = this.ah.executionAsyncId();
-    const current = this.contexts[id];
-    if (current) {
-      current.value = value;
-    } else {
-      this.contexts[id] = {value};
-    }
-  }
-
-  private runWithContext<T>(fn: Func<T>, context: Reference<Context>): T {
+  runWithContext<T>(fn: Func<T>, value: Context): T {
     // Run fn() so that any AsyncResource objects that are created in
     // fn will have the context set by this.setContext.
     const id = this.ah.executionAsyncId();
     const oldContext = this.contexts[id];
     // Reset the current context. This prevents this.getContext from returning
     // a stale value.
-    this.contexts[id] = context;
+    this.contexts[id] = value;
     try {
       return fn();
     } finally {
       // Revert the current context to what it was before fn was called.
       this.contexts[id] = oldContext;
     }
-  }
-
-  runWithNewContext<T>(fn: Func<T>): T {
-    return this.runWithContext(fn, {value: this.defaultContext});
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {

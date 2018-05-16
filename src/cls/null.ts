@@ -43,9 +43,7 @@ export class NullCLS<Context> implements CLS<Context> {
     return this.defaultContext;
   }
 
-  setContext(value: Context): void {}
-
-  runWithNewContext<T>(fn: Func<T>): T {
+  runWithContext<T>(fn: Func<T>): T {
     return fn();
   }
 

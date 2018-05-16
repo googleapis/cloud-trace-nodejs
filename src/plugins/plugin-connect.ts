@@ -45,7 +45,7 @@ function createMiddleware(api: PluginTypes.TraceAgent):
       url: req.originalUrl,
       traceContext:
           getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
-      skipFrames: 3
+      skipFrames: 1
     };
     api.runInRootSpan(options, (root) => {
       // Set response trace context.

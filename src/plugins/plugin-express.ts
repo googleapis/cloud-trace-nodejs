@@ -39,7 +39,7 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.TraceAgent) {
       name: req.path,
       traceContext: req.get(api.constants.TRACE_CONTEXT_HEADER_NAME),
       url: req.originalUrl,
-      skipFrames: 3
+      skipFrames: 1
     };
     api.runInRootSpan(options, (rootSpan) => {
       // Set response trace context.

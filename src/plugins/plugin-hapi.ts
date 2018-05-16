@@ -52,7 +52,7 @@ function instrument<T>(
     name: req.url ? (urlParse(req.url).pathname || '') : '',
     url: req.url,
     traceContext: getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
-    skipFrames: 4
+    skipFrames: 2
   };
   return api.runInRootSpan(options, (root) => {
     // Set response trace context.

@@ -19,7 +19,7 @@
 var shimmer = require('shimmer');
 var findIndex = require('lodash.findindex');
 
-var SKIP_FRAMES = 3;
+var SKIP_FRAMES = 1;
 
 // Required for adding distributed tracing metadata to outgoing gRPC requests.
 // This value is assigned in patchMetadata, and used in patchClient.

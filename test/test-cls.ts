@@ -54,19 +54,18 @@ describe('Continuation-Local Storage', () => {
 
     it('always returns the default value', () => {
       assert.strictEqual(instance.getContext(), 'default');
-      instance.setContext('modified');
       assert.strictEqual(instance.getContext(), 'default');
-      const result = instance.runWithNewContext(() => {
+      const result = instance.runWithContext(() => {
         assert.strictEqual(instance.getContext(), 'default');
-        instance.setContext('modified');
         return instance.getContext();
-      });
+      }, 'modified');
       assert.strictEqual(result, 'default');
-      const boundFn = instance.bindWithCurrentContext(() => {
-        assert.strictEqual(instance.getContext(), 'default');
-        instance.setContext('modified');
-        return instance.getContext();
-      });
+      const boundFn = instance.runWithContext(() => {
+        return instance.bindWithCurrentContext(() => {
+          assert.strictEqual(instance.getContext(), 'default');
+          return instance.getContext();
+        });
+      }, 'modified');
       assert.strictEqual(boundFn(), 'default');
     });
   });
@@ -95,19 +94,12 @@ describe('Continuation-Local Storage', () => {
           assert.strictEqual(c.getContext(), 'default');
         });
 
-        it('Starts a new continuation with runWithNewContext', () => {
-          const result = c.runWithNewContext(() => {
-            assert.strictEqual(c.getContext(), 'default');
-            c.setContext('modified');
+        it('Starts a new continuation with runWithContext', () => {
+          const result = c.runWithContext(() => {
             assert.strictEqual(c.getContext(), 'modified');
             return 'returned value';
-          });
+          }, 'modified');
           assert.strictEqual(result, 'returned value');
-          c.runWithNewContext(() => {
-            assert.strictEqual(c.getContext(), 'default');
-            c.setContext('also-modified');
-            assert.strictEqual(c.getContext(), 'also-modified');
-          });
         });
 
         // To avoid I/O we don't test context propagation over anything
@@ -116,8 +108,7 @@ describe('Continuation-Local Storage', () => {
         // propagation libraries themselves.
         it('Propagates context across event ticks', (done) => {
           const progress = plan(done, 3);
-          c.runWithNewContext(() => {
-            c.setContext('modified');
+          c.runWithContext(() => {
             process.nextTick(() => {
               assert.strictEqual(c.getContext(), 'modified');
               process.nextTick(() => {
@@ -133,39 +124,34 @@ describe('Continuation-Local Storage', () => {
               assert.strictEqual(c.getContext(), 'modified');
               progress();
             }, 1);
-          });
-          c.runWithNewContext(() => {
-            c.setContext('unexpected');
-          });
+          }, 'modified');
+          c.runWithContext(() => {}, 'default');
         });
 
         it('Propagates context to bound functions', () => {
           let runLater = () => {
             assert.strictEqual(c.getContext(), 'modified');
           };
-          c.runWithNewContext(() => {
-            c.setContext('modified');
+          c.runWithContext(() => {
             runLater = c.bindWithCurrentContext(runLater);
-          });
-          c.runWithNewContext(() => {
+          }, 'modified');
+          c.runWithContext(() => {
             assert.strictEqual(c.getContext(), 'default');
             runLater();
             assert.strictEqual(c.getContext(), 'default');
-          });
-          c.runWithNewContext(() => {
-            c.setContext('modified-but-different');
+          }, 'default');
+          c.runWithContext(() => {
             // bind it again
             runLater = c.bindWithCurrentContext(runLater);
-          });
+          }, 'modified-but-different');
           runLater();
         });
 
         it('Corrects context when function run with new context throws', () => {
           try {
-            c.runWithNewContext(() => {
-              c.setContext('modified');
+            c.runWithContext(() => {
               throw new Error();
-            });
+            }, 'modified');
           } catch (e) {
             assert.strictEqual(c.getContext(), 'default');
           }
@@ -173,12 +159,11 @@ describe('Continuation-Local Storage', () => {
 
         it('Corrects context when function bound to a context throws', () => {
           let runLater = () => {
-            c.setContext('modified');
             throw new Error();
           };
-          c.runWithNewContext(() => {
+          c.runWithContext(() => {
             runLater = c.bindWithCurrentContext(runLater);
-          });
+          }, 'modified');
           try {
             runLater();
           } catch (e) {
@@ -189,22 +174,20 @@ describe('Continuation-Local Storage', () => {
         it('Can be used to patch event emitters to propagate context', () => {
           const ee = new EventEmitter();
           assert.strictEqual(c.getContext(), 'default');
-          c.runWithNewContext(() => {
-            c.setContext('modified');
+          c.runWithContext(() => {
             c.patchEmitterToPropagateContext(ee);
             ee.on('a', () => {
               assert.strictEqual(c.getContext(), 'modified');
             });
-          });
-          c.runWithNewContext(() => {
-            c.setContext('modified-again');
+          }, 'modified');
+          c.runWithContext(() => {
             // Event listeners are bound lazily.
             ee.on('b', () => {
               assert.strictEqual(c.getContext(), 'modified-again');
             });
             ee.emit('a');
             assert.strictEqual(c.getContext(), 'modified-again');
-          });
+          }, 'modified-again');
           ee.on('c', () => {
             assert.strictEqual(c.getContext(), 'default');
           });
@@ -213,27 +196,24 @@ describe('Continuation-Local Storage', () => {
         });
 
         it('Supports nesting contexts', (done) => {
-          c.runWithNewContext(() => {
-            c.setContext('outer');
-            c.runWithNewContext(() => {
-              c.setContext('inner');
+          c.runWithContext(() => {
+            c.runWithContext(() => {
               setImmediate(() => {
                 assert.strictEqual(c.getContext(), 'inner');
                 done();
               });
-            });
+            }, 'inner');
             assert.strictEqual(c.getContext(), 'outer');
-          });
+          }, 'outer');
         });
 
         it('Supports basic context propagation across Promise#then calls',
            () => {
-             return c.runWithNewContext(() => {
-               c.setContext('modified');
+             return c.runWithContext(() => {
                return Promise.resolve().then(() => {
                  assert.strictEqual(c.getContext(), 'modified');
                });
-             });
+             }, 'modified');
            });
       });
     }
@@ -242,13 +222,9 @@ describe('Continuation-Local Storage', () => {
       it('uses a single global context', async () => {
         const cls = new SingularCLS('default');
         cls.enable();
-        cls.runWithNewContext(() => {
-          cls.setContext('modified');
-        });
+        cls.runWithContext(() => {}, 'modified');
         await Promise.resolve();
-        cls.runWithNewContext(() => {
-          assert.strictEqual(cls.getContext(), 'modified');
-        });
+        assert.strictEqual(cls.getContext(), 'modified');
       });
     });
   });
@@ -299,7 +275,8 @@ describe('Continuation-Local Storage', () => {
              c.disable();
              assert.ok(!c.isEnabled());
              assert.ok(c.getContext().type, SpanType.UNTRACED);
-             assert.ok(c.runWithNewContext(() => 'hi'), 'hi');
+             assert.ok(
+                 c.runWithContext(() => 'hi', TraceCLS.UNCORRELATED), 'hi');
              const fn = () => {};
              assert.strictEqual(c.bindWithCurrentContext(fn), fn);
              c.patchEmitterToPropagateContext(new EventEmitter());
@@ -318,10 +295,10 @@ describe('Continuation-Local Storage', () => {
 
         it('exposes the correct number of stack frames to remove', () => {
           function myFunction() {
-            c.runWithNewContext(() => {
+            c.runWithContext(() => {
               const frames = createStackTrace(1, c.rootSpanStackOffset);
               assert.strictEqual(frames[0].method_name, 'myFunction');
-            });
+            }, TraceCLS.UNCORRELATED);
           }
           myFunction();
         });

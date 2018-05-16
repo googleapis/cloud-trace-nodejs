@@ -82,22 +82,20 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
   });
 
   it('Supports basic context propagation across async-await boundaries', () => {
-    return cls.runWithNewContext(async () => {
-      cls.setContext('modified');
+    return cls.runWithContext(async () => {
       await Promise.resolve();
       assert.strictEqual(cls.getContext(), 'modified');
       await Promise.resolve();
       assert.strictEqual(cls.getContext(), 'modified');
-    });
+    }, 'modified');
   });
 
   describe('Using AsyncResource API', () => {
     it('Supports context propagation without trigger ID', async () => {
       let res!: asyncHooksModule.AsyncResource;
-      await cls.runWithNewContext(async () => {
+      await cls.runWithContext(async () => {
         res = new AsyncResource(TEST_ASYNC_RESOURCE);
-        cls.setContext('modified');
-      });
+      }, 'modified');
       res.runInAsyncScope(() => {
         assert.strictEqual(cls.getContext(), 'modified');
       });
@@ -106,14 +104,12 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
     it('Supports context propagation with trigger ID', async () => {
       let triggerId!: number;
       let res!: asyncHooksModule.AsyncResource;
-      await cls.runWithNewContext(async () => {
+      await cls.runWithContext(async () => {
         triggerId = new AsyncResource(TEST_ASYNC_RESOURCE).asyncId();
-        cls.setContext('correct');
-      });
-      await cls.runWithNewContext(async () => {
+      }, 'correct');
+      await cls.runWithContext(async () => {
         res = new AsyncResource(TEST_ASYNC_RESOURCE, triggerId);
-        cls.setContext('incorrect');
-      });
+      }, 'incorrect');
       res.runInAsyncScope(() => {
         assert.strictEqual(cls.getContext(), 'correct');
       });

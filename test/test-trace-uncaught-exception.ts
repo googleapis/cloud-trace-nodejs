@@ -16,7 +16,7 @@
 
 'use strict';
 
-import { cls } from '../src/cls';
+import { cls, TraceCLS } from '../src/cls';
 
 var assert = require('assert');
 var nock = require('nock');
@@ -75,11 +75,11 @@ describe('tracewriter publishing', function() {
         onUncaughtException: 'flush'
       });
       common.avoidTraceWriterAuth();
-      cls.get().runWithNewContext(function() {
+      cls.get().runWithContext(function() {
         queueSpans(2, agent);
         buf = common.getTraces();
         throw new Error(':(');
-      });
+      }, TraceCLS.UNCORRELATED);
     });
   });
 

@@ -19,7 +19,7 @@ import * as is from 'is';
 import * as semver from 'semver';
 import * as uuid from 'uuid';
 
-import {cls} from './cls';
+import {cls, RootContext} from './cls';
 import {Constants, SpanType} from './constants';
 import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
 import {ChildSpanData, RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
@@ -136,42 +136,41 @@ export class TraceAgent implements TraceAgentInterface {
       return fn(UNCORRELATED_ROOT_SPAN);
     }
 
-    return cls.get().runWithNewContext(() => {
-      this.logger!.info(`TraceApi#runInRootSpan: [${
-          this.pluginName}] Created root span [${options.name}]`);
-      // Attempt to read incoming trace context.
-      let incomingTraceContext: IncomingTraceContext = {};
-      if (isString(options.traceContext) && !this.config!.ignoreContextHeader) {
-        const parsedContext = util.parseContextFromHeader(options.traceContext);
-        if (parsedContext) {
-          incomingTraceContext = parsedContext;
-        }
+    // Attempt to read incoming trace context.
+    let incomingTraceContext: IncomingTraceContext = {};
+    if (isString(options.traceContext) && !this.config!.ignoreContextHeader) {
+      const parsedContext = util.parseContextFromHeader(options.traceContext);
+      if (parsedContext) {
+        incomingTraceContext = parsedContext;
       }
+    }
 
-      // Consult the trace policy, and don't create a root span if the trace
-      // policy disallows it.
-      const locallyAllowed =
-          this.policy!.shouldTrace(Date.now(), options.url || '');
-      const remotelyAllowed = incomingTraceContext.options === undefined ||
-          !!(incomingTraceContext.options &
-             Constants.TRACE_OPTIONS_TRACE_ENABLED);
-      if (!locallyAllowed || !remotelyAllowed) {
-        cls.get().setContext(UNTRACED_ROOT_SPAN);
-        return fn(UNTRACED_ROOT_SPAN);
-      }
+    // Consult the trace policy.
+    const locallyAllowed =
+        this.policy!.shouldTrace(Date.now(), options.url || '');
+    const remotelyAllowed = incomingTraceContext.options === undefined ||
+        !!(incomingTraceContext.options &
+           Constants.TRACE_OPTIONS_TRACE_ENABLED);
 
+    let rootContext: RootSpan&RootContext;
+    // Don't create a root span if the trace policy disallows it.
+    if (!locallyAllowed || !remotelyAllowed) {
+      rootContext = UNTRACED_ROOT_SPAN;
+    } else {
       // Create a new root span, and invoke fn with it.
       const traceId =
           incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
       const parentId = incomingTraceContext.spanId || '0';
-      const rootContext = new RootSpanData(
+      rootContext = new RootSpanData(
           {projectId: '', traceId, spans: []}, /* Trace object */
           options.name,                        /* Span name */
           parentId,                            /* Parent's span ID */
-          cls.get().rootSpanStackOffset + (options.skipFrames || 0) - 3);
-      cls.get().setContext(rootContext);
+          options.skipFrames || 0);
+    }
+
+    return cls.get().runWithContext(() => {
       return fn(rootContext);
-    });
+    }, rootContext);
   }
 
   getCurrentContextId(): string|null {
