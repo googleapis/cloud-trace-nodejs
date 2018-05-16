@@ -54,7 +54,6 @@ export class Tracing implements Component {
   constructor(
       config: NormalizedConfig, private readonly traceAgent: TraceAgent) {
     this.config = config;
-    this.traceAgent = traceAgent;
     let logLevel = config.enabled ? config.logLevel : 0;
     // Clamp the logger level.
     if (logLevel < 0) {
@@ -103,19 +102,14 @@ export class Tracing implements Component {
       return;
     }
 
+    // Initialize context propagation mechanism configuration.
+    const clsConfig: Forceable<TraceCLSConfig> = {
+      mechanism: this.config.clsMechanism as TraceCLSMechanism,
+      [FORCE_NEW]: this.config[FORCE_NEW]
+    };
     try {
-      // Initialize context propagation mechanism.
-      const clsConfig: Forceable<TraceCLSConfig> = {
-        mechanism: this.config.clsMechanism as TraceCLSMechanism,
-        [FORCE_NEW]: this.config[FORCE_NEW]
-      };
-      cls.create(clsConfig, this.logger).enable();
-
-      traceWriter.create(this.config, this.logger).initialize((err) => {
-        if (err) {
-          this.disable();
-        }
-      });
+      traceWriter.create(this.config, this.logger);
+      cls.create(clsConfig, this.logger);
     } catch (e) {
       this.logger.error(
           'TraceAgent#start: Disabling the Trace Agent for the',
@@ -123,7 +117,15 @@ export class Tracing implements Component {
       this.disable();
       return;
     }
-
+    traceWriter.get().initialize((err) => {
+      if (err) {
+        this.logger.error(
+            'TraceAgent#start: Disabling the Trace Agent for the',
+            `following reason: ${err.message}`);
+        this.disable();
+      }
+    });
+    cls.get().enable();
     this.traceAgent.enable(this.config, this.logger);
     pluginLoader.create(this.config, this.logger).activate();
 
