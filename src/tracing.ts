@@ -41,8 +41,6 @@ export type NormalizedConfig =
  * A class that represents automatic tracing.
  */
 export class Tracing implements Component {
-  /** An object representing the custom span API. */
-  private readonly traceAgent: TraceAgent;
   /** A logger. */
   private readonly logger: common.Logger;
   /** The configuration object for this instance. */
@@ -51,8 +49,10 @@ export class Tracing implements Component {
   /**
    * Constructs a new Tracing instance.
    * @param config The configuration for this instance.
+   * @param traceAgent An object representing the custom tracing API.
    */
-  constructor(config: NormalizedConfig, traceAgent: TraceAgent) {
+  constructor(
+      config: NormalizedConfig, private readonly traceAgent: TraceAgent) {
     this.config = config;
     this.traceAgent = traceAgent;
     let logLevel = config.enabled ? config.logLevel : 0;
@@ -99,12 +99,6 @@ export class Tracing implements Component {
    * Enables automatic tracing support and the custom span API.
    */
   enable(): void {
-    if (this.traceAgent.isActive()) {
-      // For unit tests only.
-      // Undoes initialization that occurred last time this function was called.
-      this.disable();
-    }
-
     if (!this.config.enabled) {
       return;
     }
@@ -122,10 +116,6 @@ export class Tracing implements Component {
           this.disable();
         }
       });
-
-      this.traceAgent.enable(this.config, this.logger);
-
-      pluginLoader.create(this.config, this.logger).activate();
     } catch (e) {
       this.logger.error(
           'TraceAgent#start: Disabling the Trace Agent for the',
@@ -133,6 +123,9 @@ export class Tracing implements Component {
       this.disable();
       return;
     }
+
+    this.traceAgent.enable(this.config, this.logger);
+    pluginLoader.create(this.config, this.logger).activate();
 
     if (typeof this.config.projectId !== 'string' &&
         typeof this.config.projectId !== 'undefined') {
