@@ -136,24 +136,6 @@ describe('Trace Plugin Loader', () => {
                pluginLoader.state, PluginLoaderState.DEACTIVATED);
            assert.ok(plugin.unapplyCalled);
          });
-
-      it('throws when internal state is not ACTIVATED', () => {
-        const pluginLoader = makePluginLoader({plugins: {}});
-        assert.strictEqual(pluginLoader.state, PluginLoaderState.NO_HOOK);
-        const plugin = new TestPluginWrapper();
-        // TODO(kjin): Stop using index properties.
-        pluginLoader['pluginMap'].set('foo', plugin);
-
-        assert.throws(() => pluginLoader.deactivate());
-        assert.ok(!plugin.unapplyCalled);
-
-        pluginLoader.activate().deactivate();
-        assert.strictEqual(pluginLoader.state, PluginLoaderState.DEACTIVATED);
-
-        plugin.unapplyCalled = false;
-        assert.throws(() => pluginLoader.deactivate());
-        assert.ok(!plugin.unapplyCalled);
-      });
     });
   });
 

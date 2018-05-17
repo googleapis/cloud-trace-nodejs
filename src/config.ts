@@ -19,16 +19,22 @@ import * as path from 'path';
 const pluginDirectory =
     path.join(path.resolve(__dirname, '..'), 'src', 'plugins');
 
-export type CLSMechanism = 'auto'|'none'|'singular';
+export type CLSMechanism =
+    'async-hooks'|'async-listener'|'auto'|'none'|'singular';
 
 /** Available configuration options. */
 export interface Config {
   /**
    * The trace context propagation mechanism to use. The following options are
    * available:
-   * - 'auto' uses continuation-local-storage, unless async_hooks is available
-   *   _and_ the environment variable GCLOUD_TRACE_NEW_CONTEXT is set, in which
-   *   case async_hooks will be used instead.
+   * - 'async-hooks' uses an implementation of CLS on top of the Node core
+   *   `async_hooks` module in Node 8+. This option should not be used if the
+   *   Node binary version requirements are not met.
+   * - 'async-listener' uses an implementation of CLS on top of the
+   *   `continuation-local-storage` module.
+   * - 'auto' behaves like 'async-hooks' on Node 8+ when the
+   *   GCLOUD_TRACE_NEW_CONTEXT env variable is set, and 'async-listener'
+   *   otherwise.
    * - 'none' disables CLS completely.
    * - 'singular' allows one root span to exist at a time. This option is meant
    *   to be used internally by Google Cloud Functions, or in any other

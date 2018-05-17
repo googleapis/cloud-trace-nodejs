@@ -54,6 +54,10 @@ export const FORCE_NEW = Symbol('force-new');
 
 export type Forceable<T> = T&{[FORCE_NEW]?: boolean};
 
+export type Component = {
+  enable(): void; disable(): void;
+};
+
 /**
  * A class that provides access to a singleton.
  * We assume that any such singleton is always constructed with two arguments:
@@ -68,6 +72,10 @@ export class Singleton<T, ConfigType, LoggerType> {
 
   create(config: Forceable<ConfigType>, logger: LoggerType): T {
     if (!this[kSingleton] || config[FORCE_NEW]) {
+      const s = this[kSingleton] as Partial<Component>;
+      if (s && s.disable) {
+        s.disable();
+      }
       this[kSingleton] = new this.implementation(config, logger);
       return this[kSingleton]!;
     } else {
