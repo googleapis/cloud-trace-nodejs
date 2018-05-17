@@ -222,8 +222,9 @@ describe('test-trace-http2', () => {
           // In Node 9.9+, the error handler is not added by default.
           s.on('error', () => {});
           setTimeout(() => {
-            if (semver.satisfies(process.version, '>=9.4')) {
-              // Node 9.4 removed rstWithInternalError() and uses added close().
+            if (semver.satisfies(process.version, '^8.11||>=9.4')) {
+              // Node 8.11/9.4 removed rstWithInternalError() in favor of new
+              // close() function.
               s.close(http2.constants.NGHTTP2_INTERNAL_ERROR);
             } else {
               s.rstWithInternalError();
