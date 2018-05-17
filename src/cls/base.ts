@@ -63,27 +63,18 @@ export interface CLS<Context extends {}> {
   getContext(): Context;
 
   /**
-   * Sets the current continuation-local value.
-   * If not called from within a continuation, behavior is implementation-
-   * dependent.
-   * @param value The value to set.
-   */
-  setContext(value: Context): void;
-
-  /**
    * Runs the given function as the start of a new continuation.
-   * TODO(kjin): Merge this with setContext.
    * @param fn The function to run synchronously.
+   * @param value The value to set as the context in that continuation.
    * @returns The return result of running `fn`.
    */
-  runWithNewContext<T>(fn: Func<T>): T;
+  runWithContext<T>(fn: Func<T>, value: Context): T;
 
   /**
    * Binds a function to the current continuation. This should be used when
    * the CLS implementation's propagating mechanism doesn't automatically do so.
    * If not called from within a continuation, behavior is implementation-
    * defined.
-   * TODO(kjin): Determine a more accurate name for this function.
    * @param fn The function to bind.
    * @returns A wrapped version of the given function with the same signature.
    */
@@ -93,7 +84,6 @@ export interface CLS<Context extends {}> {
    * Patches an EventEmitter to lazily bind all future event listeners on this
    * instance so that they belong in the same continuation as the execution
    * path in which they were attached to the EventEmitter object.
-   * TODO(kjin): Determine a more accurate name for this function.
    * @param ee The EventEmitter to bind. This instance will be mutated.
    */
   patchEmitterToPropagateContext(ee: EventEmitter): void;

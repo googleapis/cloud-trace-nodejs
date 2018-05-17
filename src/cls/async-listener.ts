@@ -65,12 +65,10 @@ export class AsyncListenerCLS<Context extends {}> implements CLS<Context> {
     return this.defaultContext;
   }
 
-  setContext(value: Context): void {
-    this.getNamespace().set(AsyncListenerCLS.ROOT_CONTEXT_KEY, value);
-  }
-
-  runWithNewContext<T>(fn: Func<T>): T {
-    return this.getNamespace().runAndReturn(() => {
+  runWithContext<T>(fn: Func<T>, value: Context): T {
+    const namespace = this.getNamespace();
+    return namespace.runAndReturn(() => {
+      namespace.set(AsyncListenerCLS.ROOT_CONTEXT_KEY, value);
       return fn();
     });
   }

@@ -296,9 +296,6 @@ Object.keys(versions).forEach(function(version) {
         var result = oldRegister.call(this, n, h, s, d, m);
         var oldFunc = this.handlers[n].func;
         this.handlers[n].func = function() {
-          if (cls.get().getContext().type === SpanType.ROOT) {
-            cls.get().setContext({ type: SpanType.UNCORRELATED });
-          }
           return oldFunc.apply(this, arguments);
         };
         return result;
@@ -454,7 +451,6 @@ Object.keys(versions).forEach(function(version) {
     it('should support distributed trace context', function(done) {
       function makeLink(fn, meta, next) {
         return function() {
-          cls.get().setContext({ type: SpanType.UNCORRELATED });
           common.runInTransaction(function(terminate) {
             fn(client, grpc, meta, function() {
               terminate();
@@ -465,9 +461,10 @@ Object.keys(versions).forEach(function(version) {
       }
       // Enable asserting properties of the metdata on the grpc server.
       checkMetadata = true;
+      var next;
       common.runInTransaction(function (endTransaction) {
         var metadata = { a: 'b' };
-        var next = function() {
+        next = function() {
           endTransaction();
           checkMetadata = false;
           done();
@@ -486,8 +483,8 @@ Object.keys(versions).forEach(function(version) {
         next = makeLink(callClientStream, metadata, next);
         next = makeLink(callServerStream, metadata, next);
         next = makeLink(callBidi, metadata, next);
-        next();
       });
+      next();
     });
 
     it('should not let root spans interfere with one another', function(done) {
@@ -516,10 +513,6 @@ Object.keys(versions).forEach(function(version) {
                 assert(traces[0].startTime !== traces[1].startTime);
                 common.assertSpanDurationCorrect(traces[0], endFirst - startFirst);
                 common.assertSpanDurationCorrect(traces[1], Date.now() - startSecond);
-                // Clear root context so the next call to runInTransaction
-                // doesn't think we are still in one.
-                // TODO: Maybe we should do this automatically upon root.endSpan
-                cls.get().setContext({ type: SpanType.UNCORRELATED });
                 setImmediate(prevNext);
               }
             };
