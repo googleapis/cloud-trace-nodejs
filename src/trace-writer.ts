@@ -36,7 +36,7 @@ headers[Constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 /* A list of scopes needed to operate with the trace API */
 const SCOPES: string[] = ['https://www.googleapis.com/auth/trace.append'];
 
-export interface TraceWriterConfig extends common.ServiceAuthenticationConfig {
+export interface TraceWriterConfig extends common.GoogleAuthOptions {
   projectId?: string;
   onUncaughtException: string;
   bufferSize: number;
@@ -82,7 +82,9 @@ export class TraceWriter extends common.Service {
         config);
 
     this.logger = logger;
-    this.config = config;
+    // Clone the config object
+    this.config = Object.assign({}, config);
+    this.config.serviceContext = Object.assign({}, this.config.serviceContext);
     this.buffer = [];
     this.defaultLabels = {};
 
@@ -121,22 +123,21 @@ export class TraceWriter extends common.Service {
 
     // Schedule periodic flushing of the buffer, but only if we are able to get
     // the project number (potentially from the network.)
-    this.getProjectId((err: Error|null, project?: string) => {
-      if (err) {
-        this.logger.error(
-            'TraceWriter#initialize: Unable to acquire the project number',
-            'automatically from the GCP metadata service. Please provide a',
-            'valid project ID as environmental variable GCLOUD_PROJECT, or as',
-            `config.projectId passed to start. Original error: ${err}`);
-        cb(err);
-      } else {
-        this.config.projectId = project;
-        this.scheduleFlush();
-        if (--pendingOperations === 0) {
-          cb();
-        }
-      }
-    });
+    this.getProjectId().then(
+        () => {
+          this.scheduleFlush();
+          if (--pendingOperations === 0) {
+            cb();
+          }
+        },
+        (err: Error) => {
+          this.logger.error(
+              'TraceWriter#initialize: Unable to acquire the project number',
+              'automatically from the GCP metadata service. Please provide a',
+              'valid project ID as environmental variable GCLOUD_PROJECT, or as',
+              `config.projectId passed to start. Original error: ${err}`);
+          cb(err);
+        });
 
     this.getHostname((hostname) => {
       this.getInstanceId((instanceId) => {
@@ -212,27 +213,14 @@ export class TraceWriter extends common.Service {
         });
   }
 
-  /**
-   * Returns the project ID if it has been cached and attempts to load
-   * it from the enviroment or network otherwise.
-   */
-  getProjectId(cb: (err: Error|null, projectId?: string) => void) {
+  getProjectId() {
     if (this.config.projectId) {
-      cb(null, this.config.projectId);
-      return;
+      return Promise.resolve(this.config.projectId);
     }
-
-    gcpMetadata.project({property: 'project-id', headers})
-        .then((res) => {
-          cb(null, res.data);  // project ID
-        })
-        .catch((err: AxiosError) => {
-          if (err.response && err.response.status === 503) {
-            err.message +=
-                ' This may be due to a temporary server error; please try again later.';
-          }
-          cb(err);
-        });
+    return super.getProjectId().then((projectId) => {
+      this.config.projectId = projectId;
+      return projectId;
+    });
   }
 
   /**
@@ -264,14 +252,7 @@ export class TraceWriter extends common.Service {
    * @param trace The trace to be queued.
    */
   queueTrace(trace: Trace) {
-    this.getProjectId((err, projectId?) => {
-      if (err || !projectId) {
-        this.logger.info(
-            'TraceWriter#queueTrace: No project ID, dropping trace.');
-        return;  // if we even reach this point, disabling traces is already
-                 // imminent.
-      }
-
+    const afterProjectId = (projectId: string) => {
       trace.projectId = projectId;
       this.buffer.push(JSON.stringify(trace));
       this.logger.info(
@@ -283,7 +264,21 @@ export class TraceWriter extends common.Service {
             'TraceWriter#queueTrace: Trace buffer full, flushing.');
         setImmediate(() => this.flushBuffer());
       }
-    });
+    };
+    // TODO(kjin): We should always be following the 'else' path.
+    // Any test that doesn't mock the Trace Writer will assume that traces get
+    // buffered synchronously. We need to refactor those tests to remove that
+    // assumption before we can make this fix.
+    if (this.config.projectId) {
+      afterProjectId(this.config.projectId);
+    } else {
+      this.getProjectId().then(afterProjectId, (err: Error) => {
+        this.logger.info(
+            'TraceWriter#queueTrace: No project ID, dropping trace.');
+        return;  // if we even reach this point, disabling traces is already
+                 // imminent.
+      });
+    }
   }
 
   /**
