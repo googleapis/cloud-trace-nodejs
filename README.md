@@ -66,8 +66,8 @@ The trace agent can do automatic tracing of the following web frameworks:
 The agent will also automatically trace RPCs from the following modules:
 * Outbound HTTP requests through `http`, `https`, and `http2` core modules
 * [grpc](https://www.npmjs.com/package/grpc) client (version ^1.1)
-* [mongodb-core](https://www.npmjs.com/package/mongodb-core) (version 1)
-* [mongoose](https://www.npmjs.com/package/mongoose) (version 4)
+* [mongodb-core](https://www.npmjs.com/package/mongodb-core) (version 1 - 3)
+* [mongoose](https://www.npmjs.com/package/mongoose) (version 4 - 5)
 * [mysql](https://www.npmjs.com/package/mysql) (version ^2.9)
 * [mysql2](https://www.npmjs.com/package/mysql2) (version 1)
 * [pg](https://www.npmjs.com/package/mysql2) (versions 6 - 7)

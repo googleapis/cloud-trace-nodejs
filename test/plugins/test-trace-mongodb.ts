@@ -29,7 +29,8 @@ var RESULT_SIZE = 5;
 
 var versions = {
   mongodb1: './fixtures/mongodb-core1',
-  mongodb2: './fixtures/mongodb-core2'
+  mongodb2: './fixtures/mongodb-core2',
+  mongodb3: './fixtures/mongodb-core3',
 };
 
 describe('mongodb', function() {
