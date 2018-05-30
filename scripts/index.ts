@@ -11,7 +11,9 @@ const {
   CIRCLE_PR_NUMBER,
   TRACE_TEST_EXCLUDE_INTEGRATION,
   TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY,
-  TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV
+  TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV,
+  GH_PAGES_PUB_ENCRYPTED_CREDENTIALS_KEY,
+  GH_PAGES_PUB_ENCRYPTED_CREDENTIALS_IV
 } = process.env;
 
 import { checkInstall } from './check-install';
@@ -66,14 +68,34 @@ async function run(steps: string[]) {
         case 'check-install':
           await checkInstall();
           break;
-        case 'encrypt-service-account-credentials':
+        case 'encrypt-gh-pages-publisher-credentials': {
+          const keyAndIV = await encryptCredentials('github-nodejs-docs-bot.key');
+          console.log([
+            `key: ${keyAndIV.key}`,
+            `iv: ${keyAndIV.iv}`
+          ].join('\n'));
+          break;
+        }
+        case 'decrypt-gh-pages-publisher-credentials': {
+          const key = GH_PAGES_PUB_ENCRYPTED_CREDENTIALS_KEY;
+          const iv = GH_PAGES_PUB_ENCRYPTED_CREDENTIALS_IV;
+          if (!key || !iv) {
+            console.log('> Environment insufficient to decrypt gh-pages publisher credentials');
+            break;
+          }
+
+          await decryptCredentials({ key, iv }, 'github-nodejs-docs-bot.key');
+          break;
+        }
+        case 'encrypt-service-account-credentials': {
           const keyAndIV = await encryptCredentials(`${projectID}-${keyID}.json`);
           console.log([
             `key: ${keyAndIV.key}`,
             `iv: ${keyAndIV.iv}`
           ].join('\n'));
           break;
-        case 'decrypt-service-account-credentials':
+        }
+        case 'decrypt-service-account-credentials': {
           const key = TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY;
           const iv = TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV;
           if (!key || !iv) {
@@ -83,6 +105,7 @@ async function run(steps: string[]) {
 
           await decryptCredentials({ key, iv }, `${projectID}-${keyID}.json`);
           break;
+        }
         case 'get-plugin-types':
           await getPluginTypes();
           break;
