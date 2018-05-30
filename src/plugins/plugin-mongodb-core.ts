@@ -17,7 +17,7 @@
 
 var shimmer = require('shimmer');
 
-var SUPPORTED_VERSIONS = '1 - 2';
+var SUPPORTED_VERSIONS = '1 - 3';
 
 function createNextWrap(api) {
   return function nextWrap(next) {
