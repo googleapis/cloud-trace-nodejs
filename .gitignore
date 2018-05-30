@@ -1,0 +1,11 @@
+*
+!*/
+!/.nojekyll
+!/.gitignore
+!/assets/**
+!/classes/**
+!/enums/**
+!/interfaces/**
+!/modules/**
+!/*.html
+!/README.md
