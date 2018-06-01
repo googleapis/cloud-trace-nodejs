@@ -183,8 +183,21 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
             const req = http.request(
                 {port, rejectUnauthorized: false},
                 waitForResponse.handleResponse);
-            await wait(DEFAULT_SPAN_DURATION / 2);
             req.end();
+            await waitForResponse.done;
+          }
+        },
+        {
+          description: 'calling http.get with Expect header',
+          fn: async () => {
+            const waitForResponse = new WaitForResponse();
+            const req = http.get(
+                {
+                  port,
+                  rejectUnauthorized: false,
+                  headers: {Expect: '100-continue'}
+                },
+                waitForResponse.handleResponse);
             await waitForResponse.done;
           }
         },

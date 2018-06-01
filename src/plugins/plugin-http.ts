@@ -42,6 +42,16 @@ function getSpanName(options: ClientRequestArgs|url.URL) {
   return options.hostname || options.host || 'localhost';
 }
 
+/**
+ * Returns whether the Expect header is on the given options object.
+ * @param options Options for http.request.
+ */
+function hasExpectHeader(options: ClientRequestArgs|
+                         url.URL): options is ClientRequestArgs {
+  // tslint:disable-next-line:no-any
+  return !!((options as any).headers && (options as any).headers.Expect);
+}
+
 function extractUrl(
     options: ClientRequestArgs|url.URL, fallbackProtocol: string) {
   let path;
@@ -111,6 +121,24 @@ function makeRequestTrace(
     span.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, method);
     span.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
 
+    // If outgoing request headers contain the "Expect" header, the returned
+    // ClientRequest will throw an error if any new headers are added. For this
+    // reason, only in this scenario, we opt to clone the options object to
+    // inject the trace context header instead of using ClientRequest#setHeader.
+    // (We don't do this generally because cloning the options object is an
+    // expensive operation.)
+    let traceHeaderPreinjected = false;
+    if (hasExpectHeader(options)) {
+      traceHeaderPreinjected = true;
+      // "Clone" the options object -- but don't deep-clone anything except for
+      // headers.
+      options = Object.assign({}, options);
+      options.headers = Object.assign({}, options.headers);
+      // Inject the trace context header.
+      options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
+          span.getTraceContext();
+    }
+
     const req = request(options, (res) => {
       api.wrapEmitter(res);
       let numBytes = 0;
@@ -144,13 +172,17 @@ function makeRequestTrace(
       }
     });
     api.wrapEmitter(req);
-    req.setHeader(
-        api.constants.TRACE_CONTEXT_HEADER_NAME, span.getTraceContext());
     req.on('error', error => {
       span.addLabel(api.labels.ERROR_DETAILS_NAME, error.name);
       span.addLabel(api.labels.ERROR_DETAILS_MESSAGE, error.message);
       span.endSpan();
     });
+    // Inject the trace context header, but only if it wasn't already injected
+    // earlier.
+    if (!traceHeaderPreinjected) {
+      req.setHeader(
+          api.constants.TRACE_CONTEXT_HEADER_NAME, span.getTraceContext());
+    }
     return req;
   };
 }
