@@ -48,8 +48,9 @@ function getSpanName(options: ClientRequestArgs|url.URL) {
  */
 function hasExpectHeader(options: ClientRequestArgs|
                          url.URL): options is ClientRequestArgs {
-  // tslint:disable-next-line:no-any
-  return !!((options as any).headers && (options as any).headers.Expect);
+  return !!(
+      (options as ClientRequestArgs).headers &&
+      (options as ClientRequestArgs).headers!.Expect);
 }
 
 function extractUrl(
