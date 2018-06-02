@@ -46,8 +46,7 @@ function getSpanName(options: ClientRequestArgs|url.URL) {
  * Returns whether the Expect header is on the given options object.
  * @param options Options for http.request.
  */
-function hasExpectHeader(options: ClientRequestArgs|
-                         url.URL): options is ClientRequestArgs {
+function hasExpectHeader(options: ClientRequestArgs|url.URL): boolean {
   return !!(
       (options as ClientRequestArgs).headers &&
       (options as ClientRequestArgs).headers!.Expect);
@@ -133,7 +132,7 @@ function makeRequestTrace(
       traceHeaderPreinjected = true;
       // "Clone" the options object -- but don't deep-clone anything except for
       // headers.
-      options = Object.assign({}, options);
+      options = Object.assign({}, options) as ClientRequestArgs;
       options.headers = Object.assign({}, options.headers);
       // Inject the trace context header.
       options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
