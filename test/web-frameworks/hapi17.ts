@@ -16,7 +16,7 @@
 
 import {hapi_17} from '../../src/plugins/types';
 
-import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkResponse} from './base';
+import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkHandlerFunction, WebFrameworkResponse} from './base';
 
 export class Hapi17 implements WebFramework {
   static commonName = `hapi@17`;
@@ -28,8 +28,7 @@ export class Hapi17 implements WebFramework {
   // So instead of registering a new Hapi plugin per path,
   // register only the first time -- passing a function that will iterate
   // through a list of routes keyed under the path.
-  private routes =
-      new Map<string, Array<() => Promise<WebFrameworkResponse|void>>>();
+  private routes = new Map<string, WebFrameworkHandlerFunction[]>();
   private registering = Promise.resolve();
 
   constructor() {
@@ -58,7 +57,7 @@ export class Hapi17 implements WebFramework {
               handler: async (request, h) => {
                 let result;
                 for (const handler of this.routes.get(options.path)!) {
-                  result = await handler();
+                  result = await handler(request.raw.req.headers);
                   if (result) {
                     return result;
                   }

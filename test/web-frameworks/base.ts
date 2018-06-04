@@ -1,3 +1,5 @@
+import {IncomingHttpHeaders} from 'http';
+
 /**
  * Copyright 2018 Google LLC
  *
@@ -30,11 +32,18 @@ export type WebFrameworkAddHandlerOptions = {
   path: string;
 }&({
   hasResponse: false;
-  fn: () => Promise<void>;
+  fn: (incomingHeaders: IncomingHttpHeaders) => Promise<void>;
 }|{
   hasResponse: true;
-  fn: () => Promise<WebFrameworkResponse>;
+  fn: (incomingHeaders: IncomingHttpHeaders) => Promise<WebFrameworkResponse>;
 });
+
+/**
+ * A type that describes a ramework-agnostic request handler function.
+ */
+export type WebFrameworkHandlerFunction =
+    (incomingHeaders: IncomingHttpHeaders) =>
+        Promise<void|WebFrameworkResponse>;
 
 /**
  * Abstraction over a web framework.
