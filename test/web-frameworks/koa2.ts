@@ -37,7 +37,7 @@ export class Koa2 implements WebFramework {
   addHandler(options: WebFrameworkAddHandlerOptions): void {
     this.app.use(async (ctx, next) => {
       if (ctx.request.path === options.path) {
-        const response = await options.fn();
+        const response = await options.fn(ctx.req.headers);
         if (response) {
           ctx.response.status = response.statusCode;
           ctx.response.body = response.message;

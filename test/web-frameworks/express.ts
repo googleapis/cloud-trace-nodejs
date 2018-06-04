@@ -37,7 +37,7 @@ export class Express4 implements WebFramework {
     this.app.get(options.path, async (req, res, next) => {
       let response: WebFrameworkResponse|void;
       try {
-        response = await options.fn();
+        response = await options.fn(req.headers);
       } catch (e) {
         next(e);
         return;

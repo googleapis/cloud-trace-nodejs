@@ -33,7 +33,7 @@ export class Restify implements WebFramework {
       this.server.get(options.path, async (req, res, next) => {
         let response: WebFrameworkResponse;
         try {
-          response = await options.fn();
+          response = await options.fn(req.headers);
         } catch (e) {
           next(e);
           return;
@@ -49,7 +49,7 @@ export class Restify implements WebFramework {
           return;
         }
         try {
-          await options.fn();
+          await options.fn(req.headers);
         } catch (e) {
           next(e);
           return;

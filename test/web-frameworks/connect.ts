@@ -41,7 +41,7 @@ export class Connect3 implements WebFramework {
             next: Function) => {
           let response: WebFrameworkResponse|void;
           try {
-            response = await options.fn();
+            response = await options.fn(req.headers);
           } catch (e) {
             // Unlike in Express, there doesn't seem to be an easily documented
             // way to silence errors

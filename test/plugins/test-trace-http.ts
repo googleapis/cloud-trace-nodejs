@@ -25,7 +25,9 @@ import * as semver from 'semver';
 import * as stream from 'stream';
 import {URL} from 'url';
 
-import {TraceSpan} from '../../src/trace';
+import {Constants} from '../../src/constants';
+import {SpanKind, TraceSpan} from '../../src/trace';
+import {parseContextFromHeader, TraceContext} from '../../src/util';
 import * as testTraceModule from '../trace';
 import {ASSERT_SPAN_TIME_TOLERANCE_MS, assertSpanDuration, DEFAULT_SPAN_DURATION} from '../utils';
 import {Express4} from '../web-frameworks/express';
@@ -47,7 +49,7 @@ class WaitForResponse {
   // A Promise that is resolved when the request function to which
   // this.handleResponse is passed has received its full response, or
   // this.handleDone has been called.
-  done: Promise<string>;
+  readonly done: Promise<string>;
   // A callback to be passed to http.request or http.get, so that when response
   // data has been fully consumed, this.done will be resolved.
   handleResponse = (res: httpModule.IncomingMessage) => {
@@ -286,7 +288,53 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       }
     });
 
-    it('should propagate context', async () => {
+    it('should propagate trace context across network boundaries', async () => {
+      const server = new ServerFramework();
+      // On the server side, capture the incoming trace context.
+      // The values in the captured context should be consistent with those
+      // observed on the client side.
+      let serverCapturedTraceContext: TraceContext|null = null;
+      server.addHandler({
+        path: '/',
+        hasResponse: true,
+        fn: async (headers) => {
+          const traceContext = headers[Constants.TRACE_CONTEXT_HEADER_NAME];
+          assert.ok(traceContext && typeof traceContext === 'string');
+          serverCapturedTraceContext =
+              parseContextFromHeader(traceContext as string);
+          return {statusCode: 200, message: 'hi'};
+        }
+      });
+      const port = server.listen(0);
+      try {
+        await testTraceModule.get().runInRootSpan(
+            {name: 'root'}, async (rootSpan) => {
+              assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+              const waitForResponse = new WaitForResponse();
+              http.get(
+                  {port, rejectUnauthorized: false},
+                  waitForResponse.handleResponse);
+              await waitForResponse.done;
+              rootSpan.endSpan();
+            });
+      } finally {
+        server.shutdown();
+      }
+      // There should be a single trace with two spans:
+      // [0] outer root span
+      // [1] http request on behalf of outer
+      const clientTrace = testTraceModule.getOneTrace();
+      assert.strictEqual(clientTrace.spans.length, 2);
+      assert.strictEqual(clientTrace.spans[1].kind, SpanKind.RPC_CLIENT);
+      const httpSpan = clientTrace.spans[1];
+      // Check that trace context is as expected.
+      assert.ok(serverCapturedTraceContext);
+      assert.strictEqual(
+          serverCapturedTraceContext!.traceId, clientTrace.traceId);
+      assert.strictEqual(serverCapturedTraceContext!.spanId, httpSpan.spanId);
+    });
+
+    it('should preserve trace context across async boundaries', async () => {
       const server = new ServerFramework();
       server.addHandler({
         path: '/',
@@ -305,6 +353,9 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
                   {port, rejectUnauthorized: false},
                   waitForResponse.handleResponse);
               await waitForResponse.done;
+              // This code executes after the HTTP request is done; i.e. in a
+              // descendant continuation from the request 'end' event handler.
+              // We make sure that trace context is still accessible here.
               const afterHttpSpan =
                   testTraceModule.get().createChildSpan({name: 'after-http'});
               assert.ok(testTraceModule.get().isRealSpan(afterHttpSpan));
@@ -454,7 +505,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
             `${nodule}://localhost:${port}/?foo=bar`);
       });
 
-      it('should should include error information if there was one', () => {
+      it('should include error information if there was one', () => {
         assert.strictEqual(errorSpan.labels[ERROR_DETAILS_NAME], 'Error');
         assert.strictEqual(
             errorSpan.labels[ERROR_DETAILS_MESSAGE], 'socket hang up');

@@ -42,7 +42,7 @@ export class Koa1 implements WebFramework {
         yield testTraceModule.get().wrap(async (cb: Function) => {
           let response: WebFrameworkResponse|void;
           try {
-            response = await options.fn();
+            response = await options.fn(this.request.req.headers);
           } catch (err) {
             cb(err);
             return;
