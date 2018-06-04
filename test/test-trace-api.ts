@@ -293,6 +293,34 @@ describe('Trace Interface', function() {
         assert.strictEqual(rootSpan.span.parentSpanId, '667');
       });
     });
+
+    describe('getting response trace context', () => {
+      it('should behave as expected', () => {
+        const fakeTraceId = 'ffeeddccbbaa99887766554433221100';
+        const traceApi = createTraceAgent();
+        const tracedContext = fakeTraceId + '/0;o=1';
+        const untracedContext = fakeTraceId + '/0;o=0';
+        const unspecifiedContext = fakeTraceId + '/0';
+        assert.strictEqual(
+            traceApi.getResponseTraceContext(tracedContext, true),
+            tracedContext);
+        assert.strictEqual(
+            traceApi.getResponseTraceContext(tracedContext, false),
+            untracedContext);
+        assert.strictEqual(
+            traceApi.getResponseTraceContext(untracedContext, true),
+            untracedContext);
+        assert.strictEqual(
+            traceApi.getResponseTraceContext(untracedContext, false),
+            untracedContext);
+        assert.strictEqual(
+            traceApi.getResponseTraceContext(unspecifiedContext, true),
+            untracedContext);
+        assert.strictEqual(
+            traceApi.getResponseTraceContext(unspecifiedContext, false),
+            untracedContext);
+      });
+    });
   });
 });
 
