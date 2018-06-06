@@ -14,26 +14,35 @@
  * limitations under the License.
  */
 
-import {Logger, logger} from '@google-cloud/common';
+import {Logger, logger, LoggerConfig} from '@google-cloud/common';
 
 const PASS_THROUGH_LOG_LEVEL = Number(process.env.GCLOUD_TEST_LOG_LEVEL || 0);
+// Capture the value of common.Logger so that we don't enter an infinite loop
+// if common.Logger is wrapped elsewhere.
+// tslint:disable-next-line:variable-name
+const OriginalLogger = Logger;
 
 // tslint:disable-next-line:no-any
-type LoggerFunction = (message: any, ...args: any[]) => void;
+type LoggerFunction<R> = (message: any, ...args: any[]) => R;
 
-export class TestLogger implements Logger {
-  private logs:
-      {[k in keyof Logger]:
-           string[]} = {error: [], warn: [], info: [], debug: [], silly: []};
-  private innerLogger = logger({level: logger.LEVELS[PASS_THROUGH_LOG_LEVEL]});
+export class TestLogger extends Logger {
+  private logs: {[k in keyof Logger]: string[]} =
+      {silent: [], error: [], warn: [], info: [], debug: [], silly: []};
+  private innerLogger =
+      new OriginalLogger({level: logger.LEVELS[PASS_THROUGH_LOG_LEVEL]});
 
-  private makeLoggerFn(logLevel: keyof Logger): LoggerFunction {
+  constructor(options?: Partial<LoggerConfig>) {
+    super(options);
+  }
+
+  private makeLoggerFn(logLevel: keyof Logger): LoggerFunction<this> {
     // TODO(kjin): When we drop support for Node 4, use spread args.
     const that = this;
     return function(this: null) {
       const args = Array.prototype.slice.call(arguments, 0);
       that.logs[logLevel].push(args.join(' '));
       that.innerLogger[logLevel].apply(this, args);
+      return that;
     };
   }
 

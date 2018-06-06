@@ -13,42 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-var assert = require('assert');
-var http = require('http');
+import * as assert from 'assert';
 
-var common = require('./plugins/common'/*.js*/);
+import * as trace from './trace';
 
-describe('test-default-ignore-ah-health', function() {
-  var agent;
-  var express;
-  before(function() {
-    agent = require('../..').start({
-      projectId: '0',
-      samplingRate: 0
-    });
-    express = require('express');
-  });
-
-  it('should ignore /_ah/health traces by default', function(done) {
-    var app = express();
-    app.get('/_ah/health', function (req, res) {
-      res.send('🏥');
-    });
-    var server = app.listen(9042, function() {
-      http.get({port: 9042, path: '/_ah/health'}, function(res) {
-        var result = '';
-        res.on('data', function(data) { result += data; });
-        res.on('end', function() {
-          assert.equal(result, '🏥');
-          assert.equal(common.getTraces().length, 0);
-          server.close();
-          done();
-        });
-      });
+describe('Trace API', () => {
+  it('should ignore /_ah/health traces by default', () => {
+    const traceApi = trace.start();
+    traceApi.runInRootSpan({name: 'root', url: '/_ah/health'}, (rootSpan) => {
+      assert.strictEqual(rootSpan.type, traceApi.spanTypes.UNTRACED);
     });
   });
 });
-
-export default {};

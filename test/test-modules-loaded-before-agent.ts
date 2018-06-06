@@ -22,17 +22,21 @@ import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
 
 describe('modules loaded before agent', () => {
-  const logger = new TestLogger();
+  let logger: CaptureTestLogger;
+
+  class CaptureTestLogger extends TestLogger {
+    constructor() {
+      super();
+      logger = this;
+    }
+  }
 
   before(() => {
-    const LEVELS = common.logger.LEVELS;
-    shimmer.wrap(common, 'logger', () => {
-      return Object.assign(() => logger, {LEVELS});
-    });
+    shimmer.wrap(common, 'Logger', () => CaptureTestLogger);
   });
 
   after(() => {
-    shimmer.unwrap(common, 'logger');
+    shimmer.unwrap(common, 'Logger');
   });
 
   it('should log if modules were loaded before agent', () => {

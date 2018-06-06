@@ -34,21 +34,16 @@
  * Most tests should include this file instead of the main module root.
  */
 
-// This is required for @google-cloud/common types.
-// tslint:disable-next-line:no-reference
-/// <reference path="../src/types.d.ts" />
-
 import * as common from '@google-cloud/common';
 import * as assert from 'assert';
 import * as shimmer from 'shimmer';
 
 import * as trace from '../src';
 import {Config, PluginTypes} from '../src';
-import {cls, TraceCLS, TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
-import {RootSpanData} from '../src/span-data';
+import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
 import {Trace, TraceSpan} from '../src/trace';
-import {PluginLoader, pluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
-import {LabelObject, TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
+import {PluginLoader, pluginLoader} from '../src/trace-plugin-loader';
+import {TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
 import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
@@ -65,8 +60,12 @@ export class TestCLS extends TraceCLS {
 }
 
 export class TestTraceWriter extends TraceWriter {
-  initialize(cb: (err?: Error) => void): void {
+  constructor(config: TraceWriterConfig, logger: common.Logger) {
+    super(config, logger);
     this.getConfig().projectId = '0';
+  }
+
+  initialize(cb: (err?: Error) => void): void {
     cb();
   }
   writeSpan(trace: Trace): void {
@@ -103,30 +102,12 @@ export function get(): PluginTypes.TraceAgent {
   return trace.get();
 }
 
-export type LoggerConstructor = new (logLevel?: keyof common.Logger) =>
-    common.Logger;
-export function setLoggerForTest(impl?: LoggerConstructor) {
-  if (common.logger.__wrapped) {
-    shimmer.unwrap(common, 'logger');
+export function setLoggerForTest(impl?: typeof common.Logger) {
+  if (common.Logger.__wrapped) {
+    shimmer.unwrap(common, 'Logger');
   }
   if (impl) {
-    const wrap = () => shimmer.wrap(
-        common, 'logger',
-        () => Object.assign((options?: common.LoggerOptions|string) => {
-          // sort of ugly, but needed to prevent possible circular constructor
-          // calls
-          shimmer.unwrap(common, 'logger');
-          let result;
-          if (typeof options === 'string') {
-            result = new impl(options as keyof common.Logger);
-          } else if (typeof options === 'object') {
-            result = new impl(options.level as keyof common.Logger);
-          } else {
-            result = new impl();
-          }
-          wrap();
-          return result;
-        }, {LEVELS: common.logger.LEVELS}));
+    const wrap = () => shimmer.wrap(common, 'Logger', () => impl);
     wrap();
   }
 }
