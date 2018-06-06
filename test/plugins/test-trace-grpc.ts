@@ -24,14 +24,17 @@ import * as assert from 'assert';
 import { asRootSpanData } from '../utils';
 import { Span } from '../../src/plugin-types';
 import { FORCE_NEW } from '../../src/util';
+import * as semver from 'semver';
 
 var shimmer = require('shimmer');
 var common = require('./common'/*.js*/);
 
-var versions = {
-  grpc1_6: './fixtures/grpc1.6',
+var versions: { [key: string]: string } = {
   grpc1_7: './fixtures/grpc1.7'
 };
+if (semver.satisfies(process.version, '<10')) {
+  versions.grpc1_6 = './fixtures/grpc1.6';
+}
 
 var protoFile = __dirname + '/../fixtures/test-grpc.proto';
 var grpcPort = 50051;
