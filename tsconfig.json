@@ -38,6 +38,7 @@
     "test/test-trace-cluster.ts",
     "test/test-trace-uncaught-exception.ts",
     "test/test-trace-web-frameworks.ts",
+    "test/test-trace-writer.ts",
     "test/test-util.ts",
     "test/trace.ts",
     "test/utils.ts",
