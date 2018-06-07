@@ -83,8 +83,8 @@ export class TraceWriter extends common.Service {
 
     this.logger = logger;
     // Clone the config object
-    this.config = Object.assign({}, config);
-    this.config.serviceContext = Object.assign({}, this.config.serviceContext);
+    this.config = {...config};
+    this.config.serviceContext = {...this.config.serviceContext};
     this.buffer = [];
     this.defaultLabels = {};
 
@@ -273,10 +273,12 @@ export class TraceWriter extends common.Service {
       afterProjectId(this.config.projectId);
     } else {
       this.getProjectId().then(afterProjectId, (err: Error) => {
+        // Because failing to get a project ID means that the trace agent will
+        // get disabled, there is a very small window for this code path to be
+        // taken. For this reason we don't do anything more complex than just
+        // notifying that we are dropping the current trace.
         this.logger.info(
             'TraceWriter#queueTrace: No project ID, dropping trace.');
-        return;  // if we even reach this point, disabling traces is already
-                 // imminent.
       });
     }
   }
