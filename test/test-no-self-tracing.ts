@@ -32,11 +32,9 @@ nock.disableNetConnect();
 
 describe('test-no-self-tracing', function() {
   it('should not trace metadata queries', function(done) {
-    delete process.env.GCLOUD_PROJECT;
     var scope = nock('http://metadata.google.internal')
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
-                .get('/computeMetadata/v1/instance/id').reply(200)
-                .get('/computeMetadata/v1/project/project-id').reply(200);
+                .get('/computeMetadata/v1/instance/id').reply(200);
     require('../..').start({[FORCE_NEW]: true});
     require('http'); // Must require http to force patching of the module
     var oldWarn = common.replaceWarnLogger(newWarn);
@@ -53,6 +51,7 @@ describe('test-no-self-tracing', function() {
                 .get('/computeMetadata/v1/instance/id').reply(200);
     var apiScope = nock('https://cloudtrace.googleapis.com')
                 .patch('/v1/projects/0/traces').reply(200);
+    delete process.env.GCLOUD_PROJECT;
     require('../..').start({
       projectId: '0',
       bufferSize: 1,

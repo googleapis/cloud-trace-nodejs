@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as common from '@google-cloud/common';
+import {Logger, logger} from '@google-cloud/common';
 import * as path from 'path';
 import * as semver from 'semver';
 
@@ -42,7 +42,7 @@ export type NormalizedConfig =
  */
 export class Tracing implements Component {
   /** A logger. */
-  private readonly logger: common.Logger;
+  private readonly logger: Logger;
   /** The configuration object for this instance. */
   private readonly config: Forceable<NormalizedConfig>;
 
@@ -56,15 +56,16 @@ export class Tracing implements Component {
     this.config = config;
     let logLevel = config.enabled ? config.logLevel : 0;
     // Clamp the logger level.
+    // TODO(kjin): When @google-cloud/common@0.19.2 is released, use
+    // Logger.LEVELS instead.
+    const defaultLevels = logger.LEVELS;
     if (logLevel < 0) {
       logLevel = 0;
-    } else if (logLevel >= common.logger.LEVELS.length) {
-      logLevel = common.logger.LEVELS.length - 1;
+    } else if (logLevel >= defaultLevels.length) {
+      logLevel = defaultLevels.length - 1;
     }
-    this.logger = common.logger({
-      level: common.logger.LEVELS[logLevel],
-      tag: '@google-cloud/trace-agent'
-    });
+    this.logger = new Logger(
+        {level: defaultLevels[logLevel], tag: '@google-cloud/trace-agent'});
   }
 
 

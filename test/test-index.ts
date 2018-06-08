@@ -66,40 +66,6 @@ describe('index.js', function() {
       assert.equal(global._google_trace_agent, agent);
     });
   });
-
-  it('should stop if TraceWriter fails to initialize', function(done) {
-    var envProjectId = process.env.GCLOUD_PROJECT;
-    delete process.env.GCLOUD_PROJECT;
-    nock.disableNetConnect();
-    var scope = nock('http://metadata.google.internal')
-                .get('/computeMetadata/v1/project/project-id')
-                .times(1)
-                .reply(404, 'foo');
-    var agent = trace.start({logLevel: 0, [FORCE_NEW]: true});
-    setTimeout(function() {
-      assert.ok(!agent.isActive());
-      scope.done();
-      process.env.GCLOUD_PROJECT = envProjectId;
-      done();
-    }, 500);
-  });
-
-  it('should allow project ID to be read after discovery', function(done) {
-    var envProjectId = process.env.GCLOUD_PROJECT;
-    delete process.env.GCLOUD_PROJECT;
-
-    nocks.projectId(function() { return 'project1'; });
-    nocks.hostname(function() { return 'host1'; });
-    nocks.instanceId(function() { return 'instance1'; });
-
-    var agent = trace.start({logLevel: 0, [FORCE_NEW]: true});
-
-    setTimeout(function() {
-      assert.strictEqual(agent.getWriterProjectId(), 'project1');
-      process.env.GCLOUD_PROJECT = envProjectId;
-      done();
-    }, 500);
-  });
 });
 
 export default {};

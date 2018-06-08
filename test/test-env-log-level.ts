@@ -14,58 +14,60 @@
  * limitations under the License.
  */
 
-'use strict';
+import * as common from '@google-cloud/common';
+import * as assert from 'assert';
+import * as shimmer from 'shimmer';
 
 import {FORCE_NEW} from '../src/util';
 
-var assert = require('assert');
-var gcloudCommon = require('@google-cloud/common');
-var shimmer = require('shimmer');
-var trace = require('../..');
+import {TestLogger} from './logger';
+import * as traceTestModule from './trace';
 
-describe('should respect environment variables', function() {
-  var logLevel;
+describe('should respect environment variables', () => {
+  let logLevel: string|null = null;
 
-  before(function() {
+  class CaptureLogLevelTestLogger extends TestLogger {
+    constructor(opts: {level: string|false}) {
+      super(opts);
+      if (opts.level === false) {
+        throw new Error('Unexpected value for opts.level');
+      }
+      logLevel = opts.level;
+    }
+  }
+
+  before(() => {
     process.env.GCLOUD_TRACE_LOGLEVEL = '4';
     // Wrap logger constructor so that the log level (string) is saved
     // in logLevel
-    shimmer.wrap(gcloudCommon, 'logger', function(original) {
-      var wrapped = Object.assign(function(options) {
-        logLevel = options.level;
-        return original.apply(this, arguments);
-      }, original);
-      return wrapped;
-    });
+    shimmer.wrap(common, 'Logger', () => CaptureLogLevelTestLogger);
   });
 
-  after(function() {
+  after(() => {
     delete process.env.GCLOUD_TRACE_LOGLEVEL;
-    shimmer.unwrap(gcloudCommon, 'logger');
+    shimmer.unwrap(common, 'logger');
   });
 
-  afterEach(function() {
+  afterEach(() => {
     logLevel = null;
   });
 
-  it('should respect GCLOUD_TRACE_LOGLEVEL', function() {
-    trace.start({[FORCE_NEW]: true});
-    assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[4]);
+  it('should respect GCLOUD_TRACE_LOGLEVEL', () => {
+    traceTestModule.start();
+    assert.strictEqual(logLevel, common.logger.LEVELS[4]);
   });
 
-  it('should prefer env to config', function() {
-    trace.start({logLevel: 2, [FORCE_NEW]: true});
-    assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[4]);
+  it('should prefer env to config', () => {
+    traceTestModule.start({logLevel: 2});
+    assert.strictEqual(logLevel, common.logger.LEVELS[4]);
   });
 
-  it('should fix out of bounds log level', function() {
+  it('should fix out of bounds log level', () => {
     process.env.GCLOUD_TRACE_LOGLEVEL = '-5';
-    trace.start({[FORCE_NEW]: true});
-    assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[0]);
+    traceTestModule.start();
+    assert.strictEqual(logLevel, common.logger.LEVELS[0]);
     process.env.GCLOUD_TRACE_LOGLEVEL = '300';
-    trace.start({[FORCE_NEW]: true});
-    assert.strictEqual(logLevel, gcloudCommon.logger.LEVELS[5]);
+    traceTestModule.start();
+    assert.strictEqual(logLevel, common.logger.LEVELS[5]);
   });
 });
-
-export default {};

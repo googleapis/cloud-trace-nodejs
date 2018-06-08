@@ -14,39 +14,34 @@
  * limitations under the License.
  */
 
-'use strict';
+import * as assert from 'assert';
+import * as http from 'http';
+import * as traceTestModule from './trace';
+import { pluginLoader, PluginLoaderState } from '../src/trace-plugin-loader';
+import { TraceWriter } from '../src/trace-writer';
+import { TraceAgent } from '../src/trace-api';
 
-import './override-gcp-metadata';
+describe('test-agent-stopped', () => {
+  class InitErrorTraceWriter extends TraceWriter {
+    getProjectId() {
+      return Promise.reject(new Error('foo'));
+    }
+  }
 
-var assert = require('assert');
-var http = require('http');
-var nock = require('nock');
-var trace = require('../..');
-var pluginLoader = require('../src/trace-plugin-loader').pluginLoader;
-var PluginLoaderState = require('../src/trace-plugin-loader').PluginLoaderState;
-
-describe('test-agent-stopped', function() {
-  var agent;
-  var savedProject;
-
-  before(function(done) {
-    savedProject = process.env.GCLOUD_PROJECT;
-
-    var scope = nock('http://metadata.google.internal')
-                .get('/computeMetadata/v1/project/project-id')
-                .reply(404);
-    delete process.env.GCLOUD_PROJECT;
-    agent = trace.start();
-    // Wait 200ms for agent to fail getting remote project id.
-    setTimeout(function() {
-      assert.ok(!agent.isActive());
-      scope.done();
+  before((done) => {
+    traceTestModule.setPluginLoaderForTest();
+    traceTestModule.setTraceWriterForTest(InitErrorTraceWriter);
+    traceTestModule.start();
+    // Wait for agent to fail getting remote project id.
+    setImmediate(() => {
+      assert.ok(!(traceTestModule.get() as TraceAgent).isActive());
       done();
-    }, 200);
+    });
   });
 
-  after(function() {
-    process.env.GCLOUD_PROJECT = savedProject;
+  after(() => {
+    traceTestModule.setPluginLoaderForTest(traceTestModule.TestPluginLoader);
+    traceTestModule.setTraceWriterForTest(traceTestModule.TestTraceWriter);
   });
 
   it('deactivates the plugin loader', () => {
@@ -55,7 +50,6 @@ describe('test-agent-stopped', function() {
 
   describe('express', function() {
     it('should not break if no project number is found', function(done) {
-      assert.ok(!agent.isActive());
       var app = require('./plugins/fixtures/express4')();
       app.get('/', function (req, res) {
         res.send('hi');
@@ -76,7 +70,6 @@ describe('test-agent-stopped', function() {
 
   describe('hapi', function() {
     it('should not break if no project number is found', function(done) {
-      assert.ok(!agent.isActive());
       var hapi = require('./plugins/fixtures/hapi8');
       var server = new hapi.Server();
       server.connection({ port: 8081 });
@@ -103,7 +96,6 @@ describe('test-agent-stopped', function() {
 
   describe('restify', function() {
     it('should not break if no project number is found', function(done) {
-      assert.ok(!agent.isActive());
       var restify = require('./plugins/fixtures/restify4');
       var server = restify.createServer();
       server.get('/', function (req, res, next) {
@@ -128,5 +120,3 @@ describe('test-agent-stopped', function() {
     });
   });
 });
-
-export default {};
