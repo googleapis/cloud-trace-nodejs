@@ -27,6 +27,9 @@
   "grpc1.6": {
     "dependencies": {
       "grpc": "~1.6.0"
+    },
+    "engines": {
+      "node": "<10"
     }
   },
   "grpc1.7": {
