@@ -15,6 +15,8 @@
  */
 'use strict';
 
+import * as semver from 'semver';
+
 // Trace agent must be started out of the loop over gRPC versions,
 // because express can't be re-patched.
 var agent = require('../..').start({
@@ -28,10 +30,12 @@ var assert = require('assert');
 var express = require('./plugins/fixtures/express4');
 var http = require('http');
 
-var versions = {
-  grpc1_6: './plugins/fixtures/grpc1.6',
+var versions: { [key: string]: string } = {
   grpc1_7: './plugins/fixtures/grpc1.7'
 };
+if (semver.satisfies(process.version, '<10')) {
+  versions.grpc1_6 = './plugins/fixtures/grpc1.6';
+}
 
 var grpcPort = 50051;
 var protoFile = __dirname + '/fixtures/test-grpc.proto';

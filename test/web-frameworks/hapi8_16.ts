@@ -42,7 +42,7 @@ export class Hapi implements WebFramework {
           handler: async (request, reply) => {
             let response: WebFrameworkResponse;
             try {
-              response = await options.fn();
+              response = await options.fn(request.raw.req.headers);
             } catch (e) {
               reply(e);
               return;
@@ -53,7 +53,7 @@ export class Hapi implements WebFramework {
       } else {
         this.server.ext('onPreHandler', async (request, reply) => {
           try {
-            await options.fn();
+            await options.fn(request.raw.req.headers);
           } catch (e) {
             reply(e);
             return;
