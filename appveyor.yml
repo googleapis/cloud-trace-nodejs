@@ -16,7 +16,6 @@ install:
   # Get the latest stable version of Node.js or io.js
   - ps: Install-Product node $env:nodejs_version
   - SET GCLOUD_PROJECT=0
-  - SET GCLOUD_TRACE_NEW_CONTEXT=1
   - SET TRACE_TEST_EXCLUDE_INTEGRATION=1
 
 # Post-install test scripts.

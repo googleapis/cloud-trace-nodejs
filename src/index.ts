@@ -79,8 +79,7 @@ function initConfig(projectConfig: Forceable<Config>):
 
   // If the CLS mechanism is set to auto-determined, decide now what it should
   // be.
-  const ahAvailable = semver.satisfies(process.version, '>=8') &&
-      process.env.GCLOUD_TRACE_NEW_CONTEXT;
+  const ahAvailable = semver.satisfies(process.version, '>=8');
   if (config.clsMechanism === 'auto') {
     config.clsMechanism = ahAvailable ? 'async-hooks' : 'async-listener';
   }

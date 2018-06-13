@@ -35,7 +35,7 @@ var semver = require('semver');
 
 var logger = require('@google-cloud/common').logger;
 var trace = require('../../..');
-if (semver.satisfies(process.version, '>=8') && process.env.GCLOUD_TRACE_NEW_CONTEXT) {
+if (semver.satisfies(process.version, '>=8')) {
   // Monkeypatch Mocha's it() to create a fresh context with each test case.
   var oldIt = global.it;
   global.it = Object.assign(function it(title, fn) {

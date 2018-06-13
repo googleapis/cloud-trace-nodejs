@@ -4,8 +4,6 @@
 node_modules_cache_key: &node_modules_cache_key node-modules-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "package.json" }}-{{ checksum "package-lock.json" }}
 test_fixtures_cache_key: &test_fixtures_cache_key test-fixtures-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "test/fixtures/plugin-fixtures.json" }}
 plugin_types_cache_key: &plugin_types_cache_key plugin-types-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "src/plugins/types/index.d.ts" }}
-test_env: &test_env
-  GCLOUD_TRACE_NEW_CONTEXT: 1
 release_tags: &release_tags
   tags:
     only: /^v\d+(\.\d+){2}(-.*)?$/
@@ -126,7 +124,6 @@ jobs:
   node4:
     docker:
       - image: node:4
-        environment: *test_env
       - *mongo_service
       - *redis_service
       - *postgres_service
@@ -135,7 +132,6 @@ jobs:
   node6:
     docker:
       - image: node:6
-        environment: *test_env
       - *mongo_service
       - *redis_service
       - *postgres_service
@@ -144,7 +140,6 @@ jobs:
   node8:
     docker:
       - image: node:8
-        environment: *test_env
       - *mongo_service
       - *redis_service
       - *postgres_service
@@ -153,7 +148,6 @@ jobs:
   node9:
     docker:
       - image: node:9
-        environment: *test_env
       - *mongo_service
       - *redis_service
       - *postgres_service
@@ -162,7 +156,6 @@ jobs:
   node10:
     docker:
       - image: node:10
-        environment: *test_env
       - *mongo_service
       - *redis_service
       - *postgres_service
