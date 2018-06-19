@@ -27,13 +27,13 @@
  * contain dots.
  */
 
-import * as connect_3 from './connect_3'; // connect@3
-import * as express_4 from './express_4'; // express@4
-import * as hapi_16 from './hapi_16'; // hapi@16
-import * as hapi_17 from './hapi_17'; // hapi@17
-import * as koa_2 from './koa_2'; // koa@2
-import * as pg_7 from './pg_7'; // pg@7
-import * as restify_5 from './restify_5'; // restify@5
+import connect_3 from './connect_3'; // connect@3
+import express_4 from './express_4'; // express@4
+import hapi_16 from './hapi_16'; // hapi@16
+import hapi_17 from './hapi_17'; // hapi@17
+import koa_2 from './koa_2'; // koa@2
+import pg_7 from './pg_7'; // pg@7
+import restify_5 from './restify_5'; // restify@5
 
 //---other imports---//
 

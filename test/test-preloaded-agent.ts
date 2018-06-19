@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as semver from 'semver';
+import semver from 'semver';
 import { execSync } from 'child_process';
-import * as assert from 'assert';
+import assert from 'assert';
 
 describe('preloaded agent', () => {
   it('should start automatically when preloaded using --require', () => {

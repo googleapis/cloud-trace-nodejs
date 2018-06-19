@@ -15,15 +15,13 @@
  */
 
 import {Logger} from '@google-cloud/common';
-import Module = require('module');
-import * as hook from 'require-in-the-middle';
-import * as path from 'path';
-import * as semver from 'semver';
-import * as shimmer from 'shimmer';
-import * as util from './util';
-import * as builtinModules from 'builtin-modules';
+import builtinModules from 'builtin-modules';
+import path from 'path';
+import hook from 'require-in-the-middle';
+import semver from 'semver';
+
+import {Intercept, Patch, Plugin} from './plugin-types';
 import {TraceAgent, TraceAgentConfig} from './trace-api';
-import {Patch, Intercept, Plugin, Instrumentation} from './plugin-types';
 import {Singleton} from './util';
 
 /**

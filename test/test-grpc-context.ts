@@ -15,7 +15,7 @@
  */
 'use strict';
 
-import * as semver from 'semver';
+import semver from 'semver';
 
 // Trace agent must be started out of the loop over gRPC versions,
 // because express can't be re-patched.

@@ -16,7 +16,7 @@
 
 import {Logger} from '@google-cloud/common';
 import {EventEmitter} from 'events';
-import * as semver from 'semver';
+import semver from 'semver';
 
 import {AsyncHooksCLS} from './cls/async-hooks';
 import {AsyncListenerCLS} from './cls/async-listener';
@@ -83,7 +83,9 @@ export enum TraceCLSMechanism {
 /**
  * Configuration options passed to the TraceCLS constructor.
  */
-export interface TraceCLSConfig { mechanism: TraceCLSMechanism; }
+export interface TraceCLSConfig {
+  mechanism: TraceCLSMechanism;
+}
 
 interface CLSConstructor {
   new(defaultContext: RootContext): CLS<RootContext>;

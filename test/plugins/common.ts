@@ -15,7 +15,7 @@
  */
 'use strict';
 
-import * as mocha from 'mocha';
+import mocha from 'mocha';
 declare global {
   namespace NodeJS {
     export interface Global {

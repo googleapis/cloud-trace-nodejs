@@ -15,7 +15,7 @@
  */
 
 import {EventEmitter} from 'events';
-import * as shimmer from 'shimmer';
+import shimmer from 'shimmer';
 import {Readable} from 'stream';
 
 import {Patch, Plugin, Span} from '../plugin-types';

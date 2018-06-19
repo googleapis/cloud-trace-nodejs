@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 import axiosModule from 'axios';
-import * as cluster from 'cluster';
+import cluster from 'cluster';
 import {Server} from 'http';
 import {AddressInfo} from 'net';
 

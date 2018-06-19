@@ -21,12 +21,12 @@ require('../../..').start({
   samplingRate: 0,
 });
 
-import * as assert from 'assert';
+import assert from 'assert';
 // This is imported only for types. Generated .js file should NOT load 'http2'
 // in this place. It is dynamically loaded later from each test suite below.
-import * as http2 from 'http2';
-import * as semver from 'semver';
-import * as stream from 'stream';
+import http2 from 'http2';
+import semver from 'semver';
+import stream from 'stream';
 
 import {Constants} from '../../src/constants';
 import {TraceLabels} from '../../src/trace-labels';

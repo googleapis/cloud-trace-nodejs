@@ -17,8 +17,8 @@
 import {EventEmitter} from 'events';
 // This is imported only for types. Generated .js file should NOT load 'http2'.
 // `http2` must be used only in type annotations, not in expressions.
-import * as http2 from 'http2';
-import * as shimmer from 'shimmer';
+import http2 from 'http2';
+import shimmer from 'shimmer';
 import {URL} from 'url';
 
 import {TraceAgent} from '../plugin-types';

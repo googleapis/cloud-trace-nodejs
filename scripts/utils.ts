@@ -1,11 +1,11 @@
 import { mkdir, Stats, stat, readFile, writeFile } from 'fs';
-import * as glob from 'glob';
+import glob from 'glob';
 import { ncp } from 'ncp';
-import * as path from 'path';
-import * as pify from 'pify';
+import path from 'path';
+import pify from 'pify';
 import { ChildProcess, ForkOptions, fork, SpawnOptions, spawn } from 'child_process';
-import * as once from 'once';
-import * as tmp from 'tmp';
+import once from 'once';
+import tmp from 'tmp';
 
 export const BUILD_DIRECTORY = 'build';
 

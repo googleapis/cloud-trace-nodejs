@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 import axiosModule from 'axios';
-import * as semver from 'semver';
+import semver from 'semver';
 
 import * as cls from '../src/cls';
 import {Constants} from '../src/constants';

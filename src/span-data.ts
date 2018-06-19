@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
-import * as util from 'util';
+import crypto from 'crypto';
+import util from 'util';
 
 import {Constants, SpanType} from './constants';
 import * as types from './plugin-types';

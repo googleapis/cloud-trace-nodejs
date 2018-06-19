@@ -18,8 +18,7 @@ import * as common from '@google-cloud/common';
 import {AxiosError} from 'axios';
 import * as gcpMetadata from 'gcp-metadata';
 import {OutgoingHttpHeaders} from 'http';
-import * as os from 'os';
-import * as util from 'util';
+import os from 'os';
 
 import {Constants} from './constants';
 import {SpanKind, Trace} from './trace';
@@ -46,7 +45,9 @@ export interface TraceWriterConfig extends common.GoogleAuthOptions {
   serviceContext: {service?: string; version?: string; minorVersion?: string;};
 }
 
-export interface LabelObject { [key: string]: string; }
+export interface LabelObject {
+  [key: string]: string;
+}
 
 /**
  * A class representing a service that publishes traces in the background.

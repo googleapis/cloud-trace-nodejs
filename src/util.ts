@@ -15,7 +15,7 @@
  */
 
 import {Logger} from '@google-cloud/common';  // for types only.
-import * as path from 'path';
+import path from 'path';
 
 // This symbol must be exported (for now).
 // See: https://github.com/Microsoft/TypeScript/issues/20080

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as http from 'http';
+import http from 'http';
 
 import {restify_5} from '../../src/plugins/types';
 

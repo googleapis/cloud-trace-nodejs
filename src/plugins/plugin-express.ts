@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as httpMethods from 'methods';
-import * as shimmer from 'shimmer';
+import httpMethods from 'methods';
+import shimmer from 'shimmer';
 
 import {PluginTypes} from '..';
 

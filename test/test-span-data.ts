@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 
 import {Constants, SpanType} from '../src/constants';
 import {BaseSpanData, ChildSpanData, RootSpanData} from '../src/span-data';

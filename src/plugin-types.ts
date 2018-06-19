@@ -22,7 +22,9 @@ import {TraceLabels} from './trace-labels';
 export type Func<T> = (...args: any[]) => T;
 
 // Defines an interface for storing Trace-Agent related data on patched modules.
-export interface TraceAgentExtension { _google_trace_patched: boolean; }
+export interface TraceAgentExtension {
+  _google_trace_patched: boolean;
+}
 
 /**
  * Represents a trace span.

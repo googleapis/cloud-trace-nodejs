@@ -15,9 +15,9 @@
  */
 
 import {Logger} from '@google-cloud/common';
-import * as is from 'is';
-import * as semver from 'semver';
-import * as uuid from 'uuid';
+import is from 'is';
+import semver from 'semver';
+import uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
 import {Constants, SpanType} from './constants';

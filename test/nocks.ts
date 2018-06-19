@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as nock from 'nock';
+import nock from 'nock';
 
 const accept = () => true;
 

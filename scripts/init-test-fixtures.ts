@@ -1,8 +1,8 @@
-import * as path from 'path';
+import path from 'path';
 import { BUILD_DIRECTORY, globP, statP, ncpP, spawnP, readFileP, writeFileP, mkdirP } from './utils';
 import { readdir } from 'fs';
-import * as pify from 'pify';
-import * as semver from 'semver';
+import pify from 'pify';
+import semver from 'semver';
 
 const readdirP: (path: string) => Promise<string[]> = pify(readdir);
 
