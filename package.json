@@ -46,7 +46,7 @@
   "author": "Google Inc.",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=0.12"
+    "node": ">=4"
   },
   "devDependencies": {
     "@types/builtin-modules": "^2.0.0",
@@ -55,7 +55,7 @@
     "@types/glob": "^5.0.32",
     "@types/is": "0.0.20",
     "@types/methods": "^1.1.0",
-    "@types/mocha": "^5.0.0",
+    "@types/mocha": "5.2.1",
     "@types/ncp": "^2.0.1",
     "@types/nock": "^9.1.2",
     "@types/node": "^10.0.9",
@@ -101,7 +101,7 @@
     "lodash.findindex": "^4.4.0",
     "lodash.isequal": "^4.0.0",
     "methods": "^1.1.1",
-    "require-in-the-middle": "^2.2.1",
+    "require-in-the-middle": "2.2.1",
     "semver": "^5.4.1",
     "shimmer": "^1.2.0",
     "uuid": "^3.0.1"
