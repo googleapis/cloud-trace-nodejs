@@ -18,10 +18,10 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
-import * as semver from 'semver';
+import semver from 'semver';
 import {Config, defaultConfig} from './config';
-import * as extend from 'extend';
-import * as path from 'path';
+import extend from 'extend';
+import path from 'path';
 import * as PluginTypes from './plugin-types';
 import {tracing, Tracing, NormalizedConfig} from './tracing';
 import {Singleton, FORCE_NEW, Forceable} from './util';

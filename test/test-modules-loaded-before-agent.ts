@@ -15,8 +15,8 @@
  */
 
 import * as common from '@google-cloud/common';
-import * as assert from 'assert';
-import * as shimmer from 'shimmer';
+import assert from 'assert';
+import shimmer from 'shimmer';
 
 import {TestLogger} from './logger';
 import * as testTraceModule from './trace';

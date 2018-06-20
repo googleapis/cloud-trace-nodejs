@@ -35,8 +35,8 @@
  */
 
 import * as common from '@google-cloud/common';
-import * as assert from 'assert';
-import * as shimmer from 'shimmer';
+import assert from 'assert';
+import shimmer from 'shimmer';
 
 import * as trace from '../src';
 import {Config, PluginTypes} from '../src';

@@ -1,7 +1,7 @@
-import * as path from 'path';
+import path from 'path';
 import { forkP } from './utils';
-import * as ts from 'typescript';
-import * as semver from 'semver';
+import ts from 'typescript';
+import semver from 'semver';
 
 export interface CompileOptions {
   strict: boolean;

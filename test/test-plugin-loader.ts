@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
-import * as assert from 'assert';
-import * as path from 'path';
-import * as hook from 'require-in-the-middle';
-import * as shimmer from 'shimmer';
+import assert from 'assert';
+import path from 'path';
 
 import {PluginLoader, PluginLoaderState, PluginWrapper} from '../src/trace-plugin-loader';
 

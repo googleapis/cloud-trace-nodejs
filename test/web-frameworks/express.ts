@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as http from 'http';
+import http from 'http';
 import {AddressInfo} from 'net';
 
 import {express_4} from '../../src/plugins/types';

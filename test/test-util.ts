@@ -15,7 +15,7 @@
  */
 
 import {Logger} from '@google-cloud/common';
-import * as assert from 'assert';
+import assert from 'assert';
 import {inspect} from 'util';
 
 import {Constants} from '../src/constants';

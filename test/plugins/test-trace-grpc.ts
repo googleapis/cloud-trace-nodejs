@@ -20,11 +20,11 @@ import { Constants, SpanType } from '../../src/constants';
 import { TraceLabels } from '../../src/trace-labels';
 import * as TracingPolicy from '../../src/tracing-policy';
 import * as util from '../../src/util';
-import * as assert from 'assert';
+import assert from 'assert';
 import { asRootSpanData } from '../utils';
 import { Span } from '../../src/plugin-types';
 import { FORCE_NEW } from '../../src/util';
-import * as semver from 'semver';
+import semver from 'semver';
 
 var shimmer = require('shimmer');
 var common = require('./common'/*.js*/);
@@ -334,7 +334,7 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
+            assert.ok(trace);
             common.assertDurationCorrect(Date.now() - start, predicate);
             assert.strictEqual(trace.labels.argument, '{"n":42}');
             assert.strictEqual(trace.labels.result, '{"n":42}');
@@ -342,7 +342,7 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
-          assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
           done();
         });
       });
@@ -365,14 +365,14 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
+            assert.ok(trace);
             common.assertDurationCorrect(Date.now() - start, predicate);
             assert.strictEqual(trace.labels.result, '{"n":45}');
           };
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
-          assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
           done();
         });
       });
@@ -385,7 +385,7 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
+            assert.ok(trace);
             common.assertDurationCorrect(Date.now() - start, predicate);
             assert.strictEqual(trace.labels.argument, '{"n":42}');
             return trace;
@@ -395,7 +395,7 @@ Object.keys(versions).forEach(function(version) {
               '{"code":0,"details":"OK","metadata":{"_internal_repr":{}}}');
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
-          assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
           done();
         });
       });
@@ -408,7 +408,7 @@ Object.keys(versions).forEach(function(version) {
           endTransaction();
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
+            assert.ok(trace);
             common.assertDurationCorrect(Date.now() - start, predicate);
             return trace;
           };
@@ -417,7 +417,7 @@ Object.keys(versions).forEach(function(version) {
               '{"code":0,"details":"OK","metadata":{"_internal_repr":{}}}');
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
-          assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
           done();
         });
       });
@@ -511,9 +511,9 @@ Object.keys(versions).forEach(function(version) {
               if (++num === 2) {
                 endTransaction();
                 var traces = common.getMatchingSpans(grpcServerOuterPredicate);
-                assert(traces.length === 2);
-                assert(traces[0].spanId !== traces[1].spanId);
-                assert(traces[0].startTime !== traces[1].startTime);
+                assert.ok(traces.length === 2);
+                assert.ok(traces[0].spanId !== traces[1].spanId);
+                assert.ok(traces[0].startTime !== traces[1].startTime);
                 common.assertSpanDurationCorrect(traces[0], endFirst - startFirst);
                 common.assertSpanDurationCorrect(traces[1], Date.now() - startSecond);
                 setImmediate(prevNext);
@@ -569,7 +569,7 @@ Object.keys(versions).forEach(function(version) {
       common.runInTransaction(function(endTransaction) {
         client.testUnary({n: EMIT_ERROR}, function(err, result) {
           endTransaction();
-          assert(err);
+          assert.ok(err);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
             assert.ok(trace);
@@ -579,7 +579,7 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
-          assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
           done();
         });
       });
@@ -589,7 +589,7 @@ Object.keys(versions).forEach(function(version) {
       common.runInTransaction(function(endTransaction) {
         var stream = client.testClientStream(function(err, result) {
           endTransaction();
-          assert(err);
+          assert.ok(err);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
             assert.ok(trace);
@@ -598,7 +598,7 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
-          assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
           done();
         });
         stream.write({n: EMIT_ERROR});
@@ -620,7 +620,7 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
-          assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
           done();
         });
       });
@@ -642,7 +642,7 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcClientPredicate);
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
-          assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
           done();
         });
       });
@@ -658,7 +658,7 @@ Object.keys(versions).forEach(function(version) {
           assert.strictEqual(status.code, grpc.status.OK);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
+            assert.ok(trace);
             common.assertDurationCorrect(Date.now() - start, predicate);
             assert.ok(metadataRegExp.test(trace.labels.metadata));
           };
@@ -681,7 +681,7 @@ Object.keys(versions).forEach(function(version) {
           assert.strictEqual(status.code, grpc.status.OK);
           var assertTraceProperties = function(predicate) {
             var trace = common.getMatchingSpan(predicate);
-            assert(trace);
+            assert.ok(trace);
             common.assertDurationCorrect(Date.now() - start, predicate);
             assert.ok(metadataRegExp.test(trace.labels.metadata));
           };
@@ -701,7 +701,7 @@ Object.keys(versions).forEach(function(version) {
             assert.ifError(err);
             var assertTraceProperties = function(predicate) {
               var trace = common.getMatchingSpan(predicate);
-              assert(trace);
+              assert.ok(trace);
               common.assertDurationCorrect(Date.now() - start, predicate);
               assert.ok(metadataRegExp.test(trace.labels.metadata));
               return trace;
@@ -723,7 +723,7 @@ Object.keys(versions).forEach(function(version) {
             assert.ifError(err);
             var assertTraceProperties = function(predicate) {
               var trace = common.getMatchingSpan(predicate);
-              assert(trace);
+              assert.ok(trace);
               common.assertDurationCorrect(Date.now() - start, predicate);
               assert.ok(metadataRegExp.test(trace.labels.metadata));
               return trace;
@@ -748,7 +748,7 @@ Object.keys(versions).forEach(function(version) {
                 assert.ifError(err);
                 var assertTraceProperties = function(predicate) {
                   var trace = common.getMatchingSpan(predicate);
-                  assert(trace);
+                  assert.ok(trace);
                   common.assertDurationCorrect(Date.now() - start, predicate);
                   assert.ok(metadataRegExp.test(trace.labels.metadata));
                   return trace;
@@ -771,7 +771,7 @@ Object.keys(versions).forEach(function(version) {
                 assert.ifError(err);
                 var assertTraceProperties = function(predicate) {
                   var trace = common.getMatchingSpan(predicate);
-                  assert(trace);
+                  assert.ok(trace);
                   common.assertDurationCorrect(Date.now() - start, predicate);
                   assert.ok(metadataRegExp.test(trace.labels.metadata));
                   return trace;

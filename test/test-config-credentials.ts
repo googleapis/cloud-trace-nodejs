@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import * as nock from 'nock';
+import assert from 'assert';
+import nock from 'nock';
 import {disableNetConnect, enableNetConnect} from 'nock';
-import * as path from 'path';
+import path from 'path';
 
 import {FORCE_NEW} from '../src/util';
 import {oauth2, patchTraces} from './nocks';

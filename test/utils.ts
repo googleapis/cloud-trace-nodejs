@@ -16,7 +16,7 @@
 
 // TODO(kjin): This file should supercede plugins/common.ts.
 
-import * as assert from 'assert';
+import assert from 'assert';
 
 import {SpanType} from '../src/constants';
 import {Span} from '../src/plugin-types';

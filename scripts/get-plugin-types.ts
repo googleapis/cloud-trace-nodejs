@@ -20,7 +20,7 @@ export async function getPluginTypes() {
   const indexTs = (await readFileP(`${TYPES_DIRECTORY}/index.d.ts`, 'utf8') as string)
     .split('\n');
   for (const line of indexTs) {
-    const matches = line.match(/^import \* as .* from '\.\/(.+)';\s*\/\/\s*(.+)@(.+)$/);
+    const matches = line.match(/^import .* from '\.\/(.+)';\s*\/\/\s*(.+)@(.+)$/);
     if (!matches) {
       continue;
     }
@@ -34,7 +34,7 @@ export async function getPluginTypes() {
         cwd: installDir
       });
       await writeFileP(`${installDir}/index.ts`,
-        `import * as _ from '${name}'; export = _;\n`, 'utf8');
+        `import _ from '${name}'; export = _;\n`, 'utf8');
     }
   }
 }

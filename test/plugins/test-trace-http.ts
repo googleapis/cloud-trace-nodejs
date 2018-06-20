@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 import {EventEmitter} from 'events';
-import * as fs from 'fs';
-import * as httpModule from 'http';
-import * as httpsModule from 'https';
+import fs from 'fs';
+import httpModule from 'http';
+import httpsModule from 'https';
 import {AddressInfo} from 'net';
-import * as path from 'path';
-import * as semver from 'semver';
-import * as stream from 'stream';
+import path from 'path';
+import semver from 'semver';
+import stream from 'stream';
 import {URL} from 'url';
 
 import {Constants} from '../../src/constants';

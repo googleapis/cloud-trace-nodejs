@@ -15,7 +15,7 @@
  */
 
 import {Logger} from '@google-cloud/common';
-import * as assert from 'assert';
+import assert from 'assert';
 
 import {defaultConfig} from '../src/config';
 import {PluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';

@@ -35,7 +35,7 @@
  * in which createApiCall was called.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 
 import * as testTraceModule from '../trace';
 

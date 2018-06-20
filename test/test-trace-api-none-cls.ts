@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 
 import {SpanType} from '../src/constants';
 import {TraceAgent} from '../src/plugin-types';

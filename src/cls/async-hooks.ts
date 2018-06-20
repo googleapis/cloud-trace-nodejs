@@ -16,9 +16,9 @@
 
 // This file calls require('async_hooks') in the AsyncHooksCLS constructor,
 // rather than upon module load.
-import * as asyncHooksModule from 'async_hooks';
+import asyncHooksModule from 'async_hooks';
 import {EventEmitter} from 'events';
-import * as shimmer from 'shimmer';
+import shimmer from 'shimmer';
 
 import {CLS, Func} from './base';
 

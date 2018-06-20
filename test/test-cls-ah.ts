@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import * as asyncHooksModule from 'async_hooks';
+import assert from 'assert';
+import asyncHooksModule from 'async_hooks';
 import {IContextDefinition} from 'mocha';
-import * as semver from 'semver';
+import semver from 'semver';
 
 import {AsyncHooksCLS} from '../src/cls/async-hooks';
 

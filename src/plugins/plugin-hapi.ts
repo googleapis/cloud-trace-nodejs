@@ -15,7 +15,7 @@
  */
 
 import {IncomingMessage, ServerResponse} from 'http';
-import * as shimmer from 'shimmer';
+import shimmer from 'shimmer';
 import {parse as urlParse} from 'url';
 
 import {PluginTypes} from '..';

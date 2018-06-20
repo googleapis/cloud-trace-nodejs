@@ -16,8 +16,8 @@
 
 // Monkeypatch gcp-metadata to not ask for retries at all.
 
-import * as rax from 'retry-axios';
-import * as shimmer from 'shimmer';
+import rax from 'retry-axios';
+import shimmer from 'shimmer';
 import { AxiosRequestConfig } from 'axios';
 
 shimmer.wrap(rax, 'attach', attach => {

@@ -1,6 +1,6 @@
 import { BUILD_DIRECTORY, nodule, readFileP, forkP, spawnP } from './utils';
-import * as path from 'path';
-import * as pify from 'pify';
+import path from 'path';
+import pify from 'pify';
 
 export async function reportCoverage() {
   await forkP(nodule('.bin/codecov'), [], {

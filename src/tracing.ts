@@ -15,8 +15,8 @@
  */
 
 import {Logger, logger} from '@google-cloud/common';
-import * as path from 'path';
-import * as semver from 'semver';
+import path from 'path';
+import semver from 'semver';
 
 import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
 import {CLSMechanism, Config, defaultConfig} from './config';

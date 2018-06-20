@@ -15,12 +15,12 @@
  */
 
 import {Service} from '@google-cloud/common';
-import * as assert from 'assert';
+import assert from 'assert';
 import {OutgoingHttpHeaders} from 'http';
-import * as nock from 'nock';
-import * as os from 'os';
+import nock from 'nock';
+import os from 'os';
 import {Response} from 'request';
-import * as shimmer from 'shimmer';
+import shimmer from 'shimmer';
 
 import {SpanKind, Trace} from '../src/trace';
 import {TraceLabels} from '../src/trace-labels';

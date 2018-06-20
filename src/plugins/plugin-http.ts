@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import * as httpModule from 'http';
+import httpModule from 'http';
 import {Agent, ClientRequest, ClientRequestArgs, get, request} from 'http';
-import * as httpsModule from 'https';
-import * as is from 'is';
-import * as semver from 'semver';
-import * as shimmer from 'shimmer';
-import * as url from 'url';
+import httpsModule from 'https';
+import is from 'is';
+import semver from 'semver';
+import shimmer from 'shimmer';
+import url from 'url';
 
 import {Plugin, TraceAgent} from '../plugin-types';
 

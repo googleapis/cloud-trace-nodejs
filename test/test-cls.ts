@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 import {EventEmitter} from 'events';
 import {ITestDefinition} from 'mocha';
-import * as semver from 'semver';
+import semver from 'semver';
 import {inspect} from 'util';
 
 import {TraceCLS, TraceCLSConfig, TraceCLSMechanism} from '../src/cls';

@@ -15,9 +15,9 @@
  */
 
 import {Logger} from '@google-cloud/common';
-import * as assert from 'assert';
-import * as semver from 'semver';
-import * as util from 'util';
+import assert from 'assert';
+import semver from 'semver';
+import util from 'util';
 
 import {TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 

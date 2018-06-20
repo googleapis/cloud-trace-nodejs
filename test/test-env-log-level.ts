@@ -15,10 +15,8 @@
  */
 
 import * as common from '@google-cloud/common';
-import * as assert from 'assert';
-import * as shimmer from 'shimmer';
-
-import {FORCE_NEW} from '../src/util';
+import assert from 'assert';
+import shimmer from 'shimmer';
 
 import {TestLogger} from './logger';
 import * as traceTestModule from './trace';

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import * as http from 'http';
+import assert from 'assert';
+import http from 'http';
 import * as traceTestModule from './trace';
 import { pluginLoader, PluginLoaderState } from '../src/trace-plugin-loader';
 import { TraceWriter } from '../src/trace-writer';
