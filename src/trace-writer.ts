@@ -19,7 +19,6 @@ import {AxiosError} from 'axios';
 import * as gcpMetadata from 'gcp-metadata';
 import {OutgoingHttpHeaders} from 'http';
 import * as os from 'os';
-import * as util from 'util';
 
 import {Constants} from './constants';
 import {SpanKind, Trace} from './trace';
@@ -27,6 +26,9 @@ import {TraceLabels} from './trace-labels';
 import {Singleton} from './util';
 
 const pjson = require('../../package.json');
+
+// TODO(kjin): This value should be exported from @g-c/c.
+const NO_PROJECT_ID_TOKEN = '{{projectId}}';
 
 const onUncaughtExceptionValues = ['ignore', 'flush', 'flushAndExit'];
 
@@ -52,9 +54,6 @@ export interface LabelObject { [key: string]: string; }
  * A class representing a service that publishes traces in the background.
  */
 export class TraceWriter extends common.Service {
-  // TODO(kjin): Make public members private (they're public for testing)
-  private logger: common.Logger;
-  private config: TraceWriterConfig;
   /** Stringified traces to be published */
   buffer: string[];
   /** Default labels to be attached to written spans */
@@ -71,7 +70,9 @@ export class TraceWriter extends common.Service {
    * @param logger The Trace Agent's logger object.
    * @constructor
    */
-  constructor(config: TraceWriterConfig, logger: common.Logger) {
+  constructor(
+      private readonly config: TraceWriterConfig,
+      private readonly logger: common.Logger) {
     super(
         {
           packageJson: pjson,
@@ -82,9 +83,6 @@ export class TraceWriter extends common.Service {
         config);
 
     this.logger = logger;
-    // Clone the config object
-    this.config = {...config};
-    this.config.serviceContext = {...this.config.serviceContext};
     this.buffer = [];
     this.defaultLabels = {};
 
@@ -214,13 +212,13 @@ export class TraceWriter extends common.Service {
   }
 
   getProjectId() {
-    if (this.config.projectId) {
-      return Promise.resolve(this.config.projectId);
+    // super.getProjectId writes to projectId, but doesn't check it first
+    // before going through the flow of obtaining it. So we add that logic
+    // first.
+    if (this.projectId !== NO_PROJECT_ID_TOKEN) {
+      return Promise.resolve(this.projectId);
     }
-    return super.getProjectId().then((projectId) => {
-      this.config.projectId = projectId;
-      return projectId;
-    });
+    return super.getProjectId();
   }
 
   /**
@@ -269,8 +267,8 @@ export class TraceWriter extends common.Service {
     // Any test that doesn't mock the Trace Writer will assume that traces get
     // buffered synchronously. We need to refactor those tests to remove that
     // assumption before we can make this fix.
-    if (this.config.projectId) {
-      afterProjectId(this.config.projectId);
+    if (this.projectId !== NO_PROJECT_ID_TOKEN) {
+      afterProjectId(this.projectId);
     } else {
       this.getProjectId().then(afterProjectId, (err: Error) => {
         // Because failing to get a project ID means that the trace agent will
@@ -329,7 +327,7 @@ export class TraceWriter extends common.Service {
    */
   publish(json: string) {
     const uri = `https://cloudtrace.googleapis.com/v1/projects/${
-        this.config.projectId}/traces`;
+        this.projectId}/traces`;
     const options = {method: 'PATCH', uri, body: json, headers};
     this.logger.info('TraceWriter#publish: Publishing to ' + uri);
     this.request(options, (err, body?, response?) => {

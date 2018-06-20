@@ -126,6 +126,16 @@ export interface TraceAgent {
   runInRootSpan<T>(options: RootSpanOptions, fn: (span: RootSpan) => T): T;
 
   /**
+   * Gets the active root span for the current context. This method is
+   * guaranteed to return an object with the surface of a RootSpan object, but
+   * it may not represent a real root span if we are not in one. Use isRealSpan
+   * or check the `type` field to determine whether this is a real or phantom
+   * span.
+   * @returns An object that represents either a real or phantom root span.
+   */
+  getCurrentRootSpan(): RootSpan;
+
+  /**
    * Returns a unique identifier for the currently active context. This can be
    * used to uniquely identify the current root span. If there is no current,
    * context, or if we have lost context, this will return null. The structure
@@ -134,6 +144,12 @@ export interface TraceAgent {
    * @returns an id for the current context, or null if there is none
    */
   getCurrentContextId(): string|null;
+
+  /**
+   * Returns the projectId that was either configured or auto-discovered by the
+   * TraceWriter.
+   */
+  getProjectId(): Promise<string>;
 
   /**
    * Returns the projectId that was either configured or auto-discovered by the

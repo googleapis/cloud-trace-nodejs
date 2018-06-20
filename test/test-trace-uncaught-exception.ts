@@ -74,7 +74,7 @@ describe('Trace Writer', () => {
      (done) => {
        const restoreOriginalUncaughtExceptionListeners =
            removeAllUncaughtExceptionListeners();
-       const traceApi = trace.start({onUncaughtException: 'flush'});
+       trace.start({onUncaughtException: 'flush', projectId: '0'});
        setImmediate(() => {
          setImmediate(() => {
            removeAllUncaughtExceptionListeners();

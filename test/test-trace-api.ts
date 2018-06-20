@@ -51,7 +51,10 @@ describe('Trace Interface', () => {
     testTraceModule.setCLSForTest(TraceCLS);
     cls.create({mechanism: TraceCLSMechanism.ASYNC_LISTENER}, logger).enable();
     traceWriter
-        .create(Object.assign({[FORCE_NEW]: true}, defaultConfig), logger)
+        .create(
+            Object.assign(
+                {[FORCE_NEW]: true, projectId: 'project-1'}, defaultConfig),
+            logger)
         .initialize(done);
   });
 
@@ -141,6 +144,17 @@ describe('Trace Interface', () => {
       assert.strictEqual(testTraceModule.getTraces().length, 1);
     });
 
+    it('should return a root span when getCurrentRootSpan is called', () => {
+      const traceAPI = createTraceAgent();
+      // When a root span isn't running, return UNCORRELATED.
+      assert.strictEqual(
+          traceAPI.getCurrentRootSpan().type, SpanType.UNCORRELATED);
+      traceAPI.runInRootSpan({name: 'root'}, (rootSpan) => {
+        assert.strictEqual(traceAPI.getCurrentRootSpan(), rootSpan);
+        rootSpan.endSpan();
+      });
+    });
+
     it('should return null context id when one does not exist', () => {
       const traceAPI = createTraceAgent();
       assert.strictEqual(traceAPI.getCurrentContextId(), null);
@@ -156,9 +170,14 @@ describe('Trace Interface', () => {
       });
     });
 
-    it('should return get the project ID if set in config', () => {
-      const config = {projectId: 'project-1'};
-      const traceApi = createTraceAgent(null /* policy */, config);
+    it('should return the project ID from the Trace Writer (promise api)',
+       async () => {
+         const traceApi = createTraceAgent();
+         assert.equal(await traceApi.getProjectId(), 'project-1');
+       });
+
+    it('should return get the project ID from the Trace Writer', () => {
+      const traceApi = createTraceAgent();
       assert.equal(traceApi.getWriterProjectId(), 'project-1');
     });
 
