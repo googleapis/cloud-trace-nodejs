@@ -26,7 +26,6 @@ import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
-import {asChildSpanData, asRootSpanData} from './utils';
 
 describe('Trace Interface', () => {
   const logger = new TestLogger();
@@ -39,6 +38,7 @@ describe('Trace Interface', () => {
             {
               enhancedDatabaseReporting: false,
               ignoreContextHeader: false,
+              pluginOptions: {},
               samplingRate: 0
             },
             config),
@@ -153,6 +153,12 @@ describe('Trace Interface', () => {
         assert.strictEqual(traceAPI.getCurrentRootSpan(), rootSpan);
         rootSpan.endSpan();
       });
+    });
+
+    it('should return pluginOptions when getPluginOptions is called', () => {
+      const pluginOptions = Symbol();
+      const traceAPI = createTraceAgent(null, {pluginOptions});
+      assert.strictEqual(traceAPI.getPluginOptions(), pluginOptions);
     });
 
     it('should return null context id when one does not exist', () => {

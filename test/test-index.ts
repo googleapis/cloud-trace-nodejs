@@ -36,6 +36,7 @@ describe('index.js', function() {
     });
     assert.ok(ranInRootSpan);
     assert.strictEqual(disabledAgent.enhancedDatabaseReportingEnabled(), false);
+    assert.strictEqual(disabledAgent.getPluginOptions(), null);
     assert.strictEqual(disabledAgent.getCurrentContextId(), null);
     assert.strictEqual(disabledAgent.getWriterProjectId(), null);
     assert.strictEqual(disabledAgent.getCurrentRootSpan().type, SpanType.UNTRACED);
