@@ -22,14 +22,12 @@ import { SpanType } from '../src/constants';
 import { FORCE_NEW } from '../src/util';
 
 var assert = require('assert');
-var nock = require('nock');
-var nocks = require('./nocks'/*.js*/);
 var trace = require('../..');
 
 var disabledAgent: TraceAgent = trace.get();
 
 describe('index.js', function() {
-  it('should get a disabled agent with `Trace.get`', function() {
+  it('should get a disabled agent with `Trace.get`', async function() {
     assert.ok(!disabledAgent.isActive()); // ensure it's disabled first
     let ranInRootSpan = false;
     disabledAgent.runInRootSpan({ name: '' }, (span) => {
@@ -40,6 +38,10 @@ describe('index.js', function() {
     assert.strictEqual(disabledAgent.enhancedDatabaseReportingEnabled(), false);
     assert.strictEqual(disabledAgent.getCurrentContextId(), null);
     assert.strictEqual(disabledAgent.getWriterProjectId(), null);
+    assert.strictEqual(disabledAgent.getCurrentRootSpan().type, SpanType.UNTRACED);
+    // getting project ID should reject.
+    await disabledAgent.getProjectId().then(
+        () => Promise.reject(new Error()), () => Promise.resolve());
     assert.strictEqual(disabledAgent.createChildSpan({ name: '' }).type, SpanType.UNTRACED);
     assert.strictEqual(disabledAgent.getResponseTraceContext('', false), '');
     const fn = () => {};

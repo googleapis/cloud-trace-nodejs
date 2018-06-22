@@ -91,7 +91,12 @@ describe('Trace Writer', () => {
     nock.disableNetConnect();
     oauth2Scope = oauth2().persist();
     shimmer.wrap(
-        Service.prototype, 'getProjectId', () => () => getProjectIdOverride());
+        Service.prototype, 'getProjectId', () => function(this: Service) {
+          return getProjectIdOverride().then(projectId => {
+            this.projectId = projectId;
+            return projectId;
+          });
+        });
   });
 
   after(() => {
@@ -117,7 +122,7 @@ describe('Trace Writer', () => {
       getProjectIdOverride = () => Promise.resolve('my-project');
       writer.initialize(err => {
         assert.ifError(err);
-        assert.strictEqual(writer.getConfig().projectId, 'my-project');
+        assert.strictEqual(writer.projectId, 'my-project');
         writer.stop();
         done();
       });
@@ -129,7 +134,7 @@ describe('Trace Writer', () => {
       getProjectIdOverride = () => Promise.resolve('my-different-project');
       writer.initialize(err => {
         assert.ifError(err);
-        assert.strictEqual(writer.getConfig().projectId, 'my-project');
+        assert.strictEqual(writer.projectId, 'my-project');
         writer.stop();
         done();
       });

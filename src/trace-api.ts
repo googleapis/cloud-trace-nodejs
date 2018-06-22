@@ -16,15 +16,14 @@
 
 import {Logger} from '@google-cloud/common';
 import * as is from 'is';
-import * as semver from 'semver';
 import * as uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
 import {Constants, SpanType} from './constants';
 import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
-import {ChildSpanData, RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
-import {SpanKind, Trace} from './trace';
+import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {TraceLabels} from './trace-labels';
+import {traceWriter} from './trace-writer';
 import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
 
@@ -35,7 +34,6 @@ import * as util from './util';
 export interface TraceAgentConfig extends TracingPolicy.TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
-  projectId?: string;
 }
 
 interface IncomingTraceContext {
@@ -173,21 +171,33 @@ export class TraceAgent implements TraceAgentInterface {
     }, rootContext);
   }
 
-  getCurrentContextId(): string|null {
+  getCurrentRootSpan(): RootSpan {
     if (!this.isActive()) {
-      return null;
+      return UNTRACED_ROOT_SPAN;
     }
+    return cls.get().getContext();
+  }
 
-    const rootSpan = cls.get().getContext();
-    if (rootSpan.type === SpanType.ROOT) {
-      return rootSpan.trace.traceId;
+  getCurrentContextId(): string|null {
+    // In v3, this will be deprecated for getCurrentRootSpan.
+    const traceContext = this.getCurrentRootSpan().getTraceContext();
+    const parsedTraceContext = util.parseContextFromHeader(traceContext);
+    return parsedTraceContext ? parsedTraceContext.traceId : null;
+  }
+
+  getProjectId(): Promise<string> {
+    if (traceWriter.exists() && traceWriter.get().isActive) {
+      return traceWriter.get().getProjectId();
+    } else {
+      return Promise.reject(
+          new Error('The Project ID could not be retrieved.'));
     }
-    return null;
   }
 
   getWriterProjectId(): string|null {
-    if (this.config) {
-      return this.config.projectId || null;
+    // In v3, this will be deprecated for getProjectId.
+    if (traceWriter.exists() && traceWriter.get().isActive) {
+      return traceWriter.get().projectId;
     } else {
       return null;
     }
