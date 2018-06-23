@@ -98,6 +98,12 @@ workflows:
       - node8
       - node9
       - node10
+  automation:
+    jobs:
+      - generate_docs:
+          filters:
+            branches:
+              only: "gen-docs"
   tests:
     jobs:
       - node4:
@@ -168,6 +174,31 @@ jobs:
       - *postgres_service
       - *mysql_service
     <<: *unit_tests
+  generate_docs:
+    docker:
+      - image: node:8
+        user: node
+    environment:
+      REGEN_GH_PAGES: "1"
+    steps:
+      - checkout
+      - run:
+          name: Install modules and dependencies.
+          command: npm install
+      - run:
+          name: Set up publish permissions.
+          command: |
+            npm run script decrypt-gh-pages-publisher-credentials
+            chmod 400 ./github-nodejs-docs-bot.key
+            ssh-add ./github-nodejs-docs-bot.key
+            git config user.email "github-nodejs-docs-bot@google.com"
+            git config user.name "Documentation Bot"
+      - run:
+          name: Re-generate documentation and push to the gh-pages branch.
+          command: ./bin/regenerate-docs.sh
+      - run:
+          name: Publish docs.
+          command: git push -u origin gh-pages
   publish_npm:
     docker:
       - image: node:8
