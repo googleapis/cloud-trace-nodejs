@@ -161,9 +161,6 @@ describe('Trace Plugin Loader', () => {
       // Ensure that module fixtures contain values that we expect.
       assert.strictEqual(require('small-number').value, 0);
       assert.strictEqual(require('large-number'), 1e100);
-      assert.strictEqual(
-          require('new-keyboard'),
-          'The QUICK BROWN FOX jumps over the LAZY DOG');
       assert.strictEqual(require('my-version-1.0'), '1.0.0');
       assert.strictEqual(require('my-version-1.0-pre'), '1.0.0-pre');
       assert.strictEqual(require('my-version-1.1'), '1.1.0');
@@ -171,34 +168,40 @@ describe('Trace Plugin Loader', () => {
     });
 
     it(`doesn't patch before activation`, () => {
-      makePluginLoader({plugins: {'small-number': 'plugin-small-number'}});
+      const loader =
+          makePluginLoader({plugins: {'small-number': 'plugin-small-number'}});
       assert.strictEqual(require('small-number').value, 0);
+      loader.deactivate();
     });
 
     it(`doesn't patch modules for which plugins aren't specified`, () => {
-      makePluginLoader({plugins: {}}).activate();
+      const loader = makePluginLoader({plugins: {}}).activate();
       assert.strictEqual(require('small-number').value, 0);
+      loader.deactivate();
     });
 
     it('patches modules when activated, with no plugin file field specifying the main file',
        () => {
-         makePluginLoader({
-           plugins: {'small-number': 'plugin-small-number'}
-         }).activate();
+         const loader = makePluginLoader({
+                          plugins: {'small-number': 'plugin-small-number'}
+                        }).activate();
          assert.strictEqual(require('small-number').value, 1);
          // Make sure requiring doesn't patch twice
          assert.strictEqual(require('small-number').value, 1);
          assert.strictEqual(
              logger.getNumLogsWith('info', '[small-number@0.0.1]'), 1);
+         loader.deactivate();
        });
 
     it('accepts absolute paths in configuration', () => {
-      makePluginLoader({
-        plugins: {'small-number': `${SEARCH_PATH}/plugin-small-number`}
-      }).activate();
+      const loader =
+          makePluginLoader({
+            plugins: {'small-number': `${SEARCH_PATH}/plugin-small-number`}
+          }).activate();
       assert.strictEqual(require('small-number').value, 1);
       assert.strictEqual(
           logger.getNumLogsWith('info', '[small-number@0.0.1]'), 1);
+      loader.deactivate();
     });
 
     it('unpatches modules when deactivated', () => {
@@ -214,10 +217,11 @@ describe('Trace Plugin Loader', () => {
     });
 
     it('intercepts and patches internal files', () => {
-      makePluginLoader({
-        plugins: {'large-number': 'plugin-large-number'}
-      }).activate();
+      const loader = makePluginLoader({
+                       plugins: {'large-number': 'plugin-large-number'}
+                     }).activate();
       assert.strictEqual(require('large-number'), 2e100);
+      loader.deactivate();
     });
 
     ['http', 'url', '[core]'].forEach(key => {
@@ -235,24 +239,17 @@ describe('Trace Plugin Loader', () => {
       });
     });
 
-    it('intercepts and patches files with circular dependencies', () => {
-      makePluginLoader({
-        plugins: {'new-keyboard': 'plugin-new-keyboard'}
-      }).activate();
-      assert.strictEqual(
-          require('new-keyboard'),
-          'The lab-grown ketchup Fox jumps over the chili Dog');
-    });
-
     it(`doesn't load plugins with falsey paths`, () => {
-      makePluginLoader({plugins: {'small-number': ''}}).activate();
+      const loader =
+          makePluginLoader({plugins: {'small-number': ''}}).activate();
       assert.strictEqual(require('small-number').value, 0);
+      loader.deactivate();
     });
 
     it('uses version ranges to determine how to patch internals', () => {
-      makePluginLoader({
-        plugins: {'my-version': 'plugin-my-version-1'}
-      }).activate();
+      const loader = makePluginLoader({
+                       plugins: {'my-version': 'plugin-my-version-1'}
+                     }).activate();
       assert.strictEqual(require('my-version-1.0'), '1.0.0-patched');
       // v1.1 has different internals.
       assert.strictEqual(require('my-version-1.1'), '1.1.0-patched');
@@ -260,21 +257,23 @@ describe('Trace Plugin Loader', () => {
       // warns for my-version-2.0 that nothing matches
       assert.strictEqual(
           logger.getNumLogsWith('warn', '[my-version@2.0.0]'), 1);
+      loader.deactivate();
     });
 
     it('patches pre-releases, but warns', () => {
-      makePluginLoader({
-        plugins: {'my-version': 'plugin-my-version-1'}
-      }).activate();
+      const loader = makePluginLoader({
+                       plugins: {'my-version': 'plugin-my-version-1'}
+                     }).activate();
       assert.strictEqual(require('my-version-1.0-pre'), '1.0.0-pre-patched');
       assert.strictEqual(
           logger.getNumLogsWith('warn', '[my-version@1.0.0-pre]'), 1);
+      loader.deactivate();
     });
 
     it('throws when the plugin throws', () => {
-      makePluginLoader({
-        plugins: {'my-version': 'plugin-my-version-2'}
-      }).activate();
+      const loader = makePluginLoader({
+                       plugins: {'my-version': 'plugin-my-version-2'}
+                     }).activate();
       let threw = false;
       try {
         require('my-version-1.0');
@@ -282,10 +281,12 @@ describe('Trace Plugin Loader', () => {
         threw = true;
       }
       assert.ok(threw);
+      loader.deactivate();
     });
 
     it('warns when a module is patched by a non-conformant plugin', () => {
-      makePluginLoader({plugins: {'[core]': 'plugin-core'}}).activate();
+      const loader =
+          makePluginLoader({plugins: {'[core]': 'plugin-core'}}).activate();
       // Reasons for possible warnings issued are listed as comments.
       require('crypto');  // neither patch nor intercept
       require('os');      // both patch and intercept
@@ -298,6 +299,7 @@ describe('Trace Plugin Loader', () => {
           logger.getNumLogsWith('warn', `[[core]@${PROCESS_VERSION}:os]`), 1);
       assert.strictEqual(
           logger.getNumLogsWith('warn', `[[core]@${PROCESS_VERSION}:dns]`), 1);
+      loader.deactivate();
     });
   });
 });
