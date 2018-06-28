@@ -32,8 +32,7 @@ export interface Config {
    *   Node binary version requirements are not met.
    * - 'async-listener' uses an implementation of CLS on top of the
    *   `continuation-local-storage` module.
-   * - 'auto' behaves like 'async-hooks' on Node 8+ when the
-   *   GCLOUD_TRACE_NEW_CONTEXT env variable is set, and 'async-listener'
+   * - 'auto' behaves like 'async-hooks' on Node 8+, and 'async-listener'
    *   otherwise.
    * - 'none' disables CLS completely.
    * - 'singular' allows one root span to exist at a time. This option is meant

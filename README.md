@@ -120,23 +120,14 @@ A fully detailed overview of the `TraceApi` object is available [here](doc/trace
 
 ## How does automatic tracing work?
 
-The Trace Agent automatically patches well-known modules to insert calls to functions that start, label, and end spans to measure latency of RPCs (such as mysql, redis, etc.) and incoming requests (such as express, hapi, etc.). As each RPC is typically performed on behalf of an incoming request, we must make sure that this association is accurately reflected in span data. To provide a uniform, generalized way of keeping track of which RPC belongs to which incoming request, we rely on the [`continuation-local-storage`][continuation-local-storage] module to keep track of the "trace context" across asynchronous boundaries.
+The Trace Agent automatically patches well-known modules to insert calls to functions that start, label, and end spans to measure latency of RPCs (such as mysql, redis, etc.) and incoming requests (such as express, hapi, etc.). As each RPC is typically performed on behalf of an incoming request, we must make sure that this association is accurately reflected in span data. To provide a uniform, generalized way of keeping track of which RPC belongs to which incoming request, we rely on the following mechanisms to keep track of the "trace context" across asynchronous boundaries:
+  * [`continuation-local-storage`][continuation-local-storage] (which relies on [`async-listener`][async-listener]) in Node 6
+  * [`async_hooks`][async-hooks] in Node 8+
 
-`continuation-local-storage`, which relies on [`async-listener`][async-listener] to preserve continuations over asynchronous boundaries, works great in most cases. However, it does have some limitations that can prevent us from being able to properly propagate trace context:
+These mechanisms work great in most cases. However, they do have some limitations that can prevent us from being able to properly propagate trace context:
 
 * It is possible that a module does its own queuing of callback functions – effectively merging asynchronous execution contexts. For example, one may write an http request buffering library that queues requests and then performs them in a batch in one shot. In such a case, when all the callbacks fire, they will execute in the context which flushed the queue instead of the context which added the callbacks to the queue. This problem is called the pooling problem or the [user-space queuing problem][queuing-problem], and is a fundamental limitation of JavaScript. If your application uses such code, you will notice that RPCs from many requests are showing up under a single trace, or that certain portions of your outbound RPCs do not get traced. In such cases we try to work around the problem through monkey patching, or by working with the library authors to fix the code to properly propagate context. However, finding problematic code is not always trivial.
-* Presently, it is not possible for `async-listener` to keep track of transitions across `await`-ed lines in ES7 [`async` functions][async-await-docs] that are available with Node 7.6+. If your application uses untranspiled `async` functions, we will not be properly track RPCs.
-
-### Tracing with `async/await`
-
-Starting in module version 2.2, the Trace Agent ships with an experimental implementation (using the Node 8 `async_hooks` API) that supports `async`/`await`. To enable this implementation, run your application with the environmental variable `GCLOUD_TRACE_NEW_CONTEXT` set:
-
-```bash
-# Requires Node 8+
-$ GCLOUD_TRACE_NEW_CONTEXT=1 npm start
-```
-
-We are actively looking for feedback on this new implementation. Please file an issue if you encounter unexpected or unwanted behavior.
+* If your application uses untranspiled `async` functions, you must use Node 8+. (Untranspiled `async` functions are supported from Node 7.6 onward, but we do not support tracing these functions in Node 7.)
 
 ## Contributing changes
 

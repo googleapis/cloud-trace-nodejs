@@ -24,8 +24,7 @@ import {TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 import * as testTraceModule from './trace';
 
 describe('Behavior set by config for context propagation mechanism', () => {
-  const useAH = semver.satisfies(process.version, '>=8') &&
-      !!process.env.GCLOUD_TRACE_NEW_CONTEXT;
+  const useAH = semver.satisfies(process.version, '>=8');
   const autoMechanism =
       useAH ? TraceCLSMechanism.ASYNC_HOOKS : TraceCLSMechanism.ASYNC_LISTENER;
   let capturedConfig: TraceCLSConfig|null;

@@ -42,8 +42,7 @@ const queryString = require('querystring');
 const uuid = require('uuid');
 const semver = require('semver');
 
-const usingAsyncHooks = semver.satisfies(process.version, '>=8') &&
-                        !!process.env.GCLOUD_TRACE_NEW_CONTEXT;
+const usingAsyncHooks = semver.satisfies(process.version, '>=8');
 console.log(`Running system test with usingAsyncHooks=${usingAsyncHooks}`);
 
 // TODO(ofrobots): this code should be moved to a better location. Perhaps

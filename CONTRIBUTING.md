@@ -12,7 +12,6 @@ The command `npm test` tests code the same way that our CI will test it. This is
 
 There are a couple of environmental variables to note:
 
-- Setting `GCLOUD_TRACE_NEW_CONTEXT` (to any string) activates `async_hooks`-based tracing on Node 8+. On versions of Node where `async_hooks` is available, tests should pass whether this variable is set or not.
 - Setting `TRACE_TEST_EXCLUDE_INTEGRATION` (to any string) disables plugin tests when the command `npm run unit-test` is run. This is recommended for changes that do not affect plugins.
   - Some integration tests depend on locally running database services. On Unix, you can use `./bin/docker-trace.sh start` to start these services.
 
