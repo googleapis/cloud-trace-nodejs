@@ -16,6 +16,7 @@
 
 // tslint:disable:no-any
 
+import {Config} from './config';
 import {Constants, SpanType} from './constants';
 import {TraceLabels} from './trace-labels';
 
@@ -109,6 +110,13 @@ export interface TraceAgent {
    * to have an enhanced level of reporting enabled.
    */
   enhancedDatabaseReportingEnabled(): boolean;
+
+  /**
+   * Gets the plugin options object. This object should not be modified.
+   * @returns The plugin options in the configuration object that was passed
+   * to start().
+   */
+  getPluginOptions(): Readonly<any>|null;
 
   /**
    * Runs the given function in a root span corresponding to an incoming

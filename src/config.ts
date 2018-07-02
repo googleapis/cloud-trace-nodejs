@@ -80,6 +80,14 @@ export interface Config {
   plugins?: {[pluginName: string]: string;};
 
   /**
+   * An object that specifies arbitrary options on how to patch a module for
+   * instrumentation. It will be available to plugins through
+   * TraceAgent#getPluginOptions.
+   */
+  // tslint:disable-next-line:no-any
+  pluginOptions?: any;
+
+  /**
    * The max number of frames to include on traces; pass a value of 0 to
    * disable stack frame limits.
    */
@@ -212,6 +220,7 @@ export const defaultConfig = {
     'redis': path.join(pluginDirectory, 'plugin-redis.js'),
     'restify': path.join(pluginDirectory, 'plugin-restify.js')
   },
+  pluginOptions: {},
   stackTraceLimit: 10,
   flushDelaySeconds: 30,
   ignoreUrls: ['/_ah/health'],

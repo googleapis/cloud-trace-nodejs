@@ -19,6 +19,7 @@ import * as is from 'is';
 import * as uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
+import {Config} from './config';
 import {Constants, SpanType} from './constants';
 import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
@@ -34,6 +35,8 @@ import * as util from './util';
 export interface TraceAgentConfig extends TracingPolicy.TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
+  // tslint:disable-next-line:no-any
+  pluginOptions: any;
 }
 
 interface IncomingTraceContext {
@@ -117,6 +120,11 @@ export class TraceAgent implements TraceAgentInterface {
 
   enhancedDatabaseReportingEnabled(): boolean {
     return !!this.config && this.config.enhancedDatabaseReporting;
+  }
+
+  // tslint:disable-next-line:no-any
+  getPluginOptions(): Readonly<any>|null {
+    return this.config ? this.config.pluginOptions : null;
   }
 
   runInRootSpan<T>(options: RootSpanOptions, fn: (span: RootSpan) => T): T {

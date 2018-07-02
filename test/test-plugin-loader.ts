@@ -47,6 +47,7 @@ describe('Trace Plugin Loader', () => {
               ignoreUrls: [],
               enhancedDatabaseReporting: false,
               ignoreContextHeader: false,
+              pluginOptions: {},
               projectId: '0'
             },
             config),
