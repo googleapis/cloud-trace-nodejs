@@ -17,7 +17,7 @@ This module provides automatic tracing for Node.js applications with Stackdriver
 
 ## Usage
 
-The Trace Agent supports Node 4+.
+The Trace Agent supports Node 6+.
 
 > **Note**: Using the Trace Agent requires a Google Cloud Project with the [Stackdriver Trace API enabled](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) and associated credentials. These values are auto-detected if the application is running on Google Cloud Platform. If your application is not running on GCP, you will need to specify the project ID and credentials either through the configuration object, or with environment variables. See [Setting Up Stackdriver Trace for Node.js][setting-up-stackdriver-trace] for more details.
 

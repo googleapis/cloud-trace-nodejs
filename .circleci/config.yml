@@ -91,29 +91,21 @@ workflows:
               only:
                 - master
     jobs:
-      - node4
       - node6
       - node8
-      - node9
       - node10
   tests:
     jobs:
-      - node4:
-          filters: *release_tags
       - node6:
           filters: *release_tags
       - node8:
-          filters: *release_tags
-      - node9:
           filters: *release_tags
       - node10:
           filters: *release_tags
       - publish_npm:
           requires:
-            - node4
             - node6
             - node8
-            - node9
             - node10
           filters:
             branches:
@@ -121,14 +113,6 @@ workflows:
             <<: *release_tags
 
 jobs:
-  node4:
-    docker:
-      - image: node:4
-      - *mongo_service
-      - *redis_service
-      - *postgres_service
-      - *mysql_service
-    <<: *unit_tests
   node6:
     docker:
       - image: node:6
@@ -140,14 +124,6 @@ jobs:
   node8:
     docker:
       - image: node:8
-      - *mongo_service
-      - *redis_service
-      - *postgres_service
-      - *mysql_service
-    <<: *unit_tests
-  node9:
-    docker:
-      - image: node:9
       - *mongo_service
       - *redis_service
       - *postgres_service
