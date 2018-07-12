@@ -1,6 +1,6 @@
 {
   "name": "@google-cloud/trace-agent",
-  "version": "2.10.1",
+  "version": "2.11.0",
   "description": "Node.js Support for StackDriver Trace",
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
@@ -46,7 +46,7 @@
   "author": "Google Inc.",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=4"
+    "node": ">=6"
   },
   "devDependencies": {
     "@types/builtin-modules": "^2.0.0",
@@ -92,7 +92,7 @@
     "typescript": "~2.7.2"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.19.1",
+    "@google-cloud/common": "^0.20.3",
     "builtin-modules": "^2.0.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
