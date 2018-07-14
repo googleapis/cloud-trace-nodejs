@@ -134,8 +134,8 @@ export class TraceWriter extends common.Service {
           this.logger.error(
               'TraceWriter#initialize: Unable to acquire the project number',
               'automatically from the GCP metadata service. Please provide a',
-              'valid project ID as environmental variable GCLOUD_PROJECT, or as',
-              `config.projectId passed to start. Original error: ${err}`);
+              'valid project ID as environmental variable GCLOUD_PROJECT, or',
+              `as config.projectId passed to start. Original error: ${err}`);
           cb(err);
         });
 
@@ -190,8 +190,9 @@ export class TraceWriter extends common.Service {
           if (err.code !== 'ENOTFOUND') {
             // We are running on GCP.
             this.logger.warn(
-                'TraceWriter#getHostname: Unable to retrieve GCE hostname',
-                `from the GCP metadata service. Original error: ${err}`);
+                'TraceWriter#getHostname: Encountered an error while',
+                'retrieving GCE hostname from the GCP metadata service',
+                `(metadata.google.internal): ${err}`);
           }
           cb(os.hostname());
         });
@@ -206,8 +207,9 @@ export class TraceWriter extends common.Service {
           if (err.code !== 'ENOTFOUND') {
             // We are running on GCP.
             this.logger.warn(
-                'TraceWriter#getInstanceId: Unable to retrieve GCE instance ID',
-                `from the GCP metadata service. Original error: ${err}`);
+                'TraceWriter#getInstanceId: Encountered an error while',
+                'retrieving GCE instance ID from the GCP metadata service',
+                `(metadata.google.internal): ${err}`);
           }
           cb();
         });
@@ -333,10 +335,13 @@ export class TraceWriter extends common.Service {
     const options = {method: 'PATCH', uri, body: json, headers};
     this.logger.info('TraceWriter#publish: Publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
-      const statusCode = (response && response.statusCode) || 'unknown';
+      const statusCode = response && response.statusCode;
       if (err) {
-        this.logger.error(`TraceWriter#publish: Received error status code ${
-            statusCode}. Original error: ${err}`);
+        this.logger.error(`TraceWriter#publish: Received error ${
+            statusCode ?
+                `with status code ${statusCode}` :
+                ''} while publishing traces to cloudtrace.googleapis.com: ${
+            err}`);
       } else {
         this.logger.info(
             `TraceWriter#publish: Published w/ status code: ${statusCode}`);
