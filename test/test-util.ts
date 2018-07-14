@@ -165,3 +165,71 @@ describe('util.generateTraceContext', () => {
     assert.strictEqual(context, '');
   });
 });
+
+describe('binary trace context', () => {
+  const commonTraceId = 'ffeeddccbbaa99887766554433221100';
+  const testCases: Array<{
+    structured: util.TraceContext | null; binary: string; description: string;
+  }> =
+      [
+        {
+          structured: {
+            traceId: commonTraceId,
+            spanId: 0x111111111111.toString(),
+            options: 1
+          },
+          binary: `0000${commonTraceId}01${'0000111111111111'}02${'01'}`,
+          description: 'trace context with 48-bit span ID'
+        },
+        {
+          structured: {
+            traceId: commonTraceId,
+            spanId: '8603657889541918976',
+            options: 1
+          },
+          binary: `0000${commonTraceId}01${'7766554433221100'}02${'01'}`,
+          description: 'trace context with 64-bit span ID'
+        },
+        {
+          structured: {traceId: commonTraceId, spanId: '1', options: 255},
+          binary: `0000${commonTraceId}01${'0000000000000001'}02${'ff'}`,
+          description: 'trace context with 8-bit options'
+        },
+        {
+          structured: {traceId: commonTraceId, spanId: '1'},
+          binary: `0000${commonTraceId}01${'0000000000000001'}02${'00'}`,
+          description: 'trace context with no options'
+        },
+        {
+          structured: null,
+          binary: '00',
+          description: 'incomplete binary trace context (by returning null)'
+        },
+        {
+          structured: null,
+          binary: '0'.repeat(58),
+          description: 'bad binary trace context (by returning null)'
+        }
+      ];
+
+  describe('util.serializeTraceContext', () => {
+    testCases.forEach(
+        testCase => testCase.structured &&
+            it(`should serialize ${testCase.description}`, () => {
+                      assert.deepStrictEqual(
+                          util.serializeTraceContext(testCase.structured!)
+                              .toString('hex'),
+                          testCase.binary);
+                    }));
+  });
+
+  describe('util.deserializeTraceContext', () => {
+    testCases.forEach(
+        testCase => it(`should deserialize ${testCase.description}`, () => {
+          assert.deepStrictEqual(
+              util.deserializeTraceContext(Buffer.from(testCase.binary, 'hex')),
+              testCase.structured &&
+                  Object.assign({options: 0}, testCase.structured));
+        }));
+  });
+});
