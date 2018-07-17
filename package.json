@@ -98,7 +98,7 @@
     "builtin-modules": "^2.0.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
-    "gcp-metadata": "^0.6.3",
+    "gcp-metadata": "^0.7.0",
     "is": "^3.2.0",
     "methods": "^1.1.1",
     "require-in-the-middle": "^3.0.0",
