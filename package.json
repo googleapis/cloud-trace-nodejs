@@ -91,11 +91,11 @@
     "timekeeper": "^2.0.0",
     "tmp": "^0.0.33",
     "ts-node": "^7.0.0",
-    "typescript": "~2.7.2"
+    "typescript": "~2.9.0"
   },
   "dependencies": {
     "@google-cloud/common": "^0.20.3",
-    "builtin-modules": "^2.0.0",
+    "builtin-modules": "^3.0.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
     "gcp-metadata": "^0.7.0",
