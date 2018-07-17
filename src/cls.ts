@@ -83,7 +83,9 @@ export enum TraceCLSMechanism {
 /**
  * Configuration options passed to the TraceCLS constructor.
  */
-export interface TraceCLSConfig { mechanism: TraceCLSMechanism; }
+export interface TraceCLSConfig {
+  mechanism: TraceCLSMechanism;
+}
 
 interface CLSConstructor {
   new(defaultContext: RootContext): CLS<RootContext>;

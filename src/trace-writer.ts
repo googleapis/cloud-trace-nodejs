@@ -48,7 +48,9 @@ export interface TraceWriterConfig extends common.GoogleAuthOptions {
   serviceContext: {service?: string; version?: string; minorVersion?: string;};
 }
 
-export interface LabelObject { [key: string]: string; }
+export interface LabelObject {
+  [key: string]: string;
+}
 
 /**
  * A class representing a service that publishes traces in the background.
