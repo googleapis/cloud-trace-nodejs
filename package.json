@@ -95,7 +95,7 @@
   },
   "dependencies": {
     "@google-cloud/common": "^0.20.3",
-    "builtin-modules": "^2.0.0",
+    "builtin-modules": "^3.0.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
     "gcp-metadata": "^0.7.0",
