@@ -8,7 +8,8 @@
     "noUnusedParameters": false,
     "noImplicitAny": false,
     "noImplicitThis": false,
-    "noEmitOnError": false
+    "noEmitOnError": false,
+    "lib": ["dom", "es2015"]
   },
   "include": [
     "src/*.ts",

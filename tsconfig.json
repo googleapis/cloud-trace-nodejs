@@ -11,6 +11,7 @@
     "src/cls/*.ts",
     "src/plugins/plugin-connect.ts",
     "src/plugins/plugin-express.ts",
+    "src/plugins/plugin-grpc.ts",
     "src/plugins/plugin-hapi.ts",
     "src/plugins/plugin-http.ts",
     "src/plugins/plugin-http2.ts",
