@@ -112,12 +112,13 @@ function patchClient(client: ClientModule, api: TraceAgent) {
    * Set trace context on a Metadata object if it exists.
    * @param metadata The Metadata object to which a trace context should be
    * added.
-   * @param span The span that contains the trace context to add as a metadata
-   * entry.
+   * @param stringifiedTraceContext The stringified trace context. If this is
+   * a falsey value, metadata will not be modified.
    */
-  function setTraceContextFromString(metadata: Metadata, span: Span): void {
+  function setTraceContextFromString(
+      metadata: Metadata, stringifiedTraceContext: string): void {
     const traceContext =
-        api.traceContextUtils.decodeFromString(span.getTraceContext());
+        api.traceContextUtils.decodeFromString(stringifiedTraceContext);
     if (traceContext) {
       const metadataValue =
           api.traceContextUtils.encodeAsByteArray(traceContext);
@@ -212,7 +213,7 @@ function patchClient(client: ClientModule, api: TraceAgent) {
       // TS: Safe cast as we either found the index of the Metadata argument
       //     or spliced it in at metaIndex.
       const metadata = args[metaIndex] as Metadata;
-      setTraceContextFromString(metadata, span);
+      setTraceContextFromString(metadata, span.getTraceContext());
       const call: EventEmitter = method.apply(this, args);
       // Add extra data only when call successfully goes through. At this point
       // we know that the arguments are correct.
