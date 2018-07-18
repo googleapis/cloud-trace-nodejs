@@ -43,8 +43,8 @@ require('@google-cloud/trace-agent').start({
 The object returned by `start()` may be used to create [custom trace spans](#custom-tracing-api):
 
 ```js
-const traceApi = require('@google-cloud/trace-agent').start();
-traceApi.runInRootSpan({ name: 'my-root-span' }, (rootSpan) => {
+const tracer = require('@google-cloud/trace-agent').start();
+tracer.runInRootSpan({ name: 'my-root-span' }, (rootSpan) => {
   // ...
   rootSpan.endSpan();
 });
@@ -99,22 +99,22 @@ For any of the web frameworks for which we provide [built-in plugins](#what-gets
 
 ### Accessing the API
 
-Calling the `start` function returns an instance of `TraceApi`, which provides an interface for tracing:
+Calling the `start` function returns an instance of `Tracer`, which provides an interface for tracing:
 
 ```js
-const traceApi = require('@google-cloud/trace-agent').start();
+const tracer = require('@google-cloud/trace-agent').start();
 ```
 
 It can also be retrieved by subsequent calls to `get` elsewhere:
 
 ```js
 // after start() is called
-const traceApi = require('@google-cloud/trace-agent').get();
+const tracer = require('@google-cloud/trace-agent').get();
 ```
 
-A `TraceApi` object is guaranteed to be returned by both of these calls, even if the agent is disabled.
+A `Tracer` object is guaranteed to be returned by both of these calls, even if the agent is disabled.
 
-A fully detailed overview of the `TraceApi` object is available [here](doc/trace-api.md).
+A fully detailed overview of the `Tracer` object is available [here](doc/trace-api.md).
 
 ## How does automatic tracing work?
 
