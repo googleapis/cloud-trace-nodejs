@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';  // for types only.
 import * as path from 'path';
+const {hexToDec, decToHex}: {[key: string]: (input: string) => string} =
+    require('hex2dec');
 
 // This symbol must be exported (for now).
 // See: https://github.com/Microsoft/TypeScript/issues/20080
@@ -37,11 +38,6 @@ export interface StackFrame {
   file_name?: string;
   line_number?: number;
   column_number?: number;
-}
-
-interface PackageJson {
-  name: string;
-  version: string;
 }
 
 export interface Constructor<T, ConfigType, LoggerType> {
@@ -240,4 +236,60 @@ export function createStackTrace(
   Error.stackTraceLimit = origLimit;
   Error.prepareStackTrace = origPrepare;
   return stackFrames;
+}
+
+/**
+ * Serialize the given trace context into a Buffer.
+ * @param traceContext The trace context to serialize.
+ */
+export function serializeTraceContext(traceContext: TraceContext): Buffer {
+  //  0           1           2
+  //  0 1 2345678901234567 8 90123456 7 8
+  // -------------------------------------
+  // | | |                | |        | | |
+  // -------------------------------------
+  //  ^ ^      ^           ^    ^     ^ ^
+  //  | |      |           |    |     | `-- options value (traceContext.options)
+  //  | |      |           |    |     `---- options field ID (2)
+  //  | |      |           |    `---------- spanID value (traceConext.spanID)
+  //  | |      |           `--------------- spanID field ID (1)
+  //  | |      `--------------------------- traceID value (traceContext.traceID)
+  //  | `---------------------------------- traceID field ID (0)
+  //  `------------------------------------ version (0)
+  const result = Buffer.alloc(29, 0);
+  result.write(traceContext.traceId, 2, 16, 'hex');
+  result.writeUInt8(1, 18);
+  // Convert Span ID from decimal to base 16 representation, then left pad into
+  // a length-16 hex string. (decToHex prepends its output with '0x', so we
+  // also slice that off.)
+  const base16SpanId =
+      `0000000000000000${decToHex(traceContext.spanId).slice(2)}`.slice(-16);
+  result.write(base16SpanId, 19, 8, 'hex');
+  result.writeUInt8(2, 27);
+  result.writeUInt8(traceContext.options || 0, 28);
+  return result;
+}
+
+/**
+ * Deseralize the given trace context from binary encoding. If the input is a
+ * Buffer of incorrect size or unexpected fields, then this function will return
+ * null.
+ * @param buffer The trace context to deserialize.
+ */
+export function deserializeTraceContext(buffer: Buffer): TraceContext|null {
+  const result: TraceContext = {traceId: '', spanId: ''};
+  // Length must be 29.
+  if (buffer.length !== 29) {
+    return null;
+  }
+  // Check version and field numbers.
+  if (buffer.readUInt8(0) !== 0 || buffer.readUInt8(1) !== 0 ||
+      buffer.readUInt8(18) !== 1 || buffer.readUInt8(27) !== 2) {
+    return null;
+  }
+  // See serializeTraceContext for byte offsets.
+  result.traceId = buffer.slice(2, 18).toString('hex');
+  result.spanId = hexToDec(buffer.slice(19, 27).toString('hex'));
+  result.options = buffer.readUInt8(28);
+  return result;
 }

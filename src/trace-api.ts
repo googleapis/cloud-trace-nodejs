@@ -58,6 +58,12 @@ export class TraceAgent implements TraceAgentInterface {
   readonly constants = Constants;
   readonly labels = TraceLabels;
   readonly spanTypes = SpanType;
+  readonly traceContextUtils = {
+    encodeAsString: util.generateTraceContext,
+    decodeFromString: util.parseContextFromHeader,
+    encodeAsByteArray: util.serializeTraceContext,
+    decodeFromByteArray: util.deserializeTraceContext
+  };
 
   private enabled = false;
   private pluginName: string;
