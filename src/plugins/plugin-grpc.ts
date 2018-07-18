@@ -109,6 +109,24 @@ function unpatchMetadata() {
 
 function patchClient(client: ClientModule, api: TraceAgent) {
   /**
+   * Set trace context on a Metadata object if it exists.
+   * @param metadata The Metadata object to which a trace context should be
+   * added.
+   * @param span The span that contains the trace context to add as a metadata
+   * entry.
+   */
+  function setTraceContextFromString(metadata: Metadata, span: Span): void {
+    const traceContext =
+        api.traceContextUtils.decodeFromString(span.getTraceContext());
+    if (traceContext) {
+      const metadataValue =
+          api.traceContextUtils.encodeAsByteArray(traceContext);
+      metadata.set(
+          api.constants.TRACE_CONTEXT_GRPC_METADATA_NAME, metadataValue);
+    }
+  }
+
+  /**
    * Wraps a callback so that the current span for this trace is also ended when
    * the callback is invoked.
    * @param span - The span that should end after this callback.
@@ -194,8 +212,7 @@ function patchClient(client: ClientModule, api: TraceAgent) {
       // TS: Safe cast as we either found the index of the Metadata argument
       //     or spliced it in at metaIndex.
       const metadata = args[metaIndex] as Metadata;
-      metadata.set(
-          api.constants.TRACE_CONTEXT_HEADER_NAME, span.getTraceContext());
+      setTraceContextFromString(metadata, span);
       const call: EventEmitter = method.apply(this, args);
       // Add extra data only when call successfully goes through. At this point
       // we know that the arguments are correct.
@@ -264,7 +281,29 @@ function unpatchClient(client: ClientModule) {
 }
 
 function patchServer(server: ServerModule, api: TraceAgent) {
-  const traceContextHeaderName = api.constants.TRACE_CONTEXT_HEADER_NAME;
+  /**
+   * Returns a trace context on a Metadata object if it exists and is
+   * well-formed, or null otherwise. The result will be encoded as a string.
+   * @param metadata The Metadata object from which trace context should be
+   * retrieved.
+   */
+  function getStringifiedTraceContext(metadata: grpcModule.Metadata): string|
+      null {
+    const metadataValue =
+        metadata.getMap()[api.constants.TRACE_CONTEXT_GRPC_METADATA_NAME] as
+        Buffer;
+    // Entry doesn't exist.
+    if (!metadataValue) {
+      return null;
+    }
+    const traceContext =
+        api.traceContextUtils.decodeFromByteArray(metadataValue);
+    // Value is malformed.
+    if (!traceContext) {
+      return null;
+    }
+    return api.traceContextUtils.encodeAsString(traceContext);
+  }
 
   /**
    * A helper function to record metadata in a trace span. The return value of
@@ -301,15 +340,12 @@ function patchServer(server: ServerModule, api: TraceAgent) {
       return function serverMethodTrace(
           this: Server, call: ServerUnaryCall<S>,
           callback: ServerUnaryCallback<T>) {
-        // TODO(kjin): Is it possible for a metadata value to be a buffer?
-        // This needs to be investigated in order to avoid the cast here and
-        // in other server wrapper functions.
         const rootSpanOptions = {
           name: requestName,
           url: requestName,
-          traceContext: call.metadata.getMap()[traceContextHeaderName],
+          traceContext: getStringifiedTraceContext(call.metadata),
           skipFrames: SKIP_FRAMES
-        } as RootSpanOptions;
+        };
         return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
           if (!api.isRealSpan(rootSpan)) {
             return serverMethod.call(this, call, callback);
@@ -362,7 +398,7 @@ function patchServer(server: ServerModule, api: TraceAgent) {
         const rootSpanOptions = {
           name: requestName,
           url: requestName,
-          traceContext: stream.metadata.getMap()[traceContextHeaderName],
+          traceContext: getStringifiedTraceContext(stream.metadata),
           skipFrames: SKIP_FRAMES
         } as RootSpanOptions;
         return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
@@ -425,7 +461,7 @@ function patchServer(server: ServerModule, api: TraceAgent) {
         const rootSpanOptions = {
           name: requestName,
           url: requestName,
-          traceContext: stream.metadata.getMap()[traceContextHeaderName],
+          traceContext: getStringifiedTraceContext(stream.metadata),
           skipFrames: SKIP_FRAMES
         } as RootSpanOptions;
         return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
@@ -486,7 +522,7 @@ function patchServer(server: ServerModule, api: TraceAgent) {
         const rootSpanOptions = {
           name: requestName,
           url: requestName,
-          traceContext: stream.metadata.getMap()[traceContextHeaderName],
+          traceContext: getStringifiedTraceContext(stream.metadata),
           skipFrames: SKIP_FRAMES
         } as RootSpanOptions;
         return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
