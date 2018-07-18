@@ -79,7 +79,7 @@ describe('redis', function() {
         common.runInTransaction(function(endTransaction) {
           client.get('beforeEach', function(err, n) {
             endTransaction();
-            assert.equal(n, 42);
+            assert.strictEqual(n, 42);
             var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-get'));
             assert(trace);
             done();

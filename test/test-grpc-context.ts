@@ -167,7 +167,7 @@ Object.keys(versions).forEach(function(version) {
     afterEach(function() {
       // We expect a single untraced http request for each test cooresponding to the
       // top level request used to start the desired test.
-      assert.equal(httpLogCount, 1);
+      assert.strictEqual(httpLogCount, 1);
       common.cleanTraces();
     });
 

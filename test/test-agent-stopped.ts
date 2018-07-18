@@ -59,7 +59,7 @@ describe('test-agent-stopped', () => {
           var result = '';
           res.on('data', function(data) { result += data; });
           res.on('end', function() {
-            assert.equal('hi', result);
+            assert.strictEqual('hi', result);
             server.close();
             done();
           });
@@ -85,7 +85,7 @@ describe('test-agent-stopped', () => {
           var result = '';
           res.on('data', function(data) { result += data; });
           res.on('end', function() {
-            assert.equal('hi', result);
+            assert.strictEqual('hi', result);
             server.stop();
             done();
           });
@@ -111,7 +111,7 @@ describe('test-agent-stopped', () => {
           var result = '';
           res.on('data', function(data) { result += data; });
           res.on('end', function() {
-            assert.equal('hi', result);
+            assert.strictEqual('hi', result);
             server.close();
             done();
           });

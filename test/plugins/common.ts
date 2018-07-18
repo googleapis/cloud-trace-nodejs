@@ -111,7 +111,7 @@ function getTraces() {
 
 function getMatchingSpan(predicate) {
   var spans = getMatchingSpans(predicate);
-  assert.equal(spans.length, 1,
+  assert.strictEqual(spans.length, 1,
     'predicate did not isolate a single span');
   return spans[0];
 }
