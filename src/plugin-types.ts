@@ -18,6 +18,9 @@
 
 import {Constants, SpanType} from './constants';
 import {TraceLabels} from './trace-labels';
+import {TraceContext} from './util';
+
+export {TraceContext};
 
 export type Func<T> = (...args: any[]) => T;
 
@@ -210,9 +213,19 @@ export interface TraceAgent {
    */
   wrapEmitter(emitter: NodeJS.EventEmitter): void;
 
+  /** Well-known constant values used by the Trace Agent. */
   readonly constants: typeof Constants;
+  /** Well-known label keys for spans. */
   readonly labels: typeof TraceLabels;
+  /** An enumeration of possible SpanType values. */
   readonly spanTypes: typeof SpanType;
+  /** A collection of functions for encoding and decoding trace context. */
+  readonly traceContextUtils: {
+    encodeAsString: (ctx: TraceContext) => string;
+    decodeFromString: (str: string) => TraceContext | null;
+    encodeAsByteArray: (ctx: TraceContext) => Buffer;
+    decodeFromByteArray: (buf: Buffer) => TraceContext | null;
+  };
 }
 
 export interface Patch<T> {
