@@ -20,7 +20,7 @@ import * as uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
 import {Constants, SpanType} from './constants';
-import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, TraceAgent as TraceAgentInterface} from './plugin-types';
+import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
@@ -28,10 +28,11 @@ import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
 
 /**
- * An interface describing configuration fields read by the TraceAgent object.
- * This includes fields read by the trace policy.
+ * An interface describing configuration fields read by the StackdriverTracer
+ * object. This includes fields read by the trace policy.
  */
-export interface TraceAgentConfig extends TracingPolicy.TracePolicyConfig {
+export interface StackdriverTracerConfig extends
+    TracingPolicy.TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
 }
@@ -51,10 +52,10 @@ function isString(obj: any): obj is string {
 }
 
 /**
- * TraceAgent exposes a number of methods to create trace spans and propagate
- * trace context across asynchronous boundaries.
+ * StackdriverTracer exposes a number of methods to create trace spans and
+ * propagate trace context across asynchronous boundaries.
  */
-export class TraceAgent implements TraceAgentInterface {
+export class StackdriverTracer implements Tracer {
   readonly constants = Constants;
   readonly labels = TraceLabels;
   readonly spanTypes = SpanType;
@@ -68,13 +69,13 @@ export class TraceAgent implements TraceAgentInterface {
   private enabled = false;
   private pluginName: string;
   private logger: Logger|null = null;
-  private config: TraceAgentConfig|null = null;
+  private config: StackdriverTracerConfig|null = null;
   // TODO(kjin): Make this private.
   policy: TracingPolicy.TracePolicy|null = null;
 
   /**
-   * Constructs a new TraceAgent instance.
-   * @param name A string identifying this TraceAgent instance in logs.
+   * Constructs a new StackdriverTracer instance.
+   * @param name A string identifying this StackdriverTracer instance in logs.
    */
   constructor(name: string) {
     this.pluginName = name;
@@ -90,7 +91,7 @@ export class TraceAgent implements TraceAgentInterface {
    * @param logger A logger object.
    * @private
    */
-  enable(config: TraceAgentConfig, logger: Logger) {
+  enable(config: StackdriverTracerConfig, logger: Logger) {
     this.logger = logger;
     this.config = config;
     this.policy = TracingPolicy.createTracePolicy(config);
@@ -112,9 +113,9 @@ export class TraceAgent implements TraceAgentInterface {
   }
 
   /**
-   * Returns whether the TraceAgent instance is active. This function is only
-   * for internal use and unit tests; under normal circumstances it will always
-   * return true.
+   * Returns whether the StackdriverTracer instance is active. This function is
+   * only for internal use and unit tests; under normal circumstances it will
+   * always return true.
    * @private
    */
   isActive(): boolean {

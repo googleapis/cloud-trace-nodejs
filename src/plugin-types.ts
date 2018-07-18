@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// This file only describes public-facing interfaces.
 // tslint:disable:no-any
 
 import {Constants, SpanType} from './constants';
@@ -106,7 +107,7 @@ export interface RootSpanOptions extends SpanOptions {
   traceContext?: string|null;
 }
 
-export interface TraceAgent {
+export interface Tracer {
   /**
    * Gets the value of enhancedDatabaseReporting in the trace agent's
    * configuration object.
@@ -228,19 +229,19 @@ export interface TraceAgent {
   };
 }
 
-export interface Patch<T> {
+export interface Monkeypatch<T> {
   file?: string;
   versions?: string;
-  patch: (module: T, agent: TraceAgent) => void;
+  patch: (module: T, agent: Tracer) => void;
   unpatch?: (module: T) => void;
 }
 
 export interface Intercept<T> {
   file?: string;
   versions?: string;
-  intercept: (module: T, agent: TraceAgent) => T;
+  intercept: (module: T, agent: Tracer) => T;
 }
 
-export type Instrumentation<T> = Patch<T>|Intercept<T>;
+export type Patch<T> = Monkeypatch<T>|Intercept<T>;
 
-export type Plugin = Array<Instrumentation<any>>;
+export type Plugin = Array<Patch<any>>;

@@ -17,7 +17,7 @@
 import * as assert from 'assert';
 
 import {SpanType} from '../src/constants';
-import {TraceAgent} from '../src/plugin-types';
+import {Tracer} from '../src/plugin-types';
 
 import * as testTraceModule from './trace';
 import {asChildSpanData, asRootSpanData} from './utils';
@@ -25,7 +25,7 @@ import {asChildSpanData, asRootSpanData} from './utils';
 const identity = <T>(x: T) => x;
 
 describe('Custom Trace API with CLS disabled', () => {
-  let traceApi: TraceAgent;
+  let traceApi: Tracer;
 
   before(() => {
     testTraceModule.setCLSForTest();

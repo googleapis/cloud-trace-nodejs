@@ -21,7 +21,7 @@ import * as http2 from 'http2';
 import * as shimmer from 'shimmer';
 import {URL} from 'url';
 
-import {TraceAgent} from '../plugin-types';
+import {Tracer} from '../plugin-types';
 
 type Http2Module = typeof http2;
 
@@ -60,13 +60,13 @@ function extractUrl(
 }
 
 function isTraceAgentRequest(
-    headers: http2.OutgoingHttpHeaders|undefined, api: TraceAgent): boolean {
+    headers: http2.OutgoingHttpHeaders|undefined, api: Tracer): boolean {
   return !!headers && !!headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
 }
 
 function makeRequestTrace(
     request: Http2SessionRequestFunction, authority: string|URL,
-    api: TraceAgent): Http2SessionRequestFunction {
+    api: Tracer): Http2SessionRequestFunction {
   return function(
              this: http2.Http2Session,
              headers?: http2.OutgoingHttpHeaders): http2.ClientHttp2Stream {
@@ -152,14 +152,14 @@ function makeRequestTrace(
 
 function patchHttp2Session(
     session: http2.ClientHttp2Session, authority: string|URL,
-    api: TraceAgent): void {
+    api: Tracer): void {
   api.wrapEmitter(session);
   shimmer.wrap(
       session, 'request',
       (request) => makeRequestTrace(request, authority, api));
 }
 
-function patchHttp2(h2: Http2Module, api: TraceAgent): void {
+function patchHttp2(h2: Http2Module, api: Tracer): void {
   shimmer.wrap(
       h2, 'connect',
       (connect) => function(this: Http2Module, authority: string|URL) {

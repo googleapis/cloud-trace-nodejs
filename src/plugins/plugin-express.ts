@@ -30,7 +30,7 @@ const methods: Array<keyof express_4.Application> =
 
 const SUPPORTED_VERSIONS = '4.x';
 
-function patchModuleRoot(express: Express4Module, api: PluginTypes.TraceAgent) {
+function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
   const labels = api.labels;
   function middleware(
       req: express_4.Request, res: express_4.Response,
@@ -106,6 +106,6 @@ const plugin: PluginTypes.Plugin = [{
   versions: SUPPORTED_VERSIONS,
   patch: patchModuleRoot,
   unpatch: unpatchModuleRoot
-} as PluginTypes.Patch<Express4Module>];
+} as PluginTypes.Monkeypatch<Express4Module>];
 
 export = plugin;

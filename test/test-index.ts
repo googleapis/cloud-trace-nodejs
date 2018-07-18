@@ -17,14 +17,14 @@
 'use strict';
 
 import './override-gcp-metadata';
-import { TraceAgent } from '../src/trace-api';
+import { StackdriverTracer } from '../src/trace-api';
 import { SpanType } from '../src/constants';
 import { FORCE_NEW } from '../src/util';
 
 var assert = require('assert');
 var trace = require('../..');
 
-var disabledAgent: TraceAgent = trace.get();
+var disabledAgent: StackdriverTracer = trace.get();
 
 describe('index.js', function() {
   it('should get a disabled agent with `Trace.get`', async function() {

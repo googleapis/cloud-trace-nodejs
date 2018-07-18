@@ -70,14 +70,14 @@ export enum SpanType {
   UNTRACED = 'UNTRACED',
 
   /**
-   * This span object was created by TraceAgent#runInRootSpan, and represents
-   * an incoming request.
+   * This span object was created by StackdriverTracer#runInRootSpan, and
+   * represents an incoming request.
    */
   ROOT = 'ROOT',
 
   /**
-   * This span object was created by TraceAgent#createChildSpan, and represents
-   * an outgoing RPC on behalf of an incoming request.
+   * This span object was created by StackdriverTracer#createChildSpan, and
+   * represents an outgoing RPC on behalf of an incoming request.
    */
   CHILD = 'CHILD'
 }

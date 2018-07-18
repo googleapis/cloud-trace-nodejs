@@ -15,7 +15,6 @@
  */
 
 import {IncomingMessage, ServerResponse} from 'http';
-import * as shimmer from 'shimmer';
 import {parse as urlParse} from 'url';
 
 import {PluginTypes} from '..';
@@ -37,7 +36,7 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
   return headerValue;
 }
 
-function createMiddleware(api: PluginTypes.TraceAgent):
+function createMiddleware(api: PluginTypes.Tracer):
     connect_3.NextHandleFunction {
   return function middleware(req: Request, res, next) {
     const options = {
