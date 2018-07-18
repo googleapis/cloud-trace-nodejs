@@ -243,18 +243,25 @@ export function createStackTrace(
  * @param traceContext The trace context to serialize.
  */
 export function serializeTraceContext(traceContext: TraceContext): Buffer {
-  //      0 byte version (0)
-  //      1 traceID field ID (0)
-  //  2->17 traceID value (traceContext.traceID)
-  //     18 spanID field ID (1)
-  // 19->26 spanID value (traceContext.spanID)
-  //     27 options field ID (2)
-  //     28 options value (traceContext.options)
+  //  0           1           2
+  //  0 1 2345678901234567 8 90123456 7 8
+  // -------------------------------------
+  // | | |                | |        | | |
+  // -------------------------------------
+  //  ^ ^      ^           ^    ^     ^ ^
+  //  | |      |           |    |     | `-- options value (traceContext.options)
+  //  | |      |           |    |     `---- options field ID (2)
+  //  | |      |           |    `---------- spanID value (traceConext.spanID)
+  //  | |      |           `--------------- spanID field ID (1)
+  //  | |      `--------------------------- traceID value (traceContext.traceID)
+  //  | `---------------------------------- traceID field ID (0)
+  //  `------------------------------------ version (0)
   const result = Buffer.alloc(29, 0);
   result.write(traceContext.traceId, 2, 16, 'hex');
   result.writeUInt8(1, 18);
   // Convert Span ID from decimal to base 16 representation, then left pad into
-  // a length-16 hex string.
+  // a length-16 hex string. (decToHex prepends its output with '0x', so we
+  // also slice that off.)
   const base16SpanId =
       `0000000000000000${decToHex(traceContext.spanId).slice(2)}`.slice(-16);
   result.write(base16SpanId, 19, 8, 'hex');
