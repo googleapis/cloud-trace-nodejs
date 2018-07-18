@@ -16,6 +16,7 @@
 
 import {Logger} from '@google-cloud/common';
 import * as is from 'is';
+import {deprecate} from 'util';
 import * as uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
@@ -184,12 +185,13 @@ export class TraceAgent implements TraceAgentInterface {
     return cls.get().getContext();
   }
 
-  getCurrentContextId(): string|null {
-    // In v3, this will be deprecated for getCurrentRootSpan.
-    const traceContext = this.getCurrentRootSpan().getTraceContext();
-    const parsedTraceContext = util.parseContextFromHeader(traceContext);
-    return parsedTraceContext ? parsedTraceContext.traceId : null;
-  }
+  getCurrentContextId =
+      deprecate(function(this: StackdriverTracer): string|null {
+        // In v3, this will be deprecated for getCurrentRootSpan.
+        const traceContext = this.getCurrentRootSpan().getTraceContext();
+        const parsedTraceContext = util.parseContextFromHeader(traceContext);
+        return parsedTraceContext ? parsedTraceContext.traceId : null;
+      }, 'Use getCurrentRootSpan instead.');
 
   getProjectId(): Promise<string> {
     if (traceWriter.exists() && traceWriter.get().isActive) {
@@ -200,14 +202,15 @@ export class TraceAgent implements TraceAgentInterface {
     }
   }
 
-  getWriterProjectId(): string|null {
-    // In v3, this will be deprecated for getProjectId.
-    if (traceWriter.exists() && traceWriter.get().isActive) {
-      return traceWriter.get().projectId;
-    } else {
-      return null;
-    }
-  }
+  getWriterProjectId =
+      deprecate(function(this: StackdriverTracer): string|null {
+        // In v3, this will be deprecated for getProjectId.
+        if (traceWriter.exists() && traceWriter.get().isActive) {
+          return traceWriter.get().projectId;
+        } else {
+          return null;
+        }
+      }, 'Use getProjectId instead.');
 
   createChildSpan(options?: SpanOptions): Span {
     if (!this.isActive()) {
