@@ -45,20 +45,28 @@ var SEND_METADATA = 131;
 var EMIT_ERROR = 13412;
 
 // Regular expression matching client-side metadata labels
-var metadataRegExp =
-  /^{"a":"b","x-cloud-trace-context":"[a-f0-9]{32}\/[0-9]+;o=1"}$/;
+var metadataRegExp = /"a":"b"/;
 
 // Whether asserts in checkServerMetadata should be run
-// Turned on only for the test that checks propagated tract context
+// Turned on only for the test that checks propagated trace context
 var checkMetadata;
+
+// When trace IDs are checked in checkServerMetadata, they should have this
+// exact value. This only applies in the test "should support distributed
+// context".
+const COMMON_TRACE_ID = 'ffeeddccbbaa99887766554433221100';
 
 function checkServerMetadata(metadata) {
   if (checkMetadata) {
-    var traceContext = metadata.getMap()[Constants.TRACE_CONTEXT_HEADER_NAME];
-    assert.ok(/[a-f0-9]{32}\/[0-9]+;o=1/.test(traceContext));
-    var parsedContext = util.parseContextFromHeader(traceContext);
+    var traceContext = metadata.getMap()[Constants.TRACE_CONTEXT_GRPC_METADATA_NAME];
+    var parsedContext = util.deserializeTraceContext(traceContext);
     assert.ok(parsedContext);
     var root = asRootSpanData(cls.get().getContext() as Span);
+    // Check that we were able to propagate trace context.
+    assert.strictEqual(parsedContext!.traceId, COMMON_TRACE_ID);
+    assert.strictEqual(root.trace.traceId, COMMON_TRACE_ID);
+    // Check that we correctly assigned the parent ID of the current span to
+    // that of the incoming span ID.
     assert.strictEqual(root.span.parentSpanId, parsedContext!.spanId);
   }
 }
@@ -205,7 +213,7 @@ function callClientStream(client, grpc, metadata, cb) {
   if (Object.keys(metadata).length > 0) {
     var m = new grpc.Metadata();
     for (var key in metadata) {
-      m.set(key, metadata[key]);
+      m.add(key, metadata[key]);
     }
     args.unshift(m);
   }
@@ -454,9 +462,10 @@ Object.keys(versions).forEach(function(version) {
     it('should support distributed trace context', function(done) {
       function makeLink(fn, meta, next) {
         return function() {
-          common.runInTransaction(function(terminate) {
+          agent.runInRootSpan({ name: '', traceContext: `${COMMON_TRACE_ID}/0;o=1` }, function(span) {
+            assert.strictEqual(span.type, agent.spanTypes.ROOT);
             fn(client, grpc, meta, function() {
-              terminate();
+              span.endSpan();
               next();
             });
           });
@@ -465,28 +474,25 @@ Object.keys(versions).forEach(function(version) {
       // Enable asserting properties of the metdata on the grpc server.
       checkMetadata = true;
       var next;
-      common.runInTransaction(function (endTransaction) {
-        var metadata = { a: 'b' };
-        next = function() {
-          endTransaction();
-          checkMetadata = false;
-          done();
-        };
-        // Try without supplying metadata (call* will not supply metadata to
-        // the grpc client methods at all if no fields are present).
-        // The plugin should automatically create a new Metadata object and
-        // populate it with trace context data accordingly.
-        next = makeLink(callUnary, {}, next);
-        next = makeLink(callClientStream, {}, next);
-        next = makeLink(callServerStream, {}, next);
-        next = makeLink(callBidi, {}, next);
-        // Try with metadata. The plugin should simply add trace context data
-        // to it.
-        next = makeLink(callUnary, metadata, next);
-        next = makeLink(callClientStream, metadata, next);
-        next = makeLink(callServerStream, metadata, next);
-        next = makeLink(callBidi, metadata, next);
-      });
+      var metadata = { a: 'b' };
+      next = function() {
+        checkMetadata = false;
+        done();
+      };
+      // Try without supplying metadata (call* will not supply metadata to
+      // the grpc client methods at all if no fields are present).
+      // The plugin should automatically create a new Metadata object and
+      // populate it with trace context data accordingly.
+      next = makeLink(callUnary, {}, next);
+      next = makeLink(callClientStream, {}, next);
+      next = makeLink(callServerStream, {}, next);
+      next = makeLink(callBidi, {}, next);
+      // Try with metadata. The plugin should simply add trace context data
+      // to it.
+      next = makeLink(callUnary, metadata, next);
+      next = makeLink(callClientStream, metadata, next);
+      next = makeLink(callServerStream, metadata, next);
+      next = makeLink(callBidi, metadata, next);
       next();
     });
 
