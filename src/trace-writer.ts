@@ -330,18 +330,16 @@ export class TraceWriter extends common.Service {
    * @param json The stringified json representation of the queued traces.
    */
   publish(json: string) {
-    const uri = `https://cloudtrace.googleapis.com/v1/projects/${
-        this.projectId}/traces`;
+    const hostname = 'cloudtrace.googleapis.com';
+    const uri = `https://${hostname}/v1/projects/${this.projectId}/traces`;
     const options = {method: 'PATCH', uri, body: json, headers};
     this.logger.info('TraceWriter#publish: Publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
       const statusCode = response && response.statusCode;
       if (err) {
         this.logger.error(`TraceWriter#publish: Received error ${
-            statusCode ?
-                `with status code ${statusCode}` :
-                ''} while publishing traces to cloudtrace.googleapis.com: ${
-            err}`);
+            statusCode ? `with status code ${statusCode}` :
+                         ''} while publishing traces to ${hostname}: ${err}`);
       } else {
         this.logger.info(
             `TraceWriter#publish: Published w/ status code: ${statusCode}`);
