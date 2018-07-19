@@ -148,6 +148,7 @@ export interface Tracer {
    * and the length of the returned string should be treated opaquely - the only
    * guarantee is that the value would unique for every root span.
    * @returns an id for the current context, or null if there is none
+   * @deprecated Use getCurrentRootSpan instead.
    */
   getCurrentContextId(): string|null;
 
@@ -161,6 +162,7 @@ export interface Tracer {
    * Returns the projectId that was either configured or auto-discovered by the
    * TraceWriter. Note that the auto-discovery is done asynchronously, so this
    * may return falsey until the projectId auto-discovery completes.
+   * @deprecated Use getProjectId instead.
    */
   getWriterProjectId(): string|null;
 
