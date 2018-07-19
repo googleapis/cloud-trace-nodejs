@@ -43,7 +43,7 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
 }
 
 function instrument<T>(
-    api: PluginTypes.TraceAgent, request: hapi_16.Request|hapi_17.Request,
+    api: PluginTypes.Tracer, request: hapi_16.Request|hapi_17.Request,
     continueCb: () => T): T {
   const req = request.raw.req;
   const res = request.raw.res;
@@ -124,7 +124,7 @@ const plugin: PluginTypes.Plugin = [
     unpatch: (hapi) => {
       shimmer.unwrap(hapi.Server.prototype, 'connection');
     }
-  } as PluginTypes.Patch<Hapi16Module>,
+  } as PluginTypes.Monkeypatch<Hapi16Module>,
   /**
    * In Hapi 17, the work that is done on behalf of a request stems from
    * Request#_execute. We patch that function to ensure that context is
@@ -153,6 +153,6 @@ const plugin: PluginTypes.Plugin = [
         Request.prototype._execute = Request.prototype._execute[ORIGINAL]!;
       }
     }
-  } as PluginTypes.Patch<{prototype: Hapi17Request}>
+  } as PluginTypes.Monkeypatch<{prototype: Hapi17Request}>
 ];
 export = plugin;

@@ -34,7 +34,7 @@ interface KoaModule<T> {
 }
 
 // Function signature for createMiddleware[2x]
-type CreateMiddlewareFn<T> = (api: PluginTypes.TraceAgent) => T;
+type CreateMiddlewareFn<T> = (api: PluginTypes.Tracer) => T;
 // Function signature for a function that returns the value of the "next"
 // middleware function parameter, wrapped to propagate context based on the
 // propagateContext flag. The type of "next" differs between Koa 1 and 2.
@@ -49,7 +49,7 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
 }
 
 function startSpanForRequest<T>(
-    api: PluginTypes.TraceAgent, ctx: KoaContext, getNext: GetNextFn<T>): T {
+    api: PluginTypes.Tracer, ctx: KoaContext, getNext: GetNextFn<T>): T {
   const req = ctx.req;
   const res = ctx.res;
   const originalEnd = res.end;
@@ -113,7 +113,7 @@ function startSpanForRequest<T>(
   });
 }
 
-function createMiddleware(api: PluginTypes.TraceAgent): koa_1.Middleware {
+function createMiddleware(api: PluginTypes.Tracer): koa_1.Middleware {
   return function* middleware(this: koa_1.Context, next: IterableIterator<{}>) {
     next = startSpanForRequest(api, this, (propagateContext: boolean) => {
       if (propagateContext) {
@@ -125,7 +125,7 @@ function createMiddleware(api: PluginTypes.TraceAgent): koa_1.Middleware {
   };
 }
 
-function createMiddleware2x(api: PluginTypes.TraceAgent): koa_2.Middleware {
+function createMiddleware2x(api: PluginTypes.Tracer): koa_2.Middleware {
   return function middleware(ctx, next) {
     next = startSpanForRequest(
         api, ctx,
@@ -136,7 +136,7 @@ function createMiddleware2x(api: PluginTypes.TraceAgent): koa_2.Middleware {
 }
 
 function patchUse<T>(
-    koa: KoaModule<T>, api: PluginTypes.TraceAgent,
+    koa: KoaModule<T>, api: PluginTypes.Tracer,
     createMiddlewareFunction: CreateMiddlewareFn<T>) {
   shimmer.wrap(koa.prototype, 'use', (use) => {
     return function useTrace(this: typeof koa.prototype&
@@ -161,7 +161,7 @@ const plugin: PluginTypes.Plugin = [
     unpatch: (koa) => {
       shimmer.unwrap(koa.prototype, 'use');
     }
-  } as PluginTypes.Patch<Koa1Module>,
+  } as PluginTypes.Monkeypatch<Koa1Module>,
   {
     file: '',
     versions: '2.x',
@@ -171,7 +171,7 @@ const plugin: PluginTypes.Plugin = [
     unpatch: (koa) => {
       shimmer.unwrap(koa.prototype, 'use');
     }
-  } as PluginTypes.Patch<Koa2Module>
+  } as PluginTypes.Monkeypatch<Koa2Module>
 ];
 
 export = plugin;

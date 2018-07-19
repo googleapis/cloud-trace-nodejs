@@ -22,7 +22,7 @@ import * as semver from 'semver';
 import * as shimmer from 'shimmer';
 import * as url from 'url';
 
-import {Plugin, TraceAgent} from '../plugin-types';
+import {Plugin, Tracer} from '../plugin-types';
 
 type HttpModule = typeof httpModule;
 type HttpsModule = typeof httpsModule;
@@ -78,14 +78,13 @@ function extractUrl(
 }
 
 // tslint:disable-next-line:no-any
-function isTraceAgentRequest(options: any, api: TraceAgent) {
+function isTraceAgentRequest(options: any, api: Tracer) {
   return options && options.headers &&
       !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
 }
 
 function makeRequestTrace(
-    protocol: string, request: RequestFunction,
-    api: TraceAgent): RequestFunction {
+    protocol: string, request: RequestFunction, api: Tracer): RequestFunction {
   // On Node 8+ we use the following function to patch both request and get.
   // Here `request` may also happen to be `get`.
   return function requestTrace(options, callback): ClientRequest {
@@ -187,7 +186,7 @@ function makeRequestTrace(
   };
 }
 
-function patchHttp(http: HttpModule, api: TraceAgent) {
+function patchHttp(http: HttpModule, api: Tracer) {
   shimmer.wrap(http, 'request', (request) => {
     return makeRequestTrace('http:', request, api);
   });
@@ -217,7 +216,7 @@ function patchHttp(http: HttpModule, api: TraceAgent) {
 
 // https.get depends on Node http internals in 8.9.0 and 9+ instead of the
 // public http module.
-function patchHttps(https: HttpsModule, api: TraceAgent) {
+function patchHttps(https: HttpsModule, api: Tracer) {
   shimmer.wrap(https, 'request', (request) => {
     return makeRequestTrace('https:', request, api);
   });

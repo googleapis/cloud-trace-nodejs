@@ -1,41 +1,41 @@
-# The `TraceApi` Object
+# The `Tracer` Object
 
-A `TraceApi` instance provides functions that facilitate the following:
+A `Tracer` instance provides functions that facilitate the following:
 
 - Creating trace spans and add labels to them.
 - Getting information about how the trace agent was configured in the current application.
 - Parsing and serializing trace contexts to support distributed tracing between microservices.
 - Binding callbacks and event emitters in order to propagate trace contexts across asynchronous boundaries.
 
-In addition to the above, `TraceApi` also provides a number of well-known label keys and constants through its `labels` and `constants` fields respectively.
+In addition to the above, `Tracer` also provides a number of well-known label keys and constants through its `labels` and `constants` fields respectively.
 
 ## Trace Spans
 
 These functions provide the capability to create trace spans, add labels to them, and close them.
 
-* `TraceApi#runInRootSpan(options, fn)`
+* `Tracer#runInRootSpan(options, fn)`
   * `options`: [`TraceOptions`](#trace-span-options)
   * `fn`: `function(Span): any`
   * Returns `any` (return value of `fn`)
   * Creates a root span and runs the given callback, passing it a `Span` object. In some instances, this `Span` object doesn't correspond to an actual trace span; this can be checked by consulting the value of `Span#type`:
-    * `TraceApi#spanTypes.ROOT`: This object corresponds to a real trace span.
-    * `TraceApi#spanTypes.UNTRACED`: There isn't a real trace span corresponding to this object, for one of the following reasons:
+    * `Tracer#spanTypes.ROOT`: This object corresponds to a real trace span.
+    * `Tracer#spanTypes.UNTRACED`: There isn't a real trace span corresponding to this object, for one of the following reasons:
       * The trace policy, as specified by the user-given configuration, disallows a root span from being created under the current circumstances.
       * The trace agent is disabled, either because it wasn't started at all, started in disabled mode, or encountered an initialization error.
       * The incoming request had headers that explicitly specified that this request shouldn't be traced.
-    * `TraceApi#spanTypes.UNCORRELATED`: `runInRootSpan` was called for a request that already has a root span. This likely indicates a programmer error, as nested root spans are not allowed.
+    * `Tracer#spanTypes.UNCORRELATED`: `runInRootSpan` was called for a request that already has a root span. This likely indicates a programmer error, as nested root spans are not allowed.
   * **Note:** You must call `endSpan` on the span object provided as an argument for the span to be recorded.
-* `TraceApi#createChildSpan(options)`
+* `Tracer#createChildSpan(options)`
   * `options`: [`TraceOptions`](#trace-span-options)
   * Returns `Span`
   * Creates a child `Span` object and returns it. In some instances, this `Span` object doesn't correspond to an actual trace span; this can be checked by consulting the value of `Span#type`:
-    * `TraceApi#spanTypes.CHILD`: This object corresponds to a real trace span.
-    * `TraceApi#spanTypes.UNTRACED`: There isn't a real trace span corresponding to this object, because this span's parent is also an `UNTRACED` (root) span.
-    * `TraceApi#spanTypes.UNCORRELATED`: There isn't a real trace span corresponding to this object, for one of the following reasons:
+    * `Tracer#spanTypes.CHILD`: This object corresponds to a real trace span.
+    * `Tracer#spanTypes.UNTRACED`: There isn't a real trace span corresponding to this object, because this span's parent is also an `UNTRACED` (root) span.
+    * `Tracer#spanTypes.UNCORRELATED`: There isn't a real trace span corresponding to this object, for one of the following reasons:
       * A root span wasn't created beforehand because `runInRootSpan` was not called at all. This likely indicates a programmer error, because child spans should always be nested within a root span.
       * A root span was created beforehand, but context was lost between then and now. This may also be a programmer error, because child spans should always be created within the context of a root span. See [`Context Propagation`](#context-propagation) for details on properly propagating root span context.
   * **Note:** You must call `endSpan` on the returned span object for the span to be recorded.
-* `TraceApi#spanTypes`
+* `Tracer#spanTypes`
   * An enumeration of the types of spans: `ROOT`, `CHILD`, `UNTRACED`, `UNCORRELATED`
 * `Span#addLabel(key, value)`
   * `key`: `string`
@@ -64,7 +64,7 @@ Some functions above accept a `TraceOptions` object, which has the following fie
 
 ## Trace Agent Configuration
 
-* `TraceApi#enhancedDatabaseReportingEnabled()`
+* `Tracer#enhancedDatabaseReportingEnabled()`
   * Returns `boolean`
   * Returns whether the trace agent was started with an enhanced level of reporting. See the [configuration][config-js] object definition for more details.
 
@@ -78,11 +78,11 @@ Trace context is sent and received using the [`'x-cloud-trace-context'`][stackdr
 
 Plugins that trace incoming HTTP requests (in other words, web frameworks) should support cross-service tracing by reading serialized trace context from the `'x-cloud-trace-context'` header, and supplying it as the [`traceContext` option](#trace-span-options) when creating a new root span. The trace agent will automatically deserialize the trace context and associate any new spans with it.
 
-The string `'x-cloud-trace-context'` is provided as `TraceApi#constants.TRACE_CONTEXT_HEADER_NAME`.
+The string `'x-cloud-trace-context'` is provided as `Tracer#constants.TRACE_CONTEXT_HEADER_NAME`.
 
 It is highly recommended for plugins to set this header field in responses, _if_ the incoming request has this header. The trace context that should be written can be obtained with the following function:
 
-* `TraceApi#getResponseTraceContext(incomingTraceContext, isTraced)`
+* `Tracer#getResponseTraceContext(incomingTraceContext, isTraced)`
   * `incomingTraceContext`: `string`
   * `isTraced`: `boolean`
   * Returns `string`

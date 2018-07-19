@@ -19,7 +19,7 @@ import * as grpcModule from 'grpc';  // for types only.
 import {Client, MethodDefinition, ServerReadableStream, ServerUnaryCall, StatusObject} from 'grpc';
 import * as shimmer from 'shimmer';
 
-import {Plugin, RootSpan, RootSpanOptions, Span, TraceAgent} from '../plugin-types';
+import {Plugin, RootSpan, RootSpanOptions, Span, Tracer} from '../plugin-types';
 
 // Re-definition of Metadata with private fields
 type Metadata = grpcModule.Metadata&{
@@ -97,7 +97,7 @@ const SKIP_FRAMES = 1;
 // tslint:disable-next-line:variable-name
 let MetadataModuleValue: MetadataModule;
 
-function patchMetadata(metadata: MetadataModule, api: TraceAgent) {
+function patchMetadata(metadata: MetadataModule, api: Tracer) {
   // metadata is the value of module.exports of src/node/src/metadata.js
   MetadataModuleValue = metadata;
 }
@@ -107,7 +107,7 @@ function unpatchMetadata() {
   // So it's safe to provide a no-op unpatch function.
 }
 
-function patchClient(client: ClientModule, api: TraceAgent) {
+function patchClient(client: ClientModule, api: Tracer) {
   /**
    * Set trace context on a Metadata object if it exists.
    * @param metadata The Metadata object to which a trace context should be
@@ -281,7 +281,7 @@ function unpatchClient(client: ClientModule) {
   shimmer.unwrap(client, 'makeClientConstructor');
 }
 
-function patchServer(server: ServerModule, api: TraceAgent) {
+function patchServer(server: ServerModule, api: Tracer) {
   /**
    * Returns a trace context on a Metadata object if it exists and is
    * well-formed, or null otherwise. The result will be encoded as a string.

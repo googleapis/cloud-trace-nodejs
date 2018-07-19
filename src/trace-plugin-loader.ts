@@ -15,15 +15,13 @@
  */
 
 import {Logger} from '@google-cloud/common';
-import Module = require('module');
-import * as hook from 'require-in-the-middle';
-import * as path from 'path';
-import * as semver from 'semver';
-import * as shimmer from 'shimmer';
-import * as util from './util';
 import * as builtinModules from 'builtin-modules';
-import {TraceAgent, TraceAgentConfig} from './trace-api';
-import {Patch, Intercept, Plugin, Instrumentation} from './plugin-types';
+import * as path from 'path';
+import * as hook from 'require-in-the-middle';
+import * as semver from 'semver';
+
+import {Intercept, Monkeypatch, Plugin} from './plugin-types';
+import {StackdriverTracer, StackdriverTracerConfig} from './trace-api';
 import {Singleton} from './util';
 
 /**
@@ -37,7 +35,7 @@ import {Singleton} from './util';
  * should be patched. (See ./plugin-types for the exact interface.)
  */
 
-export interface PluginLoaderConfig extends TraceAgentConfig {
+export interface PluginLoaderConfig extends StackdriverTracerConfig {
   // An object which contains paths to files that should be loaded as plugins
   // upon loading a module with a given name.
   plugins: {[pluginName: string]: string};
@@ -89,8 +87,8 @@ export class ModulePluginWrapper implements PluginWrapper {
   private readonly unpatchFns: Array<() => void> = [];
   // A logger.
   private readonly logger: Logger;
-  // Configuration for a TraceAgent instance.
-  private readonly traceConfig: TraceAgentConfig;
+  // Configuration for a StackdriverTracer instance.
+  private readonly traceConfig: StackdriverTracerConfig;
   // Display-friendly name of the module being patched by this plugin.
   private readonly name: string;
   // The path to the plugin.
@@ -98,16 +96,16 @@ export class ModulePluginWrapper implements PluginWrapper {
   // The exported value of the plugin, or NOT_LOADED if it hasn't been
   // loaded yet.
   private pluginExportedValue: Plugin = ModulePluginWrapper.NOT_LOADED;
-  private readonly traceApiInstances: TraceAgent[] = [];
+  private readonly traceApiInstances: StackdriverTracer[] = [];
 
   /**
    * Constructs a new PluginWrapper instance.
    * @param options Initialization fields for this object.
-   * @param traceConfig Configuration for a TraceAgent instance.
+   * @param traceConfig Configuration for a StackdriverTracer instance.
    * @param logger The logger to use.
    */
   constructor(
-      options: ModulePluginWrapperOptions, traceConfig: TraceAgentConfig,
+      options: ModulePluginWrapperOptions, traceConfig: StackdriverTracerConfig,
       logger: Logger) {
     this.logger = logger;
     this.name = options.name;
@@ -150,7 +148,7 @@ export class ModulePluginWrapper implements PluginWrapper {
     const plugin = this.getPluginExportedValue();
     // Get a list of supported patches. This is the subset of objects in the
     // plugin exported value with matching file/version fields.
-    const supportedPatches: Array<Partial<Patch<T>&Intercept<T>>> =
+    const supportedPatches: Array<Partial<Monkeypatch<T>&Intercept<T>>> =
         plugin.filter(
             patch => semver.satisfies(version, patch.versions || '*') &&
                 (file === patch.file || (!file && !patch.file)));
@@ -161,9 +159,9 @@ export class ModulePluginWrapper implements PluginWrapper {
 
     // Apply each patch object.
     return supportedPatches.reduce<T>((exportedValue, patch) => {
-      // TODO(kjin): The only benefit of creating a new TraceAgent object per
-      // patched file is to give us granularity in log messages. See if we can
-      // refactor the TraceAgent class to avoid this.
+      // TODO(kjin): The only benefit of creating a new StackdriverTracer object
+      // per patched file is to give us granularity in log messages. See if we
+      // can refactor the StackdriverTracer class to avoid this.
 
       this.logger.info(
           `PluginWrapper#applyPlugin: [${logString}] Applying plugin.`);
@@ -200,7 +198,7 @@ export class ModulePluginWrapper implements PluginWrapper {
   }
 
   private createTraceAgentInstance(file: string) {
-    const traceApi = new TraceAgent(file);
+    const traceApi = new StackdriverTracer(file);
     traceApi.enable(this.traceConfig, this.logger);
     this.traceApiInstances.push(traceApi);
     return traceApi;
@@ -218,7 +216,7 @@ export class CorePluginWrapper implements PluginWrapper {
   private readonly children: ModulePluginWrapper[];
 
   constructor(
-      config: CorePluginWrapperOptions, traceConfig: TraceAgentConfig,
+      config: CorePluginWrapperOptions, traceConfig: StackdriverTracerConfig,
       logger: Logger) {
     this.logger = logger;
     this.children = config.children.map(
