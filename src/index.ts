@@ -23,14 +23,14 @@ import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
-import {tracing, Tracing, NormalizedConfig} from './tracing';
-import {Singleton, FORCE_NEW, Forceable} from './util';
+import {Tracing, NormalizedConfig} from './tracing';
+import {FORCE_NEW, Forceable} from './util';
 import {Constants} from './constants';
-import {TraceAgent} from './trace-api';
+import {StackdriverTracer} from './trace-api';
 
 export {Config, PluginTypes};
 
-let traceAgent: TraceAgent;
+let traceAgent: StackdriverTracer;
 
 /**
  * Normalizes the user-provided configuration object by adding default values
@@ -100,7 +100,7 @@ function initConfig(projectConfig: Forceable<Config>):
  * @example
  * trace.start();
  */
-export function start(config?: Config): PluginTypes.TraceAgent {
+export function start(config?: Config): PluginTypes.Tracer {
   const normalizedConfig = initConfig(config || {});
   // Determine the preferred context propagation mechanism, as
   // continuation-local-storage should be loaded before any modules that do I/O.
@@ -111,7 +111,7 @@ export function start(config?: Config): PluginTypes.TraceAgent {
   }
 
   if (!traceAgent) {
-    traceAgent = new (require('./trace-api').TraceAgent)();
+    traceAgent = new (require('./trace-api').StackdriverTracer)();
   }
 
   try {
@@ -135,12 +135,12 @@ export function start(config?: Config): PluginTypes.TraceAgent {
 }
 
 /**
- * Get the previously created TraceAgent object.
+ * Get the previously created StackdriverTracer object.
  * @returns An object exposing functions for creating custom spans.
  */
-export function get(): PluginTypes.TraceAgent {
+export function get(): PluginTypes.Tracer {
   if (!traceAgent) {
-    traceAgent = new (require('./trace-api').TraceAgent)();
+    traceAgent = new (require('./trace-api').StackdriverTracer)();
   }
   return traceAgent;
 }

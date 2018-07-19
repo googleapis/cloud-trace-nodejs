@@ -16,13 +16,10 @@
 
 import {Logger, logger} from '@google-cloud/common';
 import * as path from 'path';
-import * as semver from 'semver';
 
 import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
-import {CLSMechanism, Config, defaultConfig} from './config';
-import {Constants} from './constants';
-import * as PluginTypes from './plugin-types';
-import {TraceAgent} from './trace-api';
+import {CLSMechanism} from './config';
+import {StackdriverTracer} from './trace-api';
 import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
 import {Component, FORCE_NEW, Forceable, packageNameFromPath, Singleton} from './util';
@@ -52,7 +49,8 @@ export class Tracing implements Component {
    * @param traceAgent An object representing the custom tracing API.
    */
   constructor(
-      config: NormalizedConfig, private readonly traceAgent: TraceAgent) {
+      config: NormalizedConfig,
+      private readonly traceAgent: StackdriverTracer) {
     this.config = config;
     let logLevel = config.enabled ? config.logLevel : 0;
     // Clamp the logger level.
@@ -89,7 +87,7 @@ export class Tracing implements Component {
     }
     if (modulesLoadedBeforeTrace.length > 0) {
       this.logger.error(
-          'TraceAgent#start: Tracing might not work as the following modules',
+          'StackdriverTracer#start: Tracing might not work as the following modules',
           'were loaded before the trace agent was initialized:',
           `[${modulesLoadedBeforeTrace.sort().join(', ')}]`);
     }
@@ -113,7 +111,7 @@ export class Tracing implements Component {
       cls.create(clsConfig, this.logger);
     } catch (e) {
       this.logger.error(
-          'TraceAgent#start: Disabling the Trace Agent for the',
+          'StackdriverTracer#start: Disabling the Trace Agent for the',
           `following reason: ${e.message}`);
       this.disable();
       return;
@@ -121,7 +119,7 @@ export class Tracing implements Component {
     traceWriter.get().initialize((err) => {
       if (err) {
         this.logger.error(
-            'TraceAgent#start: Disabling the Trace Agent for the',
+            'StackdriverTracer#start: Disabling the Trace Agent for the',
             `following reason: ${err.message}`);
         this.disable();
       }
@@ -133,7 +131,7 @@ export class Tracing implements Component {
     if (typeof this.config.projectId !== 'string' &&
         typeof this.config.projectId !== 'undefined') {
       this.logger.error(
-          'TraceAgent#start: config.projectId, if provided, must be a string.',
+          'StackdriverTracer#start: config.projectId, if provided, must be a string.',
           'Disabling trace agent.');
       this.disable();
       return;
@@ -142,7 +140,7 @@ export class Tracing implements Component {
     // Make trace agent available globally without requiring package
     global._google_trace_agent = this.traceAgent;
 
-    this.logger.info('TraceAgent#start: Trace Agent activated.');
+    this.logger.info('StackdriverTracer#start: Trace Agent activated.');
   }
 
   /**

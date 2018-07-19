@@ -19,21 +19,20 @@ import * as assert from 'assert';
 import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
 import {defaultConfig} from '../src/config';
 import {SpanType} from '../src/constants';
-import {TraceAgent, TraceAgentConfig} from '../src/trace-api';
+import {StackdriverTracer, StackdriverTracerConfig} from '../src/trace-api';
 import {traceWriter} from '../src/trace-writer';
 import {FilterPolicy, TraceAllPolicy, TraceNonePolicy, TracePolicy} from '../src/tracing-policy';
 import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
-import {asChildSpanData, asRootSpanData} from './utils';
 
 describe('Trace Interface', () => {
   const logger = new TestLogger();
   function createTraceAgent(
       policy?: TracePolicy|null,
-      config?: Partial<TraceAgentConfig>): TraceAgent {
-    const result = new TraceAgent('test');
+      config?: Partial<StackdriverTracerConfig>): StackdriverTracer {
+    const result = new StackdriverTracer('test');
     result.enable(
         Object.assign(
             {

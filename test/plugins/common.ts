@@ -26,7 +26,7 @@ declare global {
 
 import '../override-gcp-metadata';
 import { cls, TraceCLS } from '../../src/cls';
-import { TraceAgent } from '../../src/trace-api';
+import { StackdriverTracer } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import * as TracingPolicy from '../../src/tracing-policy';
 import { SpanType } from '../../src/constants';
@@ -65,11 +65,11 @@ var path = require('path');
 var request = require('request');
 var shimmer = require('shimmer');
 
-var testTraceAgent: TraceAgent;
+var testTraceAgent: StackdriverTracer;
 shimmer.wrap(trace, 'start', function(original) {
   return function() {
     var result = original.apply(this, arguments);
-    testTraceAgent = new TraceAgent('test');
+    testTraceAgent = new StackdriverTracer('test');
     testTraceAgent.enable({
       enhancedDatabaseReporting: false,
       ignoreContextHeader: false,

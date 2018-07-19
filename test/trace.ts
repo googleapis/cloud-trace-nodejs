@@ -92,13 +92,13 @@ setPluginLoaderForTest(TestPluginLoader);
 
 export type Predicate<T> = (value: T) => boolean;
 
-export function start(projectConfig?: Config): PluginTypes.TraceAgent {
+export function start(projectConfig?: Config): PluginTypes.Tracer {
   const agent = trace.start(Object.assign(
       {samplingRate: 0, logLevel: 4, [FORCE_NEW]: true}, projectConfig));
   return agent;
 }
 
-export function get(): PluginTypes.TraceAgent {
+export function get(): PluginTypes.Tracer {
   return trace.get();
 }
 

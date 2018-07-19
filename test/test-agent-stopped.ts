@@ -19,7 +19,7 @@ import * as http from 'http';
 import * as traceTestModule from './trace';
 import { pluginLoader, PluginLoaderState } from '../src/trace-plugin-loader';
 import { TraceWriter } from '../src/trace-writer';
-import { TraceAgent } from '../src/trace-api';
+import { StackdriverTracer } from '../src/trace-api';
 
 describe('test-agent-stopped', () => {
   class InitErrorTraceWriter extends TraceWriter {
@@ -34,7 +34,7 @@ describe('test-agent-stopped', () => {
     traceTestModule.start();
     // Wait for agent to fail getting remote project id.
     setImmediate(() => {
-      assert.ok(!(traceTestModule.get() as TraceAgent).isActive());
+      assert.ok(!(traceTestModule.get() as StackdriverTracer).isActive());
       done();
     });
   });

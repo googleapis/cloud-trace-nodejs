@@ -34,7 +34,7 @@ function unpatchRestify(restify: Restify5) {
   shimmer.unwrap(restify, 'createServer');
 }
 
-function patchRestify(restify: Restify5, api: PluginTypes.TraceAgent) {
+function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
   shimmer.wrap(restify, 'createServer', createServerWrap);
 
   function createServerWrap(createServer: CreateServerFn): CreateServerFn {
@@ -102,6 +102,6 @@ const plugin: PluginTypes.Plugin = [{
   versions: SUPPORTED_VERSIONS,
   patch: patchRestify,
   unpatch: unpatchRestify
-} as PluginTypes.Patch<Restify5>];
+} as PluginTypes.Monkeypatch<Restify5>];
 
 export = plugin;
