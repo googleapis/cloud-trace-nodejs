@@ -239,6 +239,16 @@ describe('Trace Plugin Loader', () => {
       });
     });
 
+    it('uses the default plugin export if it exists', () => {
+      const loader = makePluginLoader({
+                       plugins: {'url': 'plugin-core-default'}
+                     }).activate();
+      const input = {protocol: 'http:', host: 'hi'};
+      assert.strictEqual(require('url').format(input), 'expected-value');
+      loader.deactivate();
+      assert.strictEqual(require('url').format(input), 'http://hi');
+    });
+
     it(`doesn't load plugins with falsey paths`, () => {
       const loader =
           makePluginLoader({plugins: {'small-number': ''}}).activate();

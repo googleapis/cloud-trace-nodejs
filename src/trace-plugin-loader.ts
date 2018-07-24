@@ -192,7 +192,14 @@ export class ModulePluginWrapper implements PluginWrapper {
   // Helper function to get the cached plugin value if it wasn't loaded yet.
   getPluginExportedValue(): Plugin {
     if (this.pluginExportedValue === ModulePluginWrapper.NOT_LOADED) {
-      this.pluginExportedValue = require(this.path);
+      const moduleExports = require(this.path);
+      // Use the default export if it exists. Otherwise, assume that the
+      // entirety of the module exports is the plugin value itself.
+      if (moduleExports.default) {
+        this.pluginExportedValue = moduleExports.default;
+      } else {
+        this.pluginExportedValue = moduleExports;
+      }
     }
     return this.pluginExportedValue;
   }
