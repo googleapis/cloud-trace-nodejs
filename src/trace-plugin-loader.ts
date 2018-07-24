@@ -193,10 +193,10 @@ export class ModulePluginWrapper implements PluginWrapper {
   getPluginExportedValue(): Plugin {
     if (this.pluginExportedValue === ModulePluginWrapper.NOT_LOADED) {
       const moduleExports = require(this.path);
-      // Use the default export if it exists. Otherwise, assume that the
-      // entirety of the module exports is the plugin value itself.
-      if (moduleExports.default) {
-        this.pluginExportedValue = moduleExports.default;
+      // Use the exported 'plugin' field if it exists. Otherwise, assume that
+      // the entirety of the module exports is the plugin value itself.
+      if (moduleExports.plugin) {
+        this.pluginExportedValue = moduleExports.plugin;
       } else {
         this.pluginExportedValue = moduleExports;
       }

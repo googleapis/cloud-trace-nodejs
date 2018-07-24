@@ -28,7 +28,7 @@ import {FORCE_NEW, Forceable} from './util';
 import {Constants} from './constants';
 import {StackdriverTracer} from './trace-api';
 
-export {Config, PluginTypes};
+export {Config, defaultConfig, PluginTypes};
 
 let traceAgent: StackdriverTracer;
 
