@@ -46,10 +46,15 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
   }
 
   function middleware(req: Request, res: Response, next: Next): void {
+    // For the span name:
+    // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
+    // 2. If non-existent, use the path name.
+    const name =
+        req.header(api.constants.TRACE_SPAN_NAME_OVERRIDE) || req.path();
     const options = {
       // we use the path part of the url as the span name and add the full url
       // as a label later.
-      name: req.path(),
+      name,
       url: req.url,
       traceContext: req.header(api.constants.TRACE_CONTEXT_HEADER_NAME),
       skipFrames: 1
