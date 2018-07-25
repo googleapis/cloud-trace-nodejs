@@ -36,16 +36,25 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
   return headerValue;
 }
 
+function getSpanName(tracer: PluginTypes.Tracer, req: Request): string {
+  // For the span name:
+  // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
+  // 2. If non-existent, use the path name.
+  let name;
+  if (tracer.getConfig().useSpanNameOverrideHeader) {
+    name = getFirstHeader(req, tracer.constants.TRACE_SPAN_NAME_OVERRIDE);
+  }
+  if (!name) {
+    name = req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '';
+  }
+  return name;
+}
+
 function createMiddleware(api: PluginTypes.Tracer):
     connect_3.NextHandleFunction {
   return function middleware(req: Request, res, next) {
-    // For the span name:
-    // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
-    // 2. If non-existent, use the path name.
-    const name = getFirstHeader(req, api.constants.TRACE_SPAN_NAME_OVERRIDE) ||
-        (req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '');
     const options = {
-      name,
+      name: getSpanName(api, req),
       url: req.originalUrl,
       traceContext:
           getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),

@@ -63,6 +63,15 @@ export interface Config {
   enhancedDatabaseReporting?: boolean;
 
   /**
+   * If set to true, traces that represent incoming HTTP spans will prefer
+   * the header value under key Tracer#constants.TRACE_SPAN_NAME_OVERRIDE to
+   * the request path. This option should only be enabled if this server's
+   * endpoints aren't publicly exposed, as it allows misbehaving clients to
+   * set span names to arbitrary values.
+   */
+  useSpanNameOverrideHeader?: boolean;
+
+  /**
    * The maximum number of characters reported on a label value. This value
    * cannot exceed 16383, the maximum value accepted by the service.
    */
@@ -193,6 +202,7 @@ export const defaultConfig = {
   logLevel: 1,
   enabled: true,
   enhancedDatabaseReporting: false,
+  useSpanNameOverrideHeader: false,
   maximumLabelValueSize: 512,
   plugins: {
     // enable all by default

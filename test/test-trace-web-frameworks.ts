@@ -299,11 +299,15 @@ describe('Web framework tracing', () => {
         let serverSpan: TraceSpan;
 
         beforeEach(async () => {
+          const spanNameOverrideKey =
+              testTraceModule.get().constants.TRACE_SPAN_NAME_OVERRIDE;
           await testTraceModule.get().runInRootSpan(
               {name: 'outer'}, async (span) => {
                 assert.ok(testTraceModule.get().isRealSpan(span));
                 // Hit an endpoint with a query parameter.
-                await axios.get(`http://localhost:${port}/hello?this-is=dog`);
+                await axios.get(
+                    `http://localhost:${port}/hello?this-is=dog`,
+                    {headers: {[spanNameOverrideKey]: '/goodbye'}});
                 span!.endSpan();
               });
           assert.strictEqual(testTraceModule.getSpans().length, 3);
@@ -328,6 +332,10 @@ describe('Web framework tracing', () => {
               stackTrace.stack_frame[0].method_name, expectedTopStackFrame);
         });
 
+        it('doesn\'t read span name header when assoc. option is off', () => {
+          assert.strictEqual(serverSpan.name, '/hello');
+        });
+
         it('doesn\'t include query parameters in span name', () => {
           assert.strictEqual(
               serverSpan.name.indexOf('dog'), -1,
@@ -335,22 +343,25 @@ describe('Web framework tracing', () => {
         });
       });
 
-      it('uses the span name override header', async () => {
-        const spanNameOverrideKey =
-            testTraceModule.get().constants.TRACE_SPAN_NAME_OVERRIDE;
-        await testTraceModule.get().runInRootSpan(
-            {name: 'outer'}, async (span) => {
-              assert.ok(testTraceModule.get().isRealSpan(span));
-              // Specify a header which overrides the span name.
-              await axios.get(
-                  `http://localhost:${port}/hello`,
-                  {headers: {[spanNameOverrideKey]: '/goodbye'}});
-              span!.endSpan();
-            });
-        assert.strictEqual(testTraceModule.getSpans().length, 3);
-        const serverSpan = testTraceModule.getOneSpan(isServerSpan);
-        assert.strictEqual(serverSpan.name, '/goodbye');
-      });
+      it('uses the span name override header when assoc. option is on',
+         async () => {
+           testTraceModule.get().getConfig().useSpanNameOverrideHeader = true;
+           const spanNameOverrideKey =
+               testTraceModule.get().constants.TRACE_SPAN_NAME_OVERRIDE;
+           await testTraceModule.get().runInRootSpan(
+               {name: 'outer'}, async (span) => {
+                 assert.ok(testTraceModule.get().isRealSpan(span));
+                 // Specify a header which overrides the span name.
+                 await axios.get(
+                     `http://localhost:${port}/hello`,
+                     {headers: {[spanNameOverrideKey]: '/goodbye'}});
+                 span!.endSpan();
+               });
+           assert.strictEqual(testTraceModule.getSpans().length, 3);
+           const serverSpan = testTraceModule.getOneSpan(isServerSpan);
+           assert.strictEqual(serverSpan.name, '/goodbye');
+           testTraceModule.get().getConfig().useSpanNameOverrideHeader = false;
+         });
     });
   });
 });
