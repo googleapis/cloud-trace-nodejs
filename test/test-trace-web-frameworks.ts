@@ -334,6 +334,23 @@ describe('Web framework tracing', () => {
               `span name ${serverSpan.name} includes query parameters`);
         });
       });
+
+      it('uses the span name override header', async () => {
+        const spanNameOverrideKey =
+            testTraceModule.get().constants.TRACE_SPAN_NAME_OVERRIDE;
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (span) => {
+              assert.ok(testTraceModule.get().isRealSpan(span));
+              // Specify a header which overrides the span name.
+              await axios.get(
+                  `http://localhost:${port}/hello`,
+                  {headers: {[spanNameOverrideKey]: '/goodbye'}});
+              span!.endSpan();
+            });
+        assert.strictEqual(testTraceModule.getSpans().length, 3);
+        const serverSpan = testTraceModule.getOneSpan(isServerSpan);
+        assert.strictEqual(serverSpan.name, '/goodbye');
+      });
     });
   });
 });

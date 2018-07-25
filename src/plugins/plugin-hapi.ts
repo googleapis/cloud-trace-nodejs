@@ -48,8 +48,13 @@ function instrument<T>(
   const req = request.raw.req;
   const res = request.raw.res;
   const originalEnd = res.end;
+  // For the span name:
+  // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
+  // 2. If non-existent, use the path name.
+  const name = getFirstHeader(req, api.constants.TRACE_SPAN_NAME_OVERRIDE) ||
+      (req.url ? (urlParse(req.url).pathname || '') : '');
   const options: PluginTypes.RootSpanOptions = {
-    name: req.url ? (urlParse(req.url).pathname || '') : '',
+    name,
     url: req.url,
     traceContext: getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
     skipFrames: 2

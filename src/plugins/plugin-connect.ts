@@ -39,8 +39,13 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
 function createMiddleware(api: PluginTypes.Tracer):
     connect_3.NextHandleFunction {
   return function middleware(req: Request, res, next) {
+    // For the span name:
+    // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
+    // 2. If non-existent, use the path name.
+    const name = getFirstHeader(req, api.constants.TRACE_SPAN_NAME_OVERRIDE) ||
+        (req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '');
     const options = {
-      name: req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '',
+      name,
       url: req.originalUrl,
       traceContext:
           getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),

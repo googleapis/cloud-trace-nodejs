@@ -35,8 +35,12 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
   function middleware(
       req: express_4.Request, res: express_4.Response,
       next: express_4.NextFunction) {
+    // For the span name:
+    // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
+    // 2. If non-existent, use the path name.
+    const name = req.get(api.constants.TRACE_SPAN_NAME_OVERRIDE) || req.path;
     const options: PluginTypes.RootSpanOptions = {
-      name: req.path,
+      name,
       traceContext: req.get(api.constants.TRACE_CONTEXT_HEADER_NAME),
       url: req.originalUrl,
       skipFrames: 1
