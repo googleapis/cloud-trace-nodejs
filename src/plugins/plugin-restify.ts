@@ -34,6 +34,20 @@ function unpatchRestify(restify: Restify5) {
   shimmer.unwrap(restify, 'createServer');
 }
 
+function getSpanName(tracer: PluginTypes.Tracer, req: Request): string {
+  // For the span name:
+  // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
+  // 2. If non-existent, use the path name.
+  let name;
+  if (tracer.getConfig().useSpanNameOverrideHeader) {
+    name = req.header(tracer.constants.TRACE_SPAN_NAME_OVERRIDE);
+  }
+  if (!name) {
+    name = req.path();
+  }
+  return name;
+}
+
 function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
   shimmer.wrap(restify, 'createServer', createServerWrap);
 
@@ -46,15 +60,10 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
   }
 
   function middleware(req: Request, res: Response, next: Next): void {
-    // For the span name:
-    // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
-    // 2. If non-existent, use the path name.
-    const name =
-        req.header(api.constants.TRACE_SPAN_NAME_OVERRIDE) || req.path();
     const options = {
       // we use the path part of the url as the span name and add the full url
       // as a label later.
-      name,
+      name: getSpanName(api, req),
       url: req.url,
       traceContext: req.header(api.constants.TRACE_CONTEXT_HEADER_NAME),
       skipFrames: 1
