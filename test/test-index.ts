@@ -65,7 +65,7 @@ describe('index.js', function() {
     });
 
     it('should set agent on global object', function() {
-      assert.equal(global._google_trace_agent, agent);
+      assert.strictEqual(global._google_trace_agent, agent);
     });
   });
 });

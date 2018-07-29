@@ -42,14 +42,14 @@ if (semver.satisfies(process.version, '>=4')) {
         options: require('./mysql-config'/*.js*/)
       }, function (err) {
         assert(!err);
-        server.route({ 
-          method: 'GET', 
-          path: '/', 
+        server.route({
+          method: 'GET',
+          path: '/',
           handler: function (request, reply) {
             request.app.db.query('SELECT * FROM t', function(err, res) {
               return reply(common.serverRes);
-            }); 
-          } 
+            });
+          }
         });
         server.start(function(err) {
           assert(!err);
@@ -60,8 +60,8 @@ if (semver.satisfies(process.version, '>=4')) {
               var spans = common.getMatchingSpans(function (span) {
                 return span.name === 'mysql-query';
               });
-              assert.equal(spans.length, 1);
-              assert.equal(spans[0].labels.sql, 'SELECT * FROM t');
+              assert.strictEqual(spans.length, 1);
+              assert.strictEqual(spans[0].labels.sql, 'SELECT * FROM t');
               server.stop(done);
             });
           });

@@ -35,10 +35,10 @@ describe('should respect config load order', function() {
   it('should order Default -> env config -> start -> env specific', function() {
     var config = agent.config;
 
-    assert.equal(config.logLevel, 2);
-    assert.equal(config.stackTraceLimit, 2);
-    assert.equal(config.flushDelaySeconds, 31);
-    assert.equal(config.samplingRate, 15);
+    assert.strictEqual(config.logLevel, 2);
+    assert.strictEqual(config.stackTraceLimit, 2);
+    assert.strictEqual(config.flushDelaySeconds, 31);
+    assert.strictEqual(config.samplingRate, 15);
   });
 });
 

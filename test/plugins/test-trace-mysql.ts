@@ -42,11 +42,11 @@ fixtures.forEach(function(fixture) {
       mysql = require('./fixtures/' + fixture);
       pool = mysql.createPool(require('../mysql-config'/*.js*/));
     });
-  
+
     after(function() {
       pool.end();
     });
-  
+
     beforeEach(function(done) {
       pool.getConnection(function(err, conn) {
         assert(!err, 'Skipping: Failed to connect to mysql.');
@@ -55,14 +55,14 @@ fixtures.forEach(function(fixture) {
           conn.query('INSERT INTO t SET ?', obj, function(err, res) {
             connection = conn;
             assert(!err);
-            assert.equal(res.affectedRows, 1);
+            assert.strictEqual(res.affectedRows, 1);
             common.cleanTraces();
             done();
           });
         });
       });
     });
-  
+
     afterEach(function(done) {
       connection.query('DROP TABLE t', function(err) {
         assert(!err);
@@ -71,25 +71,25 @@ fixtures.forEach(function(fixture) {
         done();
       });
     });
-  
+
     it('should perform basic operations', function(done) {
       common.runInTransaction(function(endRootSpan) {
         connection.query('SELECT * FROM t', function(err, res) {
           endRootSpan();
           assert(!err);
-          assert.equal(res.length, 1);
-          assert.equal(res[0].k, 1);
-          assert.equal(res[0].v, 'obj');
+          assert.strictEqual(res.length, 1);
+          assert.strictEqual(res[0].k, 1);
+          assert.strictEqual(res[0].v, 'obj');
           var spans = common.getMatchingSpans(function (span) {
             return span.name === 'mysql-query';
           });
-          assert.equal(spans.length, 1);
-          assert.equal(spans[0].labels.sql, 'SELECT * FROM t');
+          assert.strictEqual(spans.length, 1);
+          assert.strictEqual(spans[0].labels.sql, 'SELECT * FROM t');
           done();
         });
       });
     });
-  
+
     it('should propagate context', function(done) {
       common.runInTransaction(function(endRootSpan) {
         connection.query('SELECT * FROM t', function(err, res) {
@@ -99,7 +99,7 @@ fixtures.forEach(function(fixture) {
         });
       });
     });
-  
+
     it('should remove trace frames from stack', function(done) {
       common.runInTransaction(function(endRootSpan) {
         connection.query('SELECT * FROM t', function(err, res) {
@@ -117,26 +117,26 @@ fixtures.forEach(function(fixture) {
         });
       });
     });
-  
+
     it('should work with events', function(done) {
       common.runInTransaction(function(endRootSpan) {
         var query = connection.query('SELECT * FROM t');
         query.on('result', function(row) {
-          assert.equal(row.k, 1);
-          assert.equal(row.v, 'obj');
+          assert.strictEqual(row.k, 1);
+          assert.strictEqual(row.v, 'obj');
         });
         query.on('end', function() {
           endRootSpan();
           var spans = common.getMatchingSpans(function (span) {
             return span.name === 'mysql-query';
           });
-          assert.equal(spans.length, 1);
-          assert.equal(spans[0].labels.sql, 'SELECT * FROM t');
+          assert.strictEqual(spans.length, 1);
+          assert.strictEqual(spans[0].labels.sql, 'SELECT * FROM t');
           done();
         });
       });
     });
-  
+
     it('should work without events or callback', function(done) {
       common.runInTransaction(function(endRootSpan) {
         connection.query('SELECT * FROM t');
@@ -145,13 +145,13 @@ fixtures.forEach(function(fixture) {
           var spans = common.getMatchingSpans(function (span) {
             return span.name === 'mysql-query';
           });
-          assert.equal(spans.length, 1);
-          assert.equal(spans[0].labels.sql, 'SELECT * FROM t');
+          assert.strictEqual(spans.length, 1);
+          assert.strictEqual(spans[0].labels.sql, 'SELECT * FROM t');
           done();
         }, 50);
       });
     });
-  
+
     it('should perform basic transaction', function(done) {
       var obj2 = {
         k: 2,
@@ -164,11 +164,11 @@ fixtures.forEach(function(fixture) {
             assert(!err);
             connection.query('SELECT * FROM t', function(err, res) {
               assert(!err);
-              assert.equal(res.length, 2);
-              assert.equal(res[0].k, 1);
-              assert.equal(res[0].v, 'obj');
-              assert.equal(res[1].k, 2);
-              assert.equal(res[1].v, 'obj2');
+              assert.strictEqual(res.length, 2);
+              assert.strictEqual(res[0].k, 1);
+              assert.strictEqual(res[0].v, 'obj');
+              assert.strictEqual(res[1].k, 2);
+              assert.strictEqual(res[1].v, 'obj2');
               connection.rollback(function(err) {
                 assert(!err);
                 connection.query('SELECT * FROM t', function(err, res) {
@@ -176,17 +176,17 @@ fixtures.forEach(function(fixture) {
                   connection.commit(function(err) {
                     endRootSpan();
                     assert(!err);
-                    assert.equal(res.length, 1);
-                    assert.equal(res[0].k, 1);
-                    assert.equal(res[0].v, 'obj');
+                    assert.strictEqual(res.length, 1);
+                    assert.strictEqual(res[0].k, 1);
+                    assert.strictEqual(res[0].v, 'obj');
                     var spans = common.getMatchingSpans(function (span) {
                       return span.name === 'mysql-query';
                     });
                     var expectedCmds = ['START TRANSACTION', 'INSERT INTO t SET ?',
                       'SELECT * FROM t', 'ROLLBACK', 'SELECT * FROM t', 'COMMIT'];
-                    assert.equal(expectedCmds.length, spans.length);
+                    assert.strictEqual(expectedCmds.length, spans.length);
                     for (var i = 0; i < spans.length; i++) {
-                      assert.equal(spans[i].labels.sql, expectedCmds[i]);
+                      assert.strictEqual(spans[i].labels.sql, expectedCmds[i]);
                     }
                     done();
                   });

@@ -73,12 +73,12 @@ pgVersions.forEach(pgVersion => {
           var span = common.getMatchingSpan(function (span) {
             return span.name === 'pg-query';
           });
-          assert.equal(span.labels.query, 'INSERT INTO t (name, id) VALUES($1, $2)');
-          assert.equal(span.labels.values, '[ \'test_name\', \'test_id\' ]');
-          assert.equal(span.labels.row_count, '1');
-          assert.equal(span.labels.oid, '0');
-          assert.equal(span.labels.rows, '[]');
-          assert.equal(span.labels.fields, '[]');
+          assert.strictEqual(span.labels.query, 'INSERT INTO t (name, id) VALUES($1, $2)');
+          assert.strictEqual(span.labels.values, '[ \'test_name\', \'test_id\' ]');
+          assert.strictEqual(span.labels.row_count, '1');
+          assert.strictEqual(span.labels.oid, '0');
+          assert.strictEqual(span.labels.rows, '[]');
+          assert.strictEqual(span.labels.fields, '[]');
           done();
         });
       });
@@ -93,12 +93,12 @@ pgVersions.forEach(pgVersion => {
             var span = common.getMatchingSpan(function (span) {
               return span.name === 'pg-query';
             });
-            assert.equal(span.labels.query, 'INSERT INTO t (name, id) VALUES($1, $2)');
-            assert.equal(span.labels.values, '[ \'test_name\', \'test_id\' ]');
-            assert.equal(span.labels.row_count, '1');
-            assert.equal(span.labels.oid, '0');
-            assert.equal(span.labels.rows, '[]');
-            assert.equal(span.labels.fields, '[]');
+            assert.strictEqual(span.labels.query, 'INSERT INTO t (name, id) VALUES($1, $2)');
+            assert.strictEqual(span.labels.values, '[ \'test_name\', \'test_id\' ]');
+            assert.strictEqual(span.labels.row_count, '1');
+            assert.strictEqual(span.labels.oid, '0');
+            assert.strictEqual(span.labels.rows, '[]');
+            assert.strictEqual(span.labels.fields, '[]');
             done();
           }, (err) => {
             assert.fail('Error not expected');
@@ -158,8 +158,8 @@ pgVersions.forEach(pgVersion => {
           var span = common.getMatchingSpan(function (span) {
             return span.name === 'pg-query';
           });
-          assert.equal(span.labels.query, 'SELECT $1::int AS number');
-          assert.equal(span.labels.values, '[ 1 ]');
+          assert.strictEqual(span.labels.query, 'SELECT $1::int AS number');
+          assert.strictEqual(span.labels.values, '[ 1 ]');
           done();
         });
       });
@@ -192,8 +192,8 @@ pgVersions.forEach(pgVersion => {
           var span = common.getMatchingSpan(function (span) {
             return span.name === 'pg-query';
           });
-          assert.equal(span.labels.query, 'SELECT $1::int AS number');
-          assert.equal(span.labels.values, '[ 1 ]');
+          assert.strictEqual(span.labels.query, 'SELECT $1::int AS number');
+          assert.strictEqual(span.labels.values, '[ 1 ]');
           done();
         }, 50);
       });

@@ -89,20 +89,20 @@ describe('test-trace-knex', function() {
           knex(TABLE_NAME).select().then(function(res) {
             endRootSpan();
             assert(res);
-            assert.equal(res.length, 1);
-            assert.equal(res[0].k, 1);
-            assert.equal(res[0].v, 'obj');
+            assert.strictEqual(res.length, 1);
+            assert.strictEqual(res[0].k, 1);
+            assert.strictEqual(res[0].v, 'obj');
             var spans = common.getMatchingSpans(function (span) {
               return span.name === 'mysql-query';
             });
             if (version === 'knex11') {
-              assert.equal(spans.length, 2);
-              assert.equal(spans[0].labels.sql, 'SELECT 1');
-              assert.equal(spans[1].labels.sql, 'select * from `t`');
+              assert.strictEqual(spans.length, 2);
+              assert.strictEqual(spans[0].labels.sql, 'SELECT 1');
+              assert.strictEqual(spans[1].labels.sql, 'select * from `t`');
             }
             else {
-              assert.equal(spans.length, 1);
-              assert.equal(spans[0].labels.sql, 'select * from `t`');
+              assert.strictEqual(spans.length, 1);
+              assert.strictEqual(spans[0].labels.sql, 'select * from `t`');
             }
             done();
           });
@@ -145,8 +145,8 @@ describe('test-trace-knex', function() {
           knex.select().from(TABLE_NAME).on('query-response', function(response, obj, builder) {
             var row = response[0];
             assert.ok(row);
-            assert.equal(row.k, 1);
-            assert.equal(row.v, 'obj');
+            assert.strictEqual(row.k, 1);
+            assert.strictEqual(row.v, 'obj');
           }).on('query-error', function(err, obj) {
             assert.ifError(err);
           }).then(function(res) {
@@ -155,13 +155,13 @@ describe('test-trace-knex', function() {
               return span.name === 'mysql-query';
             });
             if (version === 'knex11') {
-              assert.equal(spans.length, 2);
-              assert.equal(spans[0].labels.sql, 'SELECT 1');
-              assert.equal(spans[1].labels.sql, 'select * from `t`');
+              assert.strictEqual(spans.length, 2);
+              assert.strictEqual(spans[0].labels.sql, 'SELECT 1');
+              assert.strictEqual(spans[1].labels.sql, 'select * from `t`');
             }
             else {
-              assert.equal(spans.length, 1);
-              assert.equal(spans[0].labels.sql, 'select * from `t`');
+              assert.strictEqual(spans.length, 1);
+              assert.strictEqual(spans[0].labels.sql, 'select * from `t`');
             }
             done();
           }).catch(function(e) {
@@ -179,13 +179,13 @@ describe('test-trace-knex', function() {
                 return span.name === 'mysql-query';
               });
               if (version === 'knex11') {
-                assert.equal(spans.length, 2);
-                assert.equal(spans[0].labels.sql, 'SELECT 1');
-                assert.equal(spans[1].labels.sql, 'select * from `t`');
+                assert.strictEqual(spans.length, 2);
+                assert.strictEqual(spans[0].labels.sql, 'SELECT 1');
+                assert.strictEqual(spans[1].labels.sql, 'select * from `t`');
               }
               else {
-                assert.equal(spans.length, 1);
-                assert.equal(spans[0].labels.sql, 'select * from `t`');
+                assert.strictEqual(spans.length, 1);
+                assert.strictEqual(spans[0].labels.sql, 'select * from `t`');
               }
               done();
             }, 50);
@@ -207,11 +207,11 @@ describe('test-trace-knex', function() {
                   return trx.select()
                      .from(TABLE_NAME)
                      .then(function(res) {
-                       assert.equal(res.length, 2);
-                       assert.equal(res[0].k, 1);
-                       assert.equal(res[0].v, 'obj');
-                       assert.equal(res[1].k, 2);
-                       assert.equal(res[1].v, 'obj2');
+                       assert.strictEqual(res.length, 2);
+                       assert.strictEqual(res[0].k, 1);
+                       assert.strictEqual(res[0].v, 'obj');
+                       assert.strictEqual(res[1].k, 2);
+                       assert.strictEqual(res[1].v, 'obj2');
                      }).catch(function(err) {
                        assert.ifError(err);
                      });
@@ -228,9 +228,9 @@ describe('test-trace-knex', function() {
               .from(TABLE_NAME)
               .then(function(res) {
                 endRootSpan();
-                assert.equal(res.length, 1);
-                assert.equal(res[0].k, 1);
-                assert.equal(res[0].v, 'obj');
+                assert.strictEqual(res.length, 1);
+                assert.strictEqual(res[0].k, 1);
+                assert.strictEqual(res[0].v, 'obj');
                 var spans = common.getMatchingSpans(function (span) {
                   return span.name === 'mysql-query';
                 });
@@ -257,9 +257,9 @@ describe('test-trace-knex', function() {
                                   'ROLLBACK;',
                                   'select * from `t`'];
                 }
-                assert.equal(expectedCmds.length, spans.length);
+                assert.strictEqual(expectedCmds.length, spans.length);
                 for (var i = 0; i < spans.length; i++) {
-                  assert.equal(spans[i].labels.sql, expectedCmds[i]);
+                  assert.strictEqual(spans[i].labels.sql, expectedCmds[i]);
                 }
                 done();
               }).catch(function(err) {
