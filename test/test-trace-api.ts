@@ -172,12 +172,12 @@ describe('Trace Interface', () => {
     it('should return the project ID from the Trace Writer (promise api)',
        async () => {
          const traceApi = createTraceAgent();
-         assert.equal(await traceApi.getProjectId(), 'project-1');
+         assert.strictEqual(await traceApi.getProjectId(), 'project-1');
        });
 
     it('should return get the project ID from the Trace Writer', () => {
       const traceApi = createTraceAgent();
-      assert.equal(traceApi.getWriterProjectId(), 'project-1');
+      assert.strictEqual(traceApi.getWriterProjectId(), 'project-1');
     });
 
     it('should respect trace policy', (done) => {

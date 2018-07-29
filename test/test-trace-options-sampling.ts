@@ -46,7 +46,7 @@ describe('express + http with trace options header + sampling', function() {
         res.on('end', function() {
           if (++doneCount === 5) {
             // Only one trace should be sampled even though all have enabled header.
-            assert.equal(common.getTraces().length, 1);
+            assert.strictEqual(common.getTraces().length, 1);
             common.cleanTraces();
             server.close();
             done();

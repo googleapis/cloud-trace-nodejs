@@ -74,7 +74,7 @@ describe('test-trace-http2', () => {
            result += data;
          }).on('end', () => {
           endTransaction();
-          assert.equal(result, common.serverRes);
+          assert.strictEqual(result, common.serverRes);
           common.assertDurationCorrect(Date.now() - start);
           session.destroy();
           done();
@@ -113,10 +113,10 @@ describe('test-trace-http2', () => {
         setTimeout(() => {
           endTransaction();
           const traces = common.getTraces();
-          assert.equal(traces.length, 1);
+          assert.strictEqual(traces.length, 1);
           // The only span present should be the outer span.
-          assert.equal(traces[0].spans.length, 1);
-          assert.equal(traces[0].spans[0].name, 'outer');
+          assert.strictEqual(traces[0].spans.length, 1);
+          assert.strictEqual(traces[0].spans[0].name, 'outer');
           session.destroy();
           done();
         }, common.serverWait * 1.5);
@@ -134,11 +134,11 @@ describe('test-trace-http2', () => {
         s.on('data', (data: string) => {}).on('end', () => {
           endTransaction();
           const traces = common.getTraces();
-          assert.equal(traces.length, 1);
+          assert.strictEqual(traces.length, 1);
           // /http/method and /http/url must be set correctly even when the
           // `headers` argument is not passed to the request() call.
-          assert.equal(traces[0].spans[1].labels['/http/method'], 'GET');
-          assert.equal(
+          assert.strictEqual(traces[0].spans[1].labels['/http/method'], 'GET');
+          assert.strictEqual(
               traces[0].spans[1].labels['/http/url'],
               `http://localhost:${common.serverPort}/`);
           session.destroy();
@@ -163,7 +163,7 @@ describe('test-trace-http2', () => {
         };
         writable.on('finish', () => {
           endTransaction();
-          assert.equal(result, common.serverRes);
+          assert.strictEqual(result, common.serverRes);
           common.assertDurationCorrect(Date.now() - start);
           session.destroy();
           done();
@@ -185,8 +185,8 @@ describe('test-trace-http2', () => {
         setTimeout(() => {
           endTransaction();
           const traces = common.getTraces();
-          assert.equal(traces.length, 1);
-          assert.equal(traces[0].spans[1].name, 'localhost');
+          assert.strictEqual(traces.length, 1);
+          assert.strictEqual(traces[0].spans[1].name, 'localhost');
           session.destroy();
           done();
         }, common.serverWait * 1.5);
@@ -203,8 +203,8 @@ describe('test-trace-http2', () => {
         setTimeout(() => {
           endTransaction();
           const traces = common.getTraces();
-          assert.equal(traces.length, 1);
-          assert.equal(
+          assert.strictEqual(traces.length, 1);
+          assert.strictEqual(
               traces[0].spans[1].labels['/http/url'],
               `http://localhost:${common.serverPort}/`);
           session.destroy();
@@ -242,15 +242,15 @@ describe('test-trace-http2', () => {
           const span = common.getMatchingSpan((span: TraceSpan) => {
             return span.name !== 'outer';
           });
-          assert.equal(
+          assert.strictEqual(
               span.labels[TraceLabels.ERROR_DETAILS_NAME],
               'Error [ERR_HTTP2_STREAM_ERROR]');
           if (semver.satisfies(process.version, '>=9.11')) {
-            assert.equal(
+            assert.strictEqual(
                 span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
                 'Stream closed with error code NGHTTP2_INTERNAL_ERROR');
           } else {
-            assert.equal(
+            assert.strictEqual(
                 span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
                 'Stream closed with error code 2');
           }
@@ -276,7 +276,7 @@ describe('test-trace-http2', () => {
              result += data;
            }).on('end', () => {
             endTransaction();
-            assert.equal(result, common.serverRes);
+            assert.strictEqual(result, common.serverRes);
             common.assertDurationCorrect(Date.now() - start);
             session.destroy();
             done();
@@ -309,16 +309,16 @@ describe('test-trace-http2', () => {
               const spans = common.getMatchingSpans((span: TraceSpan) => {
                 return span.name !== 'outer';
               });
-              assert.equal(spans.length, 5);
+              assert.strictEqual(spans.length, 5);
               // We need to check a property attached at the end of a span.
               const statusCodes: number[] = [];
               for (let j = 0; j < spans.length; j++) {
                 const code = Number(
                     spans[j].labels[TraceLabels.HTTP_RESPONSE_CODE_LABEL_KEY]);
-                assert.equal(statusCodes.indexOf(code), -1);
+                assert.strictEqual(statusCodes.indexOf(code), -1);
                 statusCodes.push(code);
               }
-              assert.equal(statusCodes.reduce((a, b) => a + b), 1010);
+              assert.strictEqual(statusCodes.reduce((a, b) => a + b), 1010);
               slowServer.close();
               done();
             }
@@ -371,7 +371,7 @@ describe('test-trace-secure-http2', () => {
            result += data;
          }).on('end', () => {
           endTransaction();
-          assert.equal(result, common.serverRes);
+          assert.strictEqual(result, common.serverRes);
           common.assertDurationCorrect(Date.now() - start);
           session.destroy();
           secureServer.close();

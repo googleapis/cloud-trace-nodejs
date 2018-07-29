@@ -63,7 +63,7 @@ describe('test-no-self-tracing', function() {
     common.runInTransaction(function(end) {
       end();
       setTimeout(function() {
-        assert.equal(common.getTraces().length, 0);
+        assert.strictEqual(common.getTraces().length, 0);
         common.replaceWarnLogger(oldWarn);
         metadataScope.done();
         apiScope.done();
