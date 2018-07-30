@@ -155,7 +155,7 @@ describe('util.generateTraceContext', () => {
     it(`returns well-formatted trace context for ${inspect(s)}`, () => {
       const context = util.generateTraceContext(s);
       const parsed = util.parseContextFromHeader(context);
-      assert.deepEqual(parsed, s);
+      assert.deepStrictEqual(parsed, s);
     });
   });
 
