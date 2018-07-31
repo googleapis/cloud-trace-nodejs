@@ -58,11 +58,11 @@ describe('multiple instrumentations of the same module', function() {
         clientv2.get('v2', function(err, n) {
           endTransaction();
           var spans = common.getMatchingSpans(redisPredicate.bind(null, 'redis-get'));
-          assert.equal(spans.length, 2);
-          assert.equal(spans[0].labels.arguments, '["v0"]');
-          assert.equal(spans[0].labels.command, 'get');
-          assert.equal(spans[1].labels.arguments, '["v2"]');
-          assert.equal(spans[1].labels.command, 'get');
+          assert.strictEqual(spans.length, 2);
+          assert.strictEqual(spans[0].labels.arguments, '["v0"]');
+          assert.strictEqual(spans[0].labels.command, 'get');
+          assert.strictEqual(spans[1].labels.arguments, '["v2"]');
+          assert.strictEqual(spans[1].labels.command, 'get');
           done();
         });
       });

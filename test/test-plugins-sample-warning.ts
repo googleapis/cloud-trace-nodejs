@@ -69,7 +69,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort}, function(res) {
           server.close();
           common.cleanTraces();
-          assert.equal(untracedHttpSpanCount, 2);
+          assert.strictEqual(untracedHttpSpanCount, 2);
           done();
         });
       });
@@ -92,7 +92,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort + 1}, function(res) {
           server.close();
           common.cleanTraces();
-          assert.equal(untracedHttpSpanCount, 2);
+          assert.strictEqual(untracedHttpSpanCount, 2);
           done();
         });
       });
@@ -113,7 +113,7 @@ describe('express + dbs', function() {
         http.get({port: common.serverPort + 2}, function(res) {
           server.close();
           common.cleanTraces();
-          assert.equal(untracedHttpSpanCount, 2);
+          assert.strictEqual(untracedHttpSpanCount, 2);
           done();
         });
       });
@@ -126,7 +126,7 @@ describe('express + dbs', function() {
       var mysql = require('./plugins/fixtures/' + impl);
       var express = require('./plugins/fixtures/express4');
       var pool = mysql.createPool(require('./mysql-config'/*.js*/));
-  
+
       var app = express();
       app.get('/', function (req, res) {
         http.get('http://www.google.com/', function() {
@@ -143,7 +143,7 @@ describe('express + dbs', function() {
             pool.end();
             server.close();
             common.cleanTraces();
-            assert.equal(untracedHttpSpanCount, 2);
+            assert.strictEqual(untracedHttpSpanCount, 2);
             done();
           });
         });

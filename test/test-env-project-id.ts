@@ -27,12 +27,12 @@ var assert = require('assert');
 describe('should respect environment variables', function() {
   it('should respect GCLOUD_PROJECT', function() {
     var agent = trace.start({[FORCE_NEW]: true});
-    assert.equal(agent.config.projectId, 1729);
+    assert.strictEqual(agent.config.projectId, '1729');
   });
 
   it('should prefer env to config', function() {
     var agent = trace.start({projectId: 1927, [FORCE_NEW]: true});
-    assert.equal(agent.config.projectId, 1729);
+    assert.strictEqual(agent.config.projectId, '1729');
   });
 });
 
