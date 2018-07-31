@@ -25,12 +25,6 @@ export const Constants = {
   /** Header that carries trace context across Google infrastructure. */
   TRACE_CONTEXT_HEADER_NAME: 'x-cloud-trace-context',
 
-  /**
-   * A header that can be used to override the span name of an incoming HTTP
-   * request.
-   */
-  TRACE_SPAN_NAME_OVERRIDE: 'x-cloud-trace-span-name-override',
-
   /** Header that is used to identify outgoing http made by the agent. */
   TRACE_AGENT_REQUEST_HEADER: 'x-cloud-trace-agent-request',
 

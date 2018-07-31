@@ -19,6 +19,7 @@
 
 import {Config} from './config';
 import {Constants, SpanType} from './constants';
+import {StackdriverTracerConfig} from './trace-api';
 import {TraceLabels} from './trace-labels';
 import {TraceContext} from './util';
 
@@ -121,7 +122,7 @@ export interface Tracer {
    * Gets the current configuration, or throws if it can't be retrieved
    * because the Trace Agent was not disabled.
    */
-  getConfig(): Config;
+  getConfig(): StackdriverTracerConfig;
 
   /**
    * Runs the given function in a root span corresponding to an incoming

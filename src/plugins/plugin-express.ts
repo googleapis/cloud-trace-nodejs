@@ -30,28 +30,13 @@ const methods: Array<keyof express_4.Application> =
 
 const SUPPORTED_VERSIONS = '4.x';
 
-function getSpanName(
-    tracer: PluginTypes.Tracer, req: express_4.Request): string {
-  // For the span name:
-  // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
-  // 2. If non-existent, use the path name.
-  let name;
-  if (tracer.getConfig().useSpanNameOverrideHeader) {
-    name = req.get(tracer.constants.TRACE_SPAN_NAME_OVERRIDE);
-  }
-  if (!name) {
-    name = req.path;
-  }
-  return name;
-}
-
 function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
   const labels = api.labels;
   function middleware(
       req: express_4.Request, res: express_4.Response,
       next: express_4.NextFunction) {
     const options: PluginTypes.RootSpanOptions = {
-      name: getSpanName(api, req),
+      name: api.getConfig().incomingRequestSpanNameOverride(req.path),
       traceContext: req.get(api.constants.TRACE_CONTEXT_HEADER_NAME),
       url: req.originalUrl,
       skipFrames: 1

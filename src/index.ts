@@ -76,6 +76,13 @@ function initConfig(projectConfig: Forceable<Config>):
       Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
     config.maximumLabelValueSize = Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
   }
+  // Make incomingRequestSpanNameOverride a function if not already.
+  if (typeof config.incomingRequestSpanNameOverride === 'string') {
+    const spanName = config.incomingRequestSpanNameOverride;
+    config.incomingRequestSpanNameOverride = () => spanName;
+  } else if (typeof config.incomingRequestSpanNameOverride !== 'function') {
+    config.incomingRequestSpanNameOverride = (path: string) => path;
+  }
 
   // If the CLS mechanism is set to auto-determined, decide now what it should
   // be.

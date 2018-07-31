@@ -49,17 +49,8 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
 }
 
 function getSpanName(tracer: PluginTypes.Tracer, req: IncomingMessage): string {
-  // For the span name:
-  // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
-  // 2. If non-existent, use the path name.
-  let name;
-  if (tracer.getConfig().useSpanNameOverrideHeader) {
-    name = getFirstHeader(req, tracer.constants.TRACE_SPAN_NAME_OVERRIDE);
-  }
-  if (!name) {
-    name = req.url ? (urlParse(req.url).pathname || '') : '';
-  }
-  return name;
+  const name = req.url ? (urlParse(req.url).pathname || '') : '';
+  return tracer.getConfig().incomingRequestSpanNameOverride(name);
 }
 
 function startSpanForRequest<T>(

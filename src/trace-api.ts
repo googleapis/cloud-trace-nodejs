@@ -19,7 +19,6 @@ import * as is from 'is';
 import * as uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
-import {Config} from './config';
 import {Constants, SpanType} from './constants';
 import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
@@ -36,6 +35,7 @@ export interface StackdriverTracerConfig extends
     TracingPolicy.TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
+  incomingRequestSpanNameOverride: (path: string) => string;
 }
 
 interface IncomingTraceContext {
@@ -127,7 +127,7 @@ export class StackdriverTracer implements Tracer {
     return !!this.config && this.config.enhancedDatabaseReporting;
   }
 
-  getConfig(): Config {
+  getConfig(): StackdriverTracerConfig {
     if (!this.config) {
       throw new Error('Configuration is not available.');
     }
