@@ -47,7 +47,7 @@ describe('Trace Plugin Loader', () => {
               ignoreUrls: [],
               enhancedDatabaseReporting: false,
               ignoreContextHeader: false,
-              incomingRequestSpanNameOverride: (path: string) => path,
+              rootSpanNameOverride: (name: string) => name,
               projectId: '0'
             },
             config),

@@ -35,7 +35,7 @@ export interface StackdriverTracerConfig extends
     TracingPolicy.TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
-  incomingRequestSpanNameOverride: (path: string) => string;
+  rootSpanNameOverride: (path: string) => string;
 }
 
 interface IncomingTraceContext {
@@ -174,9 +174,10 @@ export class StackdriverTracer implements Tracer {
       const traceId =
           incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
       const parentId = incomingTraceContext.spanId || '0';
+      const name = this.config!.rootSpanNameOverride(options.name);
       rootContext = new RootSpanData(
           {projectId: '', traceId, spans: []}, /* Trace object */
-          options.name,                        /* Span name */
+          name,                                /* Span name */
           parentId,                            /* Parent's span ID */
           options.skipFrames || 0);
     }

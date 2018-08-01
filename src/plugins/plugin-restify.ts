@@ -49,7 +49,7 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
     const options = {
       // we use the path part of the url as the span name and add the full url
       // as a label later.
-      name: api.getConfig().incomingRequestSpanNameOverride(req.path()),
+      name: req.path(),
       url: req.url,
       traceContext: req.header(api.constants.TRACE_CONTEXT_HEADER_NAME),
       skipFrames: 1

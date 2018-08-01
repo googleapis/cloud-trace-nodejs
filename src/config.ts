@@ -63,13 +63,12 @@ export interface Config {
   enhancedDatabaseReporting?: boolean;
 
   /**
-   * A value that can be used to override names of spans that represent
-   * incoming requests. If specified as a string, the string will be used
-   * to replace all such span names; if specified as a function, the function
-   * will be invoked with the request path as an argument, and its return value
-   * will be used as the span name.
+   * A value that can be used to override names of root spans. If specified as
+   * a string, the string will be used to replace all such span names; if
+   * specified as a function, the function will be invoked with the request path
+   * as an argument, and its return value will be used as the span name.
    */
-  incomingRequestSpanNameOverride?: string|((path: string) => string);
+  rootSpanNameOverride?: string|((name: string) => string);
 
   /**
    * The maximum number of characters reported on a label value. This value
@@ -202,7 +201,7 @@ export const defaultConfig = {
   logLevel: 1,
   enabled: true,
   enhancedDatabaseReporting: false,
-  incomingRequestSpanNameOverride: (path: string) => path,
+  rootSpanNameOverride: (name: string) => name,
   maximumLabelValueSize: 512,
   plugins: {
     // enable all by default

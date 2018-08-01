@@ -36,7 +36,7 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
       req: express_4.Request, res: express_4.Response,
       next: express_4.NextFunction) {
     const options: PluginTypes.RootSpanOptions = {
-      name: api.getConfig().incomingRequestSpanNameOverride(req.path),
+      name: req.path,
       traceContext: req.get(api.constants.TRACE_CONTEXT_HEADER_NAME),
       url: req.originalUrl,
       skipFrames: 1

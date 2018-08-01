@@ -37,7 +37,7 @@ export const ASSERT_SPAN_TIME_TOLERANCE_MS = 40;
  */
 
 export function isServerSpan(span: TraceSpan) {
-  return span.kind === 'RPC_SERVER' && span.name !== 'outer';
+  return span.kind === 'RPC_SERVER' && !span.name.startsWith('outer');
 }
 
 // Convenience function that, when awaited, stalls for a given duration of time

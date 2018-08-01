@@ -299,8 +299,6 @@ describe('Web framework tracing', () => {
         let serverSpan: TraceSpan;
 
         beforeEach(async () => {
-          const spanNameOverrideKey =
-              testTraceModule.get().constants.TRACE_SPAN_NAME_OVERRIDE;
           await testTraceModule.get().runInRootSpan(
               {name: 'outer'}, async (span) => {
                 assert.ok(testTraceModule.get().isRealSpan(span));
@@ -337,28 +335,26 @@ describe('Web framework tracing', () => {
         });
       });
 
-      it('uses the span name override header when assoc. option is on',
-         async () => {
-           const oldSpanNameOverride = testTraceModule.get()
-                                           .getConfig()
-                                           .incomingRequestSpanNameOverride;
-           testTraceModule.get().getConfig().incomingRequestSpanNameOverride =
-               (path: string) => `${path}-goodbye`;
-           const spanNameOverrideKey =
-               testTraceModule.get().constants.TRACE_SPAN_NAME_OVERRIDE;
-           await testTraceModule.get().runInRootSpan(
-               {name: 'outer'}, async (span) => {
-                 assert.ok(testTraceModule.get().isRealSpan(span));
-                 // Specify a header which overrides the span name.
-                 await axios.get(`http://localhost:${port}/hello`);
-                 span!.endSpan();
-               });
-           assert.strictEqual(testTraceModule.getSpans().length, 3);
-           const serverSpan = testTraceModule.getOneSpan(isServerSpan);
-           assert.strictEqual(serverSpan.name, '/hello-goodbye');
-           testTraceModule.get().getConfig().incomingRequestSpanNameOverride =
-               oldSpanNameOverride;
-         });
+      it('uses the span name override option', async () => {
+        const oldSpanNameOverride =
+            testTraceModule.get().getConfig().rootSpanNameOverride;
+        testTraceModule.get().getConfig().rootSpanNameOverride =
+            (path: string) => `${path}-goodbye`;
+        try {
+          await testTraceModule.get().runInRootSpan(
+              {name: 'outer'}, async (span) => {
+                assert.ok(testTraceModule.get().isRealSpan(span));
+                await axios.get(`http://localhost:${port}/hello`);
+                span!.endSpan();
+              });
+          assert.strictEqual(testTraceModule.getSpans().length, 3);
+          const serverSpan = testTraceModule.getOneSpan(isServerSpan);
+          assert.strictEqual(serverSpan.name, '/hello-goodbye');
+        } finally {
+          testTraceModule.get().getConfig().rootSpanNameOverride =
+              oldSpanNameOverride;
+        }
+      });
     });
   });
 });

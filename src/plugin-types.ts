@@ -17,7 +17,6 @@
 // This file only describes public-facing interfaces.
 // tslint:disable:no-any
 
-import {Config} from './config';
 import {Constants, SpanType} from './constants';
 import {StackdriverTracerConfig} from './trace-api';
 import {TraceLabels} from './trace-labels';

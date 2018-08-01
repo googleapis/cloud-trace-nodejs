@@ -36,17 +36,11 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
   return headerValue;
 }
 
-function getSpanName(tracer: PluginTypes.Tracer, req: Request): string {
-  const name =
-      req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '';
-  return tracer.getConfig().incomingRequestSpanNameOverride(name);
-}
-
 function createMiddleware(api: PluginTypes.Tracer):
     connect_3.NextHandleFunction {
   return function middleware(req: Request, res, next) {
     const options = {
-      name: getSpanName(api, req),
+      name: req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '',
       url: req.originalUrl,
       traceContext:
           getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
