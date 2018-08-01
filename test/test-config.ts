@@ -22,6 +22,8 @@ import * as util from 'util';
 import {TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 
 import * as testTraceModule from './trace';
+import { NormalizedConfig } from '../src/tracing';
+import { StackdriverTracer } from '../src/trace-api';
 
 describe('Behavior set by config for context propagation mechanism', () => {
   const useAH = semver.satisfies(process.version, '>=8');
@@ -89,4 +91,65 @@ describe('Behavior set by config for context propagation mechanism', () => {
              testCase.contextPropagationConfig.mechanism);
        });
   }
+});
+
+describe('Behavior set by config for overriding root span name', () => {
+  let capturedConfig: NormalizedConfig|null;
+
+  class CaptureConfigTestTracing extends testTraceModule.TestTracing {
+    constructor(config: NormalizedConfig, traceAgent: StackdriverTracer) {
+      super(config, traceAgent);
+      // Capture the config object passed into this constructor.
+      capturedConfig = config;
+    }
+  }
+
+  beforeEach(() => {
+    capturedConfig = null;
+  });
+
+  before(() => {
+    testTraceModule.setTracingForTest(CaptureConfigTestTracing);
+  });
+
+  after(() => {
+    testTraceModule.setTracingForTest(testTraceModule.TestTracing);
+  });
+
+  it('should convert a string to a function', () => {
+    testTraceModule.start({
+      rootSpanNameOverride: 'hello'
+    });
+    assert.ok(capturedConfig!);
+    // Avoid using the ! operator multiple times.
+    const config = capturedConfig!;
+    // If !config.enabled, then TSC does not permit access to other fields on
+    // config. So use this structure instead of assert.ok(config.enabled).
+    if (config.enabled) {
+      assert.strictEqual(typeof config.rootSpanNameOverride, 'function');
+      assert.strictEqual(config.rootSpanNameOverride(''), 'hello');
+    } else {
+      assert.fail('Configuration was not enabled.');
+    }
+  });
+
+  it('should convert a non-string, non-function to the default arg', () => {
+    testTraceModule.start({
+      // We should make sure passing in unsupported values at least doesn't
+      // result in a crash.
+      // tslint:disable-next-line:no-any
+      rootSpanNameOverride: 2 as any
+    });
+    assert.ok(capturedConfig!);
+    // Avoid using the ! operator multiple times.
+    const config = capturedConfig!;
+    // If !config.enabled, then TSC does not permit access to other fields on
+    // config. So use this structure instead of assert.ok(config.enabled).
+    if (config.enabled) {
+      assert.strictEqual(typeof config.rootSpanNameOverride, 'function');
+      assert.strictEqual(config.rootSpanNameOverride('a'), 'a');
+    } else {
+      assert.fail('Configuration was not enabled.');
+    }
+  });
 });

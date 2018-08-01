@@ -44,6 +44,7 @@ import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
 import {Trace, TraceSpan} from '../src/trace';
 import {PluginLoader, pluginLoader} from '../src/trace-plugin-loader';
 import {TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
+import {tracing, Tracing} from '../src/tracing';
 import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
@@ -85,10 +86,15 @@ export class TestPluginLoader extends PluginLoader {
   }
 }
 
+// Make no modifications to Tracing. This class exists for symmetricality
+// purposes.
+export class TestTracing extends Tracing {}
+
 setCLSForTest(TestCLS);
 setLoggerForTest(TestLogger);
 setTraceWriterForTest(TestTraceWriter);
 setPluginLoaderForTest(TestPluginLoader);
+setTracingForTest(TestTracing);
 
 export type Predicate<T> = (value: T) => boolean;
 
@@ -122,6 +128,10 @@ export function setTraceWriterForTest(impl?: typeof TraceWriter) {
 
 export function setPluginLoaderForTest(impl?: typeof PluginLoader) {
   pluginLoader['implementation'] = impl || PluginLoader;
+}
+
+export function setTracingForTest(impl?: typeof Tracing) {
+  tracing['implementation'] = impl || Tracing;
 }
 
 export function getTraces(predicate?: Predicate<Trace>): Trace[] {
