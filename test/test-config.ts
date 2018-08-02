@@ -133,7 +133,7 @@ describe('Behavior set by config for overriding root span name', () => {
     }
   });
 
-  it('should convert a non-string, non-function to the default arg', () => {
+  it('should convert a non-string, non-function to the identity fn', () => {
     testTraceModule.start({
       // We should make sure passing in unsupported values at least doesn't
       // result in a crash.
