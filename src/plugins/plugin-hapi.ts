@@ -42,6 +42,20 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
   return headerValue;
 }
 
+function getSpanName(tracer: PluginTypes.Tracer, req: IncomingMessage): string {
+  // For the span name:
+  // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
+  // 2. If non-existent, use the path name.
+  let name;
+  if (tracer.getConfig().useSpanNameOverrideHeader) {
+    name = getFirstHeader(req, tracer.constants.TRACE_SPAN_NAME_OVERRIDE);
+  }
+  if (!name) {
+    name = req.url ? (urlParse(req.url).pathname || '') : '';
+  }
+  return name;
+}
+
 function instrument<T>(
     api: PluginTypes.Tracer, request: hapi_16.Request|hapi_17.Request,
     continueCb: () => T): T {
@@ -49,7 +63,7 @@ function instrument<T>(
   const res = request.raw.res;
   const originalEnd = res.end;
   const options: PluginTypes.RootSpanOptions = {
-    name: req.url ? (urlParse(req.url).pathname || '') : '',
+    name: getSpanName(api, req),
     url: req.url,
     traceContext: getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
     skipFrames: 2

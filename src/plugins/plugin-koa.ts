@@ -48,13 +48,27 @@ function getFirstHeader(req: IncomingMessage, key: string): string|null {
   return headerValue;
 }
 
+function getSpanName(tracer: PluginTypes.Tracer, req: IncomingMessage): string {
+  // For the span name:
+  // 1. Use the TRACE_SPAN_NAME_OVERRIDE header.
+  // 2. If non-existent, use the path name.
+  let name;
+  if (tracer.getConfig().useSpanNameOverrideHeader) {
+    name = getFirstHeader(req, tracer.constants.TRACE_SPAN_NAME_OVERRIDE);
+  }
+  if (!name) {
+    name = req.url ? (urlParse(req.url).pathname || '') : '';
+  }
+  return name;
+}
+
 function startSpanForRequest<T>(
     api: PluginTypes.Tracer, ctx: KoaContext, getNext: GetNextFn<T>): T {
   const req = ctx.req;
   const res = ctx.res;
   const originalEnd = res.end;
   const options = {
-    name: req.url ? (urlParse(req.url).pathname || '') : '',
+    name: getSpanName(api, req),
     url: req.url,
     traceContext: getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
     skipFrames: 2

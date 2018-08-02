@@ -17,6 +17,7 @@
 // This file only describes public-facing interfaces.
 // tslint:disable:no-any
 
+import {Config} from './config';
 import {Constants, SpanType} from './constants';
 import {TraceLabels} from './trace-labels';
 import {TraceContext} from './util';
@@ -115,6 +116,12 @@ export interface Tracer {
    * to have an enhanced level of reporting enabled.
    */
   enhancedDatabaseReportingEnabled(): boolean;
+
+  /**
+   * Gets the current configuration, or throws if it can't be retrieved
+   * because the Trace Agent was not disabled.
+   */
+  getConfig(): Config;
 
   /**
    * Runs the given function in a root span corresponding to an incoming
