@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
 import * as assert from 'assert';
 import * as path from 'path';
-import * as hook from 'require-in-the-middle';
-import * as shimmer from 'shimmer';
 
 import {PluginLoader, PluginLoaderState, PluginWrapper} from '../src/trace-plugin-loader';
 
@@ -238,6 +235,16 @@ describe('Trace Plugin Loader', () => {
             logger.getNumLogsWith('info', `[${key}@${PROCESS_VERSION}:url]`),
             2);
       });
+    });
+
+    it('uses the exported `plugin` field if it exists', () => {
+      const loader = makePluginLoader({
+                       plugins: {'url': 'plugin-core-non-top-level'}
+                     }).activate();
+      const input = {protocol: 'http:', host: 'hi'};
+      assert.strictEqual(require('url').format(input), 'expected-value');
+      loader.deactivate();
+      assert.strictEqual(require('url').format(input), 'http://hi');
     });
 
     it(`doesn't load plugins with falsey paths`, () => {
