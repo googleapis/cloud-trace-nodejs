@@ -19,7 +19,7 @@
 /** Constant values. */
 // tslint:disable-next-line:variable-name
 export const Constants = {
-  /** The metadata key under which trace context  */
+  /** The metadata key under which trace context is stored as a binary value. */
   TRACE_CONTEXT_GRPC_METADATA_NAME: 'grpc-trace-bin',
 
   /** Header that carries trace context across Google infrastructure. */

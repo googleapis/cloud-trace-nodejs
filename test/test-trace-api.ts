@@ -38,6 +38,7 @@ describe('Trace Interface', () => {
             {
               enhancedDatabaseReporting: false,
               ignoreContextHeader: false,
+              rootSpanNameOverride: (name: string) => name,
               samplingRate: 0
             },
             config),

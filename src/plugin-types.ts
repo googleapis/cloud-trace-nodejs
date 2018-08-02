@@ -18,6 +18,7 @@
 // tslint:disable:no-any
 
 import {Constants, SpanType} from './constants';
+import {StackdriverTracerConfig} from './trace-api';
 import {TraceLabels} from './trace-labels';
 import {TraceContext} from './util';
 
@@ -115,6 +116,12 @@ export interface Tracer {
    * to have an enhanced level of reporting enabled.
    */
   enhancedDatabaseReportingEnabled(): boolean;
+
+  /**
+   * Gets the current configuration, or throws if it can't be retrieved
+   * because the Trace Agent was not disabled.
+   */
+  getConfig(): StackdriverTracerConfig;
 
   /**
    * Runs the given function in a root span corresponding to an incoming
