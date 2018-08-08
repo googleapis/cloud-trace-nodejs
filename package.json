@@ -34,6 +34,7 @@
     "build/src/plugin-types.d.ts",
     "build/src/trace-labels.d.ts",
     "doc",
+    "!doc/images",
     "CHANGELOG.md",
     "LICENSE",
     "README.md"

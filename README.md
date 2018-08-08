@@ -11,7 +11,7 @@
 
 This module provides automatic tracing for Node.js applications with Stackdriver Trace. [Stackdriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
 
-<img src="/doc/images/cloud-trace-overview-page.png" alt="Stackdriver Trace Overview" />
+<img src="https://raw.githubusercontent.com/GoogleCloudPlatform/cloud-trace-nodejs/master/doc/images/cloud-trace-overview-page.png" alt="Stackdriver Trace Overview" />
 
 ## Usage
 
