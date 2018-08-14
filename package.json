@@ -72,7 +72,7 @@
     "codecov": "^3.0.0",
     "express": "^4.15.2",
     "glob": "^7.0.3",
-    "grpc": "1.13.1",
+    "grpc": "1.14.0",
     "gts": "^0.8.0",
     "intelli-espower-loader": "^1.0.1",
     "js-green-licenses": "^0.5.0",
