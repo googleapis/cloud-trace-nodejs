@@ -41,7 +41,7 @@ export async function checkInstall() {
   // use-module.ts is a fixture that imports the Trace Agent
   await ncpP('./test/fixtures/use-module.ts', `${installDir}/index.ts`);
   // Compile it
-  await spawnP(`node_modules${path.sep}.bin${path.sep}tsc`, ['index.ts'], {
+  await spawnP(`node_modules${path.sep}.bin${path.sep}tsc`, ['index.ts', '--lib', 'es2015'], {
     cwd: installDir
   });
   console.log('`npm install` + `tsc` test was successful.');
