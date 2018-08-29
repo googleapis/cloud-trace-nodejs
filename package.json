@@ -57,7 +57,7 @@
     "@types/mocha": "5.2.1",
     "@types/ncp": "^2.0.1",
     "@types/nock": "^9.1.2",
-    "@types/node": "~10.7.2",
+    "@types/node": "~10.9.0",
     "@types/once": "^1.4.0",
     "@types/pify": "^3.0.0",
     "@types/protobufjs": "^5.0.31",
