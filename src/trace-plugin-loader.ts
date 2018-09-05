@@ -19,10 +19,10 @@ import * as path from 'path';
 import * as hook from 'require-in-the-middle';
 import * as semver from 'semver';
 
+import {Logger} from './logger';
 import {Intercept, Monkeypatch, Plugin} from './plugin-types';
 import {StackdriverTracer, StackdriverTracerConfig} from './trace-api';
 import {Singleton} from './util';
-import {Logger} from './logger';
 
 /**
  * Plugins are user-provided objects containing functions that should be run

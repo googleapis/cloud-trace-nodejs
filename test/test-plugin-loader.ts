@@ -19,10 +19,10 @@ import * as path from 'path';
 import * as hook from 'require-in-the-middle';
 import * as shimmer from 'shimmer';
 
+import {Logger} from '../src/logger';
 import {PluginLoader, PluginLoaderState, PluginWrapper} from '../src/trace-plugin-loader';
 
 import {TestLogger} from './logger';
-import {Logger} from '../src/logger';
 
 export interface SimplePluginLoaderConfig {
   // An object which contains paths to files that should be loaded as plugins

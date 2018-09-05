@@ -18,11 +18,11 @@ import * as path from 'path';
 
 import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
 import {CLSMechanism} from './config';
+import {LEVELS, Logger} from './logger';
 import {StackdriverTracer} from './trace-api';
 import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
 import {Component, FORCE_NEW, Forceable, packageNameFromPath, Singleton} from './util';
-import {Logger, LEVELS} from './logger';
 
 export interface TopLevelConfig {
   enabled: boolean;

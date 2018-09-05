@@ -17,8 +17,8 @@
 import * as assert from 'assert';
 
 import {defaultConfig} from '../src/config';
-import {PluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 import {Logger} from '../src/logger';
+import {PluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 
 import * as testTraceModule from './trace';
 

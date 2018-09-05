@@ -24,7 +24,7 @@ export type LogLevel = 'silent'|ConsoleLogLevel;
  * The list of log levels.
  */
 export const LEVELS: ReadonlyArray<LogLevel> =
-  ['silent', 'error', 'warn', 'info', 'debug'];
+    ['silent', 'error', 'warn', 'info', 'debug'];
 
 export interface LoggerConfig {
   /**
@@ -54,9 +54,9 @@ export class Logger {
   private logger: consoleLogLevel.Logger|null;
 
   constructor(opts?: Partial<LoggerConfig>) {
-   const levelName =
-      opts && opts.level !== undefined ?
-        opts.level : logLevelToName(defaultConfig.logLevel);
+    const levelName = opts && opts.level !== undefined ?
+        opts.level :
+        logLevelToName(defaultConfig.logLevel);
 
     if (levelName === false || levelName === 'silent') {
       this.logger = null;

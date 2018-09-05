@@ -22,10 +22,10 @@ import * as os from 'os';
 import * as request from 'request';
 
 import {Constants} from './constants';
+import {Logger} from './logger';
 import {SpanKind, Trace} from './trace';
 import {TraceLabels} from './trace-labels';
 import {Singleton} from './util';
-import {Logger} from './logger';
 
 const pjson = require('../../package.json');
 

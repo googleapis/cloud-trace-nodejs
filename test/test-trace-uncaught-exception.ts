@@ -16,10 +16,10 @@
 
 import * as assert from 'assert';
 
+import {Logger} from '../src/logger';
 import {TraceWriterConfig} from '../src/trace-writer';
 
 import {TestLogger} from './logger';
-import {Logger} from '../src/logger';
 import * as trace from './trace';
 
 /**

@@ -18,10 +18,10 @@ import * as common from '@google-cloud/common';
 import * as assert from 'assert';
 import * as shimmer from 'shimmer';
 
+import * as logger from '../src/logger';
 import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
-import * as logger from '../src/logger';
 import * as traceTestModule from './trace';
 
 describe('should respect environment variables', () => {

@@ -41,12 +41,12 @@ import * as shimmer from 'shimmer';
 import * as trace from '../src';
 import {Config, PluginTypes} from '../src';
 import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
+import * as logger from '../src/logger';
 import {Trace, TraceSpan} from '../src/trace';
 import {PluginLoader, pluginLoader} from '../src/trace-plugin-loader';
 import {TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
 import {tracing, Tracing} from '../src/tracing';
 import {FORCE_NEW} from '../src/util';
-import * as logger from '../src/logger';
 
 import {TestLogger} from './logger';
 

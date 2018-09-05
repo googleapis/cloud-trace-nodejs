@@ -19,13 +19,13 @@ import * as uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
 import {Constants, SpanType} from './constants';
+import {Logger} from './logger';
 import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
 import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
-import {Logger} from './logger';
 
 /**
  * An interface describing configuration fields read by the StackdriverTracer
