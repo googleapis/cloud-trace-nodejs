@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@types/builtin-modules": "^2.0.0",
+    "@types/console-log-level": "^1.4.0",
     "@types/continuation-local-storage": "^3.2.1",
     "@types/extend": "^3.0.0",
     "@types/glob": "^5.0.32",
@@ -95,6 +96,7 @@
   "dependencies": {
     "@google-cloud/common": "^0.23.0",
     "builtin-modules": "^3.0.0",
+    "console-log-level": "^1.4.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
     "gcp-metadata": "^0.7.0",
