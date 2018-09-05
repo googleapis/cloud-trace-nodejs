@@ -46,6 +46,7 @@ import {PluginLoader, pluginLoader} from '../src/trace-plugin-loader';
 import {TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
 import {tracing, Tracing} from '../src/tracing';
 import {FORCE_NEW} from '../src/util';
+import * as logger from '../src/logger';
 
 import {TestLogger} from './logger';
 
@@ -55,13 +56,13 @@ const traces: Trace[] = [];
 const spans: TraceSpan[] = [];
 
 export class TestCLS extends TraceCLS {
-  constructor(config: {}, logger: common.Logger) {
+  constructor(config: {}, logger: logger.Logger) {
     super({mechanism: TraceCLSMechanism.NONE}, logger);
   }
 }
 
 export class TestTraceWriter extends TraceWriter {
-  constructor(config: TraceWriterConfig, logger: common.Logger) {
+  constructor(config: TraceWriterConfig, logger: logger.Logger) {
     super(config, logger);
     this.getConfig().projectId = '0';
   }
@@ -108,12 +109,12 @@ export function get(): PluginTypes.Tracer {
   return trace.get();
 }
 
-export function setLoggerForTest(impl?: typeof common.Logger) {
-  if (common.Logger.__wrapped) {
-    shimmer.unwrap(common, 'Logger');
+export function setLoggerForTest(impl?: typeof logger.Logger) {
+  if (logger.Logger.__wrapped) {
+    shimmer.unwrap(logger, 'Logger');
   }
   if (impl) {
-    const wrap = () => shimmer.wrap(common, 'Logger', () => impl);
+    const wrap = () => shimmer.wrap(logger, 'Logger', () => impl);
     wrap();
   }
 }

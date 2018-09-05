@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
 import * as assert from 'assert';
 import {inspect} from 'util';
 
@@ -22,6 +21,7 @@ import {Constants} from '../src/constants';
 import * as util from '../src/util';
 
 import {TestLogger} from './logger';
+import {Logger} from '../src/logger';
 
 const notNull = <T>(x: T|null|undefined): T => {
   assert.notStrictEqual(x, null);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Logger, logger, LoggerConfig} from '@google-cloud/common';
+import {Logger, LEVELS, LoggerConfig} from '../src/logger';
 
 const PASS_THROUGH_LOG_LEVEL = Number(process.env.GCLOUD_TEST_LOG_LEVEL || 0);
 // Capture the value of common.Logger so that we don't enter an infinite loop
@@ -27,9 +27,9 @@ type LoggerFunction<R> = (message: any, ...args: any[]) => R;
 
 export class TestLogger extends Logger {
   private logs: {[k in keyof Logger]: string[]} =
-      {silent: [], error: [], warn: [], info: [], debug: [], silly: []};
+      {error: [], warn: [], info: [], debug: []};
   private innerLogger =
-      new OriginalLogger({level: logger.LEVELS[PASS_THROUGH_LOG_LEVEL]});
+      new OriginalLogger({level: LEVELS[PASS_THROUGH_LOG_LEVEL]});
 
   constructor(options?: Partial<LoggerConfig>) {
     super(options);
@@ -50,7 +50,6 @@ export class TestLogger extends Logger {
   warn = this.makeLoggerFn('warn');
   info = this.makeLoggerFn('info');
   debug = this.makeLoggerFn('debug');
-  silly = this.makeLoggerFn('silly');
 
   getLogs(logLevel: keyof Logger): string[] {
     return this.logs[logLevel];

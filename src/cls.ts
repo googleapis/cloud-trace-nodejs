@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
 import {EventEmitter} from 'events';
 import * as semver from 'semver';
 
@@ -28,6 +27,7 @@ import {RootSpan} from './plugin-types';
 import {UNCORRELATED_ROOT_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {Trace, TraceSpan} from './trace';
 import {Singleton} from './util';
+import {Logger} from './logger';
 
 const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 

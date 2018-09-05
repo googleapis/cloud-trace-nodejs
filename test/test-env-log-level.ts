@@ -21,6 +21,7 @@ import * as shimmer from 'shimmer';
 import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
+import * as logger from '../src/logger';
 import * as traceTestModule from './trace';
 
 describe('should respect environment variables', () => {
@@ -40,12 +41,12 @@ describe('should respect environment variables', () => {
     process.env.GCLOUD_TRACE_LOGLEVEL = '4';
     // Wrap logger constructor so that the log level (string) is saved
     // in logLevel
-    shimmer.wrap(common, 'Logger', () => CaptureLogLevelTestLogger);
+    shimmer.wrap(logger, 'Logger', () => CaptureLogLevelTestLogger);
   });
 
   after(() => {
     delete process.env.GCLOUD_TRACE_LOGLEVEL;
-    shimmer.unwrap(common, 'logger');
+    shimmer.unwrap(logger, 'Logger');
   });
 
   afterEach(() => {
@@ -54,20 +55,20 @@ describe('should respect environment variables', () => {
 
   it('should respect GCLOUD_TRACE_LOGLEVEL', () => {
     traceTestModule.start();
-    assert.strictEqual(logLevel, common.logger.LEVELS[4]);
+    assert.strictEqual(logLevel, logger.LEVELS[4]);
   });
 
   it('should prefer env to config', () => {
     traceTestModule.start({logLevel: 2});
-    assert.strictEqual(logLevel, common.logger.LEVELS[4]);
+    assert.strictEqual(logLevel, logger.LEVELS[4]);
   });
 
   it('should fix out of bounds log level', () => {
     process.env.GCLOUD_TRACE_LOGLEVEL = '-5';
     traceTestModule.start();
-    assert.strictEqual(logLevel, common.logger.LEVELS[0]);
+    assert.strictEqual(logLevel, logger.LEVELS[0]);
     process.env.GCLOUD_TRACE_LOGLEVEL = '300';
     traceTestModule.start();
-    assert.strictEqual(logLevel, common.logger.LEVELS[5]);
+    assert.strictEqual(logLevel, logger.LEVELS[5]);
   });
 });

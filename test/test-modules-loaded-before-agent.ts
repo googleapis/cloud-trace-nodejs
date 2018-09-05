@@ -19,6 +19,7 @@ import * as assert from 'assert';
 import * as shimmer from 'shimmer';
 
 import {TestLogger} from './logger';
+import * as log from '../src/logger';
 import * as testTraceModule from './trace';
 
 describe('modules loaded before agent', () => {
@@ -32,11 +33,11 @@ describe('modules loaded before agent', () => {
   }
 
   before(() => {
-    shimmer.wrap(common, 'Logger', () => CaptureTestLogger);
+    shimmer.wrap(log, 'Logger', () => CaptureTestLogger);
   });
 
   after(() => {
-    shimmer.unwrap(common, 'Logger');
+    shimmer.unwrap(log, 'Logger');
   });
 
   it('should log if modules were loaded before agent', () => {

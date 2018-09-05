@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
 import * as is from 'is';
 import * as uuid from 'uuid';
 
@@ -26,6 +25,7 @@ import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
 import * as TracingPolicy from './tracing-policy';
 import * as util from './util';
+import {Logger} from './logger';
 
 /**
  * An interface describing configuration fields read by the StackdriverTracer

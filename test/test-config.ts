@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
 import * as assert from 'assert';
 import * as semver from 'semver';
 import * as util from 'util';
@@ -24,6 +23,7 @@ import {TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 import * as testTraceModule from './trace';
 import { NormalizedConfig } from '../src/tracing';
 import { StackdriverTracer } from '../src/trace-api';
+import {Logger} from '../src/logger';
 
 describe('Behavior set by config for context propagation mechanism', () => {
   const useAH = semver.satisfies(process.version, '>=8');
