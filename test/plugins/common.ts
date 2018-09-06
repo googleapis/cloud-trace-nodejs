@@ -30,10 +30,10 @@ import { StackdriverTracer } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import * as TracingPolicy from '../../src/tracing-policy';
 import { SpanType } from '../../src/constants';
+import { TestLogger } from '../logger';
 
 var semver = require('semver');
 
-var logger = require('@google-cloud/common').logger;
 var trace = require('../../..');
 if (semver.satisfies(process.version, '>=8')) {
   // Monkeypatch Mocha's it() to create a fresh context with each test case.
@@ -75,7 +75,7 @@ shimmer.wrap(trace, 'start', function(original) {
       ignoreContextHeader: false,
       rootSpanNameOverride: (name: string) => name,
       samplingRate: 0
-    }, logger());
+    }, new TestLogger());
     testTraceAgent.policy = new TracingPolicy.TraceAllPolicy();
     return result;
   };

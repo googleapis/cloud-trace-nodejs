@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
 import * as assert from 'assert';
 import {inspect} from 'util';
 
 import {Constants} from '../src/constants';
+import {Logger} from '../src/logger';
 import * as util from '../src/util';
 
 import {TestLogger} from './logger';

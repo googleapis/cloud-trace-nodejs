@@ -19,8 +19,10 @@ import {AxiosError} from 'axios';
 import * as gcpMetadata from 'gcp-metadata';
 import {OutgoingHttpHeaders} from 'http';
 import * as os from 'os';
+import * as request from 'request';
 
 import {Constants} from './constants';
+import {Logger} from './logger';
 import {SpanKind, Trace} from './trace';
 import {TraceLabels} from './trace-labels';
 import {Singleton} from './util';
@@ -74,9 +76,10 @@ export class TraceWriter extends common.Service {
    */
   constructor(
       private readonly config: TraceWriterConfig,
-      private readonly logger: common.Logger) {
+      private readonly logger: Logger) {
     super(
         {
+          requestModule: request,
           packageJson: pjson,
           projectIdRequired: false,
           baseUrl: 'https://cloudtrace.googleapis.com/v1',

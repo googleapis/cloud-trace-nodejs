@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import * as common from '@google-cloud/common';
 import * as assert from 'assert';
 import * as shimmer from 'shimmer';
+
+import * as log from '../src/logger';
 
 import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
@@ -32,11 +33,11 @@ describe('modules loaded before agent', () => {
   }
 
   before(() => {
-    shimmer.wrap(common, 'Logger', () => CaptureTestLogger);
+    shimmer.wrap(log, 'Logger', () => CaptureTestLogger);
   });
 
   after(() => {
-    shimmer.unwrap(common, 'Logger');
+    shimmer.unwrap(log, 'Logger');
   });
 
   it('should log if modules were loaded before agent', () => {

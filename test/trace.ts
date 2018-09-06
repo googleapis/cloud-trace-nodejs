@@ -34,13 +34,13 @@
  * Most tests should include this file instead of the main module root.
  */
 
-import * as common from '@google-cloud/common';
 import * as assert from 'assert';
 import * as shimmer from 'shimmer';
 
 import * as trace from '../src';
 import {Config, PluginTypes} from '../src';
 import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
+import * as logger from '../src/logger';
 import {Trace, TraceSpan} from '../src/trace';
 import {PluginLoader, pluginLoader} from '../src/trace-plugin-loader';
 import {TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
@@ -55,13 +55,13 @@ const traces: Trace[] = [];
 const spans: TraceSpan[] = [];
 
 export class TestCLS extends TraceCLS {
-  constructor(config: {}, logger: common.Logger) {
+  constructor(config: {}, logger: logger.Logger) {
     super({mechanism: TraceCLSMechanism.NONE}, logger);
   }
 }
 
 export class TestTraceWriter extends TraceWriter {
-  constructor(config: TraceWriterConfig, logger: common.Logger) {
+  constructor(config: TraceWriterConfig, logger: logger.Logger) {
     super(config, logger);
     this.getConfig().projectId = '0';
   }
@@ -108,12 +108,12 @@ export function get(): PluginTypes.Tracer {
   return trace.get();
 }
 
-export function setLoggerForTest(impl?: typeof common.Logger) {
-  if (common.Logger.__wrapped) {
-    shimmer.unwrap(common, 'Logger');
+export function setLoggerForTest(impl?: typeof logger.Logger) {
+  if (logger.Logger.__wrapped) {
+    shimmer.unwrap(logger, 'Logger');
   }
   if (impl) {
-    const wrap = () => shimmer.wrap(common, 'Logger', () => impl);
+    const wrap = () => shimmer.wrap(logger, 'Logger', () => impl);
     wrap();
   }
 }

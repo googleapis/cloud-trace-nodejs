@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import {Logger, logger} from '@google-cloud/common';
 import * as path from 'path';
 
 import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
 import {CLSMechanism} from './config';
+import {LEVELS, Logger} from './logger';
 import {StackdriverTracer} from './trace-api';
 import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
@@ -54,9 +54,7 @@ export class Tracing implements Component {
     this.config = config;
     let logLevel = config.enabled ? config.logLevel : 0;
     // Clamp the logger level.
-    // TODO(kjin): When @google-cloud/common@0.19.2 is released, use
-    // Logger.LEVELS instead.
-    const defaultLevels = logger.LEVELS;
+    const defaultLevels = LEVELS;
     if (logLevel < 0) {
       logLevel = 0;
     } else if (logLevel >= defaultLevels.length) {

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
 import * as assert from 'assert';
 
+import {Logger} from '../src/logger';
 import {TraceWriterConfig} from '../src/trace-writer';
 
 import {TestLogger} from './logger';

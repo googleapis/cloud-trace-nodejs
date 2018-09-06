@@ -49,6 +49,7 @@
   },
   "devDependencies": {
     "@types/builtin-modules": "^2.0.0",
+    "@types/console-log-level": "^1.4.0",
     "@types/continuation-local-storage": "^3.2.1",
     "@types/extend": "^3.0.0",
     "@types/glob": "^5.0.32",
@@ -83,7 +84,6 @@
     "nyc": "^13.0.0",
     "once": "^1.4.0",
     "pify": "^4.0.0",
-    "request": "^2.83.0",
     "retry-axios": "^0.3.2",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.6",
@@ -94,14 +94,16 @@
     "typescript": "~3.0.0"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.20.3",
+    "@google-cloud/common": "^0.23.0",
     "builtin-modules": "^3.0.0",
+    "console-log-level": "^1.4.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.0",
     "gcp-metadata": "^0.7.0",
     "hex2dec": "^1.0.1",
     "is": "^3.2.0",
     "methods": "^1.1.1",
+    "request": "^2.83.0",
     "require-in-the-middle": "^3.0.0",
     "semver": "^5.4.1",
     "shimmer": "^1.2.0",

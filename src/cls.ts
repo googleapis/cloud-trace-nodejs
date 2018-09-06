@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {Logger} from '@google-cloud/common';
 import {EventEmitter} from 'events';
 import * as semver from 'semver';
 
@@ -24,6 +23,7 @@ import {CLS, Func} from './cls/base';
 import {NullCLS} from './cls/null';
 import {SingularCLS} from './cls/singular';
 import {SpanType} from './constants';
+import {Logger} from './logger';
 import {RootSpan} from './plugin-types';
 import {UNCORRELATED_ROOT_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {Trace, TraceSpan} from './trace';
