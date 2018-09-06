@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import * as common from '@google-cloud/common';
 import * as assert from 'assert';
 import * as shimmer from 'shimmer';
 
 import * as logger from '../src/logger';
-import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
 import * as traceTestModule from './trace';
@@ -69,6 +67,6 @@ describe('should respect environment variables', () => {
     assert.strictEqual(logLevel, logger.LEVELS[0]);
     process.env.GCLOUD_TRACE_LOGLEVEL = '300';
     traceTestModule.start();
-    assert.strictEqual(logLevel, logger.LEVELS[5]);
+    assert.strictEqual(logLevel, logger.LEVELS[4]);
   });
 });

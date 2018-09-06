@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as common from '@google-cloud/common';
 import * as assert from 'assert';
 import * as shimmer from 'shimmer';
 

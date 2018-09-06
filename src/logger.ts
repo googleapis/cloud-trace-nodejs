@@ -65,32 +65,32 @@ export class Logger {
 
     this.logger = consoleLogLevel({
       stderr: true,
-      prefix: opts && opts.tag ? opts.tag : '@google-cloud/trace-agent',
+      prefix: opts && opts.tag ? opts.tag : 'unknown',
       level: levelName as ConsoleLogLevel
     });
   }
 
   error(...args: Array<{}>): void {
     if (this.logger) {
-      this.logger.error(args);
+      this.logger.error(...args);
     }
   }
 
   warn(...args: Array<{}>): void {
     if (this.logger) {
-      this.logger.warn(args);
+      this.logger.warn(...args);
     }
   }
 
   debug(...args: Array<{}>): void {
     if (this.logger) {
-      this.logger.debug(args);
+      this.logger.debug(...args);
     }
   }
 
   info(...args: Array<{}>): void {
     if (this.logger) {
-      this.logger.info(args);
+      this.logger.info(...args);
     }
   }
 }

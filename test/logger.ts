@@ -32,7 +32,7 @@ export class TestLogger extends Logger {
       new OriginalLogger({level: LEVELS[PASS_THROUGH_LOG_LEVEL]});
 
   constructor(options?: Partial<LoggerConfig>) {
-    super(options);
+    super(Object.assign({tag: '@google-cloud/trace-agent'}, options));
   }
 
   private makeLoggerFn(logLevel: keyof Logger): LoggerFunction<this> {
