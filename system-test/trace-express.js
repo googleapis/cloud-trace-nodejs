@@ -16,17 +16,17 @@
 
 'use strict';
 
-if (!process.env.TRACE_SYSTEM_TEST_PROJECT ||
-    !process.env.TRACE_SYSTEM_TEST_KEYFILE) {
+if (!process.env.GCLOUD_PROJECT ||
+    !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
   console.error('system-test requires credentials to be available via ' +
-    'environment. Please set TRACE_SYSTEM_TEST_PROJECT and ' +
-    'TRACE_SYSTEM_TEST_KEYFILE.');
+    'environment. Please set GCLOUD_PROJECT and ' +
+    'GOOGLE_APPLICATION_CREDENTIALS.');
   process.exit(1);
 }
 
 const WRITE_CONSISTENCY_DELAY_MS = 20 * 1000;
-const projectId = process.env.TRACE_SYSTEM_TEST_PROJECT;
-const keyFilename = process.env.TRACE_SYSTEM_TEST_KEYFILE;
+const projectId = process.env.GCLOUD_PROJECT;
+const keyFilename = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
 // trace-agent must be loaded before everything else.
 require('../').start({
