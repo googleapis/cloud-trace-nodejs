@@ -111,7 +111,7 @@ These functions help provide context propagation for root spans. Context should 
   * `emitter`: `EventEmitter`
   * Binds any event handlers subsequently attached to the given event emitter to the current context.
 
-[config-js]: https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/blob/master/config.js
+[config-js]: https://github.com/googleapis/cloud-trace-nodejs/blob/master/config.js
 [stackdriver-trace-faq]: https://cloud.google.com/trace/docs/faq
 [stackdriver-trace-span]: https://cloud.google.com/trace/api/reference/rest/v1/projects.traces#TraceSpan
 [dapper-paper]: https://research.google.com/pubs/pub36356.html

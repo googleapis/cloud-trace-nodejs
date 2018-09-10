@@ -4,7 +4,7 @@
   "description": "Node.js Support for StackDriver Trace",
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
-  "repository": "GoogleCloudPlatform/cloud-trace-nodejs",
+  "repository": "googleapis/cloud-trace-nodejs",
   "scripts": {
     "init-test-fixtures": "npm run script init-test-fixtures",
     "test": "npm run script npm-check npm-compile npm-init-test-fixtures npm-unit-test npm-license-check",

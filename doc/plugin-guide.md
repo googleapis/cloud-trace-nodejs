@@ -52,4 +52,4 @@ We recommend using [`shimmer`][shimmer] to modify function properties on objects
 Please refer to the [built-in plugins][builtin-plugins] for more comprehensive examples.
 
 [shimmer]: https://github.com/othiym23/shimmer
-[builtin-plugins]: https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/tree/master/src/plugins
+[builtin-plugins]: https://github.com/googleapis/cloud-trace-nodejs/tree/master/src/plugins

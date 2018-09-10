@@ -1,3 +1,3 @@
 #!/bin/bash
 
-changelog-maker GoogleCloudPlatform cloud-trace-nodejs
+changelog-maker googleapis cloud-trace-nodejs

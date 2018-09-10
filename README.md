@@ -11,7 +11,7 @@
 
 This module provides automatic tracing for Node.js applications with Stackdriver Trace. [Stackdriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
 
-<img src="https://raw.githubusercontent.com/GoogleCloudPlatform/cloud-trace-nodejs/master/doc/images/cloud-trace-overview-page.png" alt="Stackdriver Trace Overview" />
+<img src="https://raw.githubusercontent.com/googleapis/cloud-trace-nodejs/master/doc/images/cloud-trace-overview-page.png" alt="Stackdriver Trace Overview" />
 
 ## Usage
 
@@ -19,7 +19,7 @@ The Trace Agent supports Node 6+.
 
 > **Note**: Using the Trace Agent requires a Google Cloud Project with the [Stackdriver Trace API enabled](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) and associated credentials. These values are auto-detected if the application is running on Google Cloud Platform. If your application is not running on GCP, you will need to specify the project ID and credentials either through the configuration object, or with environment variables. See [Setting Up Stackdriver Trace for Node.js][setting-up-stackdriver-trace] for more details.
 
-> **Note**: The Trace Agent does not currently work out-of-the-box with Google Cloud Functions (or Firebase Cloud Functions). See [#725](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues/725) for a tracking issue and details on how to work around this.
+> **Note**: The Trace Agent does not currently work out-of-the-box with Google Cloud Functions (or Firebase Cloud Functions). See [#725](https://github.com/googleapis/cloud-trace-nodejs/issues/725) for a tracking issue and details on how to work around this.
 
 Simply require and start the Trace Agent as the first module in your application:
 
@@ -73,7 +73,7 @@ The agent will also automatically trace RPCs from the following modules:
 
 You can use the [Custom Tracing API](#custom-tracing-api) to trace other modules in your application.
 
-To request automatic tracing support for a module not on this list, please [file an issue](https://github.com/GoogleCloudPlatform/cloud-trace-nodejs/issues). Alternatively, you can [write a plugin yourself](doc/plugin-guide.md).
+To request automatic tracing support for a module not on this list, please [file an issue](https://github.com/googleapis/cloud-trace-nodejs/issues). Alternatively, you can [write a plugin yourself](doc/plugin-guide.md).
 
 ### Tracing Additional Modules
 
@@ -140,17 +140,17 @@ These mechanisms work great in most cases. However, they do have some limitation
 [async-listener]: https://www.npmjs.com/package/async-listener
 [cloud-console]: https://console.cloud.google.com
 [continuation-local-storage]: https://www.npmjs.com/package/continuation-local-storage
-[codecov-image]: https://codecov.io/gh/GoogleCloudPlatform/cloud-trace-nodejs/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/GoogleCloudPlatform/cloud-trace-nodejs
-[david-dev-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs/dev-status.svg
-[david-dev-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs?type=dev
-[david-image]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs.svg
-[david-url]: https://david-dm.org/GoogleCloudPlatform/cloud-trace-nodejs
+[codecov-image]: https://codecov.io/gh/googleapis/cloud-trace-nodejs/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/googleapis/cloud-trace-nodejs
+[david-dev-image]: https://david-dm.org/googleapis/cloud-trace-nodejs/dev-status.svg
+[david-dev-url]: https://david-dm.org/googleapis/cloud-trace-nodejs?type=dev
+[david-image]: https://david-dm.org/googleapis/cloud-trace-nodejs.svg
+[david-url]: https://david-dm.org/googleapis/cloud-trace-nodejs
 [npm-image]: https://badge.fury.io/js/%40google-cloud%2Ftrace-agent.svg
 [npm-url]: https://npmjs.org/package/@google-cloud/trace-agent
 [queuing-problem]: https://github.com/groundwater/nodejs-symposiums/tree/master/2016-02-26-Errors/Round1/UserModeQueuing
 [setting-up-stackdriver-trace]: https://cloud.google.com/trace/docs/setup/nodejs
-[snyk-image]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs/badge.svg
-[snyk-url]: https://snyk.io/test/github/GoogleCloudPlatform/cloud-trace-nodejs
-[circle-image]: https://circleci.com/gh/GoogleCloudPlatform/cloud-trace-nodejs.svg?style=svg
-[circle-url]: https://circleci.com/gh/GoogleCloudPlatform/cloud-trace-nodejs
+[snyk-image]: https://snyk.io/test/github/googleapis/cloud-trace-nodejs/badge.svg
+[snyk-url]: https://snyk.io/test/github/googleapis/cloud-trace-nodejs
+[circle-image]: https://circleci.com/gh/googleapis/cloud-trace-nodejs.svg?style=svg
+[circle-url]: https://circleci.com/gh/googleapis/cloud-trace-nodejs
