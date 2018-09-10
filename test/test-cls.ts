@@ -16,7 +16,6 @@
 
 import * as assert from 'assert';
 import {EventEmitter} from 'events';
-import {ITestDefinition} from 'mocha';
 import * as semver from 'semver';
 import {inspect} from 'util';
 

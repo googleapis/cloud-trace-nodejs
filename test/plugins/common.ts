@@ -15,15 +15,6 @@
  */
 'use strict';
 
-import * as mocha from 'mocha';
-declare global {
-  namespace NodeJS {
-    export interface Global {
-      it: mocha.ITestDefinition;
-    }
-  }
-}
-
 import '../override-gcp-metadata';
 import { cls, TraceCLS } from '../../src/cls';
 import { StackdriverTracer } from '../../src/trace-api';
