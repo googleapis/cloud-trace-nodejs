@@ -54,6 +54,9 @@ unit_tests: &unit_tests
         command: npm run check-install
     - run:
         name: Run system tests (skipped for PRs)
+        environment:
+          GCLOUD_PROJECT: node-team-test
+          GOOGLE_APPLICATION_CREDENTIALS: /home/node/project/node-team-test-de480e4f9023.json
         command: npm run system-test
 
 # Services needed for unit tests.
