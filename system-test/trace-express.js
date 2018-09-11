@@ -35,6 +35,9 @@ require('../').start({
   flushDelaySeconds: 1
 });
 
+// Immediately exit when an unhandled Promise rejection occurs.
+require('hard-rejection')();
+
 const assert = require('assert');
 const googleAuth = require('google-auto-auth');
 const got = require('got');
