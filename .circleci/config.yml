@@ -54,6 +54,9 @@ unit_tests: &unit_tests
         command: npm run check-install
     - run:
         name: Run system tests (skipped for PRs)
+        environment:
+          GCLOUD_PROJECT: long-door-651
+          GOOGLE_APPLICATION_CREDENTIALS: /root/project/long-door-651-a179efbeda21.json
         command: npm run system-test
 
 # Services needed for unit tests.

@@ -6,6 +6,7 @@
     "express": "^4.16.3",
     "google-auto-auth": "^0.10.0",
     "got": "^8.0.0",
+    "hard-rejection": "^1.0.0",
     "querystring": "^0.2.0"
   }
 }

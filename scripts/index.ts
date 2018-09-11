@@ -24,8 +24,9 @@ import { runTests } from './run-tests';
 import { testNonInterference } from './test-non-interference';
 import { BUILD_DIRECTORY, existsP, spawnP } from './utils';
 
-// The identifying string in the service account credentials file path.
-const keyID = 'de480e4f9023';
+// The identifying components in the service account credentials file path.
+const projectID = 'long-door-651';
+const keyID = 'a179efbeda21';
 
 // Globs to exclude when running unit tests only.
 const unitTestExcludeGlobs: string[] = TRACE_TEST_EXCLUDE_INTEGRATION ? [
@@ -66,7 +67,7 @@ async function run(steps: string[]) {
           await checkInstall();
           break;
         case 'encrypt-service-account-credentials':
-          const keyAndIV = await encryptCredentials(`node-team-test-${keyID}.json`);
+          const keyAndIV = await encryptCredentials(`${projectID}-${keyID}.json`);
           console.log([
             `key: ${keyAndIV.key}`,
             `iv: ${keyAndIV.iv}`
@@ -80,7 +81,7 @@ async function run(steps: string[]) {
             break;
           }
 
-          await decryptCredentials({ key, iv }, `node-team-test-${keyID}.json`);
+          await decryptCredentials({ key, iv }, `${projectID}-${keyID}.json`);
           break;
         case 'get-plugin-types':
           await getPluginTypes();
@@ -113,7 +114,7 @@ async function run(steps: string[]) {
           });
           break;
         case 'run-system-tests':
-          if (CIRCLE_PR_NUMBER && !(await existsP('node-team-test-${keyID}.json'))) {
+          if (CIRCLE_PR_NUMBER || !(await existsP(`${projectID}-${keyID}.json`))) {
             console.log('> Not running system tests in PRs');
           } else {
             await spawnP(
