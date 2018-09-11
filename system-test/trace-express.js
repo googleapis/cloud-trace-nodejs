@@ -16,6 +16,10 @@
 
 'use strict';
 
+// Note - The service account with the given credentials must have the
+// following roles:
+// - Cloud Trace Admin (cloudtrace.admin)
+// - Cloud Datastore User (datastore.user)
 if (!process.env.GCLOUD_PROJECT ||
     !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
   console.error('system-test requires credentials to be available via ' +
