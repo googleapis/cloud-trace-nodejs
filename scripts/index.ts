@@ -113,7 +113,7 @@ async function run(steps: string[]) {
           });
           break;
         case 'run-system-tests':
-          if (CIRCLE_PR_NUMBER && !(await existsP('node-team-test-${keyID}.json'))) {
+          if (CIRCLE_PR_NUMBER || !(await existsP(`node-team-test-${keyID}.json`))) {
             console.log('> Not running system tests in PRs');
           } else {
             await spawnP(
