@@ -1,7 +1,6 @@
 ---
 # Constant values.
 
-node_modules_cache_key: &node_modules_cache_key node-modules-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "package.json" }}-{{ checksum "package-lock.json" }}
 test_fixtures_cache_key: &test_fixtures_cache_key test-fixtures-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "test/fixtures/plugin-fixtures.json" }}
 plugin_types_cache_key: &plugin_types_cache_key plugin-types-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "src/plugins/types/index.d.ts" }}
 release_tags: &release_tags
@@ -17,16 +16,10 @@ unit_tests: &unit_tests
         name: Configure npm to allow running scripts as root
         command: npm config set unsafe-perm true
     - restore_cache:
-        key: *node_modules_cache_key
-    - restore_cache:
         key: *plugin_types_cache_key
     - run:
         name: Install modules and dependencies
         command: npm install
-    - save_cache:
-        key: *node_modules_cache_key
-        paths:
-          - node_modules
     - save_cache:
         key: *plugin_types_cache_key
         paths:
