@@ -114,7 +114,7 @@ async function run(steps: string[]) {
           });
           break;
         case 'run-system-tests':
-          if (CIRCLE_PR_NUMBER || !(await existsP(`${projectID}-${keyID}.json`))) {
+          if (CIRCLE_PR_NUMBER) {
             console.log('> Not running system tests in PRs');
           } else {
             await spawnP(
