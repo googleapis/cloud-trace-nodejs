@@ -19,7 +19,7 @@ import * as assert from 'assert';
 import {OutgoingHttpHeaders} from 'http';
 import * as nock from 'nock';
 import * as os from 'os';
-import {Response} from 'request';
+import {Response} from 'request';  // Only for type declarations.
 import * as shimmer from 'shimmer';
 
 import {SpanKind, Trace} from '../src/trace';
