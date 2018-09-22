@@ -255,6 +255,7 @@ export const defaultConfig = {
   maximumLabelValueSize: 512,
   plugins: {
     // enable all by default
+    'bluebird': path.join(pluginDirectory, 'plugin-bluebird.js'),
     'connect': path.join(pluginDirectory, 'plugin-connect.js'),
     'express': path.join(pluginDirectory, 'plugin-express.js'),
     'generic-pool': path.join(pluginDirectory, 'plugin-generic-pool.js'),

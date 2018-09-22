@@ -52,9 +52,14 @@ export function wait(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Get the given span's duration in MS.
+export function getDuration(span: TraceSpan) {
+  return Date.parse(span.endTime) - Date.parse(span.startTime);
+}
+
 // Assert that the given span's duration is within the given range.
 export function assertSpanDuration(span: TraceSpan, bounds: [number, number?]) {
-  const spanDuration = Date.parse(span.endTime) - Date.parse(span.startTime);
+  const spanDuration = getDuration(span);
   const lowerBound = bounds[0];
   const upperBound = bounds[1] !== undefined ? bounds[1] : bounds[0];
   assert.ok(
