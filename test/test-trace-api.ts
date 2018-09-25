@@ -39,7 +39,8 @@ describe('Trace Interface', () => {
               enhancedDatabaseReporting: false,
               ignoreContextHeader: false,
               rootSpanNameOverride: (name: string) => name,
-              samplingRate: 0
+              samplingRate: 0,
+              spansPerTraceSoftLimit: Infinity
             },
             config),
         logger);

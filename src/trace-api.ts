@@ -37,6 +37,7 @@ export interface StackdriverTracerConfig extends
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
   rootSpanNameOverride: (path: string) => string;
+  spansPerTraceSoftLimit: number;
 }
 
 interface IncomingTraceContext {
@@ -241,6 +242,17 @@ export class StackdriverTracer implements Tracer {
             options.name}] because root span [${
             rootSpan.span.name}] was already closed.`);
         return UNCORRELATED_CHILD_SPAN;
+      }
+      if (rootSpan.trace.spans.length === this.config!.spansPerTraceSoftLimit) {
+        // As in the previous case, a root span with a large number of child
+        // spans suggests a memory leak stemming from context confusion. This
+        // is likely due to userspace task queues or Promise implementations.
+        this.logger!.warn(`TraceApi#createChildSpan: [${
+            this.pluginName}] Adding child span [${
+            options.name}] will cause the trace with root span [${
+            rootSpan.span.name}] to contain more than ${
+            this.config!
+                .spansPerTraceSoftLimit} spans. This is likely a memory leak.`);
       }
       // Create a new child span and return it.
       const childContext = rootSpan.createChildSpan({
