@@ -17,6 +17,8 @@
 // This file only describes public-facing interfaces.
 // tslint:disable:no-any
 
+import {EventEmitter} from 'events';
+
 import {Constants, SpanType} from './constants';
 import {StackdriverTracerConfig} from './trace-api';
 import {TraceLabels} from './trace-labels';
@@ -219,7 +221,7 @@ export interface Tracer {
    * @param emitter An event emitter whose handlers should have
    * the trace context binded to them.
    */
-  wrapEmitter(emitter: NodeJS.EventEmitter): void;
+  wrapEmitter(emitter: EventEmitter): void;
 
   /** Well-known constant values used by the Trace Agent. */
   readonly constants: typeof Constants;

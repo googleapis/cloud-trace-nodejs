@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {EventEmitter} from 'events';
 import * as is from 'is';
 import * as uuid from 'uuid';
 
@@ -288,7 +289,7 @@ export class StackdriverTracer implements Tracer {
     return cls.get().bindWithCurrentContext(fn);
   }
 
-  wrapEmitter(emitter: NodeJS.EventEmitter): void {
+  wrapEmitter(emitter: EventEmitter): void {
     if (!this.isActive()) {
       return;
     }
