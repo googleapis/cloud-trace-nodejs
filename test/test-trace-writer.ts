@@ -16,9 +16,13 @@
 
 import {Service} from '@google-cloud/common';
 import * as assert from 'assert';
+import {GoogleAuth} from 'google-auth-library';
+import {JWTInput} from 'google-auth-library/build/src/auth/credentials';
+import {RefreshOptions} from 'google-auth-library/build/src/auth/oauth2client';
 import {OutgoingHttpHeaders} from 'http';
 import * as nock from 'nock';
 import * as os from 'os';
+import * as path from 'path';
 import {Response} from 'request';  // Only for type declarations.
 import * as shimmer from 'shimmer';
 
@@ -29,6 +33,14 @@ import {TraceWriter, TraceWriterConfig} from '../src/trace-writer';
 import {TestLogger} from './logger';
 import {hostname, instanceId, oauth2} from './nocks';
 import {wait} from './utils';
+
+interface TestCredentials {
+  client_id?: string;
+  client_secret?: string;
+  refresh_token?: string;
+  private_key?: string;
+  type?: string;
+}
 
 interface DecorateRequestOptions {
   method: string;
@@ -114,6 +126,67 @@ describe('Trace Writer', () => {
   afterEach(() => {
     metadataScopes.done();
     nock.cleanAll();
+  });
+
+  describe('constructor', () => {
+    // Utility method which, for a given config, constructs a new TraceWriter
+    // instance, and gets the credentials that would be used upon initiating
+    // a trace batch publish.
+    const captureCredentialsForConfig =
+        async (config: Partial<TraceWriterConfig>) => {
+      const writer =
+          new TraceWriter(Object.assign({}, DEFAULT_CONFIG, config), logger);
+      let capturedJson;
+      shimmer.wrap(writer.authClient, 'fromJSON', (fromJSON) => {
+        return function(
+            this: GoogleAuth, json: JWTInput, options?: RefreshOptions) {
+          capturedJson = json;
+          return fromJSON.call(this, json, options);
+        };
+      });
+      await writer.authClient.getClient();
+      shimmer.unwrap(writer.authClient, 'fromJSON');
+      return capturedJson;
+    };
+
+    beforeEach(() => {
+      // Just for this scenario, use real metadata endpoints
+      metadataScopes.cancel();
+      nock.cleanAll();
+    });
+
+    it('should use the keyFilename field of the config object', async () => {
+      const expectedCredentials: TestCredentials =
+          require('./fixtures/gcloud-credentials.json');
+      const actualCredentials = await captureCredentialsForConfig({
+        projectId: 'my-project',
+        keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json')
+      });
+      assert.deepStrictEqual(actualCredentials, expectedCredentials);
+    });
+
+    it('should use the credentials field of the config object', async () => {
+      const expectedCredentials: TestCredentials =
+          require('./fixtures/gcloud-credentials.json');
+      const actualCredentials = await captureCredentialsForConfig(
+          {projectId: 'my-project', credentials: expectedCredentials});
+      assert.deepStrictEqual(actualCredentials, expectedCredentials);
+    });
+
+    it('should ignore keyFilename if credentials is provided', async () => {
+      const expectedCredentials: TestCredentials = {
+        client_id: 'a',
+        client_secret: 'b',
+        refresh_token: 'c',
+        type: 'authorized_user'
+      };
+      const actualCredentials = await captureCredentialsForConfig({
+        projectId: 'my-project',
+        keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
+        credentials: expectedCredentials
+      });
+      assert.deepStrictEqual(actualCredentials, expectedCredentials);
+    });
   });
 
   describe('initialization process', () => {
