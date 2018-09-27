@@ -27,7 +27,6 @@
     "test/test-cls.ts",
     "test/test-cls-ah.ts",
     "test/test-config-cls.ts",
-    "test/test-config-credentials.ts",
     "test/test-config-plugins.ts",
     "test/test-default-ignore-ah-health.ts",
     "test/test-env-log-level.ts",
