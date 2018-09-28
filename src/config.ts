@@ -210,7 +210,7 @@ export const defaultConfig = {
   enhancedDatabaseReporting: false,
   rootSpanNameOverride: (name: string) => name,
   clsMechanism: 'auto' as CLSMechanism,
-  spansPerTraceSoftLimit: 25,
+  spansPerTraceSoftLimit: 200,
   maximumLabelValueSize: 512,
   plugins: {
     // enable all by default
