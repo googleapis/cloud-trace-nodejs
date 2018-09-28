@@ -40,7 +40,8 @@ describe('Trace Interface', () => {
               ignoreContextHeader: false,
               rootSpanNameOverride: (name: string) => name,
               samplingRate: 0,
-              spansPerTraceSoftLimit: Infinity
+              spansPerTraceSoftLimit: Infinity,
+              spansPerTraceHardLimit: Infinity
             },
             config),
         logger);
@@ -155,6 +156,25 @@ describe('Trace Interface', () => {
         rootSpan.endSpan();
       });
     });
+
+    it('should warn when the spans per trace soft limit has been exceeded',
+       () => {
+         const tracer = createTraceAgent(
+             null, {spansPerTraceSoftLimit: 10, spansPerTraceHardLimit: 20});
+         tracer.runInRootSpan({name: 'root'}, (rootSpan) => {
+           for (let i = 0; i < 10; i++) {
+             tracer.createChildSpan({name: `span-${i}`}).endSpan();
+           }
+           assert.strictEqual(logger.getNumLogsWith('warn', '[span-9]'), 1);
+           for (let i = 0; i < 9; i++) {
+             tracer.createChildSpan({name: `span-${i + 10}`}).endSpan();
+           }
+           const child = tracer.createChildSpan({name: `span-19`});
+           assert.ok(!tracer.isRealSpan(child));
+           assert.strictEqual(logger.getNumLogsWith('error', '[span-19]'), 1);
+           rootSpan.endSpan();
+         });
+       });
 
     it('should return null context id when one does not exist', () => {
       const traceAPI = createTraceAgent();

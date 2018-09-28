@@ -70,7 +70,8 @@ shimmer.wrap(trace, 'start', function(original) {
       ignoreContextHeader: false,
       rootSpanNameOverride: (name: string) => name,
       samplingRate: 0,
-      spansPerTraceSoftLimit: Infinity
+      spansPerTraceSoftLimit: Infinity,
+      spansPerTraceHardLimit: Infinity
     }, new TestLogger());
     testTraceAgent.policy = new TracingPolicy.TraceAllPolicy();
     return result;

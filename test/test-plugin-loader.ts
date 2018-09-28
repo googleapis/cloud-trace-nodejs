@@ -49,7 +49,8 @@ describe('Trace Plugin Loader', () => {
               ignoreContextHeader: false,
               rootSpanNameOverride: (name: string) => name,
               projectId: '0',
-              spansPerTraceSoftLimit: Infinity
+              spansPerTraceSoftLimit: Infinity,
+              spansPerTraceHardLimit: Infinity
             },
             config),
         logger);

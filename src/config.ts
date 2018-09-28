@@ -72,11 +72,18 @@ export interface Config {
 
   /**
    * The number of local spans per trace to allow before emitting a warning.
-   * An excessive number of spans per trace may suggest a memory leak.
+   * An unexpectedly large number of spans per trace may suggest a memory leak.
    * This value should be 1-2x the estimated maximum number of RPCs made on
    * behalf of a single incoming request.
    */
   spansPerTraceSoftLimit?: number;
+
+  /**
+   * The maximum number of local spans per trace to allow in total. Creating
+   * more spans will cause the agent to log an error. (This limit does not apply
+   * when using RootSpan to create child spans.)
+   */
+  spansPerTraceHardLimit?: number;
 
   /**
    * The maximum number of characters reported on a label value. This value
@@ -211,6 +218,7 @@ export const defaultConfig = {
   rootSpanNameOverride: (name: string) => name,
   clsMechanism: 'auto' as CLSMechanism,
   spansPerTraceSoftLimit: 200,
+  spansPerTraceHardLimit: 1000,
   maximumLabelValueSize: 512,
   plugins: {
     // enable all by default
