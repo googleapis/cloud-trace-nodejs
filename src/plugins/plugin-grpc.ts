@@ -29,7 +29,7 @@ type Metadata = grpcModule.Metadata&{
 type MetadataModule = typeof grpcModule.Metadata;
 // Type of makeClientConstructor as exported from client.js
 type MakeClientConstructorFunction =
-    (methods: {[key: string]: never;}, serviceName: string,
+    (methods: {[key: string]: {originalName?: string;};}, serviceName: string,
      classOptions: never) => typeof Client;
 // Meta-type of client-side handlers
 type ClientMethod<S, T> = ((typeof Client.prototype.makeUnaryRequest)|
@@ -265,8 +265,16 @@ function patchClient(client: ClientModule, api: Tracer) {
       // Client is a class.
       // tslint:disable-next-line:variable-name
       const Client = makeClientConstructor.apply(this, arguments);
-      shimmer.massWrap(
-          [Client.prototype], Object.keys(methods), makeClientMethod);
+      const methodsToWrap = [
+        ...Object.keys(methods),
+        ...Object.keys(methods)
+                .map(methodName => methods[methodName].originalName)
+                .filter(
+                    originalName => !!originalName &&
+                        Client.prototype.hasOwnProperty(originalName)) as
+            string[]
+      ];
+      shimmer.massWrap([Client.prototype], methodsToWrap, makeClientMethod);
       return Client;
     };
   }

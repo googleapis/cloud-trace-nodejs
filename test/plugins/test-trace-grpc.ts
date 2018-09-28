@@ -278,6 +278,8 @@ Object.keys(versions).forEach(function(version) {
   var client;
   var shouldTraceArgs: any[] = [];
   describe(version, function() {
+    const skipFor1_6 = version === 'grpc1_6' ? it.skip : it;
+
     before(function() {
       // Set up to record invocations of shouldTrace
       shimmer.wrap(TracingPolicy, 'createTracePolicy', function(original) {
@@ -356,16 +358,6 @@ Object.keys(versions).forEach(function(version) {
       });
     });
 
-    it('should propagate context', function(done) {
-      common.runInTransaction(function(endTransaction) {
-        callUnary(client, grpc, {}, function() {
-          assert.ok(common.hasContext());
-          endTransaction();
-          done();
-        });
-      });
-    });
-
     it('should accurately measure time for client streaming requests', function(done) {
       var start = Date.now();
       common.runInTransaction(function(endTransaction) {
@@ -426,6 +418,39 @@ Object.keys(versions).forEach(function(version) {
           assertTraceProperties(grpcServerOuterPredicate);
           // Check that a child span was created in gRPC root span 
           assert(common.getMatchingSpan(grpcServerInnerPredicate));
+          done();
+        });
+      });
+    });
+
+    // Older versions of gRPC (<1.7) do not add original names.
+    skipFor1_6('should trace client requests using the original method name', (done) => {
+      common.runInTransaction((endTransaction) => {
+        // The original method name is TestUnary.
+        client.TestUnary({n: 10}, (err, result) => {
+          assert.ifError(err);
+          assert.strictEqual(result.n, 10);
+          endTransaction();
+          var assertTraceProperties = function(predicate) {
+            var trace = common.getMatchingSpan(predicate);
+            assert.ok(trace);
+            assert.strictEqual(trace.labels.argument, '{"n":10}');
+            assert.strictEqual(trace.labels.result, '{"n":10}');
+          };
+          assertTraceProperties(grpcClientPredicate);
+          assertTraceProperties(grpcServerOuterPredicate);
+          // Check that a child span was created in gRPC root span 
+          assert.ok(common.getMatchingSpan(grpcServerInnerPredicate));
+          done();
+        });
+      });
+    });
+
+    it('should propagate context', function(done) {
+      common.runInTransaction(function(endTransaction) {
+        callUnary(client, grpc, {}, function() {
+          assert.ok(common.hasContext());
+          endTransaction();
           done();
         });
       });
