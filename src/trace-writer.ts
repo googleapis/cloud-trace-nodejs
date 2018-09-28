@@ -235,7 +235,7 @@ export class TraceWriter extends common.Service {
    *
    * @param trace The trace to be queued.
    */
-  writeSpan(trace: Trace) {
+  writeTrace(trace: Trace) {
     for (const span of trace.spans) {
       if (span.endTime === '') {
         span.endTime = (new Date()).toISOString();
@@ -248,29 +248,21 @@ export class TraceWriter extends common.Service {
         Object.assign(spanData.labels, this.defaultLabels);
       }
     });
-    this.queueTrace(trace);
-  }
 
-  /**
-   * Buffers the provided trace to be published.
-   *
-   * @private
-   * @param trace The trace to be queued.
-   */
-  queueTrace(trace: Trace) {
     const afterProjectId = (projectId: string) => {
       trace.projectId = projectId;
       this.buffer.push(JSON.stringify(trace));
       this.logger.info(
-          `TraceWriter#queueTrace: buffer.size = ${this.buffer.length}`);
+          `TraceWriter#writeTrace: buffer.size = ${this.buffer.length}`);
 
       // Publish soon if the buffer is getting big
       if (this.buffer.length >= this.config.bufferSize) {
         this.logger.info(
-            'TraceWriter#queueTrace: Trace buffer full, flushing.');
+            'TraceWriter#writeTrace: Trace buffer full, flushing.');
         setImmediate(() => this.flushBuffer());
       }
     };
+
     // TODO(kjin): We should always be following the 'else' path.
     // Any test that doesn't mock the Trace Writer will assume that traces get
     // buffered synchronously. We need to refactor those tests to remove that

@@ -328,7 +328,7 @@ describe('Trace Writer', () => {
           Object.assign({}, DEFAULT_CONFIG, {bufferSize: 1}), logger);
       writer.initialize(async err => {
         assert.ifError(err);
-        writer.writeSpan(createDummyTrace());
+        writer.writeTrace(createDummyTrace());
         // TraceWriter#publish should be called soon
         // (Promise task queue drain + immediate).
         await wait(200);
@@ -354,12 +354,12 @@ describe('Trace Writer', () => {
             Object.assign({}, DEFAULT_CONFIG, {bufferSize: NUM_SPANS}), logger);
         writer.initialize(async err => {
           assert.ifError(err);
-          writer.writeSpan(createDummyTrace());
+          writer.writeTrace(createDummyTrace());
           await wait(200);
           // Didn't publish yet
           assert.ok(!capturedRequestOptions);
           for (let i = 1; i < NUM_SPANS; i++) {
-            writer.writeSpan(createDummyTrace());
+            writer.writeTrace(createDummyTrace());
           }
           await wait(200);
           const publishedTraces: Trace[] =
@@ -377,7 +377,7 @@ describe('Trace Writer', () => {
           assert.ifError(err);
           // Two rounds to ensure that it's periodical
           for (let round = 0; round < 2; round++) {
-            writer.writeSpan(createDummyTrace());
+            writer.writeTrace(createDummyTrace());
             await wait(500);
             // Didn't publish yet
             assert.ok(!capturedRequestOptions);
@@ -397,7 +397,7 @@ describe('Trace Writer', () => {
           Object.assign({}, DEFAULT_CONFIG, {bufferSize: 1}), logger);
       writer.initialize(async err => {
         assert.ifError(err);
-        writer.writeSpan(createDummyTrace());
+        writer.writeTrace(createDummyTrace());
         await wait(200);
         assert.strictEqual(
             logger.getNumLogsWith('error', 'TraceWriter#publish'), 1);

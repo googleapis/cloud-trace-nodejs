@@ -52,7 +52,7 @@ describe('Trace Writer', () => {
       super(config, logger);
       // Don't run the risk of auto-flushing
       this.getConfig().bufferSize = Infinity;
-      this.queueTrace(autoQueuedTrace);
+      this.writeTrace(autoQueuedTrace);
     }
 
     publish(json: string) {
