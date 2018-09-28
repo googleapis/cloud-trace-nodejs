@@ -116,13 +116,6 @@ export interface Config {
   stackTraceLimit?: number;
 
   /**
-   * Buffer the captured traces for `flushDelaySeconds` seconds before
-   * publishing to the trace API, unless the buffer fills up first.
-   * Also see `bufferSize`.
-   */
-  flushDelaySeconds?: number;
-
-  /**
    * URLs that partially match any regex in ignoreUrls will not be traced.
    * In addition, URLs that are _exact matches_ of strings in ignoreUrls will
    * also not be traced (this is deprecated behavior and will be removed in v3).
@@ -171,8 +164,16 @@ export interface Config {
   contextHeaderBehavior?: ContextHeaderBehavior;
 
   /**
-   * The number of transactions we buffer before we publish to the trace
-   * API, unless `flushDelaySeconds` seconds have elapsed first.
+   * Buffer the captured traces for `flushDelaySeconds` seconds before
+   * publishing to the Stackdriver Trace API, unless the buffer fills up first.
+   * Also see `bufferSize`.
+   */
+  flushDelaySeconds?: number;
+
+  /**
+   * The number of spans in buffered traces needed to trigger a publish of all
+   * traces to the Stackdriver Trace API, unless `flushDelaySeconds` seconds
+   * has elapsed first.
    */
   bufferSize?: number;
 

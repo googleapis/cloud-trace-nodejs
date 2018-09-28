@@ -104,6 +104,9 @@ export abstract class BaseSpanData implements Span {
   }
 
   endSpan(timestamp?: Date) {
+    if (!!this.span.endTime) {
+      return;
+    }
     timestamp = timestamp || new Date();
     this.span.endTime = timestamp.toISOString();
   }
@@ -114,6 +117,23 @@ export abstract class BaseSpanData implements Span {
  */
 export class RootSpanData extends BaseSpanData implements types.RootSpan {
   readonly type = SpanType.ROOT;
+  // Locally-tracked list of children.
+  private children: ChildSpanData[] = [];
+  // A function that replaces the ChildSpanData#endSpan prototype method on
+  // a child span instance.
+  private static overrideChildEndSpanHandler = function(
+      this: ChildSpanData, timestamp?: Date) {
+    if (!!this.span.endTime) {
+      return;
+    }
+    ChildSpanData.prototype.endSpan.call(this, timestamp);
+    // Also, publish just this span.
+    traceWriter.get().writeTrace({
+      projectId: this.trace.projectId,
+      traceId: this.trace.traceId,
+      spans: [this.span]
+    });
+  };
 
   constructor(
       trace: Trace, spanName: string, parentSpanId: string,
@@ -125,16 +145,29 @@ export class RootSpanData extends BaseSpanData implements types.RootSpan {
   createChildSpan(options?: SpanOptions): Span {
     options = options || {name: ''};
     const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-    return new ChildSpanData(
+    const child = new ChildSpanData(
         this.trace,       /* Trace object */
         options.name,     /* Span name */
         this.span.spanId, /* Parent's span ID */
         skipFrames);      /* # of frames to skip in stack trace */
+    this.children.push(child);
+    return child;
   }
 
   endSpan(timestamp?: Date) {
+    if (!!this.span.endTime) {
+      return;
+    }
     super.endSpan(timestamp);
     traceWriter.get().writeTrace(this.trace);
+    this.children.forEach(child => {
+      if (!child.span.endTime) {
+        // Child hasn't ended yet.
+        // Override the endSpan function to make it re-publish only itself.
+        child.endSpan = RootSpanData.overrideChildEndSpanHandler;
+      }
+    });
+    this.children = [];
   }
 }
 

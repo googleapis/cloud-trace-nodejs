@@ -94,11 +94,11 @@ function replaceWarnLogger(fn) {
  * Cleans the tracer state between test runs.
  */
 function cleanTraces() {
-  traceWriter.get().buffer = [];
+  traceWriter.get()['buffer'].flush();
 }
 
 function getTraces() {
-  return traceWriter.get().buffer.map(buffer => JSON.parse(buffer));
+  return traceWriter.get()['buffer']['traces'];
 }
 
 function getMatchingSpan(predicate) {
@@ -138,6 +138,7 @@ function createChildSpan(cb, duration) {
   assert.ok(span);
   var t = setTimeout(function() {
     assert.strictEqual(span.type, SpanType.CHILD);
+    span.endSpan();
     if (cb) {
       cb();
     }
