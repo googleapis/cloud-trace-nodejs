@@ -65,7 +65,8 @@ export class Logger {
 
     this.logger = consoleLogLevel({
       stderr: true,
-      prefix: opts && opts.tag ? opts.tag : 'unknown',
+      prefix: `${opts && opts.tag ? opts.tag : 'unknown'} ${
+          levelName.toUpperCase()}`,
       level: levelName as ConsoleLogLevel
     });
   }
