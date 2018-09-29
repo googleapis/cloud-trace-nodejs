@@ -55,7 +55,7 @@ describe('Trace Writer', () => {
       this.writeTrace(autoQueuedTrace);
     }
 
-    publish(json: string) {
+    protected publish(json: string) {
       capturedPublishedTraces = json;
     }
   }

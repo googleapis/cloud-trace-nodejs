@@ -282,12 +282,10 @@ export class TraceWriter extends common.Service {
   }
 
   /**
-   * Flushes the buffer of traces at a regular interval
-   * controlled by the flushDelay property of this
-   * TraceWriter's config.
-   * @private
+   * Flushes the buffer of traces at a regular interval controlled by the
+   * flushDelay property of this TraceWriter's config.
    */
-  scheduleFlush() {
+  private scheduleFlush() {
     this.logger.info('TraceWriter#scheduleFlush: Performing periodic flush.');
     this.flushBuffer();
 
@@ -306,9 +304,8 @@ export class TraceWriter extends common.Service {
 
   /**
    * Serializes the buffered traces to be published asynchronously.
-   * @private
    */
-  flushBuffer() {
+  private flushBuffer() {
     if (this.buffer.length === 0) {
       return;
     }
@@ -322,10 +319,9 @@ export class TraceWriter extends common.Service {
 
   /**
    * Publishes flushed traces to the network.
-   * @private
    * @param json The stringified json representation of the queued traces.
    */
-  publish(json: string) {
+  protected publish(json: string) {
     const hostname = 'cloudtrace.googleapis.com';
     const uri = `https://${hostname}/v1/projects/${this.projectId}/traces`;
     const options = {method: 'PATCH', uri, body: json, headers};
