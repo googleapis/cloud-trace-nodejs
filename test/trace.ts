@@ -66,9 +66,8 @@ export class TestTraceWriter extends TraceWriter {
     this.getConfig().projectId = '0';
   }
 
-  initialize(cb: (err?: Error) => void): void {
-    cb();
-  }
+  async initialize(): Promise<void> {}
+
   writeTrace(trace: Trace): void {
     traces.push(trace);
     trace.spans.forEach(span => {

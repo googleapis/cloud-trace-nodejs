@@ -121,74 +121,65 @@ export class TraceWriter extends common.Service {
     this.isActive = false;
   }
 
-  initialize(cb: (err?: Error) => void): void {
-    // Ensure that cb is called only once.
-    let pendingOperations = 2;
+  getConfig(): TraceWriterConfig {
+    return this.config;
+  }
 
+  initialize(): Promise<void> {
     // Schedule periodic flushing of the buffer, but only if we are able to get
     // the project number (potentially from the network.)
-    this.getProjectId().then(
-        () => {
-          this.scheduleFlush();
-          if (--pendingOperations === 0) {
-            cb();
-          }
-        },
-        (err: Error) => {
+    const gettingProjectId =
+        this.getProjectId().then(() => this.scheduleFlush(), (err: Error) => {
           this.logger.error(
               'TraceWriter#initialize: Unable to acquire the project number',
               'automatically from the GCP metadata service. Please provide a',
               'valid project ID as environmental variable GCLOUD_PROJECT, or',
               `as config.projectId passed to start. Original error: ${err}`);
-          cb(err);
+          throw err;
         });
 
-    this.getHostname((hostname) => {
-      this.getInstanceId((instanceId) => {
-        // tslint:disable-next-line:no-any
-        const addDefaultLabel = (key: string, value: any) => {
-          this.defaultLabels[key] = `${value}`;
-        };
+    const gettingMetadata =
+        Promise.all([this.getHostname(), this.getInstanceId()])
+            .then(([hostname, instanceId]: [string, string|null]) => {
+              // tslint:disable-next-line:no-any
+              const addDefaultLabel = (key: string, value: any) => {
+                this.defaultLabels[key] = `${value}`;
+              };
 
-        this.defaultLabels = {};
-        addDefaultLabel(
-            TraceLabels.AGENT_DATA, `node ${pjson.name} v${pjson.version}`);
-        addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname);
-        if (instanceId) {
-          addDefaultLabel(TraceLabels.GCE_INSTANCE_ID, instanceId);
-        }
-        const moduleName = this.config.serviceContext.service || hostname;
-        addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName);
+              this.defaultLabels = {};
+              addDefaultLabel(
+                  TraceLabels.AGENT_DATA,
+                  `node ${pjson.name} v${pjson.version}`);
+              addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname);
+              if (instanceId) {
+                addDefaultLabel(TraceLabels.GCE_INSTANCE_ID, instanceId);
+              }
+              const moduleName = this.config.serviceContext.service || hostname;
+              addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName);
 
-        const moduleVersion = this.config.serviceContext.version;
-        if (moduleVersion) {
-          addDefaultLabel(TraceLabels.GAE_MODULE_VERSION, moduleVersion);
-          const minorVersion = this.config.serviceContext.minorVersion;
-          if (minorVersion) {
-            let versionLabel = '';
-            if (moduleName !== 'default') {
-              versionLabel = moduleName + ':';
-            }
-            versionLabel += moduleVersion + '.' + minorVersion;
-            addDefaultLabel(TraceLabels.GAE_VERSION, versionLabel);
-          }
-        }
-        Object.freeze(this.defaultLabels);
-        if (--pendingOperations === 0) {
-          cb();
-        }
-      });
-    });
+              const moduleVersion = this.config.serviceContext.version;
+              if (moduleVersion) {
+                addDefaultLabel(TraceLabels.GAE_MODULE_VERSION, moduleVersion);
+                const minorVersion = this.config.serviceContext.minorVersion;
+                if (minorVersion) {
+                  let versionLabel = '';
+                  if (moduleName !== 'default') {
+                    versionLabel = moduleName + ':';
+                  }
+                  versionLabel += moduleVersion + '.' + minorVersion;
+                  addDefaultLabel(TraceLabels.GAE_VERSION, versionLabel);
+                }
+              }
+              Object.freeze(this.defaultLabels);
+            });
+
+    return Promise.all([gettingProjectId, gettingMetadata]).then(() => {});
   }
 
-  getConfig(): TraceWriterConfig {
-    return this.config;
-  }
-
-  getHostname(cb: (hostname: string) => void) {
-    gcpMetadata.instance({property: 'hostname', headers})
+  private getHostname(): Promise<string> {
+    return gcpMetadata.instance({property: 'hostname', headers})
         .then((data) => {
-          cb(data);  // hostname
+          return data;  // hostname
         })
         .catch((err: AxiosError) => {
           if (err.code !== 'ENOTFOUND') {
@@ -198,14 +189,14 @@ export class TraceWriter extends common.Service {
                 'retrieving GCE hostname from the GCP metadata service',
                 `(metadata.google.internal): ${err}`);
           }
-          cb(os.hostname());
+          return os.hostname();
         });
   }
 
-  getInstanceId(cb: (instanceId?: number) => void) {
-    gcpMetadata.instance({property: 'id', headers})
+  private getInstanceId(): Promise<string|null> {
+    return gcpMetadata.instance({property: 'id', headers})
         .then((data) => {
-          cb(data);  // instance ID
+          return data;  // instance ID
         })
         .catch((err: AxiosError) => {
           if (err.code !== 'ENOTFOUND') {
@@ -215,7 +206,7 @@ export class TraceWriter extends common.Service {
                 'retrieving GCE instance ID from the GCP metadata service',
                 `(metadata.google.internal): ${err}`);
           }
-          cb();
+          return null;
         });
   }
 
