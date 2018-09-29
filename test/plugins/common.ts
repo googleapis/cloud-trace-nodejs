@@ -30,6 +30,10 @@ if (semver.satisfies(process.version, '>=8')) {
   // Monkeypatch Mocha's it() to create a fresh context with each test case.
   var oldIt = global.it;
   global.it = Object.assign(function it(title, fn) {
+    // it.skip calls it without a function argument
+    if (!fn) {
+      return oldIt.call(this, title);
+    }
     function wrappedFn() {
       if (cls.exists()) {
         return cls.get().runWithContext(() => fn.apply(this, arguments), TraceCLS.UNCORRELATED);
