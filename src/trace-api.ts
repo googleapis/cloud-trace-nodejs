@@ -238,7 +238,7 @@ export class StackdriverTracer implements Tracer {
         // with continuously growing number of child spans. The second case
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
-        this.logger!.warn(`TraceApi#createChildSpan: [${
+        this.logger!.error(`TraceApi#createChildSpan: [${
             this.pluginName}] Creating phantom child span [${
             options.name}] because root span [${
             rootSpan.span.name}] was already closed.`);
@@ -254,6 +254,11 @@ export class StackdriverTracer implements Tracer {
             rootSpan.span.name}] has reached a limit of ${
             this.config!
                 .spansPerTraceHardLimit} spans. This is likely a memory leak.`);
+        this.logger!.error([
+          'TraceApi#createChildSpan: Please see',
+          'https://github.com/googleapis/cloud-trace-nodejs/wiki',
+          'for details and suggested actions.'
+        ].join(' '));
         return UNCORRELATED_CHILD_SPAN;
       }
       if (rootSpan.trace.spans.length === this.config!.spansPerTraceSoftLimit) {
@@ -271,6 +276,11 @@ export class StackdriverTracer implements Tracer {
             rootSpan.span.name}] to contain more than ${
             this.config!
                 .spansPerTraceSoftLimit} spans. This is likely a memory leak.`);
+        this.logger!.error([
+          'TraceApi#createChildSpan: Please see',
+          'https://github.com/googleapis/cloud-trace-nodejs/wiki',
+          'for details and suggested actions.'
+        ].join(' '));
       }
       // Create a new child span and return it.
       const childContext = rootSpan.createChildSpan({

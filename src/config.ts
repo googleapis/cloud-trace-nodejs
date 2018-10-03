@@ -71,7 +71,7 @@ export interface Config {
   clsMechanism?: CLSMechanism;
 
   /**
-   * The number of local spans per trace to allow before emitting a warning.
+   * The number of local spans per trace to allow before emitting an error log.
    * An unexpectedly large number of spans per trace may suggest a memory leak.
    * This value should be 1-2x the estimated maximum number of RPCs made on
    * behalf of a single incoming request.
@@ -80,8 +80,10 @@ export interface Config {
 
   /**
    * The maximum number of local spans per trace to allow in total. Creating
-   * more spans will cause the agent to log an error. (This limit does not apply
-   * when using RootSpan to create child spans.)
+   * more spans in a single trace will cause the agent to log an error, and such
+   * spans will be dropped. (This limit does not apply when using a RootSpan
+   * instance to create child spans.)
+   * This value should be greater than spansPerTraceSoftLimit.
    */
   spansPerTraceHardLimit?: number;
 
