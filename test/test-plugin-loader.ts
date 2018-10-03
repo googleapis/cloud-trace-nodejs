@@ -48,7 +48,9 @@ describe('Trace Plugin Loader', () => {
               enhancedDatabaseReporting: false,
               ignoreContextHeader: false,
               rootSpanNameOverride: (name: string) => name,
-              projectId: '0'
+              projectId: '0',
+              spansPerTraceSoftLimit: Infinity,
+              spansPerTraceHardLimit: Infinity
             },
             config),
         logger);

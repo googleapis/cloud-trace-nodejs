@@ -25,26 +25,6 @@ export type CLSMechanism =
 /** Available configuration options. */
 export interface Config {
   /**
-   * The trace context propagation mechanism to use. The following options are
-   * available:
-   * - 'async-hooks' uses an implementation of CLS on top of the Node core
-   *   `async_hooks` module in Node 8+. This option should not be used if the
-   *   Node binary version requirements are not met.
-   * - 'async-listener' uses an implementation of CLS on top of the
-   *   `continuation-local-storage` module.
-   * - 'auto' behaves like 'async-hooks' on Node 8+, and 'async-listener'
-   *   otherwise.
-   * - 'none' disables CLS completely.
-   * - 'singular' allows one root span to exist at a time. This option is meant
-   *   to be used internally by Google Cloud Functions, or in any other
-   *   environment where it is guaranteed that only one request is being served
-   *   at a time.
-   * The 'auto' mechanism is used by default if this configuration option is
-   * not explicitly set.
-   */
-  clsMechanism?: CLSMechanism;
-
-  /**
    * Log levels: 0=disabled, 1=error, 2=warn, 3=info, 4=debug
    * The value of GCLOUD_TRACE_LOGLEVEL takes precedence over this value.
    */
@@ -69,6 +49,43 @@ export interface Config {
    * as an argument, and its return value will be used as the span name.
    */
   rootSpanNameOverride?: string|((name: string) => string);
+
+  /**
+   * The trace context propagation mechanism to use. The following options are
+   * available:
+   * - 'async-hooks' uses an implementation of CLS on top of the Node core
+   *   `async_hooks` module in Node 8+. This option should not be used if the
+   *   Node binary version requirements are not met.
+   * - 'async-listener' uses an implementation of CLS on top of the
+   *   `continuation-local-storage` module.
+   * - 'auto' behaves like 'async-hooks' on Node 8+, and 'async-listener'
+   *   otherwise.
+   * - 'none' disables CLS completely.
+   * - 'singular' allows one root span to exist at a time. This option is meant
+   *   to be used internally by Google Cloud Functions, or in any other
+   *   environment where it is guaranteed that only one request is being served
+   *   at a time.
+   * The 'auto' mechanism is used by default if this configuration option is
+   * not explicitly set.
+   */
+  clsMechanism?: CLSMechanism;
+
+  /**
+   * The number of local spans per trace to allow before emitting an error log.
+   * An unexpectedly large number of spans per trace may suggest a memory leak.
+   * This value should be 1-2x the estimated maximum number of RPCs made on
+   * behalf of a single incoming request.
+   */
+  spansPerTraceSoftLimit?: number;
+
+  /**
+   * The maximum number of local spans per trace to allow in total. Creating
+   * more spans in a single trace will cause the agent to log an error, and such
+   * spans will be dropped. (This limit does not apply when using a RootSpan
+   * instance to create child spans.)
+   * This value should be greater than spansPerTraceSoftLimit.
+   */
+  spansPerTraceHardLimit?: number;
 
   /**
    * The maximum number of characters reported on a label value. This value
@@ -197,11 +214,13 @@ export interface Config {
  * user-provided value will be used to extend the default value.
  */
 export const defaultConfig = {
-  clsMechanism: 'auto' as CLSMechanism,
   logLevel: 1,
   enabled: true,
   enhancedDatabaseReporting: false,
   rootSpanNameOverride: (name: string) => name,
+  clsMechanism: 'auto' as CLSMechanism,
+  spansPerTraceSoftLimit: 200,
+  spansPerTraceHardLimit: 1000,
   maximumLabelValueSize: 512,
   plugins: {
     // enable all by default

@@ -37,6 +37,8 @@ export interface StackdriverTracerConfig extends
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
   rootSpanNameOverride: (path: string) => string;
+  spansPerTraceSoftLimit: number;
+  spansPerTraceHardLimit: number;
 }
 
 interface IncomingTraceContext {
@@ -236,11 +238,49 @@ export class StackdriverTracer implements Tracer {
         // with continuously growing number of child spans. The second case
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
-        this.logger!.warn(`TraceApi#createChildSpan: [${
+        this.logger!.error(`TraceApi#createChildSpan: [${
             this.pluginName}] Creating phantom child span [${
             options.name}] because root span [${
             rootSpan.span.name}] was already closed.`);
         return UNCORRELATED_CHILD_SPAN;
+      }
+      if (rootSpan.trace.spans.length >= this.config!.spansPerTraceHardLimit) {
+        // As in the previous case, a root span with a large number of child
+        // spans suggests a memory leak stemming from context confusion. This
+        // is likely due to userspace task queues or Promise implementations.
+        this.logger!.error(`TraceApi#createChildSpan: [${
+            this.pluginName}] Creating phantom child span [${
+            options.name}] because the trace with root span [${
+            rootSpan.span.name}] has reached a limit of ${
+            this.config!
+                .spansPerTraceHardLimit} spans. This is likely a memory leak.`);
+        this.logger!.error([
+          'TraceApi#createChildSpan: Please see',
+          'https://github.com/googleapis/cloud-trace-nodejs/wiki',
+          'for details and suggested actions.'
+        ].join(' '));
+        return UNCORRELATED_CHILD_SPAN;
+      }
+      if (rootSpan.trace.spans.length === this.config!.spansPerTraceSoftLimit) {
+        // As in the previous case, a root span with a large number of child
+        // spans suggests a memory leak stemming from context confusion. This
+        // is likely due to userspace task queues or Promise implementations.
+
+        // Note that since child spans can be created by users directly on a
+        // RootSpanData instance, this block might be skipped because it only
+        // checks equality -- this is OK because no automatic tracing plugin
+        // uses the RootSpanData API directly.
+        this.logger!.warn(`TraceApi#createChildSpan: [${
+            this.pluginName}] Adding child span [${
+            options.name}] will cause the trace with root span [${
+            rootSpan.span.name}] to contain more than ${
+            this.config!
+                .spansPerTraceSoftLimit} spans. This is likely a memory leak.`);
+        this.logger!.error([
+          'TraceApi#createChildSpan: Please see',
+          'https://github.com/googleapis/cloud-trace-nodejs/wiki',
+          'for details and suggested actions.'
+        ].join(' '));
       }
       // Create a new child span and return it.
       const childContext = rootSpan.createChildSpan({
