@@ -125,89 +125,83 @@ export class TraceWriter extends common.Service {
     return this.config;
   }
 
-  initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     // Schedule periodic flushing of the buffer, but only if we are able to get
     // the project number (potentially from the network.)
-    const gettingProjectId =
-        this.getProjectId().then(() => this.scheduleFlush(), (err: Error) => {
-          this.logger.error(
-              'TraceWriter#initialize: Unable to acquire the project number',
-              'automatically from the GCP metadata service. Please provide a',
-              'valid project ID as environmental variable GCLOUD_PROJECT, or',
-              `as config.projectId passed to start. Original error: ${err}`);
-          throw err;
-        });
+    const getProjectIdAndScheduleFlush = async () => {
+      try {
+        await this.getProjectId();
+      } catch (err) {
+        this.logger.error(
+            'TraceWriter#initialize: Unable to acquire the project number',
+            'automatically from the GCP metadata service. Please provide a',
+            'valid project ID as environmental variable GCLOUD_PROJECT, or',
+            `as config.projectId passed to start. Original error: ${err}`);
+        throw err;
+      }
+      this.scheduleFlush();
+    };
+    const [hostname, instanceId] = await Promise.all([
+      this.getHostname(), this.getInstanceId(), getProjectIdAndScheduleFlush()
+    ]);
+    // tslint:disable-next-line:no-any
+    const addDefaultLabel = (key: string, value: any) => {
+      this.defaultLabels[key] = `${value}`;
+    };
+    this.defaultLabels = {};
+    addDefaultLabel(
+        TraceLabels.AGENT_DATA, `node ${pjson.name} v${pjson.version}`);
+    addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname);
+    if (instanceId) {
+      addDefaultLabel(TraceLabels.GCE_INSTANCE_ID, instanceId);
+    }
+    const moduleName = this.config.serviceContext.service || hostname;
+    addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName);
 
-    const gettingMetadata =
-        Promise.all([this.getHostname(), this.getInstanceId()])
-            .then(([hostname, instanceId]: [string, string|null]) => {
-              // tslint:disable-next-line:no-any
-              const addDefaultLabel = (key: string, value: any) => {
-                this.defaultLabels[key] = `${value}`;
-              };
-
-              this.defaultLabels = {};
-              addDefaultLabel(
-                  TraceLabels.AGENT_DATA,
-                  `node ${pjson.name} v${pjson.version}`);
-              addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname);
-              if (instanceId) {
-                addDefaultLabel(TraceLabels.GCE_INSTANCE_ID, instanceId);
-              }
-              const moduleName = this.config.serviceContext.service || hostname;
-              addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName);
-
-              const moduleVersion = this.config.serviceContext.version;
-              if (moduleVersion) {
-                addDefaultLabel(TraceLabels.GAE_MODULE_VERSION, moduleVersion);
-                const minorVersion = this.config.serviceContext.minorVersion;
-                if (minorVersion) {
-                  let versionLabel = '';
-                  if (moduleName !== 'default') {
-                    versionLabel = moduleName + ':';
-                  }
-                  versionLabel += moduleVersion + '.' + minorVersion;
-                  addDefaultLabel(TraceLabels.GAE_VERSION, versionLabel);
-                }
-              }
-              Object.freeze(this.defaultLabels);
-            });
-
-    return Promise.all([gettingProjectId, gettingMetadata]).then(() => {});
+    const moduleVersion = this.config.serviceContext.version;
+    if (moduleVersion) {
+      addDefaultLabel(TraceLabels.GAE_MODULE_VERSION, moduleVersion);
+      const minorVersion = this.config.serviceContext.minorVersion;
+      if (minorVersion) {
+        let versionLabel = '';
+        if (moduleName !== 'default') {
+          versionLabel = moduleName + ':';
+        }
+        versionLabel += moduleVersion + '.' + minorVersion;
+        addDefaultLabel(TraceLabels.GAE_VERSION, versionLabel);
+      }
+    }
+    Object.freeze(this.defaultLabels);
   }
 
-  private getHostname(): Promise<string> {
-    return gcpMetadata.instance({property: 'hostname', headers})
-        .then((data) => {
-          return data;  // hostname
-        })
-        .catch((err: AxiosError) => {
-          if (err.code !== 'ENOTFOUND') {
-            // We are running on GCP.
-            this.logger.warn(
-                'TraceWriter#getHostname: Encountered an error while',
-                'retrieving GCE hostname from the GCP metadata service',
-                `(metadata.google.internal): ${err}`);
-          }
-          return os.hostname();
-        });
+  private async getHostname(): Promise<string> {
+    try {
+      return await gcpMetadata.instance({property: 'hostname', headers});
+    } catch (err) {
+      if (err.code !== 'ENOTFOUND') {
+        // We are running on GCP.
+        this.logger.warn(
+            'TraceWriter#getHostname: Encountered an error while',
+            'retrieving GCE hostname from the GCP metadata service',
+            `(metadata.google.internal): ${err}`);
+      }
+      return os.hostname();
+    }
   }
 
-  private getInstanceId(): Promise<string|null> {
-    return gcpMetadata.instance({property: 'id', headers})
-        .then((data) => {
-          return data;  // instance ID
-        })
-        .catch((err: AxiosError) => {
-          if (err.code !== 'ENOTFOUND') {
-            // We are running on GCP.
-            this.logger.warn(
-                'TraceWriter#getInstanceId: Encountered an error while',
-                'retrieving GCE instance ID from the GCP metadata service',
-                `(metadata.google.internal): ${err}`);
-          }
-          return null;
-        });
+  private async getInstanceId(): Promise<string|null> {
+    try {
+      return await gcpMetadata.instance({property: 'id', headers});
+    } catch (err) {
+      if (err.code !== 'ENOTFOUND') {
+        // We are running on GCP.
+        this.logger.warn(
+            'TraceWriter#getInstanceId: Encountered an error while',
+            'retrieving GCE instance ID from the GCP metadata service',
+            `(metadata.google.internal): ${err}`);
+      }
+      return null;
+    }
   }
 
   getProjectId() {
