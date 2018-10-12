@@ -157,7 +157,7 @@ describe('Trace Interface', () => {
       });
     });
 
-    it('should warn when the spans per trace soft limit has been exceeded',
+    it('should error when the spans per trace soft limit has been exceeded',
        () => {
          const tracer = createTraceAgent(
              null, {spansPerTraceSoftLimit: 10, spansPerTraceHardLimit: 20});
@@ -165,7 +165,7 @@ describe('Trace Interface', () => {
            for (let i = 0; i < 10; i++) {
              tracer.createChildSpan({name: `span-${i}`}).endSpan();
            }
-           assert.strictEqual(logger.getNumLogsWith('warn', '[span-9]'), 1);
+           assert.strictEqual(logger.getNumLogsWith('error', '[span-9]'), 1);
            for (let i = 0; i < 9; i++) {
              tracer.createChildSpan({name: `span-${i + 10}`}).endSpan();
            }

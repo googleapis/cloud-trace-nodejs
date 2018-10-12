@@ -238,7 +238,7 @@ export class StackdriverTracer implements Tracer {
         // with continuously growing number of child spans. The second case
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
-        this.logger!.error(`TraceApi#createChildSpan: [${
+        this.logger!.warn(`TraceApi#createChildSpan: [${
             this.pluginName}] Creating phantom child span [${
             options.name}] because root span [${
             rootSpan.span.name}] was already closed.`);
@@ -270,7 +270,7 @@ export class StackdriverTracer implements Tracer {
         // RootSpanData instance, this block might be skipped because it only
         // checks equality -- this is OK because no automatic tracing plugin
         // uses the RootSpanData API directly.
-        this.logger!.warn(`TraceApi#createChildSpan: [${
+        this.logger!.error(`TraceApi#createChildSpan: [${
             this.pluginName}] Adding child span [${
             options.name}] will cause the trace with root span [${
             rootSpan.span.name}] to contain more than ${
