@@ -65,7 +65,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
           // Instead, use the ID of the AsyncResource in whose scope we are
           // currently running.
           this.contexts[id] = this.contexts[this.ah.executionAsyncId()];
-        } else {
+        } else if (this.contexts[triggerId] !== undefined) {
           // Use the trigger ID for any other type. In Node core, this is
           // usually equal the ID of the AsyncResource in whose scope we are
           // currently running (the "current" AsyncResource), or that of one
@@ -85,6 +85,17 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
       destroy: (id: number) => {
         // destroy is called when the AsyncResource is no longer used, so also
         // delete its entry in the map.
+        delete this.contexts[id];
+      },
+      promiseResolve: (id: number) => {
+        // Some Promise async resources do not get destroyed with a destroy
+        // hook, but a promiseResolve event is emitted instead. If this event
+        // is emitted, the async scope of the Promise will not be entered again,
+        // so it is generally safe to delete its entry in the map. (There is a
+        // possibility that a future async resource will directly reference
+        // this Promise as its trigger parent -- in this case, it will have
+        // the wrong parent, but this is still better than a potential memory
+        // leak.)
         delete this.contexts[id];
       }
     });
