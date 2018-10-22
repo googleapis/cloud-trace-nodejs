@@ -52,7 +52,7 @@
     "@types/console-log-level": "^1.4.0",
     "@types/continuation-local-storage": "^3.2.1",
     "@types/extend": "^3.0.0",
-    "@types/glob": "^5.0.32",
+    "@types/glob": "^7.0.0",
     "@types/is": "0.0.20",
     "@types/methods": "^1.1.0",
     "@types/mocha": "^5.2.5",
