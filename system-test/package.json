@@ -2,7 +2,7 @@
   "name": "trace-agent-system-test",
   "version": "1.0.0",
   "dependencies": {
-    "@google-cloud/datastore": "^1.0.2",
+    "@google-cloud/datastore": "^2.0.0",
     "express": "^4.16.3",
     "google-auto-auth": "^0.10.0",
     "got": "^8.0.0",
