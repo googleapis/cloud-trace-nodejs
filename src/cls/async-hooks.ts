@@ -59,7 +59,8 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
         // init is called when a new AsyncResource is created. We want code
         // that runs within the scope of this new AsyncResource to see the same
         // context as its "parent" AsyncResource. The criteria for the parent
-        // depends on the type of the AsyncResource.
+        // depends on the type of the AsyncResource. (If the parent doesn't have
+        // an associated context, don't do anything.)
         if (type === 'PROMISE' && this.contexts[currentId] !== undefined) {
           // Opt not to use the trigger ID for Promises, as this causes context
           // confusion in applications using async/await.
@@ -79,9 +80,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
           this.contexts[id] = this.contexts[triggerId];
         }
         // Note that this function only assigns values in this.contexts to
-        // values under other keys; it never generates new context values, and
-        // doesn't add an additional entry to this.contexts if there is no
-        // current, explicitly set context.
+        // values under other keys; it never generates new context values.
         // Consumers of the CLS API will get the sentinel (default) value if
         // they query the current context when it is not stored in
         // this.contexts.
