@@ -91,11 +91,11 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
         delete this.contexts[id];
       },
       promiseResolve: (id: number) => {
-        // Some Promise async resources do not get destroyed with a destroy
-        // hook, but a promiseResolve event is emitted instead. If this event
-        // is emitted, the async scope of the Promise will not be entered again,
-        // so it is generally safe to delete its entry in the map. (There is a
-        // possibility that a future async resource will directly reference
+        // Promise async resources may not get their destroy hook entered for
+        // a long time, so we listen on promiseResolve hooks as well. If this
+        // event is emitted, the async scope of the Promise will not be entered
+        // again, so it is generally safe to delete its entry in the map. (There
+        // is a possibility that a future async resource will directly reference
         // this Promise as its trigger parent -- in this case, it will have
         // the wrong parent, but this is still better than a potential memory
         // leak.)
