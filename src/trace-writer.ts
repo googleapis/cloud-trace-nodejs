@@ -187,8 +187,8 @@ export class TraceWriter extends common.Service {
 
   getHostname(cb: (hostname: string) => void) {
     gcpMetadata.instance({property: 'hostname', headers})
-        .then((res) => {
-          cb(res.data);  // hostname
+        .then((data) => {
+          cb(data);  // hostname
         })
         .catch((err: AxiosError) => {
           if (err.code !== 'ENOTFOUND') {
@@ -204,8 +204,8 @@ export class TraceWriter extends common.Service {
 
   getInstanceId(cb: (instanceId?: number) => void) {
     gcpMetadata.instance({property: 'id', headers})
-        .then((res) => {
-          cb(res.data);  // instance ID
+        .then((data) => {
+          cb(data);  // instance ID
         })
         .catch((err: AxiosError) => {
           if (err.code !== 'ENOTFOUND') {
