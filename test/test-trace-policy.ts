@@ -35,14 +35,17 @@ describe('TracePolicy', () => {
   });
 
   describe('Sampling', () => {
-    const tracesPerSecond = [10, 50, 150, 200, 500, 1000];
-    for (const expected of tracesPerSecond) {
-      it(`should throttle traces when samplingRate = ` + expected, () => {
+    const NUM_SECONDS = 10;
+    const testCases = [0.1, 0.5, 1, 10, 50, 150, 200, 500, 1000];
+    for (const testCase of testCases) {
+      it(`should throttle traces when samplingRate = ` + testCase, () => {
         const policy =
-            new TracePolicy({samplingRate: expected, ignoreUrls: []});
+            new TracePolicy({samplingRate: testCase, ignoreUrls: []});
+        const expected = NUM_SECONDS * testCase;
         let actual = 0;
         const start = Date.now();
-        for (let timestamp = start; timestamp < start + 1000; timestamp++) {
+        for (let timestamp = start; timestamp < start + 1000 * NUM_SECONDS;
+             timestamp++) {
           if (policy.shouldTrace({timestamp, url: ''})) {
             actual++;
           }
@@ -55,5 +58,29 @@ describe('TracePolicy', () => {
             `Expected close to (>=0.8*) ${expected} traced but got ${actual}`);
       });
     }
+
+    it('should always sample when samplingRate = 0', () => {
+      const policy = new TracePolicy({samplingRate: 0, ignoreUrls: []});
+      let numSamples = 0;
+      const start = Date.now();
+      for (let timestamp = start; timestamp < start + 1000; timestamp++) {
+        if (policy.shouldTrace({timestamp, url: ''})) {
+          numSamples++;
+        }
+      }
+      assert.strictEqual(numSamples, 1000);
+    });
+
+    it('should never sample when samplingRate < 0', () => {
+      const policy = new TracePolicy({samplingRate: -1, ignoreUrls: []});
+      let numSamples = 0;
+      const start = Date.now();
+      for (let timestamp = start; timestamp < start + 1000; timestamp++) {
+        if (policy.shouldTrace({timestamp, url: ''})) {
+          numSamples++;
+        }
+      }
+      assert.strictEqual(numSamples, 0);
+    });
   });
 });
