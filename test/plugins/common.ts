@@ -19,7 +19,6 @@ import '../override-gcp-metadata';
 import { cls, TraceCLS } from '../../src/cls';
 import { StackdriverTracer } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
-import * as TracingPolicy from '../../src/tracing-policy';
 import { SpanType } from '../../src/constants';
 import { TestLogger } from '../logger';
 
@@ -70,10 +69,10 @@ shimmer.wrap(trace, 'start', function(original) {
       ignoreContextHeader: false,
       rootSpanNameOverride: (name: string) => name,
       samplingRate: 0,
+      ignoreUrls: [],
       spansPerTraceSoftLimit: Infinity,
       spansPerTraceHardLimit: Infinity
     }, new TestLogger());
-    testTraceAgent.policy = new TracingPolicy.TraceAllPolicy();
     return result;
   };
 });

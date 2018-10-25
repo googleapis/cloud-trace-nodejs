@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-/**
- * An object that determines whether a request should be traced.
- */
-export interface TracePolicy {
-  shouldTrace(dateMillis: number, url: string): boolean;
+interface TracePolicyPredicate<T> {
+  shouldTrace: (value: T) => boolean;
 }
 
-export class RateLimiterPolicy implements TracePolicy {
-  private traceWindow: number;
+class Sampler implements TracePolicyPredicate<number> {
+  private readonly traceWindow: number;
   private nextTraceStart: number;
 
   constructor(samplesPerSecond: number) {
@@ -42,51 +39,72 @@ export class RateLimiterPolicy implements TracePolicy {
   }
 }
 
-export class FilterPolicy implements TracePolicy {
-  constructor(
-      private basePolicy: TracePolicy,
-      private filterUrls: Array<string|RegExp>) {}
+class URLFilter implements TracePolicyPredicate<string> {
+  constructor(private readonly filterUrls: Array<string|RegExp>) {}
 
-  private matches(url: string) {
-    return this.filterUrls.some((candidate) => {
+  shouldTrace(url: string) {
+    return !this.filterUrls.some((candidate) => {
       return (typeof candidate === 'string' && candidate === url) ||
           !!url.match(candidate);
     });
   }
-
-  shouldTrace(dateMillis: number, url: string) {
-    return !this.matches(url) && this.basePolicy.shouldTrace(dateMillis, url);
-  }
 }
 
-export class TraceAllPolicy implements TracePolicy {
-  shouldTrace() {
-    return true;
-  }
-}
-
-export class TraceNonePolicy implements TracePolicy {
-  shouldTrace() {
-    return false;
-  }
-}
-
+/**
+ * Options for constructing a TracePolicy instance.
+ */
 export interface TracePolicyConfig {
+  /**
+   * A field that controls time-based sampling.
+   */
   samplingRate: number;
-  ignoreUrls?: Array<string|RegExp>;
+  /**
+   * A field that controls a url-based filter.
+   */
+  ignoreUrls: Array<string|RegExp>;
 }
 
-// TODO(kjin): This could be a class as well.
-export function createTracePolicy(config: TracePolicyConfig): TracePolicy {
-  let basePolicy;
-  if (config.samplingRate < 1) {
-    basePolicy = new TraceAllPolicy();
-  } else {
-    basePolicy = new RateLimiterPolicy(config.samplingRate);
+/**
+ * A class that makes decisions about whether a trace should be created.
+ */
+export class TracePolicy {
+  private readonly sampler: TracePolicyPredicate<number>;
+  private readonly urlFilter: TracePolicyPredicate<string>;
+
+  /**
+   * Constructs a new TracePolicy instance.
+   * @param config Configuration for the TracePolicy instance.
+   */
+  constructor(config: TracePolicyConfig) {
+    if (config.samplingRate >= 0 && config.samplingRate < 1) {
+      this.sampler = {shouldTrace: () => true};
+    } else if (config.samplingRate < 0) {
+      this.sampler = {shouldTrace: () => false};
+    } else {
+      this.sampler = new Sampler(config.samplingRate);
+    }
+    if (config.ignoreUrls.length === 0) {
+      this.urlFilter = {shouldTrace: () => true};
+    } else {
+      this.urlFilter = new URLFilter(config.ignoreUrls);
+    }
   }
-  if (config.ignoreUrls && config.ignoreUrls.length > 0) {
-    return new FilterPolicy(basePolicy, config.ignoreUrls);
-  } else {
-    return basePolicy;
+
+  /**
+   * Given a timestamp and URL, decides if a trace should be created.
+   * @param options Fields that help determine whether a trace should be
+   *                created.
+   */
+  shouldTrace(options: {timestamp: number, url: string}): boolean {
+    return this.sampler.shouldTrace(options.timestamp) &&
+        this.urlFilter.shouldTrace(options.url);
+  }
+
+  static always(): TracePolicy {
+    return new TracePolicy({samplingRate: 0, ignoreUrls: []});
+  }
+
+  static never(): TracePolicy {
+    return new TracePolicy({samplingRate: -1, ignoreUrls: []});
   }
 }
