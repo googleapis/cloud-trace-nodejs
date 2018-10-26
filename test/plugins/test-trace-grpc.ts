@@ -282,15 +282,10 @@ Object.keys(versions).forEach(function(version) {
 
     before(function() {
       // Set up to record invocations of shouldTrace
-      shimmer.wrap(TracingPolicy, 'createTracePolicy', function(original) {
-        return function() {
-          var result = original.apply(this, arguments);
-          var shouldTrace = result.shouldTrace;
-          result.shouldTrace = function() {
-            shouldTraceArgs.push(Array.prototype.slice.call(arguments, 0));
-            return shouldTrace.apply(this, arguments);
-          };
-          return result;
+      shimmer.wrap(TracingPolicy.TracePolicy.prototype, 'shouldTrace', function(original) {
+        return function(options) {
+          shouldTraceArgs.push(options);
+          return original.apply(this, arguments);
         };
       });
 
@@ -471,10 +466,10 @@ Object.keys(versions).forEach(function(version) {
         var prefix = 'grpc:/nodetest.Tester/Test';
         // calls to shouldTrace should be in the order which the client method
         // of each type was called.
-        assert.strictEqual(shouldTraceArgs[3][1], prefix + 'Unary');
-        assert.strictEqual(shouldTraceArgs[2][1], prefix + 'ClientStream');
-        assert.strictEqual(shouldTraceArgs[1][1], prefix + 'ServerStream');
-        assert.strictEqual(shouldTraceArgs[0][1], prefix + 'BidiStream');
+        assert.strictEqual(shouldTraceArgs[3].url, prefix + 'Unary');
+        assert.strictEqual(shouldTraceArgs[2].url, prefix + 'ClientStream');
+        assert.strictEqual(shouldTraceArgs[1].url, prefix + 'ServerStream');
+        assert.strictEqual(shouldTraceArgs[0].url, prefix + 'BidiStream');
         done();
       };
       next = callUnary.bind(null, client, grpc, {}, next);

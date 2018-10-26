@@ -14,56 +14,46 @@
  * limitations under the License.
  */
 
-'use strict';
+import * as assert from 'assert';
 
-import * as TracingPolicy from '../src/tracing-policy';
+import {TracePolicy} from '../src/tracing-policy';
 
-var assert = require('assert');
-
-describe('FilterPolicy', function() {
-  it('should not allow filtered urls', function() {
-    var policy = TracingPolicy.createTracePolicy({
-      samplingRate: 0,
-      ignoreUrls: ['/_ah/health', /\/book*/]
+describe('TracePolicy', () => {
+  describe('URL Filtering', () => {
+    it('should not allow filtered urls', () => {
+      const policy = new TracePolicy(
+          {samplingRate: 0, ignoreUrls: ['/_ah/health', /\/book*/]});
+      assert.ok(!policy.shouldTrace({timestamp: 0, url: '/_ah/health'}));
+      assert.ok(!policy.shouldTrace({timestamp: 0, url: '/book/test'}));
     });
-    assert(!policy.shouldTrace(0, '/_ah/health'));
-    assert(!policy.shouldTrace(0, '/book/test'));
-  });
 
-  it('should allow non-filtered urls', function() {
-    var policy = TracingPolicy.createTracePolicy({
-      samplingRate: 0,
-      ignoreUrls: ['/_ah/health']
-    });
-    assert(policy.shouldTrace(0, '/_ah/background'));
-  });
-});
-
-describe('RateLimiterPolicy', function() {
-  var tracesPerSecond = [10, 50, 150, 200, 500, 1000];
-  tracesPerSecond.forEach(function(traceCount) {
-    it('should throttle traces, ' + traceCount, function() {
-      var policy = TracingPolicy.createTracePolicy({samplingRate: traceCount});
-      testAllowedTraces(policy, traceCount);
+    it('should allow non-filtered urls', () => {
+      const policy =
+          new TracePolicy({samplingRate: 0, ignoreUrls: ['/_ah/health']});
+      assert.ok(policy.shouldTrace({timestamp: 0, url: '/_ah/background'}));
     });
   });
-});
 
-function testAllowedTraces(policy, expected) {
-  var successes = runForSecond(policy);
-  assert(successes <= expected, 'Got ' + successes);
-  assert(successes > expected * 0.8, 'Got ' + successes);
-}
-
-function runForSecond(policy) {
-  var successes = 0;
-  var start = Date.now();
-  for (var time = start; time < start + 1000; time++) {
-    if (policy.shouldTrace(time)) {
-      successes++;
+  describe('Sampling', () => {
+    const tracesPerSecond = [10, 50, 150, 200, 500, 1000];
+    for (const expected of tracesPerSecond) {
+      it(`should throttle traces when samplingRate = ` + expected, () => {
+        const policy =
+            new TracePolicy({samplingRate: expected, ignoreUrls: []});
+        let actual = 0;
+        const start = Date.now();
+        for (let timestamp = start; timestamp < start + 1000; timestamp++) {
+          if (policy.shouldTrace({timestamp, url: ''})) {
+            actual++;
+          }
+        }
+        assert.ok(
+            actual <= expected,
+            `Expected less than ${expected} traced but got ${actual}`);
+        assert.ok(
+            actual > expected * 0.8,
+            `Expected close to (>=0.8*) ${expected} traced but got ${actual}`);
+      });
     }
-  }
-  return successes;
-}
-
-export default {};
+  });
+});

@@ -25,15 +25,14 @@ import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plug
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
-import * as TracingPolicy from './tracing-policy';
+import {TracePolicy, TracePolicyConfig} from './tracing-policy';
 import * as util from './util';
 
 /**
  * An interface describing configuration fields read by the StackdriverTracer
  * object. This includes fields read by the trace policy.
  */
-export interface StackdriverTracerConfig extends
-    TracingPolicy.TracePolicyConfig {
+export interface StackdriverTracerConfig extends TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   ignoreContextHeader: boolean;
   rootSpanNameOverride: (path: string) => string;
@@ -74,8 +73,7 @@ export class StackdriverTracer implements Tracer {
   private pluginName: string;
   private logger: Logger|null = null;
   private config: StackdriverTracerConfig|null = null;
-  // TODO(kjin): Make this private.
-  policy: TracingPolicy.TracePolicy|null = null;
+  private policy: TracePolicy|null = null;
 
   /**
    * Constructs a new StackdriverTracer instance.
@@ -98,7 +96,7 @@ export class StackdriverTracer implements Tracer {
   enable(config: StackdriverTracerConfig, logger: Logger) {
     this.logger = logger;
     this.config = config;
-    this.policy = TracingPolicy.createTracePolicy(config);
+    this.policy = new TracePolicy(config);
     this.enabled = true;
   }
 
@@ -112,7 +110,7 @@ export class StackdriverTracer implements Tracer {
     // never generates traces allows persisting wrapped methods (either because
     // they are already instantiated or the plugin doesn't unpatch them) to
     // short-circuit out of trace generation logic.
-    this.policy = new TracingPolicy.TraceNonePolicy();
+    this.policy = TracePolicy.never();
     this.enabled = false;
   }
 
@@ -162,8 +160,8 @@ export class StackdriverTracer implements Tracer {
     }
 
     // Consult the trace policy.
-    const locallyAllowed =
-        this.policy!.shouldTrace(Date.now(), options.url || '');
+    const locallyAllowed = this.policy!.shouldTrace(
+        {timestamp: Date.now(), url: options.url || ''});
     const remotelyAllowed = incomingTraceContext.options === undefined ||
         !!(incomingTraceContext.options &
            Constants.TRACE_OPTIONS_TRACE_ENABLED);

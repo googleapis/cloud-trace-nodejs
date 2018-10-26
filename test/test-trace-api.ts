@@ -21,7 +21,6 @@ import {defaultConfig} from '../src/config';
 import {SpanType} from '../src/constants';
 import {StackdriverTracer, StackdriverTracerConfig} from '../src/trace-api';
 import {traceWriter} from '../src/trace-writer';
-import {FilterPolicy, TraceAllPolicy, TraceNonePolicy, TracePolicy} from '../src/tracing-policy';
 import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
@@ -29,9 +28,8 @@ import * as testTraceModule from './trace';
 
 describe('Trace Interface', () => {
   const logger = new TestLogger();
-  function createTraceAgent(
-      policy?: TracePolicy|null,
-      config?: Partial<StackdriverTracerConfig>): StackdriverTracer {
+  function createTraceAgent(config?: Partial<StackdriverTracerConfig>):
+      StackdriverTracer {
     const result = new StackdriverTracer('test');
     result.enable(
         Object.assign(
@@ -40,12 +38,12 @@ describe('Trace Interface', () => {
               ignoreContextHeader: false,
               rootSpanNameOverride: (name: string) => name,
               samplingRate: 0,
+              ignoreUrls: [],
               spansPerTraceSoftLimit: Infinity,
               spansPerTraceHardLimit: Infinity
             },
             config),
         logger);
-    result.policy = policy || new TraceAllPolicy();
     return result;
   }
 
@@ -160,7 +158,7 @@ describe('Trace Interface', () => {
     it('should error when the spans per trace soft limit has been exceeded',
        () => {
          const tracer = createTraceAgent(
-             null, {spansPerTraceSoftLimit: 10, spansPerTraceHardLimit: 20});
+             {spansPerTraceSoftLimit: 10, spansPerTraceHardLimit: 20});
          tracer.runInRootSpan({name: 'root'}, (rootSpan) => {
            for (let i = 0; i < 10; i++) {
              tracer.createChildSpan({name: `span-${i}`}).endSpan();
@@ -203,7 +201,7 @@ describe('Trace Interface', () => {
     });
 
     it('should respect trace policy', (done) => {
-      const traceAPI = createTraceAgent(new TraceNonePolicy());
+      const traceAPI = createTraceAgent({samplingRate: -1 /*never*/});
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, (rootSpan) => {
         assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
         const childSpan = rootSpan.createChildSpan({name: 'child'});
@@ -214,8 +212,7 @@ describe('Trace Interface', () => {
 
     it('should respect filter urls', () => {
       const url = 'rootUrl';
-      const traceAPI =
-          createTraceAgent(new FilterPolicy(new TraceAllPolicy(), [url]));
+      const traceAPI = createTraceAgent({ignoreUrls: [url]});
       traceAPI.runInRootSpan({name: 'root', url}, (rootSpan) => {
         assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
       });
@@ -228,7 +225,7 @@ describe('Trace Interface', () => {
     it('should respect enhancedDatabaseReporting options field', () => {
       [true, false].forEach((enhancedDatabaseReporting) => {
         const traceAPI = createTraceAgent(
-            null, {enhancedDatabaseReporting, ignoreContextHeader: false});
+            {enhancedDatabaseReporting, ignoreContextHeader: false});
         assert.strictEqual(
             traceAPI.enhancedDatabaseReportingEnabled(),
             enhancedDatabaseReporting);
@@ -238,7 +235,7 @@ describe('Trace Interface', () => {
     it('should respect ignoreContextHeader options field', () => {
       // ignoreContextHeader: true
       createTraceAgent(
-          null, {enhancedDatabaseReporting: false, ignoreContextHeader: true})
+          {enhancedDatabaseReporting: false, ignoreContextHeader: true})
           .runInRootSpan(
               {name: 'root1', traceContext: '123456/667;o=1'}, (rootSpan) => {
                 rootSpan.endSpan();
@@ -251,7 +248,7 @@ describe('Trace Interface', () => {
       assert.notStrictEqual(foundTrace.spans[0].parentSpanId, '667');
       // ignoreContextHeader: false
       createTraceAgent(
-          null, {enhancedDatabaseReporting: false, ignoreContextHeader: false})
+          {enhancedDatabaseReporting: false, ignoreContextHeader: false})
           .runInRootSpan(
               {name: 'root2', traceContext: '123456/667;o=1'}, (rootSpan) => {
                 rootSpan.endSpan();
