@@ -76,7 +76,7 @@ export class TracePolicy {
    * @param config Configuration for the TracePolicy instance.
    */
   constructor(config: TracePolicyConfig) {
-    if (config.samplingRate >= 0 && config.samplingRate < 1) {
+    if (config.samplingRate === 0) {
       this.sampler = {shouldTrace: () => true};
     } else if (config.samplingRate < 0) {
       this.sampler = {shouldTrace: () => false};
