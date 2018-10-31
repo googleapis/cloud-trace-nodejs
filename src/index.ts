@@ -60,6 +60,15 @@ function initConfig(projectConfig: Forceable<Config>):
     envSetConfig =
         require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
   }
+
+  // Internally, ignoreContextHeader is no longer being used, so convert the
+  // user's value into a value for contextHeaderBehavior. But let this value
+  // be overridden by the user's explicitly set value for contextHeaderBehavior.
+  const contextHeaderBehaviorUnderride = {
+    contextHeaderBehavior: projectConfig.ignoreContextHeader ? 'ignore' :
+                                                               'default'
+  };
+
   // Configuration order of precedence:
   // 1. Environment Variables
   // 2. Project Config
@@ -67,7 +76,8 @@ function initConfig(projectConfig: Forceable<Config>):
   // 4. Default Config (as specified in './config')
   const config = extend(
       true, {[FORCE_NEW]: projectConfig[FORCE_NEW]}, defaultConfig,
-      envSetConfig, projectConfig, envConfig, {plugins: {}});
+      envSetConfig, contextHeaderBehaviorUnderride, projectConfig, envConfig,
+      {plugins: {}});
   // The empty plugins object guarantees that plugins is a plain object,
   // even if it's explicitly specified in the config to be a non-object.
 
