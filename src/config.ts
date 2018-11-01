@@ -147,7 +147,8 @@ export interface Config {
    * are available:
    *   'default' -- Trace context will be propagated for incoming requests that
    *   contain the context header. A new trace will be created for requests
-   *   without trace context headers.
+   *   without trace context headers. All traces are still subject to local
+   *   sampling and url filter policies.
    *   'require' -- Same as default, but traces won't be created for requests
    *   without trace context headers. This should not be set for end user-facing
    *   services, as this header is usually set by other traced services rather
