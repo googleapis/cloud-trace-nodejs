@@ -58,13 +58,17 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
         // init is called when a new AsyncResource is created. We want code
         // that runs within the scope of this new AsyncResource to see the same
         // context as its "parent" AsyncResource. The criteria for the parent
-        // depends on the type of the AsyncResource.
+        // depends on the type of the AsyncResource. (If the parent doesn't have
+        // an associated context, don't do anything.)
         if (type === 'PROMISE') {
           // Opt not to use the trigger ID for Promises, as this causes context
           // confusion in applications using async/await.
           // Instead, use the ID of the AsyncResource in whose scope we are
           // currently running.
-          this.contexts[id] = this.contexts[this.ah.executionAsyncId()];
+          const currentId = this.ah.executionAsyncId();
+          if (this.contexts[currentId] !== undefined) {
+            this.contexts[id] = this.contexts[currentId];
+          }
         } else {
           // Use the trigger ID for any other type. In Node core, this is
           // usually equal the ID of the AsyncResource in whose scope we are
@@ -75,16 +79,30 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
           // AsyncResource API, because users of that API can specify their own
           // trigger ID. In this case, we choose to respect the user's
           // selection.
-          this.contexts[id] = this.contexts[triggerId];
+          if (this.contexts[triggerId] !== undefined) {
+            this.contexts[id] = this.contexts[triggerId];
+          }
         }
-        // Note that this function always assigns values in this.contexts to
-        // values under other keys, which may or may not be undefined. Consumers
-        // of the CLS API will get the sentinel (default) value if they query
-        // the current context when it is stored as undefined.
+        // Note that this function only assigns values in this.contexts to
+        // values under other keys; it never generates new context values.
+        // Consumers of the CLS API will get the sentinel (default) value if
+        // they query the current context when it is not stored in
+        // this.contexts.
       },
       destroy: (id: number) => {
         // destroy is called when the AsyncResource is no longer used, so also
         // delete its entry in the map.
+        delete this.contexts[id];
+      },
+      promiseResolve: (id: number) => {
+        // Promise async resources may not get their destroy hook entered for
+        // a long time, so we listen on promiseResolve hooks as well. If this
+        // event is emitted, the async scope of the Promise will not be entered
+        // again, so it is generally safe to delete its entry in the map. (There
+        // is a possibility that a future async resource will directly reference
+        // this Promise as its trigger parent -- in this case, it will have
+        // the wrong parent, but this is still better than a potential memory
+        // leak.)
         delete this.contexts[id];
       }
     });

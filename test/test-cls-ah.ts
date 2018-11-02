@@ -90,7 +90,7 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
     }, 'modified');
   });
 
-  describe('Using AsyncResource API', () => {
+  describe('Compatibility with AsyncResource API', () => {
     it('Supports context propagation without trigger ID', async () => {
       let res!: asyncHooksModule.AsyncResource;
       await cls.runWithContext(async () => {
@@ -114,5 +114,112 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
         assert.strictEqual(cls.getContext(), 'correct');
       });
     });
+  });
+
+  describe('Memory consumption with Promises', () => {
+    const createdPromiseIDs: number[] = [];
+    let hook: asyncHooksModule.AsyncHook;
+
+    before(() => {
+      hook = asyncHooks
+                 .createHook({
+                   init: (uid: number, type: string) => {
+                     if (type === 'PROMISE') {
+                       createdPromiseIDs.push(uid);
+                     }
+                   }
+                 })
+                 .enable();
+    });
+
+    after(() => {
+      hook.disable();
+    });
+
+    const testCases:
+        Array<{description: string; skip?: boolean; fn: () => {}}> = [
+          {description: 'a no-op async function', fn: async () => {}}, {
+            description: 'an async function that throws',
+            fn: async () => {
+              throw new Error();
+            }
+          },
+          {
+            description: 'an async function that awaits a rejected value',
+            fn: async () => {
+              await new Promise(reject => setImmediate(reject));
+            }
+          },
+          {
+            description: 'an async function with awaited values',
+            fn: async () => {
+              await 0;
+              await new Promise(resolve => resolve());
+              await new Promise(resolve => setImmediate(resolve));
+            }
+          },
+          {
+            description: 'an async function that awaits another async function',
+            fn: async () => {
+              await (async () => {
+                await Promise.resolve();
+              })();
+            }
+          },
+          {
+            description: 'a plain function that returns a Promise',
+            fn: () => Promise.resolve()
+          },
+          {
+            description:
+                'a plain function that returns a Promise that will reject',
+            fn: () => Promise.reject()
+          },
+          {
+            description: 'an async function with spread args',
+            // TODO(kjin): A possible bug in exists that causes an extra Promise
+            // async resource to be initialized when an async function with
+            // spread args is invoked. promiseResolve is not called for this
+            // async resource. Fix this bug and then remove this skip directive.
+            skip: true,
+            fn: async (...args: number[]) => args
+          }
+        ];
+
+    for (const testCase of testCases) {
+      const skipIfTestSpecifies = !!testCase.skip ? it.skip : it;
+      skipIfTestSpecifies(
+          `Doesn't retain stale references when running ${
+              testCase.description} in a context`,
+          async () => {
+            createdPromiseIDs.length = 0;
+            try {
+              // Run the test function in a new context.
+              await cls.runWithContext(testCase.fn, 'will-be-stale');
+            } catch (e) {
+              // Ignore errors; they aren't important for this test.
+            } finally {
+              // At this point, Promises created from invoking the test function
+              // should have had either their destroy or promiseResolve hook
+              // called. We observe this by iterating through the Promises that
+              // were created in this context, and checking to see that getting
+              // the current context in the scope of an async resource that
+              // references any of these Promises as its trigger parent doesn't
+              // yield the stale context value from before. The only way this is
+              // possible is if the CLS implementation internally kept a stale
+              // reference to a context-local value keyed on the ID of a PROMISE
+              // resource that should have been disposed.
+              const stalePromiseIDs = createdPromiseIDs.filter((id) => {
+                const a = new AsyncResource('test', id);
+                const result = a.runInAsyncScope(() => {
+                  return cls.getContext() === 'will-be-stale';
+                });
+                a.emitDestroy();
+                return result;
+              });
+              assert.strictEqual(stalePromiseIDs.length, 0);
+            }
+          });
+    }
   });
 });
