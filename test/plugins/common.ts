@@ -17,7 +17,7 @@
 
 import '../override-gcp-metadata';
 import { cls, TraceCLS } from '../../src/cls';
-import { StackdriverTracer } from '../../src/trace-api';
+import { StackdriverTracer, TraceContextHeaderBehavior } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import { SpanType } from '../../src/constants';
 import { TestLogger } from '../logger';
@@ -66,7 +66,7 @@ shimmer.wrap(trace, 'start', function(original) {
     testTraceAgent = new StackdriverTracer('test');
     testTraceAgent.enable({
       enhancedDatabaseReporting: false,
-      ignoreContextHeader: false,
+      contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
       rootSpanNameOverride: (name: string) => name,
       samplingRate: 0,
       ignoreUrls: [],

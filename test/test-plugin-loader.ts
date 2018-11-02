@@ -20,6 +20,7 @@ import * as hook from 'require-in-the-middle';
 import * as shimmer from 'shimmer';
 
 import {Logger} from '../src/logger';
+import {TraceContextHeaderBehavior} from '../src/trace-api';
 import {PluginLoader, PluginLoaderState, PluginWrapper} from '../src/trace-plugin-loader';
 
 import {TestLogger} from './logger';
@@ -46,7 +47,7 @@ describe('Trace Plugin Loader', () => {
               samplingRate: 0,
               ignoreUrls: [],
               enhancedDatabaseReporting: false,
-              ignoreContextHeader: false,
+              contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
               rootSpanNameOverride: (name: string) => name,
               projectId: '0',
               spansPerTraceSoftLimit: Infinity,

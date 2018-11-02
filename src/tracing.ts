@@ -32,7 +32,7 @@ export interface TopLevelConfig {
 
 // PluginLoaderConfig extends TraceAgentConfig
 export type NormalizedConfig =
-    (TraceWriterConfig&PluginLoaderConfig&TopLevelConfig)|{enabled: false};
+    ((TraceWriterConfig&PluginLoaderConfig&TopLevelConfig)|{enabled: false});
 
 /**
  * A class that represents automatic tracing.

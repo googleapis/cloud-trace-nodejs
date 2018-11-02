@@ -29,12 +29,33 @@ import {TracePolicy, TracePolicyConfig} from './tracing-policy';
 import * as util from './util';
 
 /**
+ * An enumeration of the different possible types of behavior when dealing with
+ * incoming trace context. Requests are still subject to local tracing policy.
+ */
+export enum TraceContextHeaderBehavior {
+  /**
+   * Respect the trace context header if it exists; otherwise, trace the
+   * request as a new trace.
+   */
+  DEFAULT = 'default',
+  /**
+   * Respect the trace context header if it exists; otherwise, treat the
+   * request as unsampled and don't trace it.
+   */
+  REQUIRE = 'require',
+  /**
+   * Trace every request as a new trace, even if trace context exists.
+   */
+  IGNORE = 'ignore'
+}
+
+/**
  * An interface describing configuration fields read by the StackdriverTracer
  * object. This includes fields read by the trace policy.
  */
 export interface StackdriverTracerConfig extends TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
-  ignoreContextHeader: boolean;
+  contextHeaderBehavior: TraceContextHeaderBehavior;
   rootSpanNameOverride: (path: string) => string;
   spansPerTraceSoftLimit: number;
   spansPerTraceHardLimit: number;
@@ -43,7 +64,7 @@ export interface StackdriverTracerConfig extends TracePolicyConfig {
 interface IncomingTraceContext {
   traceId?: string;
   spanId?: string;
-  options?: number;
+  options: number;
 }
 
 /**
@@ -151,20 +172,26 @@ export class StackdriverTracer implements Tracer {
     }
 
     // Attempt to read incoming trace context.
-    let incomingTraceContext: IncomingTraceContext = {};
-    if (isString(options.traceContext) && !this.config!.ignoreContextHeader) {
-      const parsedContext = util.parseContextFromHeader(options.traceContext);
-      if (parsedContext) {
-        incomingTraceContext = parsedContext;
-      }
+    const incomingTraceContext: IncomingTraceContext = {options: 1};
+    let parsedContext: util.TraceContext|null = null;
+    if (isString(options.traceContext) &&
+        this.config!.contextHeaderBehavior !==
+            TraceContextHeaderBehavior.IGNORE) {
+      parsedContext = util.parseContextFromHeader(options.traceContext);
+    }
+    if (parsedContext) {
+      Object.assign(incomingTraceContext, parsedContext);
+    } else if (
+        this.config!.contextHeaderBehavior ===
+        TraceContextHeaderBehavior.REQUIRE) {
+      incomingTraceContext.options = 0;
     }
 
     // Consult the trace policy.
     const locallyAllowed = this.policy!.shouldTrace(
         {timestamp: Date.now(), url: options.url || ''});
-    const remotelyAllowed = incomingTraceContext.options === undefined ||
-        !!(incomingTraceContext.options &
-           Constants.TRACE_OPTIONS_TRACE_ENABLED);
+    const remotelyAllowed = !!(
+        incomingTraceContext.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
 
     let rootContext: RootSpan&RootContext;
     // Don't create a root span if the trace policy disallows it.
