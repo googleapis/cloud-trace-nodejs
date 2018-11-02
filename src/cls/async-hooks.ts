@@ -55,19 +55,21 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
     // Create the hook.
     this.hook = this.ah.createHook({
       init: (id: number, type: string, triggerId: number, resource: {}) => {
-        const currentId = this.ah.executionAsyncId();
         // init is called when a new AsyncResource is created. We want code
         // that runs within the scope of this new AsyncResource to see the same
         // context as its "parent" AsyncResource. The criteria for the parent
         // depends on the type of the AsyncResource. (If the parent doesn't have
         // an associated context, don't do anything.)
-        if (type === 'PROMISE' && this.contexts[currentId] !== undefined) {
+        if (type === 'PROMISE') {
           // Opt not to use the trigger ID for Promises, as this causes context
           // confusion in applications using async/await.
           // Instead, use the ID of the AsyncResource in whose scope we are
           // currently running.
-          this.contexts[id] = this.contexts[currentId];
-        } else if (this.contexts[triggerId] !== undefined) {
+          const currentId = this.ah.executionAsyncId();
+          if (this.contexts[currentId] !== undefined) {
+            this.contexts[id] = this.contexts[currentId];
+          }
+        } else {
           // Use the trigger ID for any other type. In Node core, this is
           // usually equal the ID of the AsyncResource in whose scope we are
           // currently running (the "current" AsyncResource), or that of one
@@ -77,7 +79,9 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
           // AsyncResource API, because users of that API can specify their own
           // trigger ID. In this case, we choose to respect the user's
           // selection.
-          this.contexts[id] = this.contexts[triggerId];
+          if (this.contexts[triggerId] !== undefined) {
+            this.contexts[id] = this.contexts[triggerId];
+          }
         }
         // Note that this function only assigns values in this.contexts to
         // values under other keys; it never generates new context values.
