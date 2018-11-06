@@ -141,11 +141,10 @@ export class TraceWriter extends common.Service {
       }
       this.scheduleFlush();
     };
-    const [hostname, instanceId] = await Promise.all([
+    const [hostname, instanceId, _] = await Promise.all([
       this.getHostname(), this.getInstanceId(), getProjectIdAndScheduleFlush()
     ]);
-    // tslint:disable-next-line:no-any
-    const addDefaultLabel = (key: string, value: any) => {
+    const addDefaultLabel = (key: string, value: string|number) => {
       this.defaultLabels[key] = `${value}`;
     };
     this.defaultLabels = {};
@@ -189,7 +188,7 @@ export class TraceWriter extends common.Service {
     }
   }
 
-  private async getInstanceId(): Promise<string|null> {
+  private async getInstanceId(): Promise<number|null> {
     try {
       return await gcpMetadata.instance({property: 'id', headers});
     } catch (err) {
