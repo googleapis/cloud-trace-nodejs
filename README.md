@@ -34,7 +34,7 @@ Optionally, you can pass a [configuration object](src/config.ts) to the `start()
 
 ```js
 require('@google-cloud/trace-agent').start({
-  samplingRate: 500, // sample 500 traces per second, or at most 1 every 2 milliseconds.
+  samplingRate: 5, // sample 5 traces per second, or at most 1 every 200 milliseconds.
   ignoreUrls: [ /^\/ignore-me#/ ] // ignore the "/ignore-me" endpoint.
 });
 // ...
