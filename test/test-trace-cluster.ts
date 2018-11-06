@@ -63,16 +63,12 @@ describe('test-trace-cluster', () => {
       });
       const port = (server.address() as AddressInfo).port;
 
-      // TODO(kjin): This fails because context is incorrectly propagated to
-      // the request handler. See issue #659
-
-      // await trace.get().runInRootSpan({ name: 'outer' }, async span => {
-      //   assert.ok(span);
-      //   await axios.get(`http://localhost:${port}`);
-      //   span!.endSpan();
-      // });
       let recordedTime = Date.now();
-      await axios.get(`http://localhost:${port}`);
+      await testTraceModule.get().runInRootSpan({name: 'outer'}, async span => {
+        assert.ok(span);
+        await axios.get(`http://localhost:${port}`);
+        span!.endSpan();
+      });
       recordedTime = Date.now() - recordedTime;
       const serverSpan = testTraceModule.getOneSpan(isServerSpan);
       assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
