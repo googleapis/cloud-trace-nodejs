@@ -141,7 +141,9 @@ export class TraceWriter extends common.Service {
       }
       this.scheduleFlush();
     };
-    const [hostname, instanceId, _] = await Promise.all([
+    // getProjectIdAndScheduleFlush has no return value, so no need to capture
+    // it on the left-hand side.
+    const [hostname, instanceId] = await Promise.all([
       this.getHostname(), this.getInstanceId(), getProjectIdAndScheduleFlush()
     ]);
     const addDefaultLabel = (key: string, value: string|number) => {
