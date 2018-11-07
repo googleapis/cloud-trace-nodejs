@@ -28,7 +28,7 @@ import {wait} from './utils';
 
 describe('SpanData', () => {
   class CaptureSpanTraceWriter extends TraceWriter {
-    writeSpan(trace: Trace) {
+    writeTrace(trace: Trace) {
       assert.strictEqual(capturedTrace, null);
       capturedTrace = trace;
     }

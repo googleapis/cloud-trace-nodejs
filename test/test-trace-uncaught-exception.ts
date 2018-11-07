@@ -17,6 +17,7 @@
 import * as assert from 'assert';
 
 import {Logger} from '../src/logger';
+import {Trace} from '../src/trace';
 import {TraceWriterConfig} from '../src/trace-writer';
 
 import {TestLogger} from './logger';
@@ -52,10 +53,17 @@ describe('Trace Writer', () => {
       super(config, logger);
       // Don't run the risk of auto-flushing
       this.getConfig().bufferSize = Infinity;
-      this.queueTrace(autoQueuedTrace);
+      this.writeTrace(autoQueuedTrace);
     }
 
-    publish(json: string) {
+    writeTrace(trace: Trace) {
+      super.writeTrace(trace);
+      // Since flushBuffer doesn't call publish unless a trace is buffered,
+      // do that as well
+      this.buffer.push(JSON.stringify(trace));
+    }
+
+    protected publish(json: string) {
       capturedPublishedTraces = json;
     }
   }

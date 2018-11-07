@@ -183,7 +183,7 @@ function createChildSpan(cb, duration) {
 }
 
 function installNoopTraceWriter() {
-  traceWriter.get().writeSpan = function() {};
+  traceWriter.get().writeTrace = function() {};
 }
 
 function avoidTraceWriterAuth() {

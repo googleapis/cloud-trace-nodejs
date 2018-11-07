@@ -190,104 +190,90 @@ describe('Trace Writer', () => {
   });
 
   describe('initialization process', () => {
-    it('gets the project ID when none is passed in', (done) => {
+    it('gets the project ID when none is passed in', async () => {
       const writer = new TraceWriter(DEFAULT_CONFIG, logger);
       getProjectIdOverride = () => Promise.resolve('my-project');
-      writer.initialize(err => {
-        assert.ifError(err);
-        assert.strictEqual(writer.projectId, 'my-project');
-        writer.stop();
-        done();
-      });
+      await writer.initialize();
+      assert.strictEqual(writer.projectId, 'my-project');
+      writer.stop();
     });
 
-    it(`doesn't call Service#getProjectId if project ID is passed`, (done) => {
-      const writer = new TraceWriter(
-          Object.assign({projectId: 'my-project'}, DEFAULT_CONFIG), logger);
-      getProjectIdOverride = () => Promise.resolve('my-different-project');
-      writer.initialize(err => {
-        assert.ifError(err);
-        assert.strictEqual(writer.projectId, 'my-project');
-        writer.stop();
-        done();
-      });
-    });
+    it(`doesn't call Service#getProjectId if project ID is passed`,
+       async () => {
+         const writer = new TraceWriter(
+             Object.assign({projectId: 'my-project'}, DEFAULT_CONFIG), logger);
+         getProjectIdOverride = () => Promise.resolve('my-different-project');
+         await writer.initialize();
+         assert.strictEqual(writer.projectId, 'my-project');
+         writer.stop();
+       });
 
-    it(`errors when a project ID can't be determined`, (done) => {
+    it(`errors when a project ID can't be determined`, async () => {
       const writer = new TraceWriter(DEFAULT_CONFIG, logger);
       getProjectIdOverride = () => Promise.reject(new Error());
-      writer.initialize(err => {
-        assert.ok(err);
+      try {
+        await writer.initialize();
+      } catch (e) {
         // We can't know whether the metadata endpoints are called, so don't
         // check them.
         metadataScopes.cancel();
         writer.stop();
-        done();
-      });
+        return;
+      }
+      assert.fail('initialize should have thrown.');
     });
 
-    it('assigns default labels based on metadata', (done) => {
+    it('assigns default labels based on metadata', async () => {
       const writer = new TraceWriter(DEFAULT_CONFIG, logger);
       // Just for this scenario, use real metadata endpoints
       metadataScopes.cancel();
       nock.cleanAll();
       // Flakes suggest that nock.cleanAll works asynchronously, so continue
       // the test on a separate tick.
-      setImmediate(() => {
-        const gotInstanceId = instanceId(200, () => 'my-instance-id');
-        const gotHostname = hostname(200, () => 'my-hostname');
-        writer.initialize(err => {
-          assert.ifError(err);
-          assert.strictEqual(
-              writer.defaultLabels[TraceLabels.GCE_INSTANCE_ID],
-              'my-instance-id');
-          assert.strictEqual(
-              writer.defaultLabels[TraceLabels.GCE_HOSTNAME], 'my-hostname');
-          assert.strictEqual(
-              writer.defaultLabels[TraceLabels.GAE_MODULE_NAME], 'my-hostname');
-          gotInstanceId.done();
-          gotHostname.done();
-          writer.stop();
-          done();
-        });
-      });
+      await new Promise(res => setImmediate(res));
+      const gotInstanceId = instanceId(200, () => 'my-instance-id');
+      const gotHostname = hostname(200, () => 'my-hostname');
+      await writer.initialize();
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.GCE_INSTANCE_ID], 'my-instance-id');
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.GCE_HOSTNAME], 'my-hostname');
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.GAE_MODULE_NAME], 'my-hostname');
+      gotInstanceId.done();
+      gotHostname.done();
+      writer.stop();
     });
 
-    it('assigns values for default labels in lieu of metadata', (done) => {
+    it('assigns values for default labels in lieu of metadata', async () => {
       const writer = new TraceWriter(DEFAULT_CONFIG, logger);
-      writer.initialize(err => {
-        assert.ifError(err);
-        assert.ok(!writer.defaultLabels[TraceLabels.GCE_INSTANCE_ID]);
-        assert.strictEqual(
-            writer.defaultLabels[TraceLabels.GCE_HOSTNAME], os.hostname());
-        assert.strictEqual(
-            writer.defaultLabels[TraceLabels.GAE_MODULE_NAME], os.hostname());
-        writer.stop();
-        done();
-      });
+      await writer.initialize();
+      assert.ok(!writer.defaultLabels[TraceLabels.GCE_INSTANCE_ID]);
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.GCE_HOSTNAME], os.hostname());
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.GAE_MODULE_NAME], os.hostname());
+      writer.stop();
     });
 
-    it('assigns other well-known labels', (done) => {
+    it('assigns other well-known labels', async () => {
       const writer = new TraceWriter(
           Object.assign({}, DEFAULT_CONFIG, {
             serviceContext:
                 {service: 'foo', version: 'bar', minorVersion: 'baz'}
           }),
           logger);
-      writer.initialize(err => {
-        assert.ifError(err);
-        assert.strictEqual(
-            writer.defaultLabels[TraceLabels.AGENT_DATA],
-            `node ${pjson.name} v${pjson.version}`);
-        assert.strictEqual(
-            writer.defaultLabels[TraceLabels.GAE_MODULE_NAME], 'foo');
-        assert.strictEqual(
-            writer.defaultLabels[TraceLabels.GAE_MODULE_VERSION], 'bar');
-        assert.strictEqual(
-            writer.defaultLabels[TraceLabels.GAE_VERSION], 'foo:bar.baz');
-        writer.stop();
-        done();
-      });
+      await writer.initialize();
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.AGENT_DATA],
+          `node ${pjson.name} v${pjson.version}`);
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.GAE_MODULE_NAME], 'foo');
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.GAE_MODULE_VERSION], 'bar');
+      assert.strictEqual(
+          writer.defaultLabels[TraceLabels.GAE_VERSION], 'foo:bar.baz');
+      writer.stop();
     });
   });
 
@@ -323,87 +309,74 @@ describe('Trace Writer', () => {
       capturedRequestOptions = null;
     });
 
-    it('appends project ID and default labels to written traces', (done) => {
+    it('appends project ID and default labels to written traces', async () => {
       const writer = new MockedRequestTraceWriter(
           Object.assign({}, DEFAULT_CONFIG, {bufferSize: 1}), logger);
-      writer.initialize(async err => {
-        assert.ifError(err);
-        writer.writeSpan(createDummyTrace());
-        // TraceWriter#publish should be called soon
-        // (Promise task queue drain + immediate).
-        await wait(200);
-        const publishedTraces: Trace[] =
-            JSON.parse(capturedRequestOptions!.body).traces;
-        assert.strictEqual(publishedTraces.length, 1);
-        assert.strictEqual(publishedTraces[0].projectId, '0');
-        assert.ok(publishedTraces[0].spans[0].endTime);
-        Object.keys(writer.defaultLabels).forEach(key => {
-          assert.strictEqual(
-              publishedTraces[0].spans[0].labels[key],
-              writer.defaultLabels[key]);
-        });
-        writer.stop();
-        done();
+      await writer.initialize();
+      writer.writeTrace(createDummyTrace());
+      // TraceWriter#publish should be called soon
+      // (Promise task queue drain + immediate).
+      await wait(200);
+      const publishedTraces: Trace[] =
+          JSON.parse(capturedRequestOptions!.body).traces;
+      assert.strictEqual(publishedTraces.length, 1);
+      assert.strictEqual(publishedTraces[0].projectId, '0');
+      assert.ok(publishedTraces[0].spans[0].endTime);
+      Object.keys(writer.defaultLabels).forEach(key => {
+        assert.strictEqual(
+            publishedTraces[0].spans[0].labels[key], writer.defaultLabels[key]);
       });
+      writer.stop();
     });
 
     describe('condition for publishing traces', () => {
-      it('is satisfied when the buffer is full', (done) => {
+      it('is satisfied when the buffer is full', async () => {
         const NUM_SPANS = 5;
         const writer = new MockedRequestTraceWriter(
             Object.assign({}, DEFAULT_CONFIG, {bufferSize: NUM_SPANS}), logger);
-        writer.initialize(async err => {
-          assert.ifError(err);
-          writer.writeSpan(createDummyTrace());
-          await wait(200);
-          // Didn't publish yet
-          assert.ok(!capturedRequestOptions);
-          for (let i = 1; i < NUM_SPANS; i++) {
-            writer.writeSpan(createDummyTrace());
-          }
-          await wait(200);
-          const publishedTraces: Trace[] =
-              JSON.parse(capturedRequestOptions!.body).traces;
-          assert.strictEqual(publishedTraces.length, NUM_SPANS);
-          writer.stop();
-          done();
-        });
+        await writer.initialize();
+        writer.writeTrace(createDummyTrace());
+        await wait(200);
+        // Didn't publish yet
+        assert.ok(!capturedRequestOptions);
+        for (let i = 1; i < NUM_SPANS; i++) {
+          writer.writeTrace(createDummyTrace());
+        }
+        await wait(200);
+        const publishedTraces: Trace[] =
+            JSON.parse(capturedRequestOptions!.body).traces;
+        assert.strictEqual(publishedTraces.length, NUM_SPANS);
+        writer.stop();
       });
 
-      it('is satisfied periodically', (done) => {
+      it('is satisfied periodically', async () => {
         const writer = new MockedRequestTraceWriter(
             Object.assign({}, DEFAULT_CONFIG, {flushDelaySeconds: 1}), logger);
-        writer.initialize(async err => {
-          assert.ifError(err);
-          // Two rounds to ensure that it's periodical
-          for (let round = 0; round < 2; round++) {
-            writer.writeSpan(createDummyTrace());
-            await wait(500);
-            // Didn't publish yet
-            assert.ok(!capturedRequestOptions);
-            await wait(600);
-            assert.ok(capturedRequestOptions);
-            capturedRequestOptions = null;
-          }
-          writer.stop();
-          done();
-        });
+        await writer.initialize();
+        // Two rounds to ensure that it's periodical
+        for (let round = 0; round < 2; round++) {
+          writer.writeTrace(createDummyTrace());
+          await wait(500);
+          // Didn't publish yet
+          assert.ok(!capturedRequestOptions);
+          await wait(600);
+          assert.ok(capturedRequestOptions);
+          capturedRequestOptions = null;
+        }
+        writer.stop();
       });
     });
 
-    it('emits an error if there was an error publishing', (done) => {
+    it('emits an error if there was an error publishing', async () => {
       overrideRequestResponse = () => Promise.reject(new Error());
       const writer = new MockedRequestTraceWriter(
           Object.assign({}, DEFAULT_CONFIG, {bufferSize: 1}), logger);
-      writer.initialize(async err => {
-        assert.ifError(err);
-        writer.writeSpan(createDummyTrace());
-        await wait(200);
-        assert.strictEqual(
-            logger.getNumLogsWith('error', 'TraceWriter#publish'), 1);
-        writer.stop();
-        done();
-      });
+      await writer.initialize();
+      writer.writeTrace(createDummyTrace());
+      await wait(200);
+      assert.strictEqual(
+          logger.getNumLogsWith('error', 'TraceWriter#publish'), 1);
+      writer.stop();
     });
   });
 });

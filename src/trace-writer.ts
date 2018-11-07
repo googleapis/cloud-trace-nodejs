@@ -121,102 +121,88 @@ export class TraceWriter extends common.Service {
     this.isActive = false;
   }
 
-  initialize(cb: (err?: Error) => void): void {
-    // Ensure that cb is called only once.
-    let pendingOperations = 2;
-
-    // Schedule periodic flushing of the buffer, but only if we are able to get
-    // the project number (potentially from the network.)
-    this.getProjectId().then(
-        () => {
-          this.scheduleFlush();
-          if (--pendingOperations === 0) {
-            cb();
-          }
-        },
-        (err: Error) => {
-          this.logger.error(
-              'TraceWriter#initialize: Unable to acquire the project number',
-              'automatically from the GCP metadata service. Please provide a',
-              'valid project ID as environmental variable GCLOUD_PROJECT, or',
-              `as config.projectId passed to start. Original error: ${err}`);
-          cb(err);
-        });
-
-    this.getHostname((hostname) => {
-      this.getInstanceId((instanceId) => {
-        // tslint:disable-next-line:no-any
-        const addDefaultLabel = (key: string, value: any) => {
-          this.defaultLabels[key] = `${value}`;
-        };
-
-        this.defaultLabels = {};
-        addDefaultLabel(
-            TraceLabels.AGENT_DATA, `node ${pjson.name} v${pjson.version}`);
-        addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname);
-        if (instanceId) {
-          addDefaultLabel(TraceLabels.GCE_INSTANCE_ID, instanceId);
-        }
-        const moduleName = this.config.serviceContext.service || hostname;
-        addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName);
-
-        const moduleVersion = this.config.serviceContext.version;
-        if (moduleVersion) {
-          addDefaultLabel(TraceLabels.GAE_MODULE_VERSION, moduleVersion);
-          const minorVersion = this.config.serviceContext.minorVersion;
-          if (minorVersion) {
-            let versionLabel = '';
-            if (moduleName !== 'default') {
-              versionLabel = moduleName + ':';
-            }
-            versionLabel += moduleVersion + '.' + minorVersion;
-            addDefaultLabel(TraceLabels.GAE_VERSION, versionLabel);
-          }
-        }
-        Object.freeze(this.defaultLabels);
-        if (--pendingOperations === 0) {
-          cb();
-        }
-      });
-    });
-  }
-
   getConfig(): TraceWriterConfig {
     return this.config;
   }
 
-  getHostname(cb: (hostname: string) => void) {
-    gcpMetadata.instance({property: 'hostname', headers})
-        .then((data) => {
-          cb(data);  // hostname
-        })
-        .catch((err: AxiosError) => {
-          if (err.code !== 'ENOTFOUND') {
-            // We are running on GCP.
-            this.logger.warn(
-                'TraceWriter#getHostname: Encountered an error while',
-                'retrieving GCE hostname from the GCP metadata service',
-                `(metadata.google.internal): ${err}`);
-          }
-          cb(os.hostname());
-        });
+  async initialize(): Promise<void> {
+    // Schedule periodic flushing of the buffer, but only if we are able to get
+    // the project number (potentially from the network.)
+    const getProjectIdAndScheduleFlush = async () => {
+      try {
+        await this.getProjectId();
+      } catch (err) {
+        this.logger.error(
+            'TraceWriter#initialize: Unable to acquire the project number',
+            'automatically from the GCP metadata service. Please provide a',
+            'valid project ID as environmental variable GCLOUD_PROJECT, or',
+            `as config.projectId passed to start. Original error: ${err}`);
+        throw err;
+      }
+      this.scheduleFlush();
+    };
+    // getProjectIdAndScheduleFlush has no return value, so no need to capture
+    // it on the left-hand side.
+    const [hostname, instanceId] = await Promise.all([
+      this.getHostname(), this.getInstanceId(), getProjectIdAndScheduleFlush()
+    ]);
+    const addDefaultLabel = (key: string, value: string|number) => {
+      this.defaultLabels[key] = `${value}`;
+    };
+    this.defaultLabels = {};
+    addDefaultLabel(
+        TraceLabels.AGENT_DATA, `node ${pjson.name} v${pjson.version}`);
+    addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname);
+    if (instanceId) {
+      addDefaultLabel(TraceLabels.GCE_INSTANCE_ID, instanceId);
+    }
+    const moduleName = this.config.serviceContext.service || hostname;
+    addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName);
+
+    const moduleVersion = this.config.serviceContext.version;
+    if (moduleVersion) {
+      addDefaultLabel(TraceLabels.GAE_MODULE_VERSION, moduleVersion);
+      const minorVersion = this.config.serviceContext.minorVersion;
+      if (minorVersion) {
+        let versionLabel = '';
+        if (moduleName !== 'default') {
+          versionLabel = moduleName + ':';
+        }
+        versionLabel += moduleVersion + '.' + minorVersion;
+        addDefaultLabel(TraceLabels.GAE_VERSION, versionLabel);
+      }
+    }
+    Object.freeze(this.defaultLabels);
   }
 
-  getInstanceId(cb: (instanceId?: number) => void) {
-    gcpMetadata.instance({property: 'id', headers})
-        .then((data) => {
-          cb(data);  // instance ID
-        })
-        .catch((err: AxiosError) => {
-          if (err.code !== 'ENOTFOUND') {
-            // We are running on GCP.
-            this.logger.warn(
-                'TraceWriter#getInstanceId: Encountered an error while',
-                'retrieving GCE instance ID from the GCP metadata service',
-                `(metadata.google.internal): ${err}`);
-          }
-          cb();
-        });
+  private async getHostname(): Promise<string> {
+    try {
+      return await gcpMetadata.instance({property: 'hostname', headers});
+    } catch (err) {
+      if (err.code !== 'ENOTFOUND') {
+        // We are running on GCP.
+        this.logger.warn(
+            'TraceWriter#getHostname: Encountered an error while',
+            'retrieving GCE hostname from the GCP metadata service',
+            `(metadata.google.internal): ${err}`);
+      }
+      return os.hostname();
+    }
+  }
+
+  private async getInstanceId(): Promise<number|null> {
+    try {
+      return await gcpMetadata.instance({property: 'id', headers});
+    } catch (err) {
+      if (err.code !== 'ENOTFOUND') {
+        // We are running on GCP.
+        this.logger.warn(
+            'TraceWriter#getInstanceId: Encountered an error while',
+            'retrieving GCE instance ID from the GCP metadata service',
+            `(metadata.google.internal): ${err}`);
+      }
+      return null;
+    }
   }
 
   getProjectId() {
@@ -235,7 +221,7 @@ export class TraceWriter extends common.Service {
    *
    * @param trace The trace to be queued.
    */
-  writeSpan(trace: Trace) {
+  writeTrace(trace: Trace) {
     for (const span of trace.spans) {
       if (span.endTime === '') {
         span.endTime = (new Date()).toISOString();
@@ -248,29 +234,21 @@ export class TraceWriter extends common.Service {
         Object.assign(spanData.labels, this.defaultLabels);
       }
     });
-    this.queueTrace(trace);
-  }
 
-  /**
-   * Buffers the provided trace to be published.
-   *
-   * @private
-   * @param trace The trace to be queued.
-   */
-  queueTrace(trace: Trace) {
     const afterProjectId = (projectId: string) => {
       trace.projectId = projectId;
       this.buffer.push(JSON.stringify(trace));
       this.logger.info(
-          `TraceWriter#queueTrace: buffer.size = ${this.buffer.length}`);
+          `TraceWriter#writeTrace: buffer.size = ${this.buffer.length}`);
 
       // Publish soon if the buffer is getting big
       if (this.buffer.length >= this.config.bufferSize) {
         this.logger.info(
-            'TraceWriter#queueTrace: Trace buffer full, flushing.');
+            'TraceWriter#writeTrace: Trace buffer full, flushing.');
         setImmediate(() => this.flushBuffer());
       }
     };
+
     // TODO(kjin): We should always be following the 'else' path.
     // Any test that doesn't mock the Trace Writer will assume that traces get
     // buffered synchronously. We need to refactor those tests to remove that
@@ -290,12 +268,10 @@ export class TraceWriter extends common.Service {
   }
 
   /**
-   * Flushes the buffer of traces at a regular interval
-   * controlled by the flushDelay property of this
-   * TraceWriter's config.
-   * @private
+   * Flushes the buffer of traces at a regular interval controlled by the
+   * flushDelay property of this TraceWriter's config.
    */
-  scheduleFlush() {
+  private scheduleFlush() {
     this.logger.info('TraceWriter#scheduleFlush: Performing periodic flush.');
     this.flushBuffer();
 
@@ -314,9 +290,8 @@ export class TraceWriter extends common.Service {
 
   /**
    * Serializes the buffered traces to be published asynchronously.
-   * @private
    */
-  flushBuffer() {
+  private flushBuffer() {
     if (this.buffer.length === 0) {
       return;
     }
@@ -330,10 +305,9 @@ export class TraceWriter extends common.Service {
 
   /**
    * Publishes flushed traces to the network.
-   * @private
    * @param json The stringified json representation of the queued traces.
    */
-  publish(json: string) {
+  protected publish(json: string) {
     const hostname = 'cloudtrace.googleapis.com';
     const uri = `https://${hostname}/v1/projects/${this.projectId}/traces`;
     const options = {method: 'PATCH', uri, body: json, headers};

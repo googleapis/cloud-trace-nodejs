@@ -47,15 +47,15 @@ describe('Trace Interface', () => {
     return result;
   }
 
-  before((done) => {
+  before(() => {
     testTraceModule.setCLSForTest(TraceCLS);
     cls.create({mechanism: TraceCLSMechanism.ASYNC_LISTENER}, logger).enable();
-    traceWriter
+    return traceWriter
         .create(
             Object.assign(
                 {[FORCE_NEW]: true, projectId: 'project-1'}, defaultConfig),
             logger)
-        .initialize(done);
+        .initialize();
   });
 
   after(() => {

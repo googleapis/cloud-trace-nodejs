@@ -134,7 +134,7 @@ export class RootSpanData extends BaseSpanData implements types.RootSpan {
 
   endSpan(timestamp?: Date) {
     super.endSpan(timestamp);
-    traceWriter.get().writeSpan(this.trace);
+    traceWriter.get().writeTrace(this.trace);
   }
 }
 
