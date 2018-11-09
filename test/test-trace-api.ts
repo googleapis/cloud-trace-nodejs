@@ -275,6 +275,17 @@ describe('Trace Interface', () => {
           testTraceModule.getSpans(span => span.name === 'root3').length, 0);
     });
 
+    it('should trace if no option flags are provided', () => {
+      createTraceAgent({enhancedDatabaseReporting: false})
+          .runInRootSpan(
+              {name: 'root', traceContext: '123456/667'}, (rootSpan) => {
+                rootSpan.endSpan();
+              });
+      const foundTrace =
+          testTraceModule.getOneTrace(trace => trace.traceId === '123456');
+      assert.strictEqual(foundTrace.spans.length, 1);
+    });
+
     describe('getting response trace context', () => {
       it('should behave as expected', () => {
         const fakeTraceId = 'ffeeddccbbaa99887766554433221100';
