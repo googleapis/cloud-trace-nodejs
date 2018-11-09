@@ -180,6 +180,10 @@ export class StackdriverTracer implements Tracer {
       parsedContext = util.parseContextFromHeader(options.traceContext);
     }
     if (parsedContext) {
+      if (parsedContext.options === undefined) {
+        // If there are no incoming option flags, default to 0x1.
+        parsedContext.options = 1;
+      }
       Object.assign(incomingTraceContext, parsedContext);
     } else if (
         this.config!.contextHeaderBehavior ===
