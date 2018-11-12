@@ -32,8 +32,9 @@ export async function checkInstall() {
   });
   // Install the tgz file as a package, along with necessities.
   // @types/node version should match the current process version, but clamped
-  // at >=9 (because of http2 types).
-  const nodeTypesVersion = Math.max(getNodeMajorVersion(), 9);
+  // at >=9 (because of http2 types) and <11 (because Node 11 doesn't yet have
+  // type definitions).
+  const nodeTypesVersion = Math.min(Math.max(getNodeMajorVersion(), 9), 10);
   await spawnP('npm', ['install', 'typescript', `@types/node@${nodeTypesVersion}`, tgz[0]], {
     cwd: installDir
   });

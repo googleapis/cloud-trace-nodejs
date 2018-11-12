@@ -17,6 +17,7 @@
 // TODO(kjin): This file should supercede plugins/common.ts.
 
 import * as assert from 'assert';
+import * as semver from 'semver';
 
 import {SpanType} from '../src/constants';
 import {Span} from '../src/plugin-types';
@@ -79,4 +80,99 @@ export function plan(done: MochaDone, num: number): MochaDone {
       }
     }
   };
+}
+
+/**
+ * A type that describes the shape of ./fixtures/plugin-fixtures.json, which
+ * contains the data used by `npm run init-test-fixtures` to create all module
+ * fixtures for testing.
+ */
+type PluginFixtures = {
+  /**
+   * Each fixture (module, version) is represented as an entry here. The
+   * structure of the value is a rough subset of package.json, with extra fields
+   * denoted by leading underscores.
+   */
+  [fixture: string]: {
+    dependencies: {[moduleName: string]: string;};
+    engines?: {node?: string;};
+    /**
+     * If there are multiple top-level dependencies, specifies which one is the
+     * "main" one
+     */
+    _mainModule?: string;
+  }
+};
+
+/**
+ * An object containing helpful information and functions for a fixture.
+ */
+type FixtureHelper<T> = {
+  /** The module version encapsulated by the fixture. */
+  version: string;
+  /** When called, loads the fixture. */
+  require: () => T;
+  /**
+   * Returns it.skip if the selected module's version is in the version range
+   * given; returns it otherwise.
+   */
+  skip: (it: Mocha.TestFunction, versionRange: string) =>
+      Mocha.PendingTestFunction;
+};
+
+/**
+ * Given a module name, return a list of objects that are useful for importing
+ * test fixtures for that module.
+ * @param moduleName The module name to look up.
+ */
+function getFixturesForModule<T>(moduleName: string): Array<FixtureHelper<T>> {
+  const pluginFixtures: PluginFixtures = require('./fixtures/plugin-fixtures');
+  const keys = Object.keys(pluginFixtures);
+  return keys
+      .filter(key => {
+        const value = pluginFixtures[key];
+        let mainModule: string;
+        if (value._mainModule) {
+          mainModule = value._mainModule;
+        } else {
+          const dependencies = Object.keys(value.dependencies);
+          if (dependencies.length === 0) {
+            // No main module?
+            return;
+          }
+          mainModule = dependencies[0];
+        }
+        const moduleNameMatches = mainModule === moduleName;
+        const versionCompatible = !value.engines || !value.engines.node ||
+            semver.satisfies(process.version, value.engines.node);
+        return moduleNameMatches && versionCompatible;
+      })
+      .map(key => {
+        const version = require(`./plugins/fixtures/${key}/node_modules/${
+                                    moduleName}/package.json`)
+                            .version;
+        const getModule: () => T = () => require(`./plugins/fixtures/${key}`);
+        // Convenience function -- returns if.skip if the selected module's
+        // version is in the version range given.
+        const skip = (it: Mocha.TestFunction, versionRange: string) => {
+          return semver.satisfies(version, versionRange) ? it.skip : it;
+        };
+        return {version, require: getModule, skip};
+      });
+}
+
+/**
+ * Given a module name, calls describe() on each fixture matching that module
+ * name, with an appropriate description.
+ * @param moduleName The module name.
+ * @param describeFn A test suite to run.
+ */
+export function describeInterop<T>(
+    moduleName: string, describeFn: (fixture: FixtureHelper<T>) => void): void {
+  const fixtures = getFixturesForModule<T>(moduleName);
+  for (const fixture of fixtures) {
+    describe(
+        `Trace Agent interop w/ ${moduleName}@${fixture.version}`,
+        () => describeFn(fixture));
+  }
 }
