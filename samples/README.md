@@ -2,9 +2,12 @@
 
 This sample demonstrates using [Stackdriver Trace][trace] with Node.js.
 
+> Node 8+ is required for this sample.
+
 * [Setup](#setup)
 * [Running locally](#running-locally)
 * [Deploying to App Engine](#deploying-to-app-engine)
+* [Viewing Traces](#viewing-traces)
 
 ## Setup
 
@@ -14,33 +17,19 @@ Before you can run or deploy the sample, you need to do the following:
     running and deploying.
 1.  Install dependencies:
 
-    With `npm`:
-
         npm install
-
-    or with `yarn`:
-
-        yarn install
 
 ## Running locally
 
-With `npm`:
-
     npm start
-
-or with `yarn`:
-
-    yarn start
 
 ## Deploying to App Engine
 
-With `npm`:
+Ensure that you have an up-to-date `gcloud` (run `gcloud components update`), and then:
 
     npm run deploy
 
-or with `yarn`:
-
-    yarn run deploy
+## Viewing Traces
 
 Use the [Stackdriver Trace dashboard](https://console.cloud.google.com/traces/traces) to inspect recorded traces.
 

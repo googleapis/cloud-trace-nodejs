@@ -12,6 +12,5 @@
 # limitations under the License.
 
 # [START app_yaml]
-runtime: nodejs
-env: flex
+runtime: nodejs10
 # [END app_yaml]
