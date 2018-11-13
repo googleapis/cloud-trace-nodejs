@@ -203,5 +203,10 @@
     "dependencies": {
       "restify": "^6.0.1"
     }
+  },
+  "restify7": {
+    "dependencies": {
+      "restify": "^7.2.2"
+    }
   }
 }

@@ -85,4 +85,5 @@ export const Restify3 = makeRestifyClass(3, '<7');
 export const Restify4 = makeRestifyClass(4);
 export const Restify5 = makeRestifyClass(5);
 export const Restify6 = makeRestifyClass(6);
+export const Restify7 = makeRestifyClass(7);
 // tslint:enable:variable-name

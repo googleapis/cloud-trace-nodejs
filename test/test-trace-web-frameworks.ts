@@ -33,7 +33,7 @@ import {Hapi17} from './web-frameworks/hapi17';
 import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
 import {Koa1} from './web-frameworks/koa1';
 import {Koa2} from './web-frameworks/koa2';
-import {Restify3, Restify4, Restify5, Restify6} from './web-frameworks/restify';
+import {Restify3, Restify4, Restify5, Restify6, Restify7} from './web-frameworks/restify';
 
 // The type of a stack trace object after being parsed from a trace span's stack
 // frame label.
@@ -46,7 +46,7 @@ const ABORTED_SPAN_RETRIES = 3;
 // The list of web frameworks to test.
 const FRAMEWORKS: WebFrameworkConstructor[] = [
   Connect3, Express4, Hapi8, Hapi12, Hapi15, Hapi16, Hapi17, Koa1, Koa2,
-  Restify3, Restify4, Restify5, Restify6
+  Restify3, Restify4, Restify5, Restify6, Restify7
 ];
 
 /**
