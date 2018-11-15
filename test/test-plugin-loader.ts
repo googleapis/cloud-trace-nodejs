@@ -46,6 +46,7 @@ describe('Trace Plugin Loader', () => {
             {
               samplingRate: 0,
               ignoreUrls: [],
+              ignoreMethods: [],
               enhancedDatabaseReporting: false,
               contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
               rootSpanNameOverride: (name: string) => name,

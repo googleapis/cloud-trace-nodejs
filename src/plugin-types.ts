@@ -103,6 +103,8 @@ export interface SpanOptions {
 export interface RootSpanOptions extends SpanOptions {
   /* A URL associated with the root span, if applicable. */
   url?: string;
+  /* A Method associated with the root span, if applicable. */
+  method?: string;
   /**
    * The serialized form of an object that contains information about an
    * existing trace context, if it exists.
