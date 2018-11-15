@@ -58,7 +58,7 @@ describe('Web framework tracing', () => {
   before(() => {
     testTraceModule.setCLSForTest();
     testTraceModule.setPluginLoaderForTest();
-    testTraceModule.start({ignoreUrls: [/ignore-me/]});
+    testTraceModule.start({ignoreUrls: [/ignore-me/], ignoreMethods: ['HEAD']});
     axios = require('axios');
   });
 
@@ -199,6 +199,18 @@ describe('Web framework tracing', () => {
               assert.ok(testTraceModule.get().isRealSpan(span));
               // Hit endpoint that always gets ignored.
               await axios.get(`http://localhost:${port}/ignore-me`);
+              span!.endSpan();
+            });
+        assert.strictEqual(testTraceModule.getSpans().length, 2);
+        assert.strictEqual(testTraceModule.getSpans(isServerSpan).length, 0);
+      });
+
+      it('doesn\'t trace ignored methods', async () => {
+        await testTraceModule.get().runInRootSpan(
+            {name: 'outer'}, async (span) => {
+              assert.ok(testTraceModule.get().isRealSpan(span));
+              // Trace Agent has been configured to ignore HEAD requests.
+              await axios.head(`http://localhost:${port}/one-handler`);
               span!.endSpan();
             });
         assert.strictEqual(testTraceModule.getSpans().length, 2);

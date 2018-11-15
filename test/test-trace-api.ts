@@ -39,6 +39,7 @@ describe('Trace Interface', () => {
               rootSpanNameOverride: (name: string) => name,
               samplingRate: 0,
               ignoreUrls: [],
+              ignoreMethods: [],
               spansPerTraceSoftLimit: Infinity,
               spansPerTraceHardLimit: Infinity
             },

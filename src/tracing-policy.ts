@@ -1,3 +1,5 @@
+import {METHODS} from 'http';
+
 /**
  * Copyright 2015 Google Inc. All Rights Reserved.
  *
@@ -50,6 +52,24 @@ class URLFilter implements TracePolicyPredicate<string> {
   }
 }
 
+class HTTPMethodFilter implements TracePolicyPredicate<string> {
+  filterMethods: string[];
+
+  constructor(filterMethods: string[]) {
+    const lowercaseMethods = METHODS.map(m => m.toLowerCase());
+    this.filterMethods =
+        filterMethods.map(method => method.toLowerCase())
+            .filter(method => lowercaseMethods.indexOf(method) !== -1);
+  }
+
+  shouldTrace(method: string) {
+    if (!method) {
+      return true;
+    }
+    return this.filterMethods.indexOf(method.toLowerCase()) === -1;
+  }
+}
+
 /**
  * Options for constructing a TracePolicy instance.
  */
@@ -62,6 +82,10 @@ export interface TracePolicyConfig {
    * A field that controls a url-based filter.
    */
   ignoreUrls: Array<string|RegExp>;
+  /**
+   * A field that controls an HTTP method-based filter.
+   */
+  ignoreMethods: string[];
 }
 
 /**
@@ -70,6 +94,7 @@ export interface TracePolicyConfig {
 export class TracePolicy {
   private readonly sampler: TracePolicyPredicate<number>;
   private readonly urlFilter: TracePolicyPredicate<string>;
+  private readonly methodFilter: TracePolicyPredicate<string>;
 
   /**
    * Constructs a new TracePolicy instance.
@@ -88,6 +113,11 @@ export class TracePolicy {
     } else {
       this.urlFilter = new URLFilter(config.ignoreUrls);
     }
+    if (config.ignoreMethods.length === 0) {
+      this.methodFilter = {shouldTrace: () => true};
+    } else {
+      this.methodFilter = new HTTPMethodFilter(config.ignoreMethods);
+    }
   }
 
   /**
@@ -95,16 +125,20 @@ export class TracePolicy {
    * @param options Fields that help determine whether a trace should be
    *                created.
    */
-  shouldTrace(options: {timestamp: number, url: string}): boolean {
+  shouldTrace(options: {timestamp: number, url: string, method: string}):
+      boolean {
     return this.sampler.shouldTrace(options.timestamp) &&
-        this.urlFilter.shouldTrace(options.url);
+        this.urlFilter.shouldTrace(options.url) &&
+        this.methodFilter.shouldTrace(options.method);
   }
 
   static always(): TracePolicy {
-    return new TracePolicy({samplingRate: 0, ignoreUrls: []});
+    return new TracePolicy(
+        {samplingRate: 0, ignoreUrls: [], ignoreMethods: []});
   }
 
   static never(): TracePolicy {
-    return new TracePolicy({samplingRate: -1, ignoreUrls: []});
+    return new TracePolicy(
+        {samplingRate: -1, ignoreUrls: [], ignoreMethods: []});
   }
 }
