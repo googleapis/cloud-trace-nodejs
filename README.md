@@ -68,7 +68,7 @@ The agent will also automatically trace RPCs from the following modules:
 * [mongoose](https://www.npmjs.com/package/mongoose) (version 4 - 5)
 * [mysql](https://www.npmjs.com/package/mysql) (version ^2.9)
 * [mysql2](https://www.npmjs.com/package/mysql2) (version 1)
-* [pg](https://www.npmjs.com/package/mysql2) (versions 6 - 7)
+* [pg](https://www.npmjs.com/package/pg) (versions 6 - 7)
 * [redis](https://www.npmjs.com/package/redis) (versions 0.12 - 2)
 
 You can use the [Custom Tracing API](#custom-tracing-api) to trace other modules in your application.
