@@ -192,8 +192,11 @@ export class StackdriverTracer implements Tracer {
     }
 
     // Consult the trace policy.
-    const locallyAllowed = this.policy!.shouldTrace(
-        {timestamp: Date.now(), url: options.url || ''});
+    const locallyAllowed = this.policy!.shouldTrace({
+      timestamp: Date.now(),
+      url: options.url || '',
+      method: options.method || ''
+    });
     const remotelyAllowed = !!(
         incomingTraceContext.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
 

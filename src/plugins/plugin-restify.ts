@@ -51,6 +51,7 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
       // as a label later.
       name: req.path(),
       url: req.url,
+      method: req.method,
       traceContext: req.header(api.constants.TRACE_CONTEXT_HEADER_NAME),
       skipFrames: 1
     };

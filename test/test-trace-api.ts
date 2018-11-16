@@ -39,6 +39,7 @@ describe('Trace Interface', () => {
               rootSpanNameOverride: (name: string) => name,
               samplingRate: 0,
               ignoreUrls: [],
+              ignoreMethods: [],
               spansPerTraceSoftLimit: Infinity,
               spansPerTraceHardLimit: Infinity
             },
@@ -218,6 +219,18 @@ describe('Trace Interface', () => {
       });
       traceAPI.runInRootSpan(
           {name: 'root', url: 'alternativeUrl'}, (rootSpan) => {
+            assert.strictEqual(rootSpan.type, SpanType.ROOT);
+          });
+    });
+
+    it('should respect filter methods', () => {
+      const method = 'method';
+      const traceAPI = createTraceAgent({ignoreMethods: [method]});
+      traceAPI.runInRootSpan({name: 'root', method}, (rootSpan) => {
+        assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
+      });
+      traceAPI.runInRootSpan(
+          {name: 'root', method: 'alternativeMethod'}, (rootSpan) => {
             assert.strictEqual(rootSpan.type, SpanType.ROOT);
           });
     });
