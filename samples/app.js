@@ -26,7 +26,7 @@ const express = require('express');
 const got = require('got');
 
 const app = express();
-const DISCOVERY_URL = 'https://www.googleapis.com/discovery/v1/apis1';
+const DISCOVERY_URL = 'https://www.googleapis.com/discovery/v1/apis';
 
 // This incoming HTTP request should be captured by Trace
 app.get('/', async (req, res) => {
