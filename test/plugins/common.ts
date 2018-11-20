@@ -70,6 +70,7 @@ shimmer.wrap(trace, 'start', function(original) {
       rootSpanNameOverride: (name: string) => name,
       samplingRate: 0,
       ignoreUrls: [],
+      ignoreMethods: [],
       spansPerTraceSoftLimit: Infinity,
       spansPerTraceHardLimit: Infinity
     }, new TestLogger());

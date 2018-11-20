@@ -42,6 +42,7 @@ function createMiddleware(api: PluginTypes.Tracer):
     const options = {
       name: req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '',
       url: req.originalUrl,
+      method: req.method,
       traceContext:
           getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
       skipFrames: 1

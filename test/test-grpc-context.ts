@@ -15,7 +15,7 @@
  */
 'use strict';
 
-import * as semver from 'semver';
+import { describeInterop } from './utils';
 
 // Trace agent must be started out of the loop over gRPC versions,
 // because express can't be re-patched.
@@ -29,13 +29,6 @@ var common = require('./plugins/common'/*.js*/);
 var assert = require('assert');
 var express = require('./plugins/fixtures/express4');
 var http = require('http');
-
-var versions: { [key: string]: string } = {
-  grpc1_7: './plugins/fixtures/grpc1.7'
-};
-if (semver.satisfies(process.version, '<10')) {
-  versions.grpc1_6 = './plugins/fixtures/grpc1.6';
-}
 
 var grpcPort = 50051;
 var protoFile = __dirname + '/fixtures/test-grpc.proto';
@@ -61,12 +54,13 @@ function requestAndSendHTTPStatus(res, expectedReqs) {
   }, expectedReqs);
 }
 
-Object.keys(versions).forEach(function(version) {
-  var grpc;
-  var httpLogCount;
-  describe('express + ' + version, function() {
+describeInterop('grpc', fixture => {
+  describe('Context Propagation', () => {
+    var grpc;
+    var httpLogCount;
+
     before(function(done) {
-      grpc = require(versions[version]);
+      grpc = fixture.require();
 
       common.replaceWarnLogger(function(msg) {
         if (msg.indexOf('http') !== -1) {

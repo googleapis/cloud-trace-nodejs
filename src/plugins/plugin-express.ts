@@ -39,6 +39,7 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
       name: req.path,
       traceContext: req.get(api.constants.TRACE_CONTEXT_HEADER_NAME),
       url: req.originalUrl,
+      method: req.method,
       skipFrames: 1
     };
     api.runInRootSpan(options, (rootSpan) => {

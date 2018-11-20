@@ -38,6 +38,7 @@
 import * as assert from 'assert';
 
 import * as testTraceModule from '../trace';
+import {describeInterop} from '../utils';
 
 interface ApiCallSettings {
   merge: () => {
@@ -55,14 +56,14 @@ type GaxModule = {
       OuterApiCall<I, O>;
 };
 
-describe('Tracing with google-gax', () => {
+describeInterop<GaxModule>('google-gax', fixture => {
   let googleGax: GaxModule;
 
   before(() => {
     testTraceModule.setCLSForTest();
     testTraceModule.setPluginLoaderForTest();
     testTraceModule.start();
-    googleGax = require('./fixtures/google-gax0.16');
+    googleGax = fixture.require();
   });
 
   after(() => {

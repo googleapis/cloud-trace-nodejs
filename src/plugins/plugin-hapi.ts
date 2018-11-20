@@ -51,6 +51,7 @@ function instrument<T>(
   const options: PluginTypes.RootSpanOptions = {
     name: req.url ? (urlParse(req.url).pathname || '') : '',
     url: req.url,
+    method: req.method,
     traceContext: getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
     skipFrames: 2
   };
