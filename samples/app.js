@@ -15,11 +15,11 @@
 
 'use strict';
 
-// [START trace_app]
+// [START trace_setup_nodejs_app]
 if (process.env.NODE_ENV === 'production') {
-  // [START trace_setup_implicit]
+  // [START trace_setup_nodejs_implicit]
   require('@google-cloud/trace-agent').start();
-  // [END trace_setup_implicit]
+  // [END trace_setup_nodejs_implicit]
 }
 
 const express = require('express');
@@ -53,4 +53,4 @@ app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
   console.log('Press Ctrl+C to quit.');
 });
-// [END trace_app]
+// [END trace_setup_nodejs_app]
