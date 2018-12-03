@@ -135,6 +135,14 @@ export interface Config {
   ignoreUrls?: Array<string|RegExp>;
 
   /**
+   * Request methods that match any string in ignoreMethods will not be traced.
+   * matching is *not* case-sensitive (OPTIONS == options == OptiONs)
+   *
+   * No methods are ignored by default.
+   */
+  ignoreMethods?: string[];
+
+  /**
    * An upper bound on the number of traces to gather each second. If set to 0,
    * sampling is disabled and all traces are recorded. Sampling rates greater
    * than 1000 are not supported and will result in at most 1000 samples per
@@ -265,6 +273,7 @@ export const defaultConfig = {
   stackTraceLimit: 10,
   flushDelaySeconds: 30,
   ignoreUrls: ['/_ah/health'],
+  ignoreMethods: [],
   samplingRate: 10,
   contextHeaderBehavior: 'default',
   bufferSize: 1000,

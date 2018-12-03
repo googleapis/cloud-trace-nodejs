@@ -21,16 +21,42 @@ import {TracePolicy} from '../src/tracing-policy';
 describe('TracePolicy', () => {
   describe('URL Filtering', () => {
     it('should not allow filtered urls', () => {
-      const policy = new TracePolicy(
-          {samplingRate: 0, ignoreUrls: ['/_ah/health', /\/book*/]});
-      assert.ok(!policy.shouldTrace({timestamp: 0, url: '/_ah/health'}));
-      assert.ok(!policy.shouldTrace({timestamp: 0, url: '/book/test'}));
+      const policy = new TracePolicy({
+        samplingRate: 0,
+        ignoreUrls: ['/_ah/health', /\/book*/],
+        ignoreMethods: []
+      });
+      assert.ok(
+          !policy.shouldTrace({timestamp: 0, url: '/_ah/health', method: ''}));
+      assert.ok(
+          !policy.shouldTrace({timestamp: 0, url: '/book/test', method: ''}));
     });
 
     it('should allow non-filtered urls', () => {
-      const policy =
-          new TracePolicy({samplingRate: 0, ignoreUrls: ['/_ah/health']});
-      assert.ok(policy.shouldTrace({timestamp: 0, url: '/_ah/background'}));
+      const policy = new TracePolicy(
+          {samplingRate: 0, ignoreUrls: ['/_ah/health'], ignoreMethods: []});
+      assert.ok(policy.shouldTrace(
+          {timestamp: 0, url: '/_ah/background', method: ''}));
+    });
+  });
+
+  describe('Method Filtering', () => {
+    it('should not allow filtered methods', () => {
+      const policy = new TracePolicy({
+        samplingRate: 0,
+        ignoreUrls: [],
+        ignoreMethods: ['method1', 'method2']
+      });
+      assert.ok(
+          !policy.shouldTrace({timestamp: 0, url: '', method: 'method1'}));
+      assert.ok(
+          !policy.shouldTrace({timestamp: 0, url: '', method: 'method2'}));
+    });
+
+    it('should allow non-filtered methods', () => {
+      const policy = new TracePolicy(
+          {samplingRate: 0, ignoreUrls: [], ignoreMethods: ['method']});
+      assert.ok(policy.shouldTrace({timestamp: 0, url: '', method: 'method1'}));
     });
   });
 
@@ -39,14 +65,14 @@ describe('TracePolicy', () => {
     const testCases = [0.1, 0.5, 1, 10, 50, 150, 200, 500, 1000];
     for (const testCase of testCases) {
       it(`should throttle traces when samplingRate = ` + testCase, () => {
-        const policy =
-            new TracePolicy({samplingRate: testCase, ignoreUrls: []});
+        const policy = new TracePolicy(
+            {samplingRate: testCase, ignoreUrls: [], ignoreMethods: []});
         const expected = NUM_SECONDS * testCase;
         let actual = 0;
         const start = Date.now();
         for (let timestamp = start; timestamp < start + 1000 * NUM_SECONDS;
              timestamp++) {
-          if (policy.shouldTrace({timestamp, url: ''})) {
+          if (policy.shouldTrace({timestamp, url: '', method: ''})) {
             actual++;
           }
         }
@@ -60,11 +86,12 @@ describe('TracePolicy', () => {
     }
 
     it('should always sample when samplingRate = 0', () => {
-      const policy = new TracePolicy({samplingRate: 0, ignoreUrls: []});
+      const policy =
+          new TracePolicy({samplingRate: 0, ignoreUrls: [], ignoreMethods: []});
       let numSamples = 0;
       const start = Date.now();
       for (let timestamp = start; timestamp < start + 1000; timestamp++) {
-        if (policy.shouldTrace({timestamp, url: ''})) {
+        if (policy.shouldTrace({timestamp, url: '', method: ''})) {
           numSamples++;
         }
       }
@@ -72,11 +99,12 @@ describe('TracePolicy', () => {
     });
 
     it('should never sample when samplingRate < 0', () => {
-      const policy = new TracePolicy({samplingRate: -1, ignoreUrls: []});
+      const policy = new TracePolicy(
+          {samplingRate: -1, ignoreUrls: [], ignoreMethods: []});
       let numSamples = 0;
       const start = Date.now();
       for (let timestamp = start; timestamp < start + 1000; timestamp++) {
-        if (policy.shouldTrace({timestamp, url: ''})) {
+        if (policy.shouldTrace({timestamp, url: '', method: ''})) {
           numSamples++;
         }
       }

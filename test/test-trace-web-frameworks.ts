@@ -58,7 +58,7 @@ describe('Web framework tracing', () => {
   before(() => {
     testTraceModule.setCLSForTest();
     testTraceModule.setPluginLoaderForTest();
-    testTraceModule.start({ignoreUrls: [/ignore-me/]});
+    testTraceModule.start({ignoreUrls: [/ignore-me/], ignoreMethods: []});
     axios = require('axios');
   });
 

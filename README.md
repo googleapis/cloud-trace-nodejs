@@ -36,6 +36,7 @@ Optionally, you can pass a [configuration object](src/config.ts) to the `start()
 require('@google-cloud/trace-agent').start({
   samplingRate: 5, // sample 5 traces per second, or at most 1 every 200 milliseconds.
   ignoreUrls: [ /^\/ignore-me#/ ] // ignore the "/ignore-me" endpoint.
+  ignoreMethods: [ 'options' ] // ignore requests with OPTIONS method (case-insensitive).
 });
 // ...
 ```
@@ -72,7 +73,7 @@ The agent will also automatically trace RPCs from the following modules:
 * [mongoose](https://www.npmjs.com/package/mongoose) (version 4 - 5)
 * [mysql](https://www.npmjs.com/package/mysql) (version ^2.9)
 * [mysql2](https://www.npmjs.com/package/mysql2) (version 1)
-* [pg](https://www.npmjs.com/package/mysql2) (versions 6 - 7)
+* [pg](https://www.npmjs.com/package/pg) (versions 6 - 7)
 * [redis](https://www.npmjs.com/package/redis) (versions 0.12 - 2)
 
 You can use the [Custom Tracing API](#custom-tracing-api) to trace other modules in your application.
