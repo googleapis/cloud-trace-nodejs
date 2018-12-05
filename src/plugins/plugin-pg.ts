@@ -138,8 +138,6 @@ class PostgresPatchUtility {
     return this.tracer.wrap((err: Error|null, res?: pg_7.QueryResult) => {
       this.maybePopulateLabelsFromOutputs(span, err, res);
       span.endSpan();
-      // TS: Type cast is safe as we know that callback is a
-      // Function.
       callback(err, res);
     });
   }

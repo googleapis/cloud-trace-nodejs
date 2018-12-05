@@ -23,11 +23,6 @@ var assert = require('assert');
 
 var pgVersions = ['6', '7'];
 
-// process.on('unhandledRejection', (err) => {
-//   console.error(err);
-//   process.exit(1);
-// });
-
 pgVersions.forEach(pgVersion => {
   describe(`test-trace-pg (v${pgVersion})`, function() {
     var pg;
