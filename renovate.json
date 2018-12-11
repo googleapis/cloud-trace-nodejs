@@ -15,5 +15,6 @@
       "extends": "packages:linters",
       "groupName": "linters"
     }
-  ]
+  ],
+  "ignoreDeps": ["@types/protobufjs"]
 }
