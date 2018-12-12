@@ -47,7 +47,7 @@ if (semver.satisfies(process.version, '>=4')) {
           path: '/',
           handler: function (request, reply) {
             request.app.db.query('SELECT * FROM t', function(err, res) {
-              return reply(common.serverRes);
+              return reply('hello');
             });
           }
         });

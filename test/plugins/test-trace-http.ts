@@ -29,7 +29,7 @@ import {Constants} from '../../src/constants';
 import {SpanKind, TraceSpan} from '../../src/trace';
 import {parseContextFromHeader, TraceContext} from '../../src/util';
 import * as testTraceModule from '../trace';
-import {ASSERT_SPAN_TIME_TOLERANCE_MS, assertSpanDuration, DEFAULT_SPAN_DURATION} from '../utils';
+import {assertSpanDuration, DEFAULT_SPAN_DURATION} from '../utils';
 import {Express4} from '../web-frameworks/express';
 
 // This type describes (http|https).(get|request).
@@ -81,8 +81,10 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * A modification of the Express4 test server that uses HTTPS instead.
  */
 class Express4Secure extends Express4 {
-  static key = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'));
-  static cert = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
+  static key =
+      fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'key.pem'));
+  static cert =
+      fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'cert.pem'));
   private https: typeof httpsModule;
 
   constructor() {
@@ -250,9 +252,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
                  });
              const clientSpan =
                  testTraceModule.getOneSpan(span => span.kind === 'RPC_CLIENT');
-             assertSpanDuration(
-                 clientSpan,
-                 [recordedTime - ASSERT_SPAN_TIME_TOLERANCE_MS, recordedTime]);
+             assertSpanDuration(clientSpan, [recordedTime]);
            });
       }
     });

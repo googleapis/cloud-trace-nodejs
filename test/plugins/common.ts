@@ -53,7 +53,6 @@ if (semver.satisfies(process.version, '>=8')) {
 }
 
 var assert = require('assert');
-var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var request = require('request');
@@ -78,12 +77,7 @@ shimmer.wrap(trace, 'start', function(original) {
   };
 });
 
-var FORGIVENESS = 0.2;
-var SERVER_WAIT = 200;
 var SERVER_PORT = 9042;
-var SERVER_RES = '1729';
-var SERVER_KEY = fs.readFileSync(path.join(__dirname, 'fixtures', 'key.pem'));
-var SERVER_CERT = fs.readFileSync(path.join(__dirname, 'fixtures', 'cert.pem'));
 
 function replaceFunction(target, prop, fn) {
   var old = target[prop];
@@ -124,34 +118,6 @@ function getMatchingSpans(predicate) {
     });
   });
   return list;
-}
-
-function assertSpanDurationCorrect(span, expectedDuration) {
-  var duration = Date.parse(span.endTime) - Date.parse(span.startTime);
-  assert(duration > expectedDuration * (1 - FORGIVENESS),
-      'Duration was ' + duration + ', expected ' + expectedDuration);
-  assert(duration < expectedDuration * (1 + FORGIVENESS),
-      'Duration was ' + duration + ', expected ' + expectedDuration);
-}
-
-/**
- * Verifies that the duration of the span captured
- * by the tracer matching the predicate `predicate`
- * is greater than the expected duration but within the
- * forgiveness factor of it.
- *
- * If no span predicate is supplied, it is assumed that
- * exactly one span has been recorded and the predicate
- * (t -> True) will be used.
- *
- * @param {function(?)=} predicate
- */
-function assertDurationCorrect(expectedDuration, predicate) {
-  // We assume that the tests never care about top level transactions created
-  // by the harness itself
-  predicate = predicate || function(span) { return span.name !== 'outer'; };
-  var span = getMatchingSpan(predicate);
-  assertSpanDurationCorrect(span, expectedDuration);
 }
 
 function runInTransaction(fn) {
@@ -196,8 +162,6 @@ function hasContext() {
 }
 
 module.exports = {
-  assertSpanDurationCorrect: assertSpanDurationCorrect,
-  assertDurationCorrect: assertDurationCorrect,
   cleanTraces: cleanTraces,
   getMatchingSpan: getMatchingSpan,
   getMatchingSpans: getMatchingSpans,
@@ -209,11 +173,7 @@ module.exports = {
   hasContext: hasContext,
   installNoopTraceWriter: installNoopTraceWriter,
   avoidTraceWriterAuth: avoidTraceWriterAuth,
-  serverWait: SERVER_WAIT,
-  serverRes: SERVER_RES,
   serverPort: SERVER_PORT,
-  serverKey: SERVER_KEY,
-  serverCert: SERVER_CERT,
 };
 
 export default {};
