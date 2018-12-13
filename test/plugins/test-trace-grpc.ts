@@ -21,7 +21,7 @@ import { TraceLabels } from '../../src/trace-labels';
 import * as TracingPolicy from '../../src/tracing-policy';
 import * as util from '../../src/util';
 import * as assert from 'assert';
-import { asRootSpanData, describeInterop } from '../utils';
+import { asRootSpanData, describeInterop, DEFAULT_SPAN_DURATION, assertSpanDuration } from '../utils';
 import { Span } from '../../src/plugin-types';
 import { FORCE_NEW } from '../../src/util';
 
@@ -71,16 +71,16 @@ function startServer(proto, grpc, agent, metadata, trailing_metadata) {
       if (call.request.n === EMIT_ERROR) {
         common.createChildSpan(function () {
           cb(new Error('test'));
-        }, common.serverWait);
+        }, DEFAULT_SPAN_DURATION);
       } else if (call.request.n === SEND_METADATA) {
         call.sendMetadata(metadata);
         setTimeout(function() {
           cb(null, {n: call.request.n}, trailing_metadata);
-        }, common.serverWait);
+        }, DEFAULT_SPAN_DURATION);
       } else {
         common.createChildSpan(function () {
           cb(null, {n: call.request.n});
-        }, common.serverWait);
+        }, DEFAULT_SPAN_DURATION);
       }
     },
     testClientStream: function(call, cb) {
@@ -96,7 +96,7 @@ function startServer(proto, grpc, agent, metadata, trailing_metadata) {
         if (!stopChildSpan) {
           stopChildSpan = common.createChildSpan(function () {
             triggerCb();
-          }, common.serverWait);
+          }, DEFAULT_SPAN_DURATION);
         }
         sum += data.n;
       });
@@ -121,7 +121,7 @@ function startServer(proto, grpc, agent, metadata, trailing_metadata) {
       if (stream.request.n === EMIT_ERROR) {
         common.createChildSpan(function () {
           stream.emit('error', new Error('test'));
-        }, common.serverWait);
+        }, DEFAULT_SPAN_DURATION);
       } else {
         if (stream.request.n === SEND_METADATA) {
           stream.sendMetadata(metadata);
@@ -131,7 +131,7 @@ function startServer(proto, grpc, agent, metadata, trailing_metadata) {
         }
         common.createChildSpan(function () {
           stream.end();
-        }, common.serverWait);
+        }, DEFAULT_SPAN_DURATION);
       }
     },
     testBidiStream: function(stream) {
@@ -140,12 +140,12 @@ function startServer(proto, grpc, agent, metadata, trailing_metadata) {
       var stopChildSpan;
       var t = setTimeout(function() {
         stream.end();
-      }, common.serverWait);
+      }, DEFAULT_SPAN_DURATION);
       stream.on('data', function(data) {
         // Creating child span in stream event handler to ensure that
         // context is propagated correctly
         if (!stopChildSpan) {
-          stopChildSpan = common.createChildSpan(null, common.serverWait);
+          stopChildSpan = common.createChildSpan(null, DEFAULT_SPAN_DURATION);
         }
         sum += data.n;
         stream.write({n: data.n});
@@ -159,7 +159,7 @@ function startServer(proto, grpc, agent, metadata, trailing_metadata) {
               stopChildSpan();
             }
             stream.emit('error', new Error('test'));
-          }, common.serverWait);
+          }, DEFAULT_SPAN_DURATION);
         } else if (sum === SEND_METADATA) {
           stream.sendMetadata(metadata);
         }
@@ -262,8 +262,6 @@ function callBidi(client, grpc, metadata, cb) {
   });
 }
 
-// TODO(kjin): grpc currently doesn't work with Node 11. When it does, remove
-// the "engines" restriction for gRPC in plugin-fixtures.json.
 describeInterop('grpc', fixture => {
   var agent;
   var grpc;
@@ -331,7 +329,8 @@ describeInterop('grpc', fixture => {
         var assertTraceProperties = function(predicate) {
           var trace = common.getMatchingSpan(predicate);
           assert(trace);
-          common.assertDurationCorrect(Date.now() - start, predicate);
+          assertSpanDuration(common.getMatchingSpan(predicate),
+            [DEFAULT_SPAN_DURATION, Date.now() - start]);
           assert.strictEqual(trace.labels.argument, '{"n":42}');
           assert.strictEqual(trace.labels.result, '{"n":42}');
         };
@@ -352,7 +351,8 @@ describeInterop('grpc', fixture => {
         var assertTraceProperties = function(predicate) {
           var trace = common.getMatchingSpan(predicate);
           assert(trace);
-          common.assertDurationCorrect(Date.now() - start, predicate);
+          assertSpanDuration(common.getMatchingSpan(predicate),
+            [DEFAULT_SPAN_DURATION, Date.now() - start]);
           assert.strictEqual(trace.labels.result, '{"n":45}');
         };
         assertTraceProperties(grpcClientPredicate);
@@ -372,7 +372,8 @@ describeInterop('grpc', fixture => {
         var assertTraceProperties = function(predicate) {
           var trace = common.getMatchingSpan(predicate);
           assert(trace);
-          common.assertDurationCorrect(Date.now() - start, predicate);
+          assertSpanDuration(common.getMatchingSpan(predicate),
+            [DEFAULT_SPAN_DURATION, Date.now() - start]);
           assert.strictEqual(trace.labels.argument, '{"n":42}');
           return trace;
         };
@@ -395,7 +396,8 @@ describeInterop('grpc', fixture => {
         var assertTraceProperties = function(predicate) {
           var trace = common.getMatchingSpan(predicate);
           assert(trace);
-          common.assertDurationCorrect(Date.now() - start, predicate);
+          assertSpanDuration(common.getMatchingSpan(predicate),
+            [DEFAULT_SPAN_DURATION, Date.now() - start]);
           return trace;
         };
         var clientTrace = assertTraceProperties(grpcClientPredicate);
@@ -512,7 +514,7 @@ describeInterop('grpc', fixture => {
     var next = done;
     // Calling queueCallTogether builds a call chain, with each link
     // testing interference between two gRPC calls spaced apart by half
-    // of common.serverWait (to interleave them).
+    // of DEFAULT_SPAN_DURATION (to interleave them).
     // This chain is kicked off with an initial call to next().
     var queueCallTogether = function(first, second) {
       var prevNext = next;
@@ -527,12 +529,14 @@ describeInterop('grpc', fixture => {
             }
             if (++num === 2) {
               endTransaction();
-              var traces = common.getMatchingSpans(grpcServerOuterPredicate);
-              assert(traces.length === 2);
-              assert(traces[0].spanId !== traces[1].spanId);
-              assert(traces[0].startTime !== traces[1].startTime);
-              common.assertSpanDurationCorrect(traces[0], endFirst - startFirst);
-              common.assertSpanDurationCorrect(traces[1], Date.now() - startSecond);
+              var spans = common.getMatchingSpans(grpcServerOuterPredicate);
+              assert(spans.length === 2);
+              assert(spans[0].spanId !== spans[1].spanId);
+              assert(spans[0].startTime !== spans[1].startTime);
+              assertSpanDuration(spans[0],
+                [DEFAULT_SPAN_DURATION, endFirst - startFirst]);
+              assertSpanDuration(spans[1],
+                [DEFAULT_SPAN_DURATION, Date.now() - startSecond]);
               setImmediate(prevNext);
             }
           };
@@ -541,7 +545,7 @@ describeInterop('grpc', fixture => {
           setTimeout(function() {
             startSecond = Date.now();
             second(callback);
-          }, common.serverWait / 2);
+          }, DEFAULT_SPAN_DURATION / 2);
         });
       };
     };
@@ -676,7 +680,8 @@ describeInterop('grpc', fixture => {
         var assertTraceProperties = function(predicate) {
           var trace = common.getMatchingSpan(predicate);
           assert(trace);
-          common.assertDurationCorrect(Date.now() - start, predicate);
+          assertSpanDuration(common.getMatchingSpan(predicate),
+            [DEFAULT_SPAN_DURATION, Date.now() - start]);
           assert.ok(metadataRegExp.test(trace.labels.metadata));
         };
         assertTraceProperties(grpcClientPredicate);
@@ -699,7 +704,8 @@ describeInterop('grpc', fixture => {
         var assertTraceProperties = function(predicate) {
           var trace = common.getMatchingSpan(predicate);
           assert(trace);
-          common.assertDurationCorrect(Date.now() - start, predicate);
+          assertSpanDuration(common.getMatchingSpan(predicate),
+            [DEFAULT_SPAN_DURATION, Date.now() - start]);
           assert.ok(metadataRegExp.test(trace.labels.metadata));
         };
         assertTraceProperties(grpcClientPredicate);

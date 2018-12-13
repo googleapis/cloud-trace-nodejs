@@ -17,8 +17,11 @@
 // TODO(kjin): This file should supercede plugins/common.ts.
 
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as semver from 'semver';
 
+import {cls} from '../src/cls';
 import {SpanType} from '../src/constants';
 import {Span} from '../src/plugin-types';
 import {ChildSpanData, RootSpanData} from '../src/span-data';
@@ -31,7 +34,10 @@ import {TraceSpan} from '../src/trace';
 // The duration to give a span when it's important
 export const DEFAULT_SPAN_DURATION = 200;
 // The acceptable window of variation in span duration
-export const ASSERT_SPAN_TIME_TOLERANCE_MS = 40;
+export const ASSERT_SPAN_TIME_TOLERANCE_MS = 5;
+
+export const SERVER_KEY = fs.readFileSync(`${__dirname}/fixtures/key.pem`);
+export const SERVER_CERT = fs.readFileSync(`${__dirname}/fixtures/cert.pem`);
 
 /**
  * Helper Functions
@@ -47,13 +53,17 @@ export function wait(ms: number) {
 }
 
 // Assert that the given span's duration is within the given range.
-export function assertSpanDuration(span: TraceSpan, bounds: [number, number]) {
+export function assertSpanDuration(span: TraceSpan, bounds: [number, number?]) {
   const spanDuration = Date.parse(span.endTime) - Date.parse(span.startTime);
+  const lowerBound = bounds[0];
+  const upperBound = bounds[1] !== undefined ? bounds[1] : bounds[0];
   assert.ok(
-      spanDuration >= bounds[0] && spanDuration <= bounds[1],
+      spanDuration >= lowerBound - ASSERT_SPAN_TIME_TOLERANCE_MS &&
+          spanDuration <= upperBound + ASSERT_SPAN_TIME_TOLERANCE_MS,
       `Span duration of ${
           spanDuration} ms is not in the acceptable expected range of [${
-          bounds[0]}, ${bounds[1]}] ms`);
+          bounds[0]}, ${bounds[1]}] ms (w/ ${
+          ASSERT_SPAN_TIME_TOLERANCE_MS} ms leniency)`);
 }
 
 export function asRootSpanData(arg: Span): RootSpanData {
@@ -64,6 +74,10 @@ export function asRootSpanData(arg: Span): RootSpanData {
 export function asChildSpanData(arg: Span): ChildSpanData {
   assert.strictEqual(arg.type, SpanType.CHILD);
   return arg as ChildSpanData;
+}
+
+export function hasContext() {
+  return cls.get().getContext().type !== SpanType.UNCORRELATED;
 }
 
 export function plan(done: MochaDone, num: number): MochaDone {
