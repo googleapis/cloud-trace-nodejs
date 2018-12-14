@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { BUILD_DIRECTORY, globP, statP, ncpP, spawnP, readFileP, writeFileP, mkdirP } from './utils';
+import { BUILD_DIRECTORY, statP, ncpP, spawnP, readFileP, writeFileP, mkdirP } from './utils';
 import { readdir } from 'fs';
 import * as pify from 'pify';
 import * as semver from 'semver';
@@ -8,7 +8,7 @@ const readdirP: (path: string) => Promise<string[]> = pify(readdir);
 
 export async function initTestFixtures(installPlugins: boolean) {
   // Copy fixtures to build directory
-  const fixtureDirectories = await globP('./test/**/fixtures');
+  const fixtureDirectories = ['./test/fixtures'];
   await Promise.all(fixtureDirectories.map(async (fixtureDirectory) => {
     const newLocation = `${BUILD_DIRECTORY}/${path.relative('.', fixtureDirectory)}`;
     await ncpP(fixtureDirectory, newLocation);
@@ -20,6 +20,12 @@ export async function initTestFixtures(installPlugins: boolean) {
 
   // Run `npm install` for package fixtures
   const packageFixtures = JSON.parse(await readFileP('./test/fixtures/plugin-fixtures.json', 'utf8') as string);
+  await mkdirP('./build/test/plugins/fixtures').catch((e: { errno?: number }) => {
+    // -17: EEXIST (it's OK if this directory already exists)
+    if (e.errno !== -17) {
+      throw e;
+    }
+  });
   for (const packageName in packageFixtures) {
     const packageDirectory = `./build/test/plugins/fixtures/${packageName}`;
     let fixtureExists = true;
