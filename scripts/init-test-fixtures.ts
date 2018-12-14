@@ -20,9 +20,9 @@ export async function initTestFixtures(installPlugins: boolean) {
 
   // Run `npm install` for package fixtures
   const packageFixtures = JSON.parse(await readFileP('./test/fixtures/plugin-fixtures.json', 'utf8') as string);
-  await mkdirP('./build/test/plugins/fixtures').catch((e: { errno?: number }) => {
-    // -17: EEXIST (it's OK if this directory already exists)
-    if (e.errno !== -17) {
+  await mkdirP('./build/test/plugins/fixtures').catch((e: { code?: string }) => {
+    // it's OK if this directory already exists
+    if (e.code !== 'EEXIST') {
       throw e;
     }
   });
