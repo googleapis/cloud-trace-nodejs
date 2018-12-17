@@ -61,7 +61,7 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
       const url = `${req.protocol}://${req.headers.host}${req.originalUrl}`;
       rootSpan.addLabel(labels.HTTP_METHOD_LABEL_KEY, req.method);
       rootSpan.addLabel(labels.HTTP_URL_LABEL_KEY, url);
-      rootSpan.addLabel(labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+      rootSpan.addLabel(labels.HTTP_SOURCE_IP, req.ip);
 
       // wrap end
       const originalEnd = res.end;
