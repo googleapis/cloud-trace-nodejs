@@ -22,6 +22,7 @@
     "test/plugins/test-trace-google-gax.ts",
     "test/plugins/test-trace-http.ts",
     "test/plugins/test-trace-http2.ts",
+    "test/plugins/test-trace-knex.ts",
     "test/logger.ts",
     "test/nocks.ts",
     "test/test-cls.ts",

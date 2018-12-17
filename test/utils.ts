@@ -124,6 +124,8 @@ type PluginFixtures = {
 type FixtureHelper<T> = {
   /** The module version encapsulated by the fixture. */
   version: string;
+  /** The parsed module version. */
+  parsedVersion: {major: number, minor: number, patch: number};
   /** When called, loads the fixture. */
   require: () => T;
   /**
@@ -164,14 +166,15 @@ function getFixturesForModule<T>(moduleName: string): Array<FixtureHelper<T>> {
       .map(key => {
         const version = require(`./plugins/fixtures/${key}/node_modules/${
                                     moduleName}/package.json`)
-                            .version;
+                            .version as string;
+        const parsedVersion = semver.parse(version)!;
         const getModule: () => T = () => require(`./plugins/fixtures/${key}`);
         // Convenience function -- returns if.skip if the selected module's
         // version is in the version range given.
         const skip = (it: Mocha.TestFunction, versionRange: string) => {
           return semver.satisfies(version, versionRange) ? it.skip : it;
         };
-        return {version, require: getModule, skip};
+        return {version, parsedVersion, require: getModule, skip};
       });
 }
 

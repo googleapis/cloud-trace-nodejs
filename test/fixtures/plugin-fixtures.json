@@ -95,6 +95,20 @@
     },
     "_mainModule": "knex"
   },
+  "knex0.14": {
+    "dependencies": {
+      "knex": "^0.14.0",
+      "mysql": "^2.13.0"
+    },
+    "_mainModule": "knex"
+  },
+  "knex0.16": {
+    "dependencies": {
+      "knex": "^0.16.0",
+      "mysql": "^2.13.0"
+    },
+    "_mainModule": "knex"
+  },
   "koa1": {
     "dependencies": {
       "koa": "^1.1.2"
