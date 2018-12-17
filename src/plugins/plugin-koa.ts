@@ -86,7 +86,7 @@ function startSpanForRequest<T>(
     // middlewear runs.
     root.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
     root.addLabel(api.labels.HTTP_URL_LABEL_KEY, url);
-    root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+    root.addLabel(api.labels.HTTP_SOURCE_IP, req.ip);
 
     // wrap end
     res.end = function(this: ServerResponse) {
