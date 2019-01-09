@@ -17,11 +17,12 @@
 import * as assert from 'assert';
 import * as path from 'path';
 
+import {OpenCensusPropagation} from '../src/config';
 import {PluginLoader, PluginLoaderState, PluginWrapper} from '../src/trace-plugin-loader';
 import {alwaysTrace} from '../src/tracing-policy';
 
 import {TestLogger} from './logger';
-import {getBaseConfig} from './utils';
+import {getBaseConfig, NoPropagation} from './utils';
 
 export interface SimplePluginLoaderConfig {
   // An object which contains paths to files that should be loaded as plugins
@@ -41,7 +42,7 @@ describe('Trace Plugin Loader', () => {
   const makePluginLoader = (config: SimplePluginLoaderConfig) => {
     return new PluginLoader(
         Object.assign({tracerConfig: getBaseConfig()}, config),
-        {tracePolicy: alwaysTrace(), logger});
+        {tracePolicy: alwaysTrace(), logger, propagation: new NoPropagation()});
   };
 
   before(() => {

@@ -142,9 +142,11 @@ function makeRequestTrace(
       // headers.
       options = Object.assign({}, options) as ClientRequestArgs;
       options.headers = Object.assign({}, options.headers);
+      const headers = options.headers;
       // Inject the trace context header.
-      options.headers[api.constants.TRACE_CONTEXT_HEADER_NAME] =
-          span.getTraceContext();
+      api.propagation.inject((key, value) => {
+        headers[key] = value;
+      }, span.getTraceContext());
     }
 
     const req = request(options, (res) => {
@@ -188,19 +190,20 @@ function makeRequestTrace(
     // Inject the trace context header, but only if it wasn't already injected
     // earlier.
     if (!traceHeaderPreinjected) {
-      try {
-        req.setHeader(
-            api.constants.TRACE_CONTEXT_HEADER_NAME, span.getTraceContext());
-      } catch (e) {
-        if (e.code === ERR_HTTP_HEADERS_SENT ||
-            e.message === ERR_HTTP_HEADERS_SENT_MSG) {
-          // Swallow the error.
-          // This would happen in the pathological case where the Expect header
-          // exists but is not detected by hasExpectHeader.
-        } else {
-          throw e;
+      api.propagation.inject((key, value) => {
+        try {
+          req.setHeader(key, value);
+        } catch (e) {
+          if (e.code === ERR_HTTP_HEADERS_SENT ||
+              e.message === ERR_HTTP_HEADERS_SENT_MSG) {
+            // Swallow the error.
+            // This would happen in the pathological case where the Expect
+            // header exists but is not detected by hasExpectHeader.
+          } else {
+            throw e;
+          }
         }
-      }
+      }, span.getTraceContext());
     }
     return req;
   };

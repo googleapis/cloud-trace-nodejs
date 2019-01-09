@@ -28,14 +28,6 @@ type Request = IncomingMessage&{originalUrl?: string};
 
 const SUPPORTED_VERSIONS = '3.x';
 
-function getFirstHeader(req: IncomingMessage, key: string): string|null {
-  let headerValue = req.headers[key] || null;
-  if (headerValue && typeof headerValue !== 'string') {
-    headerValue = headerValue[0];
-  }
-  return headerValue;
-}
-
 function createMiddleware(api: PluginTypes.Tracer):
     connect_3.NextHandleFunction {
   return function middleware(req: Request, res, next) {
@@ -43,17 +35,16 @@ function createMiddleware(api: PluginTypes.Tracer):
       name: req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '',
       url: req.originalUrl,
       method: req.method,
-      traceContext:
-          getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
+      traceContext: api.propagation.extract((key) => req.headers[key]),
       skipFrames: 1
     };
     api.runInRootSpan(options, (root) => {
       // Set response trace context.
       const responseTraceContext = api.getResponseTraceContext(
-          options.traceContext || null, api.isRealSpan(root));
+          options.traceContext, api.isRealSpan(root));
       if (responseTraceContext) {
-        res.setHeader(
-            api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+        api.propagation.inject(
+            (k, v) => res.setHeader(k, v), responseTraceContext);
       }
 
       if (!api.isRealSpan(root)) {

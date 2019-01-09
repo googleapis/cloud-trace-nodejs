@@ -43,7 +43,10 @@ describe('index.js', function() {
     await disabledAgent.getProjectId().then(
         () => Promise.reject(new Error()), () => Promise.resolve());
     assert.strictEqual(disabledAgent.createChildSpan({ name: '' }).type, SpanType.UNTRACED);
-    assert.strictEqual(disabledAgent.getResponseTraceContext('', false), '');
+    assert.strictEqual(disabledAgent.getResponseTraceContext({
+      traceId: '1',
+      spanId: '1'
+    }, false), null);
     const fn = () => {};
     assert.strictEqual(disabledAgent.wrap(fn), fn);
     // TODO(kjin): Figure out how to test wrapEmitter

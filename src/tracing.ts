@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {v1 as stackdriverPropagation} from '@opencensus/propagation-stackdriver';
 import * as path from 'path';
 
 import {cls, TraceCLSConfig} from './cls';
@@ -120,12 +121,13 @@ export class Tracing implements Component {
 
     const tracePolicy = this.config.overrides.tracePolicy ||
         new BuiltinTracePolicy(this.config.tracePolicyConfig);
+    const propagation = stackdriverPropagation;
+
+    const tracerComponents = {logger: this.logger, tracePolicy, propagation};
 
     this.traceAgent.enable(
-        this.config.pluginLoaderConfig.tracerConfig, tracePolicy, this.logger);
-    pluginLoader
-        .create(
-            this.config.pluginLoaderConfig, {logger: this.logger, tracePolicy})
+        this.config.pluginLoaderConfig.tracerConfig, tracerComponents);
+    pluginLoader.create(this.config.pluginLoaderConfig, tracerComponents)
         .activate();
 
     if (typeof this.config.writerConfig.projectId !== 'string' &&

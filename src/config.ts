@@ -52,6 +52,24 @@ export interface TracePolicy {
   shouldTrace: (requestDetails: RequestDetails) => boolean;
 }
 
+export type GetHeaderFunction = {
+  getHeader: (key: string) => string[]|string|undefined;
+};
+export type SetHeaderFunction = {
+  setHeader: (key: string, value: string) => void;
+};
+export interface OpenCensusPropagation {
+  extract: (getHeader: GetHeaderFunction) => {
+    traceId: string;
+    spanId: string;
+    options?: number
+  } | null;
+  inject: (setHeader: SetHeaderFunction, traceContext: {
+    traceId: string; spanId: string;
+    options?: number
+  }) => void;
+}
+
 /**
  * Available configuration options. All fields are optional. See the
  * defaultConfig object defined in this file for default assigned values.

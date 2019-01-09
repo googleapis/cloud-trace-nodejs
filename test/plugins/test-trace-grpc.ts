@@ -475,7 +475,11 @@ describeInterop('grpc', fixture => {
   it('should support distributed trace context', function(done) {
     function makeLink(fn, meta, next) {
       return function() {
-        agent.runInRootSpan({ name: '', traceContext: `${COMMON_TRACE_ID}/0;o=1` }, function(span) {
+        agent.runInRootSpan({ name: '', traceContext: {
+          traceId: COMMON_TRACE_ID,
+          spanId: '0',
+          options: 1
+        }}, function(span) {
           assert.strictEqual(span.type, agent.spanTypes.ROOT);
           fn(client, grpc, meta, function() {
             span.endSpan();

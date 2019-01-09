@@ -97,8 +97,8 @@ function makeRequestTrace(
         api.labels.HTTP_METHOD_LABEL_KEY, extractMethodName(newHeaders));
     requestLifecycleSpan.addLabel(
         api.labels.HTTP_URL_LABEL_KEY, extractUrl(authority, newHeaders));
-    newHeaders[api.constants.TRACE_CONTEXT_HEADER_NAME] =
-        requestLifecycleSpan.getTraceContext();
+    api.propagation.inject(
+        (k, v) => newHeaders[k] = v, requestLifecycleSpan.getTraceContext());
     const stream: http2.ClientHttp2Stream = request.call(
         this, newHeaders, ...Array.prototype.slice.call(arguments, 1));
     api.wrapEmitter(stream);

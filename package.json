@@ -100,6 +100,7 @@
   },
   "dependencies": {
     "@google-cloud/common": "^1.0.0",
+    "@opencensus/propagation-stackdriver": "0.0.11",
     "builtin-modules": "^3.0.0",
     "console-log-level": "^1.4.0",
     "continuation-local-storage": "^3.2.1",

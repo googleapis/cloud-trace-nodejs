@@ -86,11 +86,11 @@ export abstract class BaseSpanData implements Span {
   }
 
   getTraceContext() {
-    return traceUtil.generateTraceContext({
+    return {
       traceId: this.trace.traceId.toString(),
       spanId: this.span.spanId.toString(),
       options: 1  // always traced
-    });
+    };
   }
 
   // tslint:disable-next-line:no-any
@@ -195,7 +195,7 @@ function createPhantomSpanData<T extends SpanType>(spanType: T): Span&
   return Object.freeze(Object.assign(
       {
         getTraceContext() {
-          return '';
+          return null;
         },
         // tslint:disable-next-line:no-any
         addLabel(key: string, value: any) {},

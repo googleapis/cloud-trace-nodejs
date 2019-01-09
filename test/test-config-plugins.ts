@@ -17,8 +17,8 @@
 import * as assert from 'assert';
 
 import {defaultConfig} from '../src/config';
-import {Logger} from '../src/logger';
-import {PluginLoader, PluginLoaderComponents, PluginLoaderConfig} from '../src/trace-plugin-loader';
+import {StackdriverTracerComponents} from '../src/trace-api';
+import {PluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 
 import * as testTraceModule from './trace';
 
@@ -28,7 +28,7 @@ describe('Configuration: Plugins', () => {
 
   class ConfigTestPluginLoader extends PluginLoader {
     constructor(
-        config: PluginLoaderConfig, components: PluginLoaderComponents) {
+        config: PluginLoaderConfig, components: StackdriverTracerComponents) {
       super(config, components);
       plugins = config.plugins;
     }
