@@ -19,6 +19,8 @@ import * as sourceMapSupport from 'source-map-support';
 const {hexToDec, decToHex}: {[key: string]: (input: string) => string} =
     require('hex2dec');
 
+export {hexToDec, decToHex};
+
 // This symbol must be exported (for now).
 // See: https://github.com/Microsoft/TypeScript/issues/20080
 export const kSingleton = Symbol();

@@ -19,7 +19,7 @@ import * as grpcModule from 'grpc';  // for types only.
 import {Client, MethodDefinition, ServerReadableStream, ServerUnaryCall, StatusObject} from 'grpc';
 import * as shimmer from 'shimmer';
 
-import {Plugin, RootSpan, RootSpanOptions, Span, Tracer} from '../plugin-types';
+import {Plugin, RootSpan, RootSpanOptions, Span, TraceContext, Tracer} from '../plugin-types';
 
 // Re-definition of Metadata with private fields
 type Metadata = grpcModule.Metadata&{
@@ -116,9 +116,7 @@ function patchClient(client: ClientModule, api: Tracer) {
    * a falsey value, metadata will not be modified.
    */
   function setTraceContextFromString(
-      metadata: Metadata, stringifiedTraceContext: string): void {
-    const traceContext =
-        api.traceContextUtils.decodeFromString(stringifiedTraceContext);
+      metadata: Metadata, traceContext: TraceContext|null): void {
     if (traceContext) {
       const metadataValue =
           api.traceContextUtils.encodeAsByteArray(traceContext);
@@ -213,7 +211,7 @@ function patchClient(client: ClientModule, api: Tracer) {
       // TS: Safe cast as we either found the index of the Metadata argument
       //     or spliced it in at metaIndex.
       const metadata = args[metaIndex] as Metadata;
-      setTraceContextFromString(metadata, span.getTraceContext());
+      setTraceContextFromString(metadata, span.getContext());
       const call: EventEmitter = method.apply(this, args);
       // Add extra data only when call successfully goes through. At this point
       // we know that the arguments are correct.
@@ -292,12 +290,11 @@ function unpatchClient(client: ClientModule) {
 function patchServer(server: ServerModule, api: Tracer) {
   /**
    * Returns a trace context on a Metadata object if it exists and is
-   * well-formed, or null otherwise. The result will be encoded as a string.
+   * well-formed, or null otherwise.
    * @param metadata The Metadata object from which trace context should be
    * retrieved.
    */
-  function getStringifiedTraceContext(metadata: grpcModule.Metadata): string|
-      null {
+  function getTraceContext(metadata: grpcModule.Metadata): TraceContext|null {
     const metadataValue =
         metadata.getMap()[api.constants.TRACE_CONTEXT_GRPC_METADATA_NAME] as
         Buffer;
@@ -305,13 +302,7 @@ function patchServer(server: ServerModule, api: Tracer) {
     if (!metadataValue) {
       return null;
     }
-    const traceContext =
-        api.traceContextUtils.decodeFromByteArray(metadataValue);
-    // Value is malformed.
-    if (!traceContext) {
-      return null;
-    }
-    return api.traceContextUtils.encodeAsString(traceContext);
+    return api.traceContextUtils.decodeFromByteArray(metadataValue);
   }
 
   /**
@@ -356,7 +347,7 @@ function patchServer(server: ServerModule, api: Tracer) {
       const rootSpanOptions = {
         name: requestName,
         url: requestName,
-        traceContext: getStringifiedTraceContext(call.metadata),
+        traceContext: getTraceContext(call.metadata),
         skipFrames: SKIP_FRAMES
       };
       return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
@@ -410,7 +401,7 @@ function patchServer(server: ServerModule, api: Tracer) {
       const rootSpanOptions = {
         name: requestName,
         url: requestName,
-        traceContext: getStringifiedTraceContext(stream.metadata),
+        traceContext: getTraceContext(stream.metadata),
         skipFrames: SKIP_FRAMES
       } as RootSpanOptions;
       return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
@@ -472,7 +463,7 @@ function patchServer(server: ServerModule, api: Tracer) {
       const rootSpanOptions = {
         name: requestName,
         url: requestName,
-        traceContext: getStringifiedTraceContext(stream.metadata),
+        traceContext: getTraceContext(stream.metadata),
         skipFrames: SKIP_FRAMES
       } as RootSpanOptions;
       return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
@@ -532,7 +523,7 @@ function patchServer(server: ServerModule, api: Tracer) {
       const rootSpanOptions = {
         name: requestName,
         url: requestName,
-        traceContext: getStringifiedTraceContext(stream.metadata),
+        traceContext: getTraceContext(stream.metadata),
         skipFrames: SKIP_FRAMES
       } as RootSpanOptions;
       return api.runInRootSpan(rootSpanOptions, (rootSpan) => {

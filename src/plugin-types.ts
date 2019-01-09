@@ -40,9 +40,16 @@ export interface Span {
   /**
    * Gets the current trace context serialized as a string, or an empty string
    * if it can't be generated.
+   * TODO(kjin): Deprecate/remove this method.
    * @return The stringified trace context.
    */
   getTraceContext(): string;
+
+  /**
+   * Gets the current trace context, or null if it can't be retrieved.
+   * @return The trace context.
+   */
+  getContext(): TraceContext|null;
 
   /**
    * Adds a key-value pair as a label to the trace span. The value will be
@@ -106,10 +113,9 @@ export interface RootSpanOptions extends SpanOptions {
   /* A Method associated with the root span, if applicable. */
   method?: string;
   /**
-   * The serialized form of an object that contains information about an
-   * existing trace context, if it exists.
+   * An existing trace context, if it exists.
    */
-  traceContext?: string|null;
+  traceContext?: TraceContext|string|null;
 }
 
 export interface Tracer {
@@ -196,9 +202,10 @@ export interface Tracer {
    * based on the trace context header value in the corresponding incoming
    * request, as well as the result from the local trace policy on whether this
    * request will be traced or not.
+   * TODO(kjin): Deprecate/remove this method.
    * @param incomingTraceContext The trace context that was attached to
    * the incoming web request, or null if the incoming request didn't have one.
-   * @param isTraced Whether the incoming was traced. This is determined
+   * @param isTraced Whether the incoming request was traced. This is determined
    * by the local tracing policy.
    * @returns If the response should contain the trace context within its
    * header, the string to be set as this header's value. Otherwise, an empty
@@ -206,6 +213,24 @@ export interface Tracer {
    */
   getResponseTraceContext(incomingTraceContext: string|null, isTraced: boolean):
       string;
+
+  /**
+   * Generates a trace context object that should be set as the trace
+   * context header in a response to an incoming web request. This value is
+   * based on the trace context header value in the corresponding incoming
+   * request, as well as the result from the local trace policy on whether this
+   * request will be traced or not.
+   * @param incomingTraceContext The trace context that was attached to
+   * the incoming web request, or null if the incoming request didn't have one.
+   * @param isTraced Whether the incoming request was traced. This is determined
+   * by the local tracing policy.
+   * @returns If the response should contain the trace context within its
+   * header, the context object to be serialized as this header's value.
+   * Otherwise, null.
+   */
+  getResponseContext(
+      incomingTraceContext: TraceContext|null, isTraced: boolean): TraceContext
+      |null;
 
   /**
    * Binds the trace context to the given function.
@@ -233,11 +258,25 @@ export interface Tracer {
   readonly spanTypes: typeof SpanType;
   /** A collection of functions for encoding and decoding trace context. */
   readonly traceContextUtils: {
+    // TODO(kjin): Deprecate/remove this method.
     encodeAsString: (ctx: TraceContext) => string;
+    // TODO(kjin): Deprecate/remove this method.
     decodeFromString: (str: string) => TraceContext | null;
     encodeAsByteArray: (ctx: TraceContext) => Buffer;
     decodeFromByteArray: (buf: Buffer) => TraceContext | null;
   };
+  /**
+   * A collection of functions for dealing with trace context in HTTP headers.
+   */
+  readonly propagation: Propagation;
+}
+
+export type GetHeaderFunction = (key: string) => string[]|string|null;
+export type SetHeaderFunction = (key: string, value: string) => void;
+export interface Propagation {
+  extract: (getHeader: GetHeaderFunction) => TraceContext | null;
+  inject:
+      (setHeader: SetHeaderFunction, traceContext: TraceContext|null) => void;
 }
 
 export interface Monkeypatch<T> {

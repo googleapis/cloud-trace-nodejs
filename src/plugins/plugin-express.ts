@@ -35,19 +35,20 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
   function middleware(
       req: express_4.Request, res: express_4.Response,
       next: express_4.NextFunction) {
-    const options: PluginTypes.RootSpanOptions = {
+    const options = {
       name: req.path,
-      traceContext: req.get(api.constants.TRACE_CONTEXT_HEADER_NAME),
+      traceContext: api.propagation.extract((key) => req.get(key) || null),
       url: req.originalUrl,
       method: req.method,
       skipFrames: 1
     };
     api.runInRootSpan(options, (rootSpan) => {
       // Set response trace context.
-      const responseTraceContext = api.getResponseTraceContext(
-          options.traceContext || null, api.isRealSpan(rootSpan));
+      const responseTraceContext = api.getResponseContext(
+          options.traceContext, api.isRealSpan(rootSpan));
       if (responseTraceContext) {
-        res.set(api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+        api.propagation.inject(
+            (k, v) => res.setHeader(k, v), responseTraceContext);
       }
 
       if (!api.isRealSpan(rootSpan)) {

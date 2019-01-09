@@ -39,7 +39,7 @@
   },
   "grpc1.7": {
     "dependencies": {
-      "grpc": "^1.7.0"
+      "grpc": "~1.17.0"
     }
   },
   "hapi-plugin-mysql3": {

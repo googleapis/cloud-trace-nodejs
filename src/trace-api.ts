@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import {v1} from '@opencensus/propagation-stackdriver';
 import {EventEmitter} from 'events';
 import * as is from 'is';
 import * as uuid from 'uuid';
@@ -21,7 +22,7 @@ import * as uuid from 'uuid';
 import {cls, RootContext} from './cls';
 import {Constants, SpanType} from './constants';
 import {Logger} from './logger';
-import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
+import {Func, Propagation, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
@@ -88,6 +89,33 @@ export class StackdriverTracer implements Tracer {
     decodeFromString: util.parseContextFromHeader,
     encodeAsByteArray: util.serializeTraceContext,
     decodeFromByteArray: util.deserializeTraceContext
+  };
+  readonly propagation: Propagation = {
+    extract: (getHeader) => {
+      // OpenCensus propagation libraries expect span IDs to be size-16 hex
+      // strings. In the future it might be worthwhile to change how span IDs
+      // are stored in this library to avoid excessive base 10<->16 conversions.
+      const result =
+          v1.extract({getHeader: (...args) => getHeader(...args) || undefined});
+      if (result) {
+        result.spanId = util.hexToDec(result.spanId);
+      }
+      return result;
+    },
+    inject:
+        (setHeader, value) => {
+          if (!value) {
+            return;
+          }
+          // Convert back to base-10 span IDs. See the wrapper for `extract`
+          // for more details.
+          value = Object.assign({}, value, {
+            spanId:
+                `0000000000000000${util.decToHex(value.spanId).slice(2)}`.slice(
+                    -16)
+          });
+          v1.inject({setHeader}, value);
+        }
   };
 
   private enabled = false;
@@ -176,10 +204,13 @@ export class StackdriverTracer implements Tracer {
     // Attempt to read incoming trace context.
     const incomingTraceContext: IncomingTraceContext = {options: 1};
     let parsedContext: util.TraceContext|null = null;
-    if (isString(options.traceContext) &&
-        this.config!.contextHeaderBehavior !==
-            TraceContextHeaderBehavior.IGNORE) {
-      parsedContext = util.parseContextFromHeader(options.traceContext);
+    if (this.config!.contextHeaderBehavior !==
+        TraceContextHeaderBehavior.IGNORE) {
+      if (isString(options.traceContext)) {
+        parsedContext = util.parseContextFromHeader(options.traceContext);
+      } else {
+        parsedContext = options.traceContext || null;
+      }
     }
     if (parsedContext) {
       if (parsedContext.options === undefined) {
@@ -346,13 +377,25 @@ export class StackdriverTracer implements Tracer {
     if (!this.isActive() || !incomingTraceContext) {
       return '';
     }
-
     const traceContext = util.parseContextFromHeader(incomingTraceContext);
-    if (!traceContext) {
+    const outgoingTraceContextObject =
+        this.getResponseContext(traceContext, isTraced);
+    if (!outgoingTraceContextObject) {
       return '';
     }
-    traceContext.options = (traceContext.options || 0) & (isTraced ? 1 : 0);
-    return util.generateTraceContext(traceContext);
+    return util.generateTraceContext(outgoingTraceContextObject);
+  }
+
+  getResponseContext(
+      incomingTraceContext: util.TraceContext|null, isTraced: boolean) {
+    if (!this.isActive() || !incomingTraceContext) {
+      return null;
+    }
+    return {
+      traceId: incomingTraceContext.traceId,
+      spanId: incomingTraceContext.spanId,
+      options: (incomingTraceContext.options || 0) & (isTraced ? 1 : 0)
+    };
   }
 
   wrap<T>(fn: Func<T>): Func<T> {

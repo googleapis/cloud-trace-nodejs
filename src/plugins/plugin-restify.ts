@@ -52,17 +52,17 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
       name: req.path(),
       url: req.url,
       method: req.method,
-      traceContext: req.header(api.constants.TRACE_CONTEXT_HEADER_NAME),
+      traceContext: api.propagation.extract(key => req.header(key) || null),
       skipFrames: 1
     };
 
     api.runInRootSpan(options, rootSpan => {
       // Set response trace context.
-      const responseTraceContext = api.getResponseTraceContext(
+      const responseTraceContext = api.getResponseContext(
           options.traceContext, api.isRealSpan(rootSpan));
       if (responseTraceContext) {
-        res.header(
-            api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+        api.propagation.inject(
+            (k, v) => res.setHeader(k, v), responseTraceContext);
       }
 
       if (!api.isRealSpan(rootSpan)) {

@@ -34,34 +34,26 @@ type Hapi17Request = hapi_17.Request&{
   _execute: Hapi17RequestExecutePrivate;
 };
 
-function getFirstHeader(req: IncomingMessage, key: string): string|null {
-  let headerValue = req.headers[key] || null;
-  if (headerValue && typeof headerValue !== 'string') {
-    headerValue = headerValue[0];
-  }
-  return headerValue;
-}
-
 function instrument<T>(
     api: PluginTypes.Tracer, request: hapi_16.Request|hapi_17.Request,
     continueCb: () => T): T {
   const req = request.raw.req;
   const res = request.raw.res;
   const originalEnd = res.end;
-  const options: PluginTypes.RootSpanOptions = {
+  const options = {
     name: req.url ? (urlParse(req.url).pathname || '') : '',
     url: req.url,
     method: req.method,
-    traceContext: getFirstHeader(req, api.constants.TRACE_CONTEXT_HEADER_NAME),
+    traceContext: api.propagation.extract(key => req.headers[key] || null),
     skipFrames: 2
   };
   return api.runInRootSpan(options, (root) => {
     // Set response trace context.
-    const responseTraceContext = api.getResponseTraceContext(
-        options.traceContext || null, api.isRealSpan(root));
+    const responseTraceContext =
+        api.getResponseContext(options.traceContext, api.isRealSpan(root));
     if (responseTraceContext) {
-      res.setHeader(
-          api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+      api.propagation.inject(
+          (k, v) => res.setHeader(k, v), responseTraceContext);
     }
 
     if (!api.isRealSpan(root)) {
