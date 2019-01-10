@@ -70,6 +70,7 @@ shimmer.wrap(trace, 'start', function(original) {
       samplingRate: 0,
       ignoreUrls: [],
       ignoreMethods: [],
+      propagation: ['@opencensus/propagation-stackdriver'],
       spansPerTraceSoftLimit: Infinity,
       spansPerTraceHardLimit: Infinity
     }, new TestLogger());

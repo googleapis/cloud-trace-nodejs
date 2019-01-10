@@ -102,12 +102,21 @@ export interface Config {
    * A list of trace plugins to load. Each field's key in this object is the
    * name of the module to trace, and its value is the require-friendly path
    * to the plugin. (See the default configuration below for examples.)
-   * Any user-provided value will be used to extend its default value.
-   * To disable a plugin in this list, you may override its path with a falsy
-   * value. Disabling any of the default plugins may cause unwanted behavior,
-   * so use caution.
+   * Any user-provided value for this field will be used to extend its default
+   * value. To disable a plugin in this list, you may override its path with a
+   * falsy value. Disabling any of the default plugins may cause unwanted
+   * behavior, so use caution.
    */
   plugins?: {[pluginName: string]: string;};
+
+  /**
+   * A require-friendly path to an OpenCensus-compatible propagation module to
+   * support context propagation across services with HTTP headers, or a list of
+   * such paths. Any user-provided value will replace the default value. To
+   * disable propagation completely, pass an empty string or empty array for
+   * this field.
+   */
+  propagation?: string|string[];
 
   /**
    * The max number of frames to include on traces; pass a value of 0 to
@@ -272,6 +281,7 @@ export const defaultConfig = {
     'redis': path.join(pluginDirectory, 'plugin-redis.js'),
     'restify': path.join(pluginDirectory, 'plugin-restify.js')
   },
+  propagation: '@opencensus/propagation-stackdriver',
   stackTraceLimit: 10,
   flushDelaySeconds: 30,
   ignoreUrls: ['/_ah/health'],

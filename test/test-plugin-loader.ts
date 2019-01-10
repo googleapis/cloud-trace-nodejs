@@ -51,6 +51,7 @@ describe('Trace Plugin Loader', () => {
               contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
               rootSpanNameOverride: (name: string) => name,
               projectId: '0',
+              propagation: ['@opencensus/propagation-stackdriver'],
               spansPerTraceSoftLimit: Infinity,
               spansPerTraceHardLimit: Infinity
             },

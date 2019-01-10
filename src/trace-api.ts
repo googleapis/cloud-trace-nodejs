@@ -29,6 +29,8 @@ import {traceWriter} from './trace-writer';
 import {TracePolicy, TracePolicyConfig} from './tracing-policy';
 import * as util from './util';
 
+type PropagationModule = typeof v1;
+
 /**
  * An enumeration of the different possible types of behavior when dealing with
  * incoming trace context. Requests are still subject to local tracing policy.
@@ -57,6 +59,7 @@ export enum TraceContextHeaderBehavior {
 export interface StackdriverTracerConfig extends TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   contextHeaderBehavior: TraceContextHeaderBehavior;
+  propagation: string[];
   rootSpanNameOverride: (path: string) => string;
   spansPerTraceSoftLimit: number;
   spansPerTraceHardLimit: number;
@@ -95,12 +98,15 @@ export class StackdriverTracer implements Tracer {
       // OpenCensus propagation libraries expect span IDs to be size-16 hex
       // strings. In the future it might be worthwhile to change how span IDs
       // are stored in this library to avoid excessive base 10<->16 conversions.
-      const result =
-          v1.extract({getHeader: (...args) => getHeader(...args) || undefined});
-      if (result) {
-        result.spanId = util.hexToDec(result.spanId);
+      for (const propagationModule of this.propagationModules) {
+        const result = propagationModule.extract(
+            {getHeader: (...args) => getHeader(...args) || undefined});
+        if (result) {
+          result.spanId = util.hexToDec(result.spanId);
+          return result;
+        }
       }
-      return result;
+      return null;
     },
     inject:
         (setHeader, value) => {
@@ -114,7 +120,10 @@ export class StackdriverTracer implements Tracer {
                 `0000000000000000${util.decToHex(value.spanId).slice(2)}`.slice(
                     -16)
           });
-          v1.inject({setHeader}, value);
+
+          for (const propagationModule of this.propagationModules) {
+            propagationModule.inject({setHeader}, value);
+          }
         }
   };
 
@@ -124,6 +133,7 @@ export class StackdriverTracer implements Tracer {
   private logger: Logger|null = null;
   private config: StackdriverTracerConfig|null = null;
   private policy: TracePolicy|null = null;
+  private propagationModules: PropagationModule[] = [];
 
   /**
    * Constructs a new StackdriverTracer instance.
@@ -149,6 +159,8 @@ export class StackdriverTracer implements Tracer {
     this.config = config;
     this.policy = new TracePolicy(config);
     this.enabled = true;
+    this.propagationModules =
+        config.propagation.map(propModulePath => require(propModulePath));
   }
 
   /**
@@ -163,6 +175,7 @@ export class StackdriverTracer implements Tracer {
     // short-circuit out of trace generation logic.
     this.policy = TracePolicy.never();
     this.enabled = false;
+    this.propagationModules = [];
   }
 
   /**

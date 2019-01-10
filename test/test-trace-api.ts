@@ -18,10 +18,10 @@ import * as assert from 'assert';
 
 import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
 import {defaultConfig} from '../src/config';
-import {SpanType} from '../src/constants';
+import {Constants, SpanType} from '../src/constants';
 import {StackdriverTracer, StackdriverTracerConfig, TraceContextHeaderBehavior} from '../src/trace-api';
 import {traceWriter} from '../src/trace-writer';
-import {FORCE_NEW} from '../src/util';
+import {FORCE_NEW, TraceContext} from '../src/util';
 
 import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
@@ -40,6 +40,7 @@ describe('Trace Interface', () => {
               samplingRate: 0,
               ignoreUrls: [],
               ignoreMethods: [],
+              propagation: ['@opencensus/propagation-stackdriver'],
               spansPerTraceSoftLimit: Infinity,
               spansPerTraceHardLimit: Infinity
             },
@@ -324,6 +325,62 @@ describe('Trace Interface', () => {
         assert.strictEqual(
             traceApi.getResponseTraceContext(unspecifiedContext, false),
             untracedContext);
+      });
+    });
+
+    describe('custom HTTP propagation', () => {
+      const context: TraceContext = {traceId: 'a', spanId: '255', options: 1};
+
+      it('should be injectable in outgoing requests', () => {
+        const tracer = createTraceAgent(
+            {propagation: [`${__dirname}/fixtures/propagation-local`]});
+        let injectFnCalled = false;
+        tracer.propagation.inject((k, v) => {
+          assert.strictEqual(k, 'my-trace-header');
+          assert.strictEqual(
+              v,
+              JSON.stringify(
+                  {traceId: 'a', spanId: '00000000000000ff', options: 1}));
+          injectFnCalled = true;
+        }, context);
+        assert.ok(injectFnCalled);
+      });
+
+      it('should be extractable from incoming requests', () => {
+        const tracer = createTraceAgent(
+            {propagation: [`${__dirname}/fixtures/propagation-local`]});
+        const extractedContext = tracer.propagation.extract((k) => {
+          assert.strictEqual(k, 'my-trace-header');
+          return JSON.stringify(
+              {traceId: 'a', spanId: '00000000000000ff', options: 1});
+        });
+        assert.deepStrictEqual(extractedContext, context);
+      });
+
+      it('should support multiple mechanisms if provided', () => {
+        const tracer = createTraceAgent({
+          propagation: [
+            `${__dirname}/fixtures/propagation-local`,
+            '@opencensus/propagation-stackdriver'
+          ]
+        });
+        const injectFnKeys: string[] = [];
+        tracer.propagation.inject((k, v) => {
+          injectFnKeys.push(k);
+        }, context);
+        assert.deepStrictEqual(
+            injectFnKeys,
+            ['my-trace-header', Constants.TRACE_CONTEXT_HEADER_NAME]);
+        // For extraction, only the first non-falsy value is returned as the
+        // context.
+        let extractFnCalled = false;
+        const extractedContext = tracer.propagation.extract((k) => {
+          assert.ok(!extractFnCalled);
+          extractFnCalled = true;
+          return JSON.stringify(
+              {traceId: 'a', spanId: '00000000000000ff', options: 1});
+        });
+        assert.deepStrictEqual(extractedContext, context);
       });
     });
   });

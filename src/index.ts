@@ -101,6 +101,13 @@ function initConfig(projectConfig: Forceable<Config>):
     config.clsMechanism = ahAvailable ? 'async-hooks' : 'async-listener';
   }
 
+  // Canonicalize the user-specified propagation mechanism.
+  if (!config.propagation) {
+    config.propagation = [];
+  } else if (typeof config.propagation === 'string') {
+    config.propagation = [config.propagation];
+  }
+
   return config;
 }
 

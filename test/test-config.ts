@@ -132,6 +132,37 @@ describe('Behavior set by config for Tracer', () => {
     testTraceModule.setTracingForTest(testTraceModule.TestTracing);
   });
 
+  describe('Propagation behavior', () => {
+    const testCases: Array<{
+      // tslint:disable-next-line:no-any
+      input: any;
+      expected: string[];
+    }> = [{
+      input: 'hi',
+      expected: ['hi']
+    }, {
+      input: ['hi', 'bye'],
+      expected: ['hi', 'bye']
+    }, {
+      input: '',
+      expected: []
+    }, {
+      input: null,
+      expected: []
+    }, {
+      input: undefined,
+      expected: ['@opencensus/propagation-stackdriver']
+    }];
+    for (const testCase of testCases) {
+      it(`should arrify a user input as expected: "${testCase.input}"`, () => {
+        testTraceModule.start({
+          propagation: testCase.input
+        });
+        const config = getCapturedConfig();
+        assert.deepStrictEqual(config.propagation, testCase.expected);
+      });
+    }
+  });
 
   describe('Context header behavior', () => {
     it('should copy over an explicitly-set value', () => {
