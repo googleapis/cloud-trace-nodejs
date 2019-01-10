@@ -15,6 +15,7 @@
  */
 
 import * as path from 'path';
+import {Propagation} from './plugin-types';
 
 const pluginDirectory =
     path.join(path.resolve(__dirname, '..'), 'src', 'plugins');
@@ -110,13 +111,12 @@ export interface Config {
   plugins?: {[pluginName: string]: string;};
 
   /**
-   * A require-friendly path to an OpenCensus-compatible propagation module to
-   * support context propagation across services with HTTP headers, or a list of
-   * such paths. Any user-provided value will replace the default value. To
-   * disable propagation completely, pass an empty string or empty array for
-   * this field.
+   * Either a require-friendly path to an OpenCensus-compatible propagation
+   * module to support context propagation across services with HTTP headers or
+   * the module itself, or a list of such paths or modules. Any user-provided
+   * value will replace the default value.
    */
-  propagation?: string|string[];
+  propagation?: string|Propagation|Array<string|Propagation>;
 
   /**
    * The max number of frames to include on traces; pass a value of 0 to

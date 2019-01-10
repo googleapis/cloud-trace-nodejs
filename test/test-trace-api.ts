@@ -360,7 +360,7 @@ describe('Trace Interface', () => {
       it('should support multiple mechanisms if provided', () => {
         const tracer = createTraceAgent({
           propagation: [
-            `${__dirname}/fixtures/propagation-local`,
+            require(`${__dirname}/fixtures/propagation-local`),
             '@opencensus/propagation-stackdriver'
           ]
         });

@@ -59,7 +59,7 @@ export enum TraceContextHeaderBehavior {
 export interface StackdriverTracerConfig extends TracePolicyConfig {
   enhancedDatabaseReporting: boolean;
   contextHeaderBehavior: TraceContextHeaderBehavior;
-  propagation: string[];
+  propagation: Array<string|Propagation>;
   rootSpanNameOverride: (path: string) => string;
   spansPerTraceSoftLimit: number;
   spansPerTraceHardLimit: number;
@@ -159,8 +159,13 @@ export class StackdriverTracer implements Tracer {
     this.config = config;
     this.policy = new TracePolicy(config);
     this.enabled = true;
-    this.propagationModules =
-        config.propagation.map(propModulePath => require(propModulePath));
+    this.propagationModules = config.propagation.map(propModule => {
+      if (typeof propModule === 'string') {
+        return require(propModule);
+      } else {
+        return propModule;
+      }
+    });
   }
 
   /**

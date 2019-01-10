@@ -24,6 +24,7 @@ import * as testTraceModule from './trace';
 import { NormalizedConfig } from '../src/tracing';
 import { StackdriverTracer } from '../src/trace-api';
 import {Logger} from '../src/logger';
+import { Propagation } from '../src/plugin-types';
 
 describe('Behavior set by config for CLS', () => {
   const useAH = semver.satisfies(process.version, '>=8');
@@ -133,16 +134,21 @@ describe('Behavior set by config for Tracer', () => {
   });
 
   describe('Propagation behavior', () => {
+    const propagationString = `${__dirname}/fixtures/propagation-local`;
+    const fakePropagation = { extract: () => null, inject: () => {} };
     const testCases: Array<{
       // tslint:disable-next-line:no-any
       input: any;
-      expected: string[];
+      expected: Array<string|Propagation>;
     }> = [{
-      input: 'hi',
-      expected: ['hi']
+      input: propagationString,
+      expected: [propagationString]
     }, {
-      input: ['hi', 'bye'],
-      expected: ['hi', 'bye']
+      input: [propagationString, fakePropagation],
+      expected: [propagationString, fakePropagation]
+    }, {
+      input: fakePropagation,
+      expected: [fakePropagation]
     }, {
       input: '',
       expected: []

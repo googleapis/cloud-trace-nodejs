@@ -104,7 +104,7 @@ function initConfig(projectConfig: Forceable<Config>):
   // Canonicalize the user-specified propagation mechanism.
   if (!config.propagation) {
     config.propagation = [];
-  } else if (typeof config.propagation === 'string') {
+  } else if (!Array.isArray(config.propagation)) {
     config.propagation = [config.propagation];
   }
 
