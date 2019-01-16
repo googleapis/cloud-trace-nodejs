@@ -345,47 +345,50 @@ function patchServer(server: ServerModule, api: Tracer) {
     // handlerSet.func is the gRPC method implementation itself.
     // We wrap it so that a span is started immediately beforehand, and ended
     // when the callback provided to it as an argument is invoked.
-    shimmer.wrap(handlerSet, 'func', (serverMethod) => {
-      return function serverMethodTrace(
-          this: Server, call: ServerUnaryCall<S>,
-          callback: ServerUnaryCallback<T>) {
-        const rootSpanOptions = {
-          name: requestName,
-          url: requestName,
-          traceContext: getStringifiedTraceContext(call.metadata),
-          skipFrames: SKIP_FRAMES
-        };
-        return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
-          if (!api.isRealSpan(rootSpan)) {
-            return serverMethod.call(this, call, callback);
-          }
-          if (api.enhancedDatabaseReportingEnabled()) {
-            shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(rootSpan));
-            rootSpan.addLabel('argument', JSON.stringify(call.request));
-          }
-          rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, 'POST');
-          // Here, we patch the callback so that the span is ended immediately
-          // beforehand.
-          const wrappedCb: ServerUnaryCallback<T> =
-              (err, result, trailer, flags) => {
-                if (api.enhancedDatabaseReportingEnabled()) {
-                  if (err) {
-                    rootSpan.addLabel('error', err);
-                  } else {
-                    rootSpan.addLabel('result', JSON.stringify(result));
-                  }
-                  if (trailer) {
-                    rootSpan.addLabel(
-                        'trailing_metadata', JSON.stringify(trailer.getMap()));
-                  }
-                }
-                rootSpan.endSpan();
-                return callback(err, result, trailer, flags);
-              };
-          return serverMethod.call(this, call, wrappedCb);
-        });
+    // TODO(kjin): shimmer cannot wrap AsyncFunction objects.
+    // Once shimmer introduces this functionality, change this code to use it
+    // here, and in other server wrap* methods.
+    // See also https://github.com/othiym23/shimmer/pull/14.
+    const serverMethod = handlerSet.func;
+    handlerSet.func = function serverMethodTrace(
+        this: Server, call: ServerUnaryCall<S>,
+        callback: ServerUnaryCallback<T>) {
+      const rootSpanOptions = {
+        name: requestName,
+        url: requestName,
+        traceContext: getStringifiedTraceContext(call.metadata),
+        skipFrames: SKIP_FRAMES
       };
-    });
+      return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
+        if (!api.isRealSpan(rootSpan)) {
+          return serverMethod.call(this, call, callback);
+        }
+        if (api.enhancedDatabaseReportingEnabled()) {
+          shimmer.wrap(call, 'sendMetadata', sendMetadataWrapper(rootSpan));
+          rootSpan.addLabel('argument', JSON.stringify(call.request));
+        }
+        rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, 'POST');
+        // Here, we patch the callback so that the span is ended immediately
+        // beforehand.
+        const wrappedCb: ServerUnaryCallback<T> =
+            (err, result, trailer, flags) => {
+              if (api.enhancedDatabaseReportingEnabled()) {
+                if (err) {
+                  rootSpan.addLabel('error', err);
+                } else {
+                  rootSpan.addLabel('result', JSON.stringify(result));
+                }
+                if (trailer) {
+                  rootSpan.addLabel(
+                      'trailing_metadata', JSON.stringify(trailer.getMap()));
+                }
+              }
+              rootSpan.endSpan();
+              return callback(err, result, trailer, flags);
+            };
+        return serverMethod.call(this, call, wrappedCb);
+      });
+    };
   }
 
   /**
@@ -400,55 +403,54 @@ function patchServer(server: ServerModule, api: Tracer) {
     // handlerSet.func is the gRPC method implementation itself.
     // We wrap it so that a span is started immediately beforehand, and ended
     // when there is no data to be sent from the server.
-    shimmer.wrap(handlerSet, 'func', (serverMethod) => {
-      return function serverMethodTrace(
-          this: Server, stream: ServerWriteableStream<S>) {
-        // TODO(kjin): Is it possible for a metadata value to be a buffer?
-        const rootSpanOptions = {
-          name: requestName,
-          url: requestName,
-          traceContext: getStringifiedTraceContext(stream.metadata),
-          skipFrames: SKIP_FRAMES
-        } as RootSpanOptions;
-        return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
-          if (!api.isRealSpan(rootSpan)) {
-            return serverMethod.call(this, stream);
-          }
-          if (api.enhancedDatabaseReportingEnabled()) {
-            shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootSpan));
-            rootSpan.addLabel('argument', JSON.stringify(stream.request));
-          }
-          rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, 'POST');
-          let spanEnded = false;
-          const endSpan = () => {
-            if (!spanEnded) {
-              spanEnded = true;
-              rootSpan.endSpan();
-            }
-          };
-          // Propagate context to stream event handlers.
-          api.wrapEmitter(stream);
-          // stream is a WriteableStream. Emitting a 'finish' or 'error' event
-          // suggests that no more data will be sent, so we end the span in
-          // these event handlers.
-          stream.on('finish', () => {
-            // End the span unless there is an error. (If there is, the span
-            // will be ended in the error event handler. This is to ensure that
-            // the 'error' label is applied.)
-            if (stream.status.code === 0) {
-              endSpan();
-            }
-          });
-          stream.on('error', (err) => {
-            if (api.enhancedDatabaseReportingEnabled()) {
-              rootSpan.addLabel('error', err);
-            }
-            endSpan();
-          });
+    const serverMethod = handlerSet.func;
+    handlerSet.func = function serverMethodTrace(
+        this: Server, stream: ServerWriteableStream<S>) {
+      // TODO(kjin): Is it possible for a metadata value to be a buffer?
+      const rootSpanOptions = {
+        name: requestName,
+        url: requestName,
+        traceContext: getStringifiedTraceContext(stream.metadata),
+        skipFrames: SKIP_FRAMES
+      } as RootSpanOptions;
+      return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
+        if (!api.isRealSpan(rootSpan)) {
           return serverMethod.call(this, stream);
+        }
+        if (api.enhancedDatabaseReportingEnabled()) {
+          shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootSpan));
+          rootSpan.addLabel('argument', JSON.stringify(stream.request));
+        }
+        rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, 'POST');
+        let spanEnded = false;
+        const endSpan = () => {
+          if (!spanEnded) {
+            spanEnded = true;
+            rootSpan.endSpan();
+          }
+        };
+        // Propagate context to stream event handlers.
+        api.wrapEmitter(stream);
+        // stream is a WriteableStream. Emitting a 'finish' or 'error' event
+        // suggests that no more data will be sent, so we end the span in
+        // these event handlers.
+        stream.on('finish', () => {
+          // End the span unless there is an error. (If there is, the span
+          // will be ended in the error event handler. This is to ensure that
+          // the 'error' label is applied.)
+          if (stream.status.code === 0) {
+            endSpan();
+          }
         });
-      };
-    });
+        stream.on('error', (err) => {
+          if (api.enhancedDatabaseReportingEnabled()) {
+            rootSpan.addLabel('error', err);
+          }
+          endSpan();
+        });
+        return serverMethod.call(this, stream);
+      });
+    };
   }
 
   /**
@@ -463,53 +465,52 @@ function patchServer(server: ServerModule, api: Tracer) {
     // handlerSet.func is the gRPC method implementation itself.
     // We wrap it so that a span is started immediately beforehand, and ended
     // when the callback provided to it as an argument is invoked.
-    shimmer.wrap(handlerSet, 'func', (serverMethod) => {
-      return function serverMethodTrace(
-          this: Server, stream: ServerReadableStream<S>,
-          callback: ServerUnaryCallback<T>) {
-        const rootSpanOptions = {
-          name: requestName,
-          url: requestName,
-          traceContext: getStringifiedTraceContext(stream.metadata),
-          skipFrames: SKIP_FRAMES
-        } as RootSpanOptions;
-        return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
-          if (!api.isRealSpan(rootSpan)) {
-            return serverMethod.call(this, stream, callback);
-          }
-          if (api.enhancedDatabaseReportingEnabled()) {
-            shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootSpan));
-          }
-          rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, 'POST');
-          // Propagate context to stream event handlers.
-          // stream is a ReadableStream.
-          // Note that unlike server streams, the length of the span is not
-          // tied to the lifetime of the stream. It should measure the time for
-          // the server to send a response, not the time until all data has been
-          // received from the client.
-          api.wrapEmitter(stream);
-          // Here, we patch the callback so that the span is ended immediately
-          // beforehand.
-          const wrappedCb: ServerUnaryCallback<T> =
-              (err, result, trailer, flags) => {
-                if (api.enhancedDatabaseReportingEnabled()) {
-                  if (err) {
-                    rootSpan.addLabel('error', err);
-                  } else {
-                    rootSpan.addLabel('result', JSON.stringify(result));
-                  }
-                  if (trailer) {
-                    rootSpan.addLabel(
-                        'trailing_metadata', JSON.stringify(trailer.getMap()));
-                  }
+    const serverMethod = handlerSet.func;
+    handlerSet.func = function serverMethodTrace(
+        this: Server, stream: ServerReadableStream<S>,
+        callback: ServerUnaryCallback<T>) {
+      const rootSpanOptions = {
+        name: requestName,
+        url: requestName,
+        traceContext: getStringifiedTraceContext(stream.metadata),
+        skipFrames: SKIP_FRAMES
+      } as RootSpanOptions;
+      return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
+        if (!api.isRealSpan(rootSpan)) {
+          return serverMethod.call(this, stream, callback);
+        }
+        if (api.enhancedDatabaseReportingEnabled()) {
+          shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootSpan));
+        }
+        rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, 'POST');
+        // Propagate context to stream event handlers.
+        // stream is a ReadableStream.
+        // Note that unlike server streams, the length of the span is not
+        // tied to the lifetime of the stream. It should measure the time for
+        // the server to send a response, not the time until all data has been
+        // received from the client.
+        api.wrapEmitter(stream);
+        // Here, we patch the callback so that the span is ended immediately
+        // beforehand.
+        const wrappedCb: ServerUnaryCallback<T> =
+            (err, result, trailer, flags) => {
+              if (api.enhancedDatabaseReportingEnabled()) {
+                if (err) {
+                  rootSpan.addLabel('error', err);
+                } else {
+                  rootSpan.addLabel('result', JSON.stringify(result));
                 }
-                rootSpan.endSpan();
-                return callback(err, result, trailer, flags);
-              };
-          return serverMethod.call(this, stream, wrappedCb);
-        });
-      };
-    });
+                if (trailer) {
+                  rootSpan.addLabel(
+                      'trailing_metadata', JSON.stringify(trailer.getMap()));
+                }
+              }
+              rootSpan.endSpan();
+              return callback(err, result, trailer, flags);
+            };
+        return serverMethod.call(this, stream, wrappedCb);
+      });
+    };
   }
 
   /**
@@ -525,54 +526,53 @@ function patchServer(server: ServerModule, api: Tracer) {
     // handlerSet.func is the gRPC method implementation itself.
     // We wrap it so that a span is started immediately beforehand, and ended
     // when there is no data to be sent from the server.
-    shimmer.wrap(handlerSet, 'func', (serverMethod) => {
-      return function serverMethodTrace(
-          this: Server, stream: ServerDuplexStream<S, T>) {
-        const rootSpanOptions = {
-          name: requestName,
-          url: requestName,
-          traceContext: getStringifiedTraceContext(stream.metadata),
-          skipFrames: SKIP_FRAMES
-        } as RootSpanOptions;
-        return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
-          if (!api.isRealSpan(rootSpan)) {
-            return serverMethod.call(this, stream);
-          }
-          if (api.enhancedDatabaseReportingEnabled()) {
-            shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootSpan));
-          }
-          rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, 'POST');
-          let spanEnded = false;
-          const endSpan = () => {
-            if (!spanEnded) {
-              spanEnded = true;
-              rootSpan.endSpan();
-            }
-          };
-          // Propagate context in stream event handlers.
-          api.wrapEmitter(stream);
-          // stream is a Duplex. Emitting a 'finish' or 'error' event
-          // suggests that no more data will be sent, so we end the span in
-          // these event handlers.
-          // Similar to client streams, the trace span should measure the time
-          // until the server has finished sending data back to the client, not
-          // the time that all data has been received from the client.
-          stream.on('finish', () => {
-            // End the span unless there is an error.
-            if (stream.status.code === 0) {
-              endSpan();
-            }
-          });
-          stream.on('error', (err: Error) => {
-            if (!spanEnded && api.enhancedDatabaseReportingEnabled()) {
-              rootSpan.addLabel('error', err);
-            }
-            endSpan();
-          });
+    const serverMethod = handlerSet.func;
+    handlerSet.func = function serverMethodTrace(
+        this: Server, stream: ServerDuplexStream<S, T>) {
+      const rootSpanOptions = {
+        name: requestName,
+        url: requestName,
+        traceContext: getStringifiedTraceContext(stream.metadata),
+        skipFrames: SKIP_FRAMES
+      } as RootSpanOptions;
+      return api.runInRootSpan(rootSpanOptions, (rootSpan) => {
+        if (!api.isRealSpan(rootSpan)) {
           return serverMethod.call(this, stream);
+        }
+        if (api.enhancedDatabaseReportingEnabled()) {
+          shimmer.wrap(stream, 'sendMetadata', sendMetadataWrapper(rootSpan));
+        }
+        rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, 'POST');
+        let spanEnded = false;
+        const endSpan = () => {
+          if (!spanEnded) {
+            spanEnded = true;
+            rootSpan.endSpan();
+          }
+        };
+        // Propagate context in stream event handlers.
+        api.wrapEmitter(stream);
+        // stream is a Duplex. Emitting a 'finish' or 'error' event
+        // suggests that no more data will be sent, so we end the span in
+        // these event handlers.
+        // Similar to client streams, the trace span should measure the time
+        // until the server has finished sending data back to the client, not
+        // the time that all data has been received from the client.
+        stream.on('finish', () => {
+          // End the span unless there is an error.
+          if (stream.status.code === 0) {
+            endSpan();
+          }
         });
-      };
-    });
+        stream.on('error', (err: Error) => {
+          if (!spanEnded && api.enhancedDatabaseReportingEnabled()) {
+            rootSpan.addLabel('error', err);
+          }
+          endSpan();
+        });
+        return serverMethod.call(this, stream);
+      });
+    };
   }
 
   /**
