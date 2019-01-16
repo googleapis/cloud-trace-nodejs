@@ -45,9 +45,13 @@ The object returned by `start()` may be used to create [custom trace spans](#cus
 
 ```js
 const tracer = require('@google-cloud/trace-agent').start();
-tracer.runInRootSpan({ name: 'my-root-span' }, (rootSpan) => {
+// ...
+
+app.get('/', async () => {
+  const customSpan = tracer.createChildSpan({name: 'my-custom-span'});
+  await doSomething();
+  customSpan.endSpan();
   // ...
-  rootSpan.endSpan();
 });
 ```
 
@@ -94,7 +98,30 @@ This list of plugins will be merged with the list of built-in plugins, which wil
 
 ## Custom Tracing API
 
-The custom tracing API can be used to create custom trace spans. A *span* is a particular unit of work within a trace, such as an RPC request. Spans may be nested; the outermost span is called a *root span*, even if there are no nested child spans. Root spans typically correspond to incoming requests, while *child spans* typically correspond to outgoing requests, or other work that is triggered in response to incoming requests.
+The custom tracing API can be used to create custom trace spans. A *span* is a particular unit of work within a trace, such as an RPC request. Spans may be nested; the outermost span is called a *root span*, even if there are no nested child spans. Root spans typically correspond to incoming requests, while *child spans* typically correspond to outgoing requests, or other work that is triggered in response to incoming requests. This means that root spans shouldn't be created in a context where a root span already exists; a child span is more suitable here. Instead, root spans should be created to track work that happens outside of the request lifecycle entirely, such as periodically scheduled work. To illustrate:
+
+```js
+const tracer = require('@google-cloud/trace-agent').start();
+// ...
+
+app.get('/', (req, res) => {
+  // We are in an automatically created root span corresponding to a request's
+  // lifecycle. Here, we can manually create and use a child span to track the
+  // time it takes to open a file.
+  const readFileSpan = tracer.createChildSpan({ name: 'fs.readFile' });
+  fs.readFile('/some/file', 'utf8', (err, data) => {
+    readFileSpan.endSpan();
+    res.send(data);
+  });
+});
+
+// For any significant work done _outside_ of the request lifecycle, use
+// runInRootSpan.
+tracer.runInRootSpan({ name: 'init' }, rootSpan => {
+  // ...
+  // Be sure to call rootSpan.endSpan().
+});
+```
 
 For any of the web frameworks for which we provide [built-in plugins](#what-gets-traced), a root span is automatically started whenever an incoming request is received (in other words, all middleware already runs within a root span). If you wish to record a span outside of any of these frameworks, any traced code must run within a root span that you create yourself.
 
