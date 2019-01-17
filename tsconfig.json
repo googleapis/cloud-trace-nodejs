@@ -31,6 +31,7 @@
     "test/test-config-plugins.ts",
     "test/test-default-ignore-ah-health.ts",
     "test/test-env-log-level.ts",
+    "test/test-grpc-async-handler.ts",
     "test/test-modules-loaded-before-agent.ts",
     "test/test-plugin-loader.ts",
     "test/test-span-data.ts",
