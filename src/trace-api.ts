@@ -92,6 +92,7 @@ export class StackdriverTracer implements Tracer {
 
   private enabled = false;
   private pluginName: string;
+  private pluginNameToLog: string;
   private logger: Logger|null = null;
   private config: StackdriverTracerConfig|null = null;
   private policy: TracePolicy|null = null;
@@ -102,6 +103,7 @@ export class StackdriverTracer implements Tracer {
    */
   constructor(name: string) {
     this.pluginName = name;
+    this.pluginNameToLog = this.pluginName ? this.pluginName : 'noPluginName';
     this.disable();  // disable immediately
   }
 
@@ -167,7 +169,7 @@ export class StackdriverTracer implements Tracer {
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanType.ROOT && !rootSpan.span.endTime) {
       this.logger!.warn(`TraceApi#runInRootSpan: [${
-          this.pluginName}] Cannot create nested root spans.`);
+          this.pluginNameToLog}] Cannot create nested root spans.`);
       return fn(UNCORRELATED_ROOT_SPAN);
     }
 
@@ -271,7 +273,7 @@ export class StackdriverTracer implements Tracer {
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
         this.logger!.warn(`TraceApi#createChildSpan: [${
-            this.pluginName}] Creating phantom child span [${
+            this.pluginNameToLog}] Creating phantom child span [${
             options.name}] because root span [${
             rootSpan.span.name}] was already closed.`);
         return UNCORRELATED_CHILD_SPAN;
@@ -281,7 +283,7 @@ export class StackdriverTracer implements Tracer {
         // spans suggests a memory leak stemming from context confusion. This
         // is likely due to userspace task queues or Promise implementations.
         this.logger!.error(`TraceApi#createChildSpan: [${
-            this.pluginName}] Creating phantom child span [${
+            this.pluginNameToLog}] Creating phantom child span [${
             options.name}] because the trace with root span [${
             rootSpan.span.name}] has reached a limit of ${
             this.config!
@@ -303,7 +305,7 @@ export class StackdriverTracer implements Tracer {
         // checks equality -- this is OK because no automatic tracing plugin
         // uses the RootSpanData API directly.
         this.logger!.error(`TraceApi#createChildSpan: [${
-            this.pluginName}] Adding child span [${
+            this.pluginNameToLog}] Adding child span [${
             options.name}] will cause the trace with root span [${
             rootSpan.span.name}] to contain more than ${
             this.config!
@@ -320,7 +322,7 @@ export class StackdriverTracer implements Tracer {
         skipFrames: options.skipFrames ? options.skipFrames + 1 : 1
       });
       this.logger!.info(`TraceApi#createChildSpan: [${
-          this.pluginName}] Created child span [${options.name}]`);
+          this.pluginNameToLog}] Created child span [${options.name}]`);
       return childContext;
     } else if (rootSpan.type === SpanType.UNTRACED) {
       // Context wasn't lost, but there's no root span, indicating that this
@@ -329,7 +331,7 @@ export class StackdriverTracer implements Tracer {
     } else {
       // Context was lost.
       this.logger!.warn(`TraceApi#createChildSpan: [${
-          this.pluginName}] Creating phantom child span [${
+          this.pluginNameToLog}] Creating phantom child span [${
           options.name}] because there is no root span.`);
       return UNCORRELATED_CHILD_SPAN;
     }
