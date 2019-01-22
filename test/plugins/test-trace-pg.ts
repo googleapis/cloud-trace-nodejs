@@ -46,22 +46,20 @@ pgVersions.forEach(pgVersion => {
         client = c;
         releaseClient = release;
         assert(!err);
-        client.query('CREATE TABLE t (name text NOT NULL, id text NOT NULL)', [],
+        client.query('DROP TABLE t', [], function(err, res) {
+          assert(!err || err.code == '42P01'); // table "t" does not exist
+          client.query('CREATE TABLE t (name text NOT NULL, id text NOT NULL)', [],
             function(err, res) {
           assert(!err);
-          common.cleanTraces();
           done();
+        });
         });
       });
     });
 
-    afterEach(function(done) {
-      client.query('DROP TABLE t', [], function(err, res) {
-        assert(!err);
-        releaseClient();
-        common.cleanTraces();
-        done();
-      });
+    afterEach(() => {
+      releaseClient();
+      common.cleanTraces();
     });
 
     it('should perform basic operations', function(done) {
@@ -167,19 +165,18 @@ pgVersions.forEach(pgVersion => {
 
     it('should work with generic Submittables', function(done) {
       common.runInTransaction(function(endRootSpan) {
-        let submitCalled = false;
         client.query({
           submit: (connection) => {
             // Indicate that the next item may be processed.
             connection.emit('readyForQuery');
-            submitCalled = true;
+          },
+          handleReadyForQuery: () => {
             endRootSpan();
             common.getMatchingSpan(function (span) {
               return span.name === 'pg-query';
             });
             done();
-          },
-          handleReadyForQuery: () => {}
+          }
         });
       });
     });
