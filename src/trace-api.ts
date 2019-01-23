@@ -103,7 +103,7 @@ export class StackdriverTracer implements Tracer {
    */
   constructor(name: string) {
     this.pluginName = name;
-    this.pluginNameToLog = this.pluginName ? this.pluginName : 'noPluginName';
+    this.pluginNameToLog = this.pluginName ? this.pluginName : 'no-plugin-name';
     this.disable();  // disable immediately
   }
 
