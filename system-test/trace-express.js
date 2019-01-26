@@ -48,6 +48,7 @@ const got = require('got');
 const queryString = require('querystring');
 const uuid = require('uuid');
 const semver = require('semver');
+const {Datastore} = require('@google-cloud/datastore');
 
 const usingAsyncHooks = semver.satisfies(process.version, '>=8');
 console.log(`Running system test with usingAsyncHooks=${usingAsyncHooks}`);
@@ -110,9 +111,9 @@ describe('express + datastore', () => {
     const testPath = `/test-${uuid.v4()}`;
 
     const express = require('express');
-    const datastore = require('@google-cloud/datastore')({
+    const datastore = new Datastore({
       projectId: projectId,
-      keyFilename: keyFilename,     
+      keyFilename: keyFilename,
     });
 
     const app = express();
