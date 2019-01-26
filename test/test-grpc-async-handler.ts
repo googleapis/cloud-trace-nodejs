@@ -36,7 +36,7 @@ describeInterop<Grpc>('grpc', (fixture) => {
     grpc = fixture.require();
     const proto =
         await protoLoader.load(`${__dirname}/fixtures/test-grpc.proto`);
-    testerService = proto['nodetest.Tester'];
+    testerService = proto['nodetest.Tester'] as protoLoader.ServiceDefinition;
   });
 
   afterEach(() => {

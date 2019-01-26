@@ -48,7 +48,7 @@
     "node": ">=6"
   },
   "devDependencies": {
-    "@grpc/proto-loader": "^0.3.0",
+    "@grpc/proto-loader": "^0.4.0",
     "@types/builtin-modules": "^2.0.0",
     "@types/console-log-level": "^1.4.0",
     "@types/continuation-local-storage": "^3.2.1",
