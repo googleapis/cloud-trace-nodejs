@@ -63,12 +63,12 @@ function mockNoMetadata() {
   };
 }
 
-let traceIdHighWater = 0;
+let traceIdHighWatermark = 0;
 function createDummyTrace(numSpans: number): Trace {
   const time = new Date().toString();
   return {
     projectId: '',
-    traceId: `${traceIdHighWater++}`,
+    traceId: `${traceIdHighWatermark++}`,
     spans: new Array(numSpans).fill(null).map(_ => ({
                                                 labels: {},
                                                 startTime: time,

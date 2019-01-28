@@ -84,7 +84,7 @@ export class TraceBuffer {
   /**
    * Clears the buffer, returning its original contents.
    */
-  flush(): Trace[] {
+  drain(): Trace[] {
     const result = this.traces;
     this.traces = [];
     this.numSpans = 0;
@@ -307,7 +307,7 @@ export class TraceWriter extends common.Service {
    */
   private flushBuffer() {
     // Privatize and clear the buffer.
-    const flushedTraces = this.buffer.flush();
+    const flushedTraces = this.buffer.drain();
     if (flushedTraces.length === 0) {
       return;
     }

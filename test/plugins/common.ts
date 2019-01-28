@@ -94,7 +94,7 @@ function replaceWarnLogger(fn) {
  * Cleans the tracer state between test runs.
  */
 function cleanTraces() {
-  traceWriter.get()['buffer'].flush();
+  traceWriter.get()['buffer'].drain();
 }
 
 function getTraces() {

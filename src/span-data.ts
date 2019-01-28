@@ -116,7 +116,8 @@ export abstract class BaseSpanData implements Span {
  */
 export class RootSpanData extends BaseSpanData implements RootSpan {
   readonly type = SpanType.ROOT;
-  // Locally-tracked list of children.
+  // Locally-tracked list of children. Used only to determine, once this span
+  // ends, whether a child still needs to be published.
   private children: ChildSpanData[] = [];
 
   constructor(
@@ -147,10 +148,11 @@ export class RootSpanData extends BaseSpanData implements RootSpan {
     this.children.forEach(child => {
       if (!child.span.endTime) {
         // Child hasn't ended yet.
-        // Inform it that it needs to self-publish.
+        // Inform the child that it needs to self-publish.
         child.shouldSelfPublish = true;
       }
     });
+    // We no longer need to keep track of our children.
     this.children = [];
   }
 }
