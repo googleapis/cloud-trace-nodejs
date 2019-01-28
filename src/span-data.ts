@@ -18,8 +18,7 @@ import * as crypto from 'crypto';
 import * as util from 'util';
 
 import {Constants, SpanType} from './constants';
-import * as types from './plugin-types';
-import {Span, SpanOptions} from './plugin-types';
+import {RootSpan, Span, SpanOptions} from './plugin-types';
 import {SpanKind, Trace, TraceSpan} from './trace';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
@@ -115,25 +114,10 @@ export abstract class BaseSpanData implements Span {
 /**
  * Represents a real root span, which corresponds to an incoming request.
  */
-export class RootSpanData extends BaseSpanData implements types.RootSpan {
+export class RootSpanData extends BaseSpanData implements RootSpan {
   readonly type = SpanType.ROOT;
   // Locally-tracked list of children.
   private children: ChildSpanData[] = [];
-  // A function that replaces the ChildSpanData#endSpan prototype method on
-  // a child span instance.
-  private static overrideChildEndSpanHandler = function(
-      this: ChildSpanData, timestamp?: Date) {
-    if (!!this.span.endTime) {
-      return;
-    }
-    ChildSpanData.prototype.endSpan.call(this, timestamp);
-    // Also, publish just this span.
-    traceWriter.get().writeTrace({
-      projectId: this.trace.projectId,
-      traceId: this.trace.traceId,
-      spans: [this.span]
-    });
-  };
 
   constructor(
       trace: Trace, spanName: string, parentSpanId: string,
@@ -163,8 +147,8 @@ export class RootSpanData extends BaseSpanData implements types.RootSpan {
     this.children.forEach(child => {
       if (!child.span.endTime) {
         // Child hasn't ended yet.
-        // Override the endSpan function to make it re-publish only itself.
-        child.endSpan = RootSpanData.overrideChildEndSpanHandler;
+        // Inform it that it needs to self-publish.
+        child.shouldSelfPublish = true;
       }
     });
     this.children = [];
@@ -176,12 +160,30 @@ export class RootSpanData extends BaseSpanData implements types.RootSpan {
  */
 export class ChildSpanData extends BaseSpanData {
   readonly type = SpanType.CHILD;
+  // Whether this span should publish itself. This is meant to be set to true
+  // by the parent RootSpanData.
+  shouldSelfPublish = false;
 
   constructor(
       trace: Trace, spanName: string, parentSpanId: string,
       skipFrames: number) {
     super(trace, spanName, parentSpanId, skipFrames);
     this.span.kind = SpanKind.RPC_CLIENT;
+  }
+
+  endSpan(timestamp?: Date) {
+    if (!!this.span.endTime) {
+      return;
+    }
+    super.endSpan(timestamp);
+    if (this.shouldSelfPublish) {
+      // Also, publish just this span.
+      traceWriter.get().writeTrace({
+        projectId: this.trace.projectId,
+        traceId: this.trace.traceId,
+        spans: [this.span]
+      });
+    }
   }
 }
 
