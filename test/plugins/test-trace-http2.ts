@@ -206,6 +206,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const session = http2.connect(`http://localhost:${serverPort}`);
           const s = session.request({':path': '/?foo=bar'});
+          s.on('data', () => {});  // enter flowing mode
           s.end();
           setTimeout(() => {
             rootSpan.endSpan();
@@ -225,6 +226,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const session = http2.connect(`http://localhost:${serverPort}`);
           const s = session.request({':path': '/'});
+          s.on('data', () => {});  // enter flowing mode
           s.end();
           setTimeout(() => {
             rootSpan.endSpan();

@@ -28,7 +28,7 @@ import * as shimmer from 'shimmer';
 
 import {SpanKind, Trace} from '../src/trace';
 import {TraceLabels} from '../src/trace-labels';
-import {TraceWriter, TraceWriterConfig} from '../src/trace-writer';
+import {TraceBuffer, TraceWriter, TraceWriterConfig} from '../src/trace-writer';
 
 import {TestLogger} from './logger';
 import {hostname, instanceId, oauth2} from './nocks';
@@ -63,18 +63,20 @@ function mockNoMetadata() {
   };
 }
 
-function createDummyTrace(): Trace {
+let traceIdHighWatermark = 0;
+function createDummyTrace(numSpans: number): Trace {
+  const time = new Date().toString();
   return {
     projectId: '',
-    traceId: '',
-    spans: [{
-      labels: {},
-      startTime: '',
-      endTime: '',
-      kind: SpanKind.RPC_SERVER,
-      name: '',
-      spanId: ''
-    }]
+    traceId: `${traceIdHighWatermark++}`,
+    spans: new Array(numSpans).fill(null).map(_ => ({
+                                                labels: {},
+                                                startTime: time,
+                                                endTime: time,
+                                                kind: SpanKind.RPC_SERVER,
+                                                name: '',
+                                                spanId: ''
+                                              }))
   };
 }
 
@@ -313,7 +315,7 @@ describe('Trace Writer', () => {
       const writer = new MockedRequestTraceWriter(
           Object.assign({}, DEFAULT_CONFIG, {bufferSize: 1}), logger);
       await writer.initialize();
-      writer.writeTrace(createDummyTrace());
+      writer.writeTrace(createDummyTrace(1));
       // TraceWriter#publish should be called soon
       // (Promise task queue drain + immediate).
       await wait(200);
@@ -329,25 +331,63 @@ describe('Trace Writer', () => {
       writer.stop();
     });
 
+    it(`doesn't enqueue open spans`, async () => {
+      const NUM_SPANS = 5;
+      const writer = new MockedRequestTraceWriter(
+          Object.assign({}, DEFAULT_CONFIG, {bufferSize: NUM_SPANS}), logger);
+      await writer.initialize();
+      const trace = createDummyTrace(NUM_SPANS);
+      // By setting the endTime to a falsey value, we're specifying that they
+      // have yet to end.
+      trace.spans.forEach(span => span.endTime = '');
+      // Write the trace. No spans should've been written, so a publish
+      // shouldn't occur.
+      writer.writeTrace(trace);
+      await wait(200);
+      // Didn't publish yet
+      assert.ok(!capturedRequestOptions);
+      // "End" the spans.
+      trace.spans.forEach(span => span.endTime = new Date().toString());
+      writer.writeTrace(trace);
+      await wait(200);
+      // Published, so look at capturedRequestOptions
+      const publishedTraces: Trace[] =
+          JSON.parse(capturedRequestOptions!.body).traces;
+      // We should observe that two traces were published. One has no spans,
+      // the other one has NUM_SPANS spans.
+      assert.strictEqual(publishedTraces.length, 2);
+      assert.strictEqual(publishedTraces[0].spans.length, 0);
+      assert.strictEqual(publishedTraces[1].spans.length, NUM_SPANS);
+      writer.stop();
+    });
+
     describe('condition for publishing traces', () => {
-      it('is satisfied when the buffer is full', async () => {
-        const NUM_SPANS = 5;
-        const writer = new MockedRequestTraceWriter(
-            Object.assign({}, DEFAULT_CONFIG, {bufferSize: NUM_SPANS}), logger);
-        await writer.initialize();
-        writer.writeTrace(createDummyTrace());
-        await wait(200);
-        // Didn't publish yet
-        assert.ok(!capturedRequestOptions);
-        for (let i = 1; i < NUM_SPANS; i++) {
-          writer.writeTrace(createDummyTrace());
-        }
-        await wait(200);
-        const publishedTraces: Trace[] =
-            JSON.parse(capturedRequestOptions!.body).traces;
-        assert.strictEqual(publishedTraces.length, NUM_SPANS);
-        writer.stop();
-      });
+      it('is satisfied when the number of enqueued spans >= bufferSize',
+         async () => {
+           const NUM_SPANS = 5;
+           const writer = new MockedRequestTraceWriter(
+               Object.assign({}, DEFAULT_CONFIG, {bufferSize: NUM_SPANS}),
+               logger);
+           await writer.initialize();
+           // Write a trace with a number of spans less than NUM_SPANS. A
+           // publish shouldn't occur.
+           writer.writeTrace(createDummyTrace(NUM_SPANS - 1));
+           await wait(200);
+           // Didn't publish yet
+           assert.ok(!capturedRequestOptions);
+           // Write another trace with one span to push us over the limit.
+           writer.writeTrace(createDummyTrace(1));
+           await wait(200);
+           // Published, so look at capturedRequestOptions
+           const publishedTraces: Trace[] =
+               JSON.parse(capturedRequestOptions!.body).traces;
+           assert.strictEqual(publishedTraces.length, 2);
+           // Count number of spans. It should be NUM_SPANS.
+           assert.strictEqual(publishedTraces.reduce((spanCount, trace) => {
+             return spanCount + trace.spans.length;
+           }, 0), NUM_SPANS);
+           writer.stop();
+         });
 
       it('is satisfied periodically', async () => {
         const writer = new MockedRequestTraceWriter(
@@ -355,7 +395,7 @@ describe('Trace Writer', () => {
         await writer.initialize();
         // Two rounds to ensure that it's periodical
         for (let round = 0; round < 2; round++) {
-          writer.writeTrace(createDummyTrace());
+          writer.writeTrace(createDummyTrace(1));
           await wait(500);
           // Didn't publish yet
           assert.ok(!capturedRequestOptions);
@@ -372,7 +412,7 @@ describe('Trace Writer', () => {
       const writer = new MockedRequestTraceWriter(
           Object.assign({}, DEFAULT_CONFIG, {bufferSize: 1}), logger);
       await writer.initialize();
-      writer.writeTrace(createDummyTrace());
+      writer.writeTrace(createDummyTrace(1));
       await wait(200);
       assert.strictEqual(
           logger.getNumLogsWith('error', 'TraceWriter#publish'), 1);

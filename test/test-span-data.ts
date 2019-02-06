@@ -182,6 +182,13 @@ describe('SpanData', () => {
       }
       myFunction();
     });
+
+    it(`doesn't call TraceWriter#writeTrace when ended`, () => {
+      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      spanData.endSpan();
+      // writeTrace writes to capturedTrace.
+      assert.ok(!capturedTrace);
+    });
   });
 
   describe('RootSpanData', () => {
@@ -198,5 +205,49 @@ describe('SpanData', () => {
       rootSpanData.endSpan();
       assert.strictEqual(capturedTrace, rootSpanData.trace);
     });
+
+    it(`doesn't write to a Trace Writer more than once`, () => {
+      const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
+      rootSpanData.endSpan();
+      assert.strictEqual(capturedTrace, rootSpanData.trace);
+      capturedTrace = null;
+      rootSpanData.endSpan();
+      assert.ok(!capturedTrace);
+    });
+
+    it('if already ended, allows open child spans to publish themselves later',
+       () => {
+         const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
+         const firstChildSpanData = rootSpanData.createChildSpan(
+                                        {name: 'short-child'}) as ChildSpanData;
+         const secondChildSpanData = rootSpanData.createChildSpan(
+                                         {name: 'long-child'}) as ChildSpanData;
+         // End the first child span.
+         firstChildSpanData.endSpan();
+         // End the root span. Note that the second child span hasn't ended yet.
+         rootSpanData.endSpan();
+         // writeTrace should've been called from rootSpanData.endSpan.
+         assert.ok(capturedTrace);
+         // Save the value of capturedTrace, and then clear it, so writeTrace
+         // doesn't fail an assertion.
+         const firstTrace = capturedTrace!;
+         capturedTrace = null;
+         // Now end the second child span. This should trigger another call to
+         // writeTrace.
+         secondChildSpanData.endSpan();
+         // writeTrace should've been called again, this time from
+         // childSpanData.endSpan.
+         assert.ok(capturedTrace);
+         assert.strictEqual(firstTrace.traceId, capturedTrace!.traceId);
+         // The child span should've written a trace with only itself as a span.
+         assert.strictEqual(capturedTrace!.spans.length, 1);
+         assert.strictEqual(capturedTrace!.spans[0], secondChildSpanData.span);
+         // Ensure that calling endSpan on a span that already ended doesn't
+         // do anything.
+         capturedTrace = null;
+         firstChildSpanData.endSpan();
+         secondChildSpanData.endSpan();
+         assert.ok(!capturedTrace);
+       });
   });
 });

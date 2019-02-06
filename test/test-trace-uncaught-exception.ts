@@ -60,7 +60,7 @@ describe('Trace Writer', () => {
       super.writeTrace(trace);
       // Since flushBuffer doesn't call publish unless a trace is buffered,
       // do that as well
-      this.buffer.push(JSON.stringify(trace));
+      this.buffer.add(trace);
     }
 
     protected publish(json: string) {

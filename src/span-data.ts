@@ -18,8 +18,7 @@ import * as crypto from 'crypto';
 import * as util from 'util';
 
 import {Constants, SpanType} from './constants';
-import * as types from './plugin-types';
-import {Span, SpanOptions} from './plugin-types';
+import {RootSpan, Span, SpanOptions} from './plugin-types';
 import {SpanKind, Trace, TraceSpan} from './trace';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
@@ -104,6 +103,9 @@ export abstract class BaseSpanData implements Span {
   }
 
   endSpan(timestamp?: Date) {
+    if (!!this.span.endTime) {
+      return;
+    }
     timestamp = timestamp || new Date();
     this.span.endTime = timestamp.toISOString();
   }
@@ -112,8 +114,11 @@ export abstract class BaseSpanData implements Span {
 /**
  * Represents a real root span, which corresponds to an incoming request.
  */
-export class RootSpanData extends BaseSpanData implements types.RootSpan {
+export class RootSpanData extends BaseSpanData implements RootSpan {
   readonly type = SpanType.ROOT;
+  // Locally-tracked list of children. Used only to determine, once this span
+  // ends, whether a child still needs to be published.
+  private children: ChildSpanData[] = [];
 
   constructor(
       trace: Trace, spanName: string, parentSpanId: string,
@@ -125,16 +130,30 @@ export class RootSpanData extends BaseSpanData implements types.RootSpan {
   createChildSpan(options?: SpanOptions): Span {
     options = options || {name: ''};
     const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
-    return new ChildSpanData(
+    const child = new ChildSpanData(
         this.trace,       /* Trace object */
         options.name,     /* Span name */
         this.span.spanId, /* Parent's span ID */
         skipFrames);      /* # of frames to skip in stack trace */
+    this.children.push(child);
+    return child;
   }
 
   endSpan(timestamp?: Date) {
+    if (!!this.span.endTime) {
+      return;
+    }
     super.endSpan(timestamp);
     traceWriter.get().writeTrace(this.trace);
+    this.children.forEach(child => {
+      if (!child.span.endTime) {
+        // Child hasn't ended yet.
+        // Inform the child that it needs to self-publish.
+        child.shouldSelfPublish = true;
+      }
+    });
+    // We no longer need to keep track of our children.
+    this.children = [];
   }
 }
 
@@ -143,12 +162,30 @@ export class RootSpanData extends BaseSpanData implements types.RootSpan {
  */
 export class ChildSpanData extends BaseSpanData {
   readonly type = SpanType.CHILD;
+  // Whether this span should publish itself. This is meant to be set to true
+  // by the parent RootSpanData.
+  shouldSelfPublish = false;
 
   constructor(
       trace: Trace, spanName: string, parentSpanId: string,
       skipFrames: number) {
     super(trace, spanName, parentSpanId, skipFrames);
     this.span.kind = SpanKind.RPC_CLIENT;
+  }
+
+  endSpan(timestamp?: Date) {
+    if (!!this.span.endTime) {
+      return;
+    }
+    super.endSpan(timestamp);
+    if (this.shouldSelfPublish) {
+      // Also, publish just this span.
+      traceWriter.get().writeTrace({
+        projectId: this.trace.projectId,
+        traceId: this.trace.traceId,
+        spans: [this.span]
+      });
+    }
   }
 }
 
