@@ -155,6 +155,12 @@ These mechanisms work great in most cases. However, they do have some limitation
 * It is possible that a module does its own queuing of callback functions – effectively merging asynchronous execution contexts. For example, one may write an http request buffering library that queues requests and then performs them in a batch in one shot. In such a case, when all the callbacks fire, they will execute in the context which flushed the queue instead of the context which added the callbacks to the queue. This problem is called the pooling problem or the [user-space queuing problem][queuing-problem], and is a fundamental limitation of JavaScript. If your application uses such code, you will notice that RPCs from many requests are showing up under a single trace, or that certain portions of your outbound RPCs do not get traced. In such cases we try to work around the problem through monkey patching, or by working with the library authors to fix the code to properly propagate context. However, finding problematic code is not always trivial.
 * If your application uses untranspiled `async` functions, you must use Node 8+. (Untranspiled `async` functions are supported from Node 7.6 onward, but we do not support tracing these functions in Node 7.)
 
+### Tracing bundled or webpacked server code.
+
+*unsupported*
+
+The way we trace modules we does not support bundled server code. Bundlers like webpack or @zeit/ncc will not work.
+
 ## Contributing changes
 
 * See [CONTRIBUTING.md](CONTRIBUTING.md)
