@@ -159,10 +159,7 @@ These mechanisms work great in most cases. However, they do have some limitation
 
 *unsupported*
 
-webpacked projects do not work.
-
-The way we trace modules we does not support bundled server code. Like projects built with webpack or @zeit/ncc.
-We only support code that depends on node core's module loading.
+The way we trace modules we does not support bundled server code. Bundlers like webpack or @zeit/ncc will not work.
 
 ## Contributing changes
 
