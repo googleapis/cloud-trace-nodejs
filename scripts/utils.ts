@@ -59,6 +59,7 @@ export function forkP(moduleName: string, args?: string[], options?: ForkOptions
   const stringifiedCommand = `\`${moduleName}${args ? (' ' + args.join(' ')) : ''}\``;
   console.log(`> Running: ${stringifiedCommand}`);
   return promisifyChildProcess(fork(moduleName, args, Object.assign({
-    stdio: 'inherit'
+    stdio: 'inherit',
+    execArgv: []
   }, options)));
 }
