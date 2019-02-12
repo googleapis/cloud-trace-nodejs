@@ -35,6 +35,11 @@ export class Koa2 implements WebFramework {
   }
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
+    if (!options.hasResponse && !options.blocking) {
+      throw new Error(`${
+          this.constructor
+              .name} wrapper for testing doesn't support non-blocking handlers.`);
+    }
     this.app.use(async (ctx, next) => {
       if (ctx.request.path === options.path) {
         const response = await options.fn(ctx.req.headers);

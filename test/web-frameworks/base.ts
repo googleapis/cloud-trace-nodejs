@@ -29,12 +29,19 @@ export interface WebFrameworkResponse {
  * The underlying type of objects passed to WebFramework#addHandler.
  */
 export type WebFrameworkAddHandlerOptions = {
+  // The path which will invoke the handler.
   path: string;
 }&({
+  // This handler doesn't provide the response.
   hasResponse: false;
+  // Whether or not this handler should block the next handler.
+  blocking: boolean;
+  // The handler function.
   fn: (incomingHeaders: IncomingHttpHeaders) => Promise<void>;
 }|{
+  // This handler provides a response.
   hasResponse: true;
+  // The handler function.
   fn: (incomingHeaders: IncomingHttpHeaders) => Promise<WebFrameworkResponse>;
 });
 
