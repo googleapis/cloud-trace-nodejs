@@ -92,6 +92,7 @@ describe('Web framework tracing', () => {
         webFramework.addHandler({
           path: '/two-handlers',
           hasResponse: false,
+          blocking: true,
           fn: async () => {
             await wait(DEFAULT_SPAN_DURATION / 2);
           }

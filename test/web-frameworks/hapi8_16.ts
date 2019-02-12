@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import * as http from 'http';
+import {EventEmitter} from 'events';
 
 import {hapi_16} from '../../src/plugins/types';
 
 import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkResponse} from './base';
 
-export class Hapi implements WebFramework {
+export class Hapi extends EventEmitter implements WebFramework {
   server: hapi_16.Server;
   // In Hapi, handlers are added after a connection is specified.
   // Since a port number is required to initialize a connection,
@@ -29,8 +29,10 @@ export class Hapi implements WebFramework {
   queuedHandlers: Array<() => void> = [];
 
   constructor(path: string) {
+    super();
     const hapi = require(path) as typeof hapi_16;
     this.server = new hapi.Server();
+    this.server.on('tail', () => this.emit('tail'));
   }
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
@@ -51,15 +53,24 @@ export class Hapi implements WebFramework {
           }
         });
       } else {
-        this.server.ext('onPreHandler', async (request, reply) => {
-          try {
-            await options.fn(request.raw.req.headers);
-          } catch (e) {
-            reply(e);
-            return;
-          }
-          reply.continue();
-        });
+        if (options.blocking) {
+          this.server.ext('onPreHandler', async (request, reply) => {
+            try {
+              await options.fn(request.raw.req.headers);
+            } catch (e) {
+              reply(e);
+              return;
+            }
+            reply.continue();
+          });
+        } else {
+          // Use Hapi's request.tail to keep track of tail work.
+          this.server.ext('onPreHandler', (request, reply) => {
+            const tail = request.tail();
+            options.fn(request.raw.req.headers).then(tail, tail);
+            reply.continue();
+          });
+        }
       }
     });
   }

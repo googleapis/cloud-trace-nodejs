@@ -34,6 +34,11 @@ export class Express4 implements WebFramework {
   }
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
+    if (!options.hasResponse && !options.blocking) {
+      throw new Error(`${
+          this.constructor
+              .name} wrapper for testing doesn't support non-blocking handlers.`);
+    }
     this.app.get(options.path, async (req, res, next) => {
       let response: WebFrameworkResponse|void;
       try {

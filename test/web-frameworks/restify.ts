@@ -29,6 +29,11 @@ export class Restify implements WebFramework {
   }
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
+    if (!options.hasResponse && !options.blocking) {
+      throw new Error(`${
+          this.constructor
+              .name} wrapper for testing doesn't support non-blocking handlers.`);
+    }
     if (options.hasResponse) {
       this.server.get(options.path, async (req, res, next) => {
         let response: WebFrameworkResponse;

@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
+import {EventEmitter} from 'events';
+
 import {hapi_17} from '../../src/plugins/types';
 
 import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkHandlerFunction, WebFrameworkResponse} from './base';
 
-export class Hapi17 implements WebFramework {
+const TAIL_WORK = Symbol('tail work for hapi');
+
+type AppState = {
+  [TAIL_WORK]?: Array<Promise<void>>;
+};
+
+export class Hapi17 extends EventEmitter implements WebFramework {
   static commonName = `hapi@17`;
   static expectedTopStackFrame = '_executeWrap';
   static versionRange = '>=7.5';
@@ -28,21 +36,27 @@ export class Hapi17 implements WebFramework {
   // So instead of registering a new Hapi plugin per path,
   // register only the first time -- passing a function that will iterate
   // through a list of routes keyed under the path.
-  private routes = new Map<string, WebFrameworkHandlerFunction[]>();
+  private routes = new Map<string, WebFrameworkAddHandlerOptions[]>();
   private registering = Promise.resolve();
 
   constructor() {
+    super();
     const hapi = require('../plugins/fixtures/hapi17') as typeof hapi_17;
     this.server = new hapi.Server();
+    this.server.events.on('response', (request: hapi_17.Request) => {
+      Promise.all((request.app as AppState)[TAIL_WORK] || [])
+          .then(
+              () => this.emit('tail'), (err: Error) => this.emit('tail', err));
+    });
   }
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
     let shouldRegister = false;
     if (!this.routes.has(options.path)) {
-      this.routes.set(options.path, [options.fn]);
+      this.routes.set(options.path, [options]);
       shouldRegister = true;
     } else {
-      this.routes.get(options.path)!.push(options.fn);
+      this.routes.get(options.path)!.push(options);
     }
 
     // Only register a new plugin for the first occurrence of this path.
@@ -56,10 +70,21 @@ export class Hapi17 implements WebFramework {
               path: options.path,
               handler: async (request, h) => {
                 let result;
-                for (const handler of this.routes.get(options.path)!) {
-                  result = await handler(request.raw.req.headers);
-                  if (result) {
-                    return result;
+                for (const localOptions of this.routes.get(options.path)!) {
+                  if (localOptions.hasResponse || localOptions.blocking) {
+                    result = await localOptions.fn(request.raw.req.headers);
+                    if (result) {
+                      return result;
+                    }
+                  } else {
+                    // Use Hapi 17's application state to keep track of
+                    // tail work.
+                    const appState: AppState = request.app;
+                    if (!appState[TAIL_WORK]) {
+                      appState[TAIL_WORK] = [];
+                    }
+                    appState[TAIL_WORK]!.push(
+                        localOptions.fn(request.raw.req.headers));
                   }
                 }
                 return h.continue;
