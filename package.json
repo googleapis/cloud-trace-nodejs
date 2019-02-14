@@ -25,7 +25,7 @@
     "prepare": "npm run script npm-clean get-plugin-types compile-es2015 compile-es2015-strict",
     "script": "ts-node -P ./scripts/tsconfig.json ./scripts",
     "license-check": "jsgl --local .",
-    "docs-test": "blcl docs -r --exclude www.googleapis.com",
+    "docs-test": "linkinator docs -r --skip www.googleapis.com",
     "predocs-test": "npm run docs"
   },
   "files": [
@@ -95,7 +95,7 @@
     "tmp": "0.0.33",
     "ts-node": "^8.0.0",
     "typescript": "~3.3.0",
-    "broken-link-checker-local": "^0.2.0"
+    "linkinator": "^1.1.2"
   },
   "dependencies": {
     "@google-cloud/common": "^0.31.0",
