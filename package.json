@@ -69,7 +69,7 @@
     "@types/request": "^2.48.1",
     "@types/semver": "^5.4.0",
     "@types/shimmer": "^1.0.1",
-    "@types/tmp": "0.0.33",
+    "@types/tmp": "0.0.34",
     "@types/uuid": "^3.4.3",
     "axios": "^0.18.0",
     "changelog-maker": "^2.2.2",
