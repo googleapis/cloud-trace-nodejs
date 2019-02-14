@@ -21,7 +21,8 @@ import { describeInterop } from './utils';
 // because express can't be re-patched.
 var agent = require('../..').start({
   projectId: '0',
-  samplingRate: 0
+  samplingRate: 0,
+  ignoreUrls: ['/no-trace']
 });
 
 var common = require('./plugins/common'/*.js*/);
@@ -37,7 +38,9 @@ var client, grpcServer, server;
 function makeHttpRequester(callback, expectedReqs) {
   var pendingHttpReqs = expectedReqs;
   return function() {
-    http.get('http://www.google.com/', function(httpRes) {
+    // Make a request to an endpoint that won't create an additional server
+    // trace.
+    http.get(`http://localhost:${common.serverPort}/no-trace`, function(httpRes) {
       httpRes.on('data', function() {});
       httpRes.on('end', function() {
         if (--pendingHttpReqs === 0) {
@@ -70,6 +73,10 @@ describeInterop('grpc', fixture => {
 
       var proto = grpc.load(protoFile).nodetest;
       var app = express();
+
+      app.get('/no-trace', function(req, res) {
+        res.sendStatus(200);
+      });
 
       app.get('/unary', function(req, res) {
         var httpRequester = requestAndSendHTTPStatus(res, 1);
