@@ -90,7 +90,7 @@
     "retry-axios": "^0.4.0",
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.6",
-    "standard-version": "^4.2.0",
+    "standard-version": "^5.0.0",
     "timekeeper": "^2.0.0",
     "tmp": "0.0.33",
     "ts-node": "^8.0.0",
