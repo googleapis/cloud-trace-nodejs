@@ -218,22 +218,17 @@ describeInterop<typeof knexTypes>('knex', (fixture) => {
                 return span.name === 'mysql-query';
               });
               let expectedCmds;
-              if (parsedVersion.minor === 10 || parsedVersion.minor >= 14) {
+              if (parsedVersion.minor === 10 || parsedVersion.minor >= 12) {
                 expectedCmds = [
                   /^BEGIN/, 'insert into `t` (`k`, `v`) values (?, ?)',
                   'select * from `t`', /^ROLLBACK/, 'select * from `t`'
                 ];
-              } else if (parsedVersion.minor === 11) {
+              } else /*if (parsedVersion.minor === 11)*/ {
                 expectedCmds = [
                   'SELECT 1', 'BEGIN;',
                   'insert into `t` (`k`, `v`) values (?, ?)',
                   'select * from `t`', 'ROLLBACK;', 'SELECT 1',
                   'select * from `t`'
-                ];
-              } else {
-                expectedCmds = [
-                  'insert into `t` (`k`, `v`) values (?, ?)',
-                  'select * from `t`', 'ROLLBACK;', 'select * from `t`'
                 ];
               }
               assert.strictEqual(expectedCmds.length, spans.length);

@@ -263,7 +263,6 @@ export const defaultConfig = {
     'hapi': path.join(pluginDirectory, 'plugin-hapi.js'),
     'http': path.join(pluginDirectory, 'plugin-http.js'),
     'http2': path.join(pluginDirectory, 'plugin-http2.js'),
-    'knex': path.join(pluginDirectory, 'plugin-knex.js'),
     'koa': path.join(pluginDirectory, 'plugin-koa.js'),
     'mongodb-core': path.join(pluginDirectory, 'plugin-mongodb-core.js'),
     'mysql': path.join(pluginDirectory, 'plugin-mysql.js'),
