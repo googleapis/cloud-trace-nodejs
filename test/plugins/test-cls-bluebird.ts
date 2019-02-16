@@ -1,5 +1,5 @@
 /**
- * Copyright 2018 Google LLC
+ * Copyright 2019 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,9 +98,7 @@ describe('Patch plugin for bluebird', () => {
     traceTestModule.setPluginLoaderForTest(traceTestModule.TestPluginLoader);
   });
 
-  // Some (one) test cases deal with arrays rather than no deferred value.
-  // tslint:disable-next-line:no-any
-  const testCases: Array<TestCase<any>> = [
+  const testCases = [
     {
       description: 'immediate resolve + child from then callback',
       makePromise: () => new BPromise(res => res()),
@@ -161,7 +159,8 @@ describe('Patch plugin for bluebird', () => {
     } as TestCase
   ];
 
-  testCases.forEach(testCase => {
+  // tslint:disable-next-line:no-any
+  testCases.forEach((testCase: TestCase<any>) => {
     it(`enables context propagation in the same way as native promises for test case: ${
            testCase.description}`,
        async () => {
