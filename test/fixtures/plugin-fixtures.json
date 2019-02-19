@@ -1,4 +1,9 @@
 {
+  "bluebird3": {
+    "dependencies": {
+      "bluebird": "^3.5.2"
+    }
+  },
   "connect3": {
     "dependencies": {
       "connect": "^3.5.0"

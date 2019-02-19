@@ -27,6 +27,7 @@
  * contain dots.
  */
 
+import * as bluebird_3 from './bluebird_3'; // bluebird@3
 import * as connect_3 from './connect_3'; // connect@3
 import * as express_4 from './express_4'; // express@4
 import * as hapi_16 from './hapi_16'; // hapi@16
@@ -86,6 +87,7 @@ declare namespace pg_6 {
 //---exports---//
 
 export {
+  bluebird_3,
   connect_3,
   express_4,
   hapi_16,
