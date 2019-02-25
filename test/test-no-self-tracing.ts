@@ -17,6 +17,7 @@
 'use strict';
 
 import {FORCE_NEW} from '../src/util';
+import {HOST_ADDRESS} from 'gcp-metadata';
 
 var assert = require('assert');
 var nock = require('nock');
@@ -32,7 +33,7 @@ nock.disableNetConnect();
 
 describe('test-no-self-tracing', function() {
   it('should not trace metadata queries', function(done) {
-    var scope = nock('http://metadata.google.internal.')
+    var scope = nock(HOST_ADDRESS)
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
                 .get('/computeMetadata/v1/instance/id').reply(200);
     require('../..').start({[FORCE_NEW]: true});
@@ -46,7 +47,7 @@ describe('test-no-self-tracing', function() {
   });
 
   it('should not trace publishes', function(done) {
-    var metadataScope = nock('http://metadata.google.internal.')
+    var metadataScope = nock(HOST_ADDRESS)
                 .get('/computeMetadata/v1/instance/hostname').reply(200)
                 .get('/computeMetadata/v1/instance/id').reply(200);
     var apiScope = nock('https://cloudtrace.googleapis.com')
