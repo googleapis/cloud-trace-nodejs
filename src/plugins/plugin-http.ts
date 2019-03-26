@@ -44,12 +44,16 @@ function getSpanName(options: ClientRequestArgs|url.URL) {
 
 /**
  * Returns whether the Expect header is on the given options object.
+ * Assumes only that the header key is either capitalized, lowercase, or
+ * all-caps for simplicity purposes.
  * @param options Options for http.request.
  */
 function hasExpectHeader(options: ClientRequestArgs|url.URL): boolean {
   return !!(
       (options as ClientRequestArgs).headers &&
-      (options as ClientRequestArgs).headers!.Expect);
+      ((options as ClientRequestArgs).headers!.Expect ||
+       (options as ClientRequestArgs).headers!.expect ||
+       (options as ClientRequestArgs).headers!.EXPECT));
 }
 
 function extractUrl(
@@ -179,8 +183,14 @@ function makeRequestTrace(
     // Inject the trace context header, but only if it wasn't already injected
     // earlier.
     if (!traceHeaderPreinjected) {
-      req.setHeader(
-          api.constants.TRACE_CONTEXT_HEADER_NAME, span.getTraceContext());
+      try {
+        req.setHeader(
+            api.constants.TRACE_CONTEXT_HEADER_NAME, span.getTraceContext());
+      } catch (e) {
+        // Swallow the error.
+        // This would happen in the pathological case where the Expect header
+        // exists but is not detected by hasExpectHeader.
+      }
     }
     return req;
   };
