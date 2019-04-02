@@ -192,20 +192,6 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           }
         },
         {
-          description: 'calling http.get with Expect header',
-          fn: async () => {
-            const waitForResponse = new WaitForResponse();
-            const req = http.get(
-                {
-                  port,
-                  rejectUnauthorized: false,
-                  headers: {Expect: '100-continue'}
-                },
-                waitForResponse.handleResponse);
-            await waitForResponse.done;
-          }
-        },
-        {
           description: 'calling http.get, but timing out and emitting an error',
           fn: async () => {
             // server.server is a handle to the underlying server in an
@@ -219,6 +205,21 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
             await waitForResponse.done;
           }
         },
+        ...['Expect', 'expect', 'EXPECT', 'eXpEcT'].map(
+            key => ({
+              description: `calling http.get with ${key} header`,
+              fn: async () => {
+                const waitForResponse = new WaitForResponse();
+                http.get(
+                    {
+                      port,
+                      rejectUnauthorized: false,
+                      headers: {[key]: '100-continue'}
+                    },
+                    waitForResponse.handleResponse);
+                await waitForResponse.done;
+              }
+            }))
       ];
 
       beforeEach(async () => {

@@ -28,6 +28,9 @@ type HttpModule = typeof httpModule;
 type HttpsModule = typeof httpsModule;
 type RequestFunction = typeof request;
 
+const ERR_HTTP_HEADERS_SENT = 'ERR_HTTP_HEADERS_SENT';
+const ERR_HTTP_HEADERS_SENT_MSG = 'Can\'t set headers after they are sent.';
+
 // tslint:disable:no-any
 const isString = is.string as (value: any) => value is string;
 // url.URL is used for type checking, but doesn't exist in Node <7.
@@ -130,6 +133,8 @@ function makeRequestTrace(
     // inject the trace context header instead of using ClientRequest#setHeader.
     // (We don't do this generally because cloning the options object is an
     // expensive operation.)
+    // See https://github.com/googleapis/cloud-trace-nodejs/pull/766 for a full
+    // explanation.
     let traceHeaderPreinjected = false;
     if (hasExpectHeader(options)) {
       traceHeaderPreinjected = true;
@@ -187,9 +192,14 @@ function makeRequestTrace(
         req.setHeader(
             api.constants.TRACE_CONTEXT_HEADER_NAME, span.getTraceContext());
       } catch (e) {
-        // Swallow the error.
-        // This would happen in the pathological case where the Expect header
-        // exists but is not detected by hasExpectHeader.
+        if (e.code === ERR_HTTP_HEADERS_SENT ||
+            e.message === ERR_HTTP_HEADERS_SENT_MSG) {
+          // Swallow the error.
+          // This would happen in the pathological case where the Expect header
+          // exists but is not detected by hasExpectHeader.
+        } else {
+          throw e;
+        }
       }
     }
     return req;
