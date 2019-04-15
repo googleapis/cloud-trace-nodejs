@@ -99,7 +99,7 @@
     "linkinator": "^1.1.2"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.32.0",
+    "@google-cloud/common": "^0.32.1",
     "builtin-modules": "^3.0.0",
     "console-log-level": "^1.4.0",
     "continuation-local-storage": "^3.2.1",
