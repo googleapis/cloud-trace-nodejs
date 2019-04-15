@@ -18,8 +18,6 @@ import * as common from '@google-cloud/common';
 import * as gcpMetadata from 'gcp-metadata';
 import {OutgoingHttpHeaders} from 'http';
 import * as os from 'os';
-import * as r from 'request';  // Only for type declarations.
-import {teenyRequest} from 'teeny-request';
 
 import {Constants} from './constants';
 import {Logger} from './logger';
@@ -117,7 +115,6 @@ export class TraceWriter extends common.Service {
       private readonly logger: Logger) {
     super(
         {
-          requestModule: teenyRequest as typeof r,
           packageJson: pjson,
           projectIdRequired: false,
           baseUrl: 'https://cloudtrace.googleapis.com/v1',

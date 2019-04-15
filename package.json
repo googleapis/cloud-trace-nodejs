@@ -91,6 +91,7 @@
     "rimraf": "^2.6.2",
     "source-map-support": "^0.5.6",
     "standard-version": "^5.0.0",
+    "teeny-request": "^3.11.1",
     "timekeeper": "^2.0.0",
     "tmp": "0.1.0",
     "ts-node": "^8.0.0",
@@ -98,7 +99,7 @@
     "linkinator": "^1.1.2"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.31.0",
+    "@google-cloud/common": "^0.32.1",
     "builtin-modules": "^3.0.0",
     "console-log-level": "^1.4.0",
     "continuation-local-storage": "^3.2.1",
@@ -110,7 +111,6 @@
     "require-in-the-middle": "^4.0.0",
     "semver": "^6.0.0",
     "shimmer": "^1.2.0",
-    "teeny-request": "^3.11.1",
     "uuid": "^3.0.1"
   }
 }
