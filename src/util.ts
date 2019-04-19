@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import * as path from 'path';
+import * as sourceMapSupport from 'source-map-support';
+
 const {hexToDec, decToHex}: {[key: string]: (input: string) => string} =
     require('hex2dec');
 
@@ -206,7 +207,7 @@ export function createStackTrace(
   const origPrepare = Error.prepareStackTrace;
   Error.prepareStackTrace =
       (error: Error, structured: NodeJS.CallSite[]): NodeJS.CallSite[] => {
-        return structured;
+        return structured.map(sourceMapSupport.wrapCallSite);
       };
   const e: {stack?: NodeJS.CallSite[]} = {};
   Error.captureStackTrace(e, constructorOpt);
