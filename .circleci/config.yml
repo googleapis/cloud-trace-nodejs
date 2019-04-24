@@ -91,6 +91,7 @@ workflows:
       - node8
       - node10
       - node11
+      - node12
   tests:
     jobs:
       - node6:
@@ -101,12 +102,15 @@ workflows:
           filters: *release_tags
       - node11:
           filters: *release_tags
+      - node12:
+          filters: *release_tags
       - publish_npm:
           requires:
             - node6
             - node8
             - node10
             - node11
+            - node 12
           filters:
             branches:
               ignore: /.*/
@@ -140,6 +144,14 @@ jobs:
   node11:
     docker:
       - image: node:11
+      - *mongo_service
+      - *redis_service
+      - *postgres_service
+      - *mysql_service
+    <<: *unit_tests
+  node12:
+    docker:
+      - image: node:12
       - *mongo_service
       - *redis_service
       - *postgres_service
