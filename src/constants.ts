@@ -42,7 +42,7 @@ export const Constants = {
   TRACE_SERVICE_LABEL_KEY_LIMIT: 127,
 
   /** Maximum size of a label value in bytes. */
-  TRACE_SERVICE_LABEL_VALUE_LIMIT: 16 * 1024 - 1
+  TRACE_SERVICE_LABEL_VALUE_LIMIT: 16 * 1024 - 1,
 };
 
 /**
@@ -79,5 +79,5 @@ export enum SpanType {
    * This span object was created by StackdriverTracer#createChildSpan, and
    * represents an outgoing RPC on behalf of an incoming request.
    */
-  CHILD = 'CHILD'
+  CHILD = 'CHILD',
 }

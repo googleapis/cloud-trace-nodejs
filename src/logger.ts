@@ -15,22 +15,27 @@
  */
 
 import * as consoleLogLevel from 'console-log-level';
-import {defaultConfig} from './config';
+import { defaultConfig } from './config';
 
-export type ConsoleLogLevel = 'error'|'warn'|'info'|'debug';
-export type LogLevel = 'silent'|ConsoleLogLevel;
+export type ConsoleLogLevel = 'error' | 'warn' | 'info' | 'debug';
+export type LogLevel = 'silent' | ConsoleLogLevel;
 
 /**
  * The list of log levels.
  */
-export const LEVELS: ReadonlyArray<LogLevel> =
-    ['silent', 'error', 'warn', 'info', 'debug'];
+export const LEVELS: ReadonlyArray<LogLevel> = [
+  'silent',
+  'error',
+  'warn',
+  'info',
+  'debug',
+];
 
 export interface LoggerConfig {
   /**
    * The minimum log level that will print to the console.
    */
-  level: string|false;
+  level: string | false;
 
   /**
    * A tag to use in log messages.
@@ -51,12 +56,13 @@ function logLevelToName(level?: number): LogLevel {
 }
 
 export class Logger {
-  private logger: consoleLogLevel.Logger|null;
+  private logger: consoleLogLevel.Logger | null;
 
   constructor(opts?: Partial<LoggerConfig>) {
-    const levelName = opts && opts.level !== undefined ?
-        opts.level :
-        logLevelToName(defaultConfig.logLevel);
+    const levelName =
+      opts && opts.level !== undefined
+        ? opts.level
+        : logLevelToName(defaultConfig.logLevel);
 
     if (levelName === false || levelName === 'silent') {
       this.logger = null;
@@ -65,9 +71,10 @@ export class Logger {
 
     this.logger = consoleLogLevel({
       stderr: true,
-      prefix: `${opts && opts.tag ? opts.tag : 'unknown'} ${
-          levelName.toUpperCase()}`,
-      level: levelName as ConsoleLogLevel
+      prefix: `${
+        opts && opts.tag ? opts.tag : 'unknown'
+      } ${levelName.toUpperCase()}`,
+      level: levelName as ConsoleLogLevel,
     });
   }
 

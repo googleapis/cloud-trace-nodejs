@@ -16,15 +16,19 @@
 
 import * as assert from 'assert';
 
-import {Constants, SpanType} from '../src/constants';
-import {BaseSpanData, ChildSpanData, RootSpanData} from '../src/span-data';
-import {Trace} from '../src/trace';
-import {TraceLabels} from '../src/trace-labels';
-import {traceWriter, TraceWriter, TraceWriterConfig} from '../src/trace-writer';
+import { Constants, SpanType } from '../src/constants';
+import { BaseSpanData, ChildSpanData, RootSpanData } from '../src/span-data';
+import { Trace } from '../src/trace';
+import { TraceLabels } from '../src/trace-labels';
+import {
+  traceWriter,
+  TraceWriter,
+  TraceWriterConfig,
+} from '../src/trace-writer';
 
-import {TestLogger} from './logger';
+import { TestLogger } from './logger';
 import * as traceAgentModule from './trace';
-import {wait} from './utils';
+import { wait } from './utils';
 
 describe('SpanData', () => {
   class CaptureSpanTraceWriter extends TraceWriter {
@@ -33,18 +37,19 @@ describe('SpanData', () => {
       capturedTrace = trace;
     }
   }
-  let capturedTrace: Trace|null;
+  let capturedTrace: Trace | null;
   let trace: Trace;
 
   before(() => {
     traceAgentModule.setTraceWriterForTest(CaptureSpanTraceWriter);
     traceWriter.create(
-        {
-          onUncaughtException: 'ignore',
-          maximumLabelValueSize: 16,
-          stackTraceLimit: 2
-        } as TraceWriterConfig,
-        new TestLogger());
+      {
+        onUncaughtException: 'ignore',
+        maximumLabelValueSize: 16,
+        stackTraceLimit: 2,
+      } as TraceWriterConfig,
+      new TestLogger()
+    );
   });
 
   after(() => {
@@ -52,7 +57,7 @@ describe('SpanData', () => {
   });
 
   beforeEach(() => {
-    trace = {projectId: '0', traceId: 'trace-id', spans: []};
+    trace = { projectId: '0', traceId: 'trace-id', spans: [] };
     capturedTrace = null;
   });
 
@@ -95,14 +100,20 @@ describe('SpanData', () => {
       const actualStart = new Date(spanData.span.startTime).getTime();
       const actualEnd = new Date(spanData.span.endTime).getTime();
       const expectedTimes = [
-        startLowerBound, actualStart, startUpperBound, endLowerBound, actualEnd,
-        endUpperBound
+        startLowerBound,
+        actualStart,
+        startUpperBound,
+        endLowerBound,
+        actualEnd,
+        endUpperBound,
       ];
       assert.ok(spanData.span.startTime);
       assert.ok(spanData.span.endTime);
       const ascending = (a: number, b: number) => a - b;
       assert.deepStrictEqual(
-          expectedTimes.slice().sort(ascending), expectedTimes);
+        expectedTimes.slice().sort(ascending),
+        expectedTimes
+      );
     });
 
     it('accepts a custom span end time', () => {
@@ -119,20 +130,24 @@ describe('SpanData', () => {
       const name = 'a'.repeat(200);
       const spanData = new CommonSpanData(trace, name, '0', 0);
       assert.strictEqual(
-          spanData.span.name,
-          `${name.slice(0, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT - 3)}...`);
+        spanData.span.name,
+        `${name.slice(0, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT - 3)}...`
+      );
     });
 
     it('adds labels of different types', () => {
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
       spanData.addLabel('key', 'value');
       spanData.addLabel('id', 42);
-      spanData.addLabel('obj', {a: true});
+      spanData.addLabel('obj', { a: true });
       spanData.addLabel('sym', Symbol('a'));
       delete spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
-      assert.deepStrictEqual(
-          spanData.span.labels,
-          {id: '42', key: 'value', obj: '{ a: true }', sym: 'Symbol(a)'});
+      assert.deepStrictEqual(spanData.span.labels, {
+        id: '42',
+        key: 'value',
+        obj: '{ a: true }',
+        sym: 'Symbol(a)',
+      });
     });
 
     it('truncates long keys', () => {
@@ -141,8 +156,10 @@ describe('SpanData', () => {
       spanData.addLabel(longKey, 'val');
       delete spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.deepStrictEqual(spanData.span.labels, {
-        [`${longKey.slice(0, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT - 3)}...`]:
-            'val'
+        [`${longKey.slice(
+          0,
+          Constants.TRACE_SERVICE_LABEL_KEY_LIMIT - 3
+        )}...`]: 'val',
       });
     });
 
@@ -152,17 +169,19 @@ describe('SpanData', () => {
       spanData.addLabel('longKey', longVal);
       delete spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.deepStrictEqual(spanData.span.labels, {
-        longKey: `${
-            longVal.slice(
-                0, traceWriter.get().getConfig().maximumLabelValueSize - 3)}...`
+        longKey: `${longVal.slice(
+          0,
+          traceWriter.get().getConfig().maximumLabelValueSize - 3
+        )}...`,
       });
     });
 
     it('exposes a method to provide serialized trace context', () => {
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
       assert.deepStrictEqual(
-          spanData.getTraceContext(),
-          `${spanData.trace.traceId}/${spanData.span.spanId};o=1`);
+        spanData.getTraceContext(),
+        `${spanData.trace.traceId}/${spanData.span.spanId};o=1`
+      );
     });
 
     it('captures stack traces', () => {
@@ -175,8 +194,9 @@ describe('SpanData', () => {
         assert.ok(Array.isArray(frames.stack_frame));
         // Check stack size
         assert.strictEqual(
-            frames.stack_frame.length,
-            traceWriter.get().getConfig().stackTraceLimit);
+          frames.stack_frame.length,
+          traceWriter.get().getConfig().stackTraceLimit
+        );
         // Check top frame
         assert.strictEqual(frames.stack_frame[0].method_name, 'myFunction');
       }
@@ -194,10 +214,13 @@ describe('SpanData', () => {
   describe('RootSpanData', () => {
     it('creates child spans', () => {
       const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
-      const childSpanData =
-          rootSpanData.createChildSpan({name: 'child'}) as ChildSpanData;
+      const childSpanData = rootSpanData.createChildSpan({
+        name: 'child',
+      }) as ChildSpanData;
       assert.strictEqual(
-          childSpanData.span.parentSpanId, rootSpanData.span.spanId);
+        childSpanData.span.parentSpanId,
+        rootSpanData.span.spanId
+      );
     });
 
     it('writes to a Trace Writer when ended', () => {
@@ -215,39 +238,40 @@ describe('SpanData', () => {
       assert.ok(!capturedTrace);
     });
 
-    it('if already ended, allows open child spans to publish themselves later',
-       () => {
-         const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
-         const firstChildSpanData = rootSpanData.createChildSpan(
-                                        {name: 'short-child'}) as ChildSpanData;
-         const secondChildSpanData = rootSpanData.createChildSpan(
-                                         {name: 'long-child'}) as ChildSpanData;
-         // End the first child span.
-         firstChildSpanData.endSpan();
-         // End the root span. Note that the second child span hasn't ended yet.
-         rootSpanData.endSpan();
-         // writeTrace should've been called from rootSpanData.endSpan.
-         assert.ok(capturedTrace);
-         // Save the value of capturedTrace, and then clear it, so writeTrace
-         // doesn't fail an assertion.
-         const firstTrace = capturedTrace!;
-         capturedTrace = null;
-         // Now end the second child span. This should trigger another call to
-         // writeTrace.
-         secondChildSpanData.endSpan();
-         // writeTrace should've been called again, this time from
-         // childSpanData.endSpan.
-         assert.ok(capturedTrace);
-         assert.strictEqual(firstTrace.traceId, capturedTrace!.traceId);
-         // The child span should've written a trace with only itself as a span.
-         assert.strictEqual(capturedTrace!.spans.length, 1);
-         assert.strictEqual(capturedTrace!.spans[0], secondChildSpanData.span);
-         // Ensure that calling endSpan on a span that already ended doesn't
-         // do anything.
-         capturedTrace = null;
-         firstChildSpanData.endSpan();
-         secondChildSpanData.endSpan();
-         assert.ok(!capturedTrace);
-       });
+    it('if already ended, allows open child spans to publish themselves later', () => {
+      const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
+      const firstChildSpanData = rootSpanData.createChildSpan({
+        name: 'short-child',
+      }) as ChildSpanData;
+      const secondChildSpanData = rootSpanData.createChildSpan({
+        name: 'long-child',
+      }) as ChildSpanData;
+      // End the first child span.
+      firstChildSpanData.endSpan();
+      // End the root span. Note that the second child span hasn't ended yet.
+      rootSpanData.endSpan();
+      // writeTrace should've been called from rootSpanData.endSpan.
+      assert.ok(capturedTrace);
+      // Save the value of capturedTrace, and then clear it, so writeTrace
+      // doesn't fail an assertion.
+      const firstTrace = capturedTrace!;
+      capturedTrace = null;
+      // Now end the second child span. This should trigger another call to
+      // writeTrace.
+      secondChildSpanData.endSpan();
+      // writeTrace should've been called again, this time from
+      // childSpanData.endSpan.
+      assert.ok(capturedTrace);
+      assert.strictEqual(firstTrace.traceId, capturedTrace!.traceId);
+      // The child span should've written a trace with only itself as a span.
+      assert.strictEqual(capturedTrace!.spans.length, 1);
+      assert.strictEqual(capturedTrace!.spans[0], secondChildSpanData.span);
+      // Ensure that calling endSpan on a span that already ended doesn't
+      // do anything.
+      capturedTrace = null;
+      firstChildSpanData.endSpan();
+      secondChildSpanData.endSpan();
+      assert.ok(!capturedTrace);
+    });
   });
 });

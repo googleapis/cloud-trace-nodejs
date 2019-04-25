@@ -14,65 +14,79 @@
  * limitations under the License.
  */
 
-import {HOST_ADDRESS} from 'gcp-metadata';
+import { HOST_ADDRESS } from 'gcp-metadata';
 import * as nock from 'nock';
 
 const accept = () => true;
 
-export function oauth2<T extends {} = {}>(validator?: (body: T) => boolean):
-    nock.Scope {
+export function oauth2<T extends {} = {}>(
+  validator?: (body: T) => boolean
+): nock.Scope {
   validator = validator || accept;
   return nock(/https:\/\/(accounts\.google\.com|www\.googleapis\.com)/)
-      .post(/\/oauth2.*token/, validator)
-      .once()
-      .reply(200, {
-        refresh_token: 'hello',
-        access_token: 'goodbye',
-        expiry_date: new Date(9999, 1, 1)
-      });
+    .post(/\/oauth2.*token/, validator)
+    .once()
+    .reply(200, {
+      refresh_token: 'hello',
+      access_token: 'goodbye',
+      expiry_date: new Date(9999, 1, 1),
+    });
 }
 
-export function projectId(status: number|(() => string), reply?: () => string) {
+export function projectId(
+  status: number | (() => string),
+  reply?: () => string
+) {
   if (typeof status === 'function') {
     reply = status;
     status = 200;
   }
   return nock(HOST_ADDRESS)
-      .get('/computeMetadata/v1/project/project-id')
-      .once()
-      .reply(status, reply, {'Metadata-Flavor': 'Google'});
+    .get('/computeMetadata/v1/project/project-id')
+    .once()
+    .reply(status, reply, { 'Metadata-Flavor': 'Google' });
 }
 
 export function instanceId(
-    status: number|(() => string), reply?: () => string) {
+  status: number | (() => string),
+  reply?: () => string
+) {
   if (typeof status === 'function') {
     reply = status;
     status = 200;
   }
   return nock(HOST_ADDRESS)
-      .get('/computeMetadata/v1/instance/id')
-      .once()
-      .reply(status, reply, {'Metadata-Flavor': 'Google'});
+    .get('/computeMetadata/v1/instance/id')
+    .once()
+    .reply(status, reply, { 'Metadata-Flavor': 'Google' });
 }
 
-export function hostname(status: number|(() => string), reply?: () => string) {
+export function hostname(
+  status: number | (() => string),
+  reply?: () => string
+) {
   if (typeof status === 'function') {
     reply = status;
     status = 200;
   }
   return nock(HOST_ADDRESS)
-      .get('/computeMetadata/v1/instance/hostname')
-      .once()
-      .reply(status, reply, {'Metadata-Flavor': 'Google'});
+    .get('/computeMetadata/v1/instance/hostname')
+    .once()
+    .reply(status, reply, { 'Metadata-Flavor': 'Google' });
 }
 
 export function patchTraces<T extends {} = {}>(
-    project: string, validator?: (body: T) => boolean, reply?: () => string,
-    withError?: boolean) {
+  project: string,
+  validator?: (body: T) => boolean,
+  reply?: () => string,
+  withError?: boolean
+) {
   validator = validator || accept;
-  const interceptor =
-      nock('https://cloudtrace.googleapis.com')
-          .intercept('/v1/projects/' + project + '/traces', 'PATCH', validator);
+  const interceptor = nock('https://cloudtrace.googleapis.com').intercept(
+    '/v1/projects/' + project + '/traces',
+    'PATCH',
+    validator
+  );
   let scope: nock.Scope;
   if (withError) {
     scope = interceptor.replyWithError(reply);

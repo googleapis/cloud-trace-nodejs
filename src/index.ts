@@ -19,16 +19,16 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-import {Config, defaultConfig} from './config';
+import { Config, defaultConfig } from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
-import {Tracing, NormalizedConfig} from './tracing';
-import {FORCE_NEW, Forceable} from './util';
-import {Constants} from './constants';
-import {StackdriverTracer} from './trace-api';
+import { Tracing, NormalizedConfig } from './tracing';
+import { FORCE_NEW, Forceable } from './util';
+import { Constants } from './constants';
+import { StackdriverTracer } from './trace-api';
 
-export {Config, PluginTypes};
+export { Config, PluginTypes };
 
 let traceAgent: StackdriverTracer;
 
@@ -39,8 +39,9 @@ let traceAgent: StackdriverTracer;
  * be modified.
  * @return A normalized configuration object.
  */
-function initConfig(projectConfig: Forceable<Config>):
-    Forceable<NormalizedConfig> {
+function initConfig(
+  projectConfig: Forceable<Config>
+): Forceable<NormalizedConfig> {
   // `|| undefined` prevents environmental variables that are empty strings
   // from overriding values provided in the config object passed to start().
   const envConfig = {
@@ -48,25 +49,27 @@ function initConfig(projectConfig: Forceable<Config>):
     projectId: process.env.GCLOUD_PROJECT || undefined,
     serviceContext: {
       service:
-          process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME || undefined,
-      version: process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION ||
-          undefined,
-      minorVersion: process.env.GAE_MINOR_VERSION || undefined
-    }
+        process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME || undefined,
+      version:
+        process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION || undefined,
+      minorVersion: process.env.GAE_MINOR_VERSION || undefined,
+    },
   };
 
   let envSetConfig: Config = {};
   if (!!process.env.GCLOUD_TRACE_CONFIG) {
-    envSetConfig =
-        require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
+    envSetConfig = require(path.resolve(
+      process.env.GCLOUD_TRACE_CONFIG!
+    )) as Config;
   }
 
   // Internally, ignoreContextHeader is no longer being used, so convert the
   // user's value into a value for contextHeaderBehavior. But let this value
   // be overridden by the user's explicitly set value for contextHeaderBehavior.
   const contextHeaderBehaviorUnderride = {
-    contextHeaderBehavior: projectConfig.ignoreContextHeader ? 'ignore' :
-                                                               'default'
+    contextHeaderBehavior: projectConfig.ignoreContextHeader
+      ? 'ignore'
+      : 'default',
   };
 
   // Configuration order of precedence:
@@ -75,15 +78,22 @@ function initConfig(projectConfig: Forceable<Config>):
   // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
   // 4. Default Config (as specified in './config')
   const config = extend(
-      true, {[FORCE_NEW]: projectConfig[FORCE_NEW]}, defaultConfig,
-      envSetConfig, contextHeaderBehaviorUnderride, projectConfig, envConfig,
-      {plugins: {}});
+    true,
+    { [FORCE_NEW]: projectConfig[FORCE_NEW] },
+    defaultConfig,
+    envSetConfig,
+    contextHeaderBehaviorUnderride,
+    projectConfig,
+    envConfig,
+    { plugins: {} }
+  );
   // The empty plugins object guarantees that plugins is a plain object,
   // even if it's explicitly specified in the config to be a non-object.
 
   // Enforce the upper limit for the label value size.
-  if (config.maximumLabelValueSize >
-      Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
+  if (
+    config.maximumLabelValueSize > Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT
+  ) {
     config.maximumLabelValueSize = Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
   }
   // Make rootSpanNameOverride a function if not already.
@@ -121,21 +131,25 @@ export function start(config?: Config): PluginTypes.Tracer {
   const normalizedConfig = initConfig(config || {});
   // Determine the preferred context propagation mechanism, as
   // continuation-local-storage should be loaded before any modules that do I/O.
-  if (normalizedConfig.enabled &&
-      normalizedConfig.clsMechanism === 'async-listener') {
+  if (
+    normalizedConfig.enabled &&
+    normalizedConfig.clsMechanism === 'async-listener'
+  ) {
     // This is the earliest we can load continuation-local-storage.
     require('continuation-local-storage');
   }
 
   if (!traceAgent) {
-    traceAgent = new (require('./trace-api').StackdriverTracer)();
+    traceAgent = new (require('./trace-api')).StackdriverTracer();
   }
 
   try {
     let tracing: Tracing;
     try {
-      tracing =
-          require('./tracing').tracing.create(normalizedConfig, traceAgent);
+      tracing = require('./tracing').tracing.create(
+        normalizedConfig,
+        traceAgent
+      );
     } catch (e) {
       // An error could be thrown if create() is called multiple times.
       // It's not a helpful error message for the end user, so make it more
@@ -157,7 +171,7 @@ export function start(config?: Config): PluginTypes.Tracer {
  */
 export function get(): PluginTypes.Tracer {
   if (!traceAgent) {
-    traceAgent = new (require('./trace-api').StackdriverTracer)();
+    traceAgent = new (require('./trace-api')).StackdriverTracer();
   }
   return traceAgent;
 }

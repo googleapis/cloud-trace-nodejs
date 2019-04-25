@@ -17,14 +17,14 @@
 // This file only describes public-facing interfaces.
 // tslint:disable:no-any
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 
-import {Constants, SpanType} from './constants';
-import {StackdriverTracerConfig} from './trace-api';
-import {TraceLabels} from './trace-labels';
-import {TraceContext} from './util';
+import { Constants, SpanType } from './constants';
+import { StackdriverTracerConfig } from './trace-api';
+import { TraceLabels } from './trace-labels';
+import { TraceContext } from './util';
 
-export {TraceContext};
+export { TraceContext };
 
 export type Func<T> = (...args: any[]) => T;
 
@@ -109,7 +109,7 @@ export interface RootSpanOptions extends SpanOptions {
    * The serialized form of an object that contains information about an
    * existing trace context, if it exists.
    */
-  traceContext?: string|null;
+  traceContext?: string | null;
 }
 
 export interface Tracer {
@@ -160,7 +160,7 @@ export interface Tracer {
    * guarantee is that the value would unique for every root span.
    * @returns an id for the current context, or null if there is none
    */
-  getCurrentContextId(): string|null;
+  getCurrentContextId(): string | null;
 
   /**
    * Returns the projectId that was either configured or auto-discovered by the
@@ -173,7 +173,7 @@ export interface Tracer {
    * TraceWriter. Note that the auto-discovery is done asynchronously, so this
    * may return falsey until the projectId auto-discovery completes.
    */
-  getWriterProjectId(): string|null;
+  getWriterProjectId(): string | null;
 
   /**
    * Creates and returns a new Span object nested within the current root
@@ -204,8 +204,10 @@ export interface Tracer {
    * header, the string to be set as this header's value. Otherwise, an empty
    * string.
    */
-  getResponseTraceContext(incomingTraceContext: string|null, isTraced: boolean):
-      string;
+  getResponseTraceContext(
+    incomingTraceContext: string | null,
+    isTraced: boolean
+  ): string;
 
   /**
    * Binds the trace context to the given function.
@@ -253,6 +255,6 @@ export interface Intercept<T> {
   intercept: (module: T, agent: Tracer) => T;
 }
 
-export type Patch<T> = Monkeypatch<T>|Intercept<T>;
+export type Patch<T> = Monkeypatch<T> | Intercept<T>;
 
 export type Plugin = Array<Patch<any>>;

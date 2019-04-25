@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 // This is imported only for types. Generated .js file should NOT load 'http2'.
 // `http2` must be used only in type annotations, not in expressions.
 import * as http2 from 'http2';
 import * as shimmer from 'shimmer';
-import {URL} from 'url';
+import { URL } from 'url';
 
-import {Tracer} from '../plugin-types';
+import { Tracer } from '../plugin-types';
 
 type Http2Module = typeof http2;
 
 // type of ClientHttp2Session#request()
-type Http2SessionRequestFunction =
-    (this: http2.ClientHttp2Session, headers?: http2.OutgoingHttpHeaders,
-     options?: http2.ClientSessionRequestOptions) => http2.ClientHttp2Stream;
+type Http2SessionRequestFunction = (
+  this: http2.ClientHttp2Session,
+  headers?: http2.OutgoingHttpHeaders,
+  options?: http2.ClientSessionRequestOptions
+) => http2.ClientHttp2Stream;
 
-function getSpanName(authority: string|URL): string {
+function getSpanName(authority: string | URL): string {
   if (typeof authority === 'string') {
     authority = new URL(authority);
   }
@@ -52,7 +54,9 @@ function extractPath(headers?: http2.OutgoingHttpHeaders): string {
 }
 
 function extractUrl(
-    authority: string|URL, headers?: http2.OutgoingHttpHeaders): string {
+  authority: string | URL,
+  headers?: http2.OutgoingHttpHeaders
+): string {
   if (typeof authority === 'string') {
     authority = new URL(authority);
   }
@@ -60,20 +64,27 @@ function extractUrl(
 }
 
 function isTraceAgentRequest(
-    headers: http2.OutgoingHttpHeaders|undefined, api: Tracer): boolean {
+  headers: http2.OutgoingHttpHeaders | undefined,
+  api: Tracer
+): boolean {
   return !!headers && !!headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
 }
 
 function makeRequestTrace(
-    request: Http2SessionRequestFunction, authority: string|URL,
-    api: Tracer): Http2SessionRequestFunction {
+  request: Http2SessionRequestFunction,
+  authority: string | URL,
+  api: Tracer
+): Http2SessionRequestFunction {
   return function(
-             this: http2.Http2Session,
-             headers?: http2.OutgoingHttpHeaders): http2.ClientHttp2Stream {
+    this: http2.Http2Session,
+    headers?: http2.OutgoingHttpHeaders
+  ): http2.ClientHttp2Stream {
     // Create new headers so that the object passed in by the client is not
     // modified.
-    const newHeaders: http2.OutgoingHttpHeaders =
-        Object.assign({}, headers || {});
+    const newHeaders: http2.OutgoingHttpHeaders = Object.assign(
+      {},
+      headers || {}
+    );
 
     // Don't trace ourselves lest we get into infinite loops.
     // Note: this would not be a problem if we guarantee buffering of trace api
@@ -87,45 +98,60 @@ function makeRequestTrace(
       return request.apply(this, arguments);
     }
 
-    const requestLifecycleSpan =
-        api.createChildSpan({name: getSpanName(authority)});
+    const requestLifecycleSpan = api.createChildSpan({
+      name: getSpanName(authority),
+    });
     if (!api.isRealSpan(requestLifecycleSpan)) {
       return request.apply(this, arguments);
     }
     // Node sets the :method pseudo-header to GET if not set by client.
     requestLifecycleSpan.addLabel(
-        api.labels.HTTP_METHOD_LABEL_KEY, extractMethodName(newHeaders));
+      api.labels.HTTP_METHOD_LABEL_KEY,
+      extractMethodName(newHeaders)
+    );
     requestLifecycleSpan.addLabel(
-        api.labels.HTTP_URL_LABEL_KEY, extractUrl(authority, newHeaders));
-    newHeaders[api.constants.TRACE_CONTEXT_HEADER_NAME] =
-        requestLifecycleSpan.getTraceContext();
+      api.labels.HTTP_URL_LABEL_KEY,
+      extractUrl(authority, newHeaders)
+    );
+    newHeaders[
+      api.constants.TRACE_CONTEXT_HEADER_NAME
+    ] = requestLifecycleSpan.getTraceContext();
     const stream: http2.ClientHttp2Stream = request.call(
-        this, newHeaders, ...Array.prototype.slice.call(arguments, 1));
+      this,
+      newHeaders,
+      ...Array.prototype.slice.call(arguments, 1)
+    );
     api.wrapEmitter(stream);
 
     let numBytes = 0;
     let listenerAttached = false;
     stream
-        .on('response',
-            (headers) => {
-              requestLifecycleSpan.addLabel(
-                  api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, headers[':status']);
-            })
-        .on('end',
-            () => {
-              requestLifecycleSpan.addLabel(
-                  api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY, numBytes);
-              requestLifecycleSpan.endSpan();
-            })
-        .on('error', (err: Error) => {
-          if (err) {
-            requestLifecycleSpan.addLabel(
-                api.labels.ERROR_DETAILS_NAME, err.name);
-            requestLifecycleSpan.addLabel(
-                api.labels.ERROR_DETAILS_MESSAGE, err.message);
-          }
-          requestLifecycleSpan.endSpan();
-        });
+      .on('response', headers => {
+        requestLifecycleSpan.addLabel(
+          api.labels.HTTP_RESPONSE_CODE_LABEL_KEY,
+          headers[':status']
+        );
+      })
+      .on('end', () => {
+        requestLifecycleSpan.addLabel(
+          api.labels.HTTP_RESPONSE_SIZE_LABEL_KEY,
+          numBytes
+        );
+        requestLifecycleSpan.endSpan();
+      })
+      .on('error', (err: Error) => {
+        if (err) {
+          requestLifecycleSpan.addLabel(
+            api.labels.ERROR_DETAILS_NAME,
+            err.name
+          );
+          requestLifecycleSpan.addLabel(
+            api.labels.ERROR_DETAILS_MESSAGE,
+            err.message
+          );
+        }
+        requestLifecycleSpan.endSpan();
+      });
     // Streams returned by Http2Session#request are yielded in paused mode.
     // Attaching a 'data' listener to the stream will switch it to flowing
     // mode which could cause the stream to drain before the calling
@@ -134,12 +160,15 @@ function makeRequestTrace(
     // will not observe data read by explicitly calling `read` on the
     // request. We expect this to be very uncommon as it is not mentioned in
     // any of the official documentation.
-    shimmer.wrap(stream, 'on', (on) => {
+    shimmer.wrap(stream, 'on', on => {
       return function(
-          this: http2.ClientHttp2Stream, eventName: {}, cb: Function) {
+        this: http2.ClientHttp2Stream,
+        eventName: {},
+        cb: Function
+      ) {
         if (eventName === 'data' && !listenerAttached) {
           listenerAttached = true;
-          on.call(this, 'data', (chunk: Buffer|string) => {
+          on.call(this, 'data', (chunk: Buffer | string) => {
             numBytes += chunk.length;
           });
         }
@@ -151,23 +180,30 @@ function makeRequestTrace(
 }
 
 function patchHttp2Session(
-    session: http2.ClientHttp2Session, authority: string|URL,
-    api: Tracer): void {
+  session: http2.ClientHttp2Session,
+  authority: string | URL,
+  api: Tracer
+): void {
   api.wrapEmitter(session);
-  shimmer.wrap(
-      session, 'request',
-      (request) => makeRequestTrace(request, authority, api));
+  shimmer.wrap(session, 'request', request =>
+    makeRequestTrace(request, authority, api)
+  );
 }
 
 function patchHttp2(h2: Http2Module, api: Tracer): void {
   shimmer.wrap(
-      h2, 'connect',
-      (connect) => function(this: Http2Module, authority: string|URL) {
-        const session: http2.ClientHttp2Session =
-            connect.apply(this, arguments);
+    h2,
+    'connect',
+    connect =>
+      function(this: Http2Module, authority: string | URL) {
+        const session: http2.ClientHttp2Session = connect.apply(
+          this,
+          arguments
+        );
         patchHttp2Session(session, authority, api);
         return session;
-      });
+      }
+  );
 }
 
 function unpatchHttp2(h2: Http2Module) {

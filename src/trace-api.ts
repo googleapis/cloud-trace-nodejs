@@ -14,18 +14,31 @@
  * limitations under the License.
  */
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import * as is from 'is';
 import * as uuid from 'uuid';
 
-import {cls, RootContext} from './cls';
-import {Constants, SpanType} from './constants';
-import {Logger} from './logger';
-import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
-import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
-import {TraceLabels} from './trace-labels';
-import {traceWriter} from './trace-writer';
-import {TracePolicy, TracePolicyConfig} from './tracing-policy';
+import { cls, RootContext } from './cls';
+import { Constants, SpanType } from './constants';
+import { Logger } from './logger';
+import {
+  Func,
+  RootSpan,
+  RootSpanOptions,
+  Span,
+  SpanOptions,
+  Tracer,
+} from './plugin-types';
+import {
+  RootSpanData,
+  UNCORRELATED_CHILD_SPAN,
+  UNCORRELATED_ROOT_SPAN,
+  UNTRACED_CHILD_SPAN,
+  UNTRACED_ROOT_SPAN,
+} from './span-data';
+import { TraceLabels } from './trace-labels';
+import { traceWriter } from './trace-writer';
+import { TracePolicy, TracePolicyConfig } from './tracing-policy';
 import * as util from './util';
 
 /**
@@ -46,7 +59,7 @@ export enum TraceContextHeaderBehavior {
   /**
    * Trace every request as a new trace, even if trace context exists.
    */
-  IGNORE = 'ignore'
+  IGNORE = 'ignore',
 }
 
 /**
@@ -87,15 +100,15 @@ export class StackdriverTracer implements Tracer {
     encodeAsString: util.generateTraceContext,
     decodeFromString: util.parseContextFromHeader,
     encodeAsByteArray: util.serializeTraceContext,
-    decodeFromByteArray: util.deserializeTraceContext
+    decodeFromByteArray: util.deserializeTraceContext,
   };
 
   private enabled = false;
   private pluginName: string;
   private pluginNameToLog: string;
-  private logger: Logger|null = null;
-  private config: StackdriverTracerConfig|null = null;
-  private policy: TracePolicy|null = null;
+  private logger: Logger | null = null;
+  private config: StackdriverTracerConfig | null = null;
+  private policy: TracePolicy | null = null;
 
   /**
    * Constructs a new StackdriverTracer instance.
@@ -104,7 +117,7 @@ export class StackdriverTracer implements Tracer {
   constructor(name: string) {
     this.pluginName = name;
     this.pluginNameToLog = this.pluginName ? this.pluginName : 'no-plugin-name';
-    this.disable();  // disable immediately
+    this.disable(); // disable immediately
   }
 
   /**
@@ -163,22 +176,26 @@ export class StackdriverTracer implements Tracer {
       return fn(UNTRACED_ROOT_SPAN);
     }
 
-    options = options || {name: ''};
+    options = options || { name: '' };
 
     // Don't create a root span if we are already in a root span
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanType.ROOT && !rootSpan.span.endTime) {
-      this.logger!.warn(`TraceApi#runInRootSpan: [${
-          this.pluginNameToLog}] Cannot create nested root spans.`);
+      this.logger!.warn(
+        `TraceApi#runInRootSpan: [${
+          this.pluginNameToLog
+        }] Cannot create nested root spans.`
+      );
       return fn(UNCORRELATED_ROOT_SPAN);
     }
 
     // Attempt to read incoming trace context.
-    const incomingTraceContext: IncomingTraceContext = {options: 1};
-    let parsedContext: util.TraceContext|null = null;
-    if (isString(options.traceContext) &&
-        this.config!.contextHeaderBehavior !==
-            TraceContextHeaderBehavior.IGNORE) {
+    const incomingTraceContext: IncomingTraceContext = { options: 1 };
+    let parsedContext: util.TraceContext | null = null;
+    if (
+      isString(options.traceContext) &&
+      this.config!.contextHeaderBehavior !== TraceContextHeaderBehavior.IGNORE
+    ) {
       parsedContext = util.parseContextFromHeader(options.traceContext);
     }
     if (parsedContext) {
@@ -188,8 +205,8 @@ export class StackdriverTracer implements Tracer {
       }
       Object.assign(incomingTraceContext, parsedContext);
     } else if (
-        this.config!.contextHeaderBehavior ===
-        TraceContextHeaderBehavior.REQUIRE) {
+      this.config!.contextHeaderBehavior === TraceContextHeaderBehavior.REQUIRE
+    ) {
       incomingTraceContext.options = 0;
     }
 
@@ -197,26 +214,32 @@ export class StackdriverTracer implements Tracer {
     const locallyAllowed = this.policy!.shouldTrace({
       timestamp: Date.now(),
       url: options.url || '',
-      method: options.method || ''
+      method: options.method || '',
     });
     const remotelyAllowed = !!(
-        incomingTraceContext.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
+      incomingTraceContext.options & Constants.TRACE_OPTIONS_TRACE_ENABLED
+    );
 
-    let rootContext: RootSpan&RootContext;
+    let rootContext: RootSpan & RootContext;
     // Don't create a root span if the trace policy disallows it.
     if (!locallyAllowed || !remotelyAllowed) {
       rootContext = UNTRACED_ROOT_SPAN;
     } else {
       // Create a new root span, and invoke fn with it.
       const traceId =
-          incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
+        incomingTraceContext.traceId ||
+        uuid
+          .v4()
+          .split('-')
+          .join('');
       const parentId = incomingTraceContext.spanId || '0';
       const name = this.config!.rootSpanNameOverride(options.name);
       rootContext = new RootSpanData(
-          {projectId: '', traceId, spans: []}, /* Trace object */
-          name,                                /* Span name */
-          parentId,                            /* Parent's span ID */
-          options.skipFrames || 0);
+        { projectId: '', traceId, spans: [] } /* Trace object */,
+        name /* Span name */,
+        parentId /* Parent's span ID */,
+        options.skipFrames || 0
+      );
     }
 
     return cls.get().runWithContext(() => {
@@ -231,7 +254,7 @@ export class StackdriverTracer implements Tracer {
     return cls.get().getContext();
   }
 
-  getCurrentContextId(): string|null {
+  getCurrentContextId(): string | null {
     // In v3, this will be deprecated for getCurrentRootSpan.
     const traceContext = this.getCurrentRootSpan().getTraceContext();
     const parsedTraceContext = util.parseContextFromHeader(traceContext);
@@ -243,11 +266,12 @@ export class StackdriverTracer implements Tracer {
       return traceWriter.get().getProjectId();
     } else {
       return Promise.reject(
-          new Error('The Project ID could not be retrieved.'));
+        new Error('The Project ID could not be retrieved.')
+      );
     }
   }
 
-  getWriterProjectId(): string|null {
+  getWriterProjectId(): string | null {
     // In v3, this will be deprecated for getProjectId.
     if (traceWriter.exists() && traceWriter.get().isActive) {
       return traceWriter.get().projectId;
@@ -261,7 +285,7 @@ export class StackdriverTracer implements Tracer {
       return UNTRACED_CHILD_SPAN;
     }
 
-    options = options || {name: ''};
+    options = options || { name: '' };
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanType.ROOT) {
       if (!!rootSpan.span.endTime) {
@@ -272,27 +296,37 @@ export class StackdriverTracer implements Tracer {
         // with continuously growing number of child spans. The second case
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
-        this.logger!.warn(`TraceApi#createChildSpan: [${
-            this.pluginNameToLog}] Creating phantom child span [${
-            options.name}] because root span [${
-            rootSpan.span.name}] was already closed.`);
+        this.logger!.warn(
+          `TraceApi#createChildSpan: [${
+            this.pluginNameToLog
+          }] Creating phantom child span [${options.name}] because root span [${
+            rootSpan.span.name
+          }] was already closed.`
+        );
         return UNCORRELATED_CHILD_SPAN;
       }
       if (rootSpan.trace.spans.length >= this.config!.spansPerTraceHardLimit) {
         // As in the previous case, a root span with a large number of child
         // spans suggests a memory leak stemming from context confusion. This
         // is likely due to userspace task queues or Promise implementations.
-        this.logger!.error(`TraceApi#createChildSpan: [${
-            this.pluginNameToLog}] Creating phantom child span [${
-            options.name}] because the trace with root span [${
-            rootSpan.span.name}] has reached a limit of ${
-            this.config!
-                .spansPerTraceHardLimit} spans. This is likely a memory leak.`);
-        this.logger!.error([
-          'TraceApi#createChildSpan: Please see',
-          'https://github.com/googleapis/cloud-trace-nodejs/wiki',
-          'for details and suggested actions.'
-        ].join(' '));
+        this.logger!.error(
+          `TraceApi#createChildSpan: [${
+            this.pluginNameToLog
+          }] Creating phantom child span [${
+            options.name
+          }] because the trace with root span [${
+            rootSpan.span.name
+          }] has reached a limit of ${
+            this.config!.spansPerTraceHardLimit
+          } spans. This is likely a memory leak.`
+        );
+        this.logger!.error(
+          [
+            'TraceApi#createChildSpan: Please see',
+            'https://github.com/googleapis/cloud-trace-nodejs/wiki',
+            'for details and suggested actions.',
+          ].join(' ')
+        );
         return UNCORRELATED_CHILD_SPAN;
       }
       if (rootSpan.trace.spans.length === this.config!.spansPerTraceSoftLimit) {
@@ -304,25 +338,35 @@ export class StackdriverTracer implements Tracer {
         // RootSpanData instance, this block might be skipped because it only
         // checks equality -- this is OK because no automatic tracing plugin
         // uses the RootSpanData API directly.
-        this.logger!.error(`TraceApi#createChildSpan: [${
-            this.pluginNameToLog}] Adding child span [${
-            options.name}] will cause the trace with root span [${
-            rootSpan.span.name}] to contain more than ${
-            this.config!
-                .spansPerTraceSoftLimit} spans. This is likely a memory leak.`);
-        this.logger!.error([
-          'TraceApi#createChildSpan: Please see',
-          'https://github.com/googleapis/cloud-trace-nodejs/wiki',
-          'for details and suggested actions.'
-        ].join(' '));
+        this.logger!.error(
+          `TraceApi#createChildSpan: [${
+            this.pluginNameToLog
+          }] Adding child span [${
+            options.name
+          }] will cause the trace with root span [${
+            rootSpan.span.name
+          }] to contain more than ${
+            this.config!.spansPerTraceSoftLimit
+          } spans. This is likely a memory leak.`
+        );
+        this.logger!.error(
+          [
+            'TraceApi#createChildSpan: Please see',
+            'https://github.com/googleapis/cloud-trace-nodejs/wiki',
+            'for details and suggested actions.',
+          ].join(' ')
+        );
       }
       // Create a new child span and return it.
       const childContext = rootSpan.createChildSpan({
         name: options.name,
-        skipFrames: options.skipFrames ? options.skipFrames + 1 : 1
+        skipFrames: options.skipFrames ? options.skipFrames + 1 : 1,
       });
-      this.logger!.info(`TraceApi#createChildSpan: [${
-          this.pluginNameToLog}] Created child span [${options.name}]`);
+      this.logger!.info(
+        `TraceApi#createChildSpan: [${
+          this.pluginNameToLog
+        }] Created child span [${options.name}]`
+      );
       return childContext;
     } else if (rootSpan.type === SpanType.UNTRACED) {
       // Context wasn't lost, but there's no root span, indicating that this
@@ -330,9 +374,13 @@ export class StackdriverTracer implements Tracer {
       return UNTRACED_CHILD_SPAN;
     } else {
       // Context was lost.
-      this.logger!.warn(`TraceApi#createChildSpan: [${
-          this.pluginNameToLog}] Creating phantom child span [${
-          options.name}] because there is no root span.`);
+      this.logger!.warn(
+        `TraceApi#createChildSpan: [${
+          this.pluginNameToLog
+        }] Creating phantom child span [${
+          options.name
+        }] because there is no root span.`
+      );
       return UNCORRELATED_CHILD_SPAN;
     }
   }
@@ -341,8 +389,10 @@ export class StackdriverTracer implements Tracer {
     return span.type === SpanType.ROOT || span.type === SpanType.CHILD;
   }
 
-  getResponseTraceContext(incomingTraceContext: string|null, isTraced: boolean):
-      string {
+  getResponseTraceContext(
+    incomingTraceContext: string | null,
+    isTraced: boolean
+  ): string {
     if (!this.isActive() || !incomingTraceContext) {
       return '';
     }

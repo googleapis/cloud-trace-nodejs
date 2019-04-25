@@ -20,11 +20,11 @@
 export enum SpanKind {
   SPAN_KIND_UNSPECIFIED = 'SPAN_KIND_UNSPECIFIED',
   RPC_SERVER = 'RPC_SERVER',
-  RPC_CLIENT = 'RPC_CLIENT'
+  RPC_CLIENT = 'RPC_CLIENT',
 }
 
 export interface TraceSpan {
-  labels: {[key: string]: string};
+  labels: { [key: string]: string };
   startTime: string;
   endTime: string;
   kind: SpanKind;

@@ -38,23 +38,31 @@
 import * as assert from 'assert';
 
 import * as testTraceModule from '../trace';
-import {describeInterop} from '../utils';
+import { describeInterop } from '../utils';
 
 interface ApiCallSettings {
   merge: () => {
-    otherArgs: {}
+    otherArgs: {};
   };
 }
-type Callback<T> = (err: Error|null, res?: T) => void;
-type InnerApiCall<I, O> =
-    (request: I, metadata: {}, options: {}, callback: Callback<O>) => void;
-type OuterApiCall<I, O> =
-    (request: I, options: {timeout: number}, callback: Callback<O>) => void;
-type GaxModule = {
+type Callback<T> = (err: Error | null, res?: T) => void;
+type InnerApiCall<I, O> = (
+  request: I,
+  metadata: {},
+  options: {},
+  callback: Callback<O>
+) => void;
+type OuterApiCall<I, O> = (
+  request: I,
+  options: { timeout: number },
+  callback: Callback<O>
+) => void;
+interface GaxModule {
   createApiCall: <I, O>(
-      funcWithAuth: Promise<InnerApiCall<I, O>>, settings: ApiCallSettings) =>
-      OuterApiCall<I, O>;
-};
+    funcWithAuth: Promise<InnerApiCall<I, O>>,
+    settings: ApiCallSettings
+  ) => OuterApiCall<I, O>;
+}
 
 describeInterop<GaxModule>('google-gax', fixture => {
   let googleGax: GaxModule;
@@ -71,27 +79,34 @@ describeInterop<GaxModule>('google-gax', fixture => {
     testTraceModule.setPluginLoaderForTest(testTraceModule.TestPluginLoader);
   });
 
-  it(`doesn't break context`, (done) => {
-    const authPromise = Promise.resolve(
-        ((args, metadata, opts, cb) => {
-          // Simulate an RPC.
-          testTraceModule.get().createChildSpan({name: 'in-request'}).endSpan();
-          setImmediate(() => cb(null, {}));
-        }) as InnerApiCall<{}, {}>);
-    const apiCall =
-        googleGax.createApiCall(authPromise, {merge: () => ({otherArgs: {}})});
+  it(`doesn't break context`, done => {
+    const authPromise = Promise.resolve(((args, metadata, opts, cb) => {
+      // Simulate an RPC.
+      testTraceModule
+        .get()
+        .createChildSpan({ name: 'in-request' })
+        .endSpan();
+      setImmediate(() => cb(null, {}));
+    }) as InnerApiCall<{}, {}>);
+    const apiCall = googleGax.createApiCall(authPromise, {
+      merge: () => ({ otherArgs: {} }),
+    });
 
-    testTraceModule.get().runInRootSpan({name: 'root'}, (root) => {
-      apiCall({}, {timeout: 20}, (err) => {
+    testTraceModule.get().runInRootSpan({ name: 'root' }, root => {
+      apiCall({}, { timeout: 20 }, err => {
         assert.ifError(err);
-        testTraceModule.get().createChildSpan({name: 'in-callback'}).endSpan();
+        testTraceModule
+          .get()
+          .createChildSpan({ name: 'in-callback' })
+          .endSpan();
         root.endSpan();
 
         // Both children should be nested under the root span where the API call
         // was made, instead of inheriting the (non-existent) context where
         // createApiCall was called.
-        const correctTrace = testTraceModule.getOneTrace(
-            t => t.spans.some(span => span.name === 'root'));
+        const correctTrace = testTraceModule.getOneTrace(t =>
+          t.spans.some(span => span.name === 'root')
+        );
         assert.strictEqual(correctTrace.spans.length, 3);
         done();
       });

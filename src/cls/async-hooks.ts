@@ -17,20 +17,25 @@
 // This file calls require('async_hooks') in the AsyncHooksCLS constructor,
 // rather than upon module load.
 import * as asyncHooksModule from 'async_hooks';
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import * as shimmer from 'shimmer';
 
-import {CLS, Func} from './base';
+import { CLS, Func } from './base';
 
 type AsyncHooksModule = typeof asyncHooksModule;
 
 // A list of well-known EventEmitter methods that add event listeners.
-const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> =
-    ['addListener', 'on', 'once', 'prependListener', 'prependOnceListener'];
+const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> = [
+  'addListener',
+  'on',
+  'once',
+  'prependListener',
+  'prependOnceListener',
+];
 // A symbol used to check if a method has been wrapped for context.
 const WRAPPED = Symbol('@google-cloud/trace-agent:AsyncHooksCLS:WRAPPED');
 
-type ContextWrapped<T> = T&{[WRAPPED]?: boolean};
+type ContextWrapped<T> = T & { [WRAPPED]?: boolean };
 
 /**
  * An implementation of continuation-local storage on top of the async_hooks
@@ -41,7 +46,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   private ah: AsyncHooksModule;
 
   /** A map of AsyncResource IDs to Context objects. */
-  private contexts: {[id: number]: Context} = {};
+  private contexts: { [id: number]: Context } = {};
   /** The AsyncHook that proactively populates entries in this.contexts. */
   private hook: asyncHooksModule.AsyncHook;
   /** Whether this instance is enabled. */
@@ -104,7 +109,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
         // the wrong parent, but this is still better than a potential memory
         // leak.)
         delete this.contexts[id];
-      }
+      },
     });
   }
 
@@ -163,7 +168,9 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
     // share context with that of the AsyncResource with the given ID.
     const contextWrapper: ContextWrapped<Func<T>> = function(this: {}) {
       return that.runWithContext(
-          () => fn.apply(this, arguments) as T, boundContext);
+        () => fn.apply(this, arguments) as T,
+        boundContext
+      );
     };
     // Prevent re-wrapping.
     contextWrapper[WRAPPED] = true;
@@ -173,16 +180,16 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
       enumerable: false,
       configurable: true,
       writable: false,
-      value: fn.length
+      value: fn.length,
     });
     return contextWrapper;
   }
 
   patchEmitterToPropagateContext(ee: EventEmitter): void {
     const that = this;
-    EVENT_EMITTER_METHODS.forEach((method) => {
+    EVENT_EMITTER_METHODS.forEach(method => {
       if (ee[method]) {
-        shimmer.wrap(ee, method, (oldMethod) => {
+        shimmer.wrap(ee, method, oldMethod => {
           return function(this: {}, event: string, cb: Func<void>) {
             return oldMethod.call(this, event, that.bindWithCurrentContext(cb));
           };

@@ -1,4 +1,4 @@
-import {IncomingHttpHeaders} from 'http';
+import { IncomingHttpHeaders } from 'http';
 
 /**
  * Copyright 2018 Google LLC
@@ -31,26 +31,30 @@ export interface WebFrameworkResponse {
 export type WebFrameworkAddHandlerOptions = {
   // The path which will invoke the handler.
   path: string;
-}&({
-  // This handler doesn't provide the response.
-  hasResponse: false;
-  // Whether or not this handler should block the next handler.
-  blocking: boolean;
-  // The handler function.
-  fn: (incomingHeaders: IncomingHttpHeaders) => Promise<void>;
-}|{
-  // This handler provides a response.
-  hasResponse: true;
-  // The handler function.
-  fn: (incomingHeaders: IncomingHttpHeaders) => Promise<WebFrameworkResponse>;
-});
+} & (
+  | {
+      // This handler doesn't provide the response.
+      hasResponse: false;
+      // Whether or not this handler should block the next handler.
+      blocking: boolean;
+      // The handler function.
+      fn: (incomingHeaders: IncomingHttpHeaders) => Promise<void>;
+    }
+  | {
+      // This handler provides a response.
+      hasResponse: true;
+      // The handler function.
+      fn: (
+        incomingHeaders: IncomingHttpHeaders
+      ) => Promise<WebFrameworkResponse>;
+    });
 
 /**
  * A type that describes a ramework-agnostic request handler function.
  */
-export type WebFrameworkHandlerFunction =
-    (incomingHeaders: IncomingHttpHeaders) =>
-        Promise<void|WebFrameworkResponse>;
+export type WebFrameworkHandlerFunction = (
+  incomingHeaders: IncomingHttpHeaders
+) => Promise<void | WebFrameworkResponse>;
 
 /**
  * Abstraction over a web framework.
@@ -67,7 +71,7 @@ export interface WebFramework {
    * If port is set to 0, an ephemeral port number will be chosen (and
    * returned).
    */
-  listen(port: number): number|Promise<number>;
+  listen(port: number): number | Promise<number>;
   /**
    * Shut down the server.
    */
@@ -79,7 +83,7 @@ export interface WebFramework {
  * WebFramework.
  */
 export interface WebFrameworkConstructor {
-  new(): WebFramework;
+  new (): WebFramework;
   versionRange: string;
   commonName: string;
   expectedTopStackFrame: string;

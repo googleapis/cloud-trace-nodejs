@@ -17,14 +17,19 @@
 import * as assert from 'assert';
 import axiosModule from 'axios';
 import * as cluster from 'cluster';
-import {Server} from 'http';
-import {AddressInfo} from 'net';
+import { Server } from 'http';
+import { AddressInfo } from 'net';
 
 import * as cls from '../src/cls';
-import {express_4 as expressModule} from '../src/plugins/types';
+import { express_4 as expressModule } from '../src/plugins/types';
 
 import * as testTraceModule from './trace';
-import {assertSpanDuration, DEFAULT_SPAN_DURATION, isServerSpan, wait} from './utils';
+import {
+  assertSpanDuration,
+  DEFAULT_SPAN_DURATION,
+  isServerSpan,
+  wait,
+} from './utils';
 
 describe('test-trace-cluster', () => {
   let axios: typeof axiosModule;
@@ -64,11 +69,13 @@ describe('test-trace-cluster', () => {
       const port = (server.address() as AddressInfo).port;
 
       let recordedTime = Date.now();
-      await testTraceModule.get().runInRootSpan({name: 'outer'}, async span => {
-        assert.ok(span);
-        await axios.get(`http://localhost:${port}`);
-        span!.endSpan();
-      });
+      await testTraceModule
+        .get()
+        .runInRootSpan({ name: 'outer' }, async span => {
+          assert.ok(span);
+          await axios.get(`http://localhost:${port}`);
+          span!.endSpan();
+        });
       recordedTime = Date.now() - recordedTime;
       const serverSpan = testTraceModule.getOneSpan(isServerSpan);
       assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);

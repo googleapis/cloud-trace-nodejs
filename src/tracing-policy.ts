@@ -40,12 +40,14 @@ class Sampler implements TracePolicyPredicate<number> {
 }
 
 class URLFilter implements TracePolicyPredicate<string> {
-  constructor(private readonly filterUrls: Array<string|RegExp>) {}
+  constructor(private readonly filterUrls: Array<string | RegExp>) {}
 
   shouldTrace(url: string) {
-    return !this.filterUrls.some((candidate) => {
-      return (typeof candidate === 'string' && candidate === url) ||
-          !!url.match(candidate);
+    return !this.filterUrls.some(candidate => {
+      return (
+        (typeof candidate === 'string' && candidate === url) ||
+        !!url.match(candidate)
+      );
     });
   }
 }
@@ -54,8 +56,8 @@ class MethodsFilter implements TracePolicyPredicate<string> {
   constructor(private readonly filterMethods: string[]) {}
 
   shouldTrace(method: string) {
-    return !this.filterMethods.some((candidate) => {
-      return (candidate.toLowerCase() === method.toLowerCase());
+    return !this.filterMethods.some(candidate => {
+      return candidate.toLowerCase() === method.toLowerCase();
     });
   }
 }
@@ -71,7 +73,7 @@ export interface TracePolicyConfig {
   /**
    * A field that controls a url-based filter.
    */
-  ignoreUrls: Array<string|RegExp>;
+  ignoreUrls: Array<string | RegExp>;
   /**
    * A field that controls a method filter.
    */
@@ -92,19 +94,19 @@ export class TracePolicy {
    */
   constructor(config: TracePolicyConfig) {
     if (config.samplingRate === 0) {
-      this.sampler = {shouldTrace: () => true};
+      this.sampler = { shouldTrace: () => true };
     } else if (config.samplingRate < 0) {
-      this.sampler = {shouldTrace: () => false};
+      this.sampler = { shouldTrace: () => false };
     } else {
       this.sampler = new Sampler(config.samplingRate);
     }
     if (config.ignoreUrls.length === 0) {
-      this.urlFilter = {shouldTrace: () => true};
+      this.urlFilter = { shouldTrace: () => true };
     } else {
       this.urlFilter = new URLFilter(config.ignoreUrls);
     }
     if (config.ignoreMethods.length === 0) {
-      this.methodsFilter = {shouldTrace: () => true};
+      this.methodsFilter = { shouldTrace: () => true };
     } else {
       this.methodsFilter = new MethodsFilter(config.ignoreMethods);
     }
@@ -115,20 +117,31 @@ export class TracePolicy {
    * @param options Fields that help determine whether a trace should be
    *                created.
    */
-  shouldTrace(options: {timestamp: number, url: string, method: string}):
-      boolean {
-    return this.sampler.shouldTrace(options.timestamp) &&
-        this.urlFilter.shouldTrace(options.url) &&
-        this.methodsFilter.shouldTrace(options.method);
+  shouldTrace(options: {
+    timestamp: number;
+    url: string;
+    method: string;
+  }): boolean {
+    return (
+      this.sampler.shouldTrace(options.timestamp) &&
+      this.urlFilter.shouldTrace(options.url) &&
+      this.methodsFilter.shouldTrace(options.method)
+    );
   }
 
   static always(): TracePolicy {
-    return new TracePolicy(
-        {samplingRate: 0, ignoreUrls: [], ignoreMethods: []});
+    return new TracePolicy({
+      samplingRate: 0,
+      ignoreUrls: [],
+      ignoreMethods: [],
+    });
   }
 
   static never(): TracePolicy {
-    return new TracePolicy(
-        {samplingRate: -1, ignoreUrls: [], ignoreMethods: []});
+    return new TracePolicy({
+      samplingRate: -1,
+      ignoreUrls: [],
+      ignoreMethods: [],
+    });
   }
 }

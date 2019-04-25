@@ -15,19 +15,23 @@
  */
 
 import * as http from 'http';
-import {AddressInfo} from 'net';
+import { AddressInfo } from 'net';
 
-import {koa_1} from '../../src/plugins/types';
+import { koa_1 } from '../../src/plugins/types';
 import * as testTraceModule from '../trace';
 
-import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkResponse} from './base';
+import {
+  WebFramework,
+  WebFrameworkAddHandlerOptions,
+  WebFrameworkResponse,
+} from './base';
 
 export class Koa1 implements WebFramework {
   static commonName = 'koa@1';
   static expectedTopStackFrame = 'middleware';
   static versionRange = '*';
   app: koa_1;
-  server: http.Server|null = null;
+  server: http.Server | null = null;
 
   constructor() {
     // tslint:disable-next-line:variable-name (Koa is a constructor)
@@ -37,15 +41,17 @@ export class Koa1 implements WebFramework {
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
     if (!options.hasResponse && !options.blocking) {
-      throw new Error(`${
-          this.constructor
-              .name} wrapper for testing doesn't support non-blocking handlers.`);
+      throw new Error(
+        `${
+          this.constructor.name
+        } wrapper for testing doesn't support non-blocking handlers.`
+      );
     }
     this.app.use(function*(next) {
       if (this.request.path === options.path) {
         // Context doesn't automatically get propagated to yielded functions.
         yield testTraceModule.get().wrap(async (cb: Function) => {
-          let response: WebFrameworkResponse|void;
+          let response: WebFrameworkResponse | void;
           try {
             response = await options.fn(this.request.req.headers);
           } catch (err) {
@@ -64,7 +70,9 @@ export class Koa1 implements WebFramework {
   }
 
   listen(port: number): number {
-    this.app.on('error', () => {/* silence error */});
+    this.app.on('error', () => {
+      /* silence error */
+    });
     if (this.server) {
       throw new Error('Server already running.');
     }

@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import {ServerResponse} from 'http';
+import { ServerResponse } from 'http';
 import * as shimmer from 'shimmer';
-import {parse as urlParse} from 'url';
+import { parse as urlParse } from 'url';
 
-import {PluginTypes} from '..';
+import { PluginTypes } from '..';
 
-import {restify_5} from './types';
+import { restify_5 } from './types';
 
 type Restify5 = typeof restify_5;
-type Request = restify_5.Request&{route?: {path: string | RegExp}};
+type Request = restify_5.Request & { route?: { path: string | RegExp } };
 type Response = restify_5.Response;
 type Next = restify_5.Next;
 type CreateServerFn = (options?: restify_5.ServerOptions) => restify_5.Server;
@@ -53,16 +53,20 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
       url: req.url,
       method: req.method,
       traceContext: req.header(api.constants.TRACE_CONTEXT_HEADER_NAME),
-      skipFrames: 1
+      skipFrames: 1,
     };
 
     api.runInRootSpan(options, rootSpan => {
       // Set response trace context.
       const responseTraceContext = api.getResponseTraceContext(
-          options.traceContext, api.isRealSpan(rootSpan));
+        options.traceContext,
+        api.isRealSpan(rootSpan)
+      );
       if (responseTraceContext) {
         res.header(
-            api.constants.TRACE_CONTEXT_HEADER_NAME, responseTraceContext);
+          api.constants.TRACE_CONTEXT_HEADER_NAME,
+          responseTraceContext
+        );
       }
 
       if (!api.isRealSpan(rootSpan)) {
@@ -72,13 +76,16 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
       api.wrapEmitter(req);
       api.wrapEmitter(res);
 
-
-      const fullUrl = `${req.header('X-Forwarded-Proto', 'http')}://${
-          req.header('host')}${req.url}`;
+      const fullUrl = `${req.header(
+        'X-Forwarded-Proto',
+        'http'
+      )}://${req.header('host')}${req.url}`;
       rootSpan.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, req.method);
       rootSpan.addLabel(api.labels.HTTP_URL_LABEL_KEY, fullUrl);
       rootSpan.addLabel(
-          api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
+        api.labels.HTTP_SOURCE_IP,
+        req.connection.remoteAddress
+      );
 
       const originalEnd = res.end;
       res.end = function(this: ServerResponse) {
@@ -89,7 +96,9 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
           rootSpan.addLabel('restify/request.route.path', req.route.path);
         }
         rootSpan.addLabel(
-            api.labels.HTTP_RESPONSE_CODE_LABEL_KEY, res.statusCode);
+          api.labels.HTTP_RESPONSE_CODE_LABEL_KEY,
+          res.statusCode
+        );
         rootSpan.endSpan();
         return returned;
       };
@@ -99,10 +108,12 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
   }
 }
 
-const plugin: PluginTypes.Plugin = [{
-  versions: SUPPORTED_VERSIONS,
-  patch: patchRestify,
-  unpatch: unpatchRestify
-} as PluginTypes.Monkeypatch<Restify5>];
+const plugin: PluginTypes.Plugin = [
+  {
+    versions: SUPPORTED_VERSIONS,
+    patch: patchRestify,
+    unpatch: unpatchRestify,
+  } as PluginTypes.Monkeypatch<Restify5>,
+];
 
 export = plugin;
