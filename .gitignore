@@ -1,6 +1,7 @@
 node_modules/
 !test/fixtures/loader/node_modules/
 npm-debug.log
+.coverage/
 .DS_Store
 .nyc_output/
 .vscode/

@@ -1,9 +1,8 @@
-import { BUILD_DIRECTORY, nodule, readFileP, forkP, spawnP } from './utils';
+import { BUILD_DIRECTORY, nodule, forkP } from './utils';
 import * as path from 'path';
-import * as pify from 'pify';
 
 export async function reportCoverage() {
-  await forkP(nodule('.bin/codecov'), [], {
+  await forkP(nodule('.bin/codecov'), [`--root=${path.resolve(BUILD_DIRECTORY, '..')}`], {
     cwd: BUILD_DIRECTORY
   });
 }

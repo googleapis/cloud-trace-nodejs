@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { globP, forkP } from './utils';
+import { globP, forkP, BUILD_DIRECTORY } from './utils';
 
 export interface Options {
   includeGlobs: string[],
@@ -28,9 +28,13 @@ export async function runTests(options: Options) {
         '--reporter',
         'lcov',
         '--report-dir',
-        `./coverage/${testNum++}`,
+        `./.coverage/${testNum++}`,
         '--exclude',
-        'build/test/**'
+        'build/test/fixtures/**',
+        '--exclude',
+        'build/test/plugins/fixtures/**',
+        '--exclude-after-remap',
+        'false',
       ] : [],
       nodule('mocha/bin/_mocha'),
       '--require',
