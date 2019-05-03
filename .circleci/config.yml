@@ -114,6 +114,8 @@ workflows:
 
 jobs:
   node6:
+    environment:
+      CODECOV_ENV: node6
     docker:
       - image: node:6
       - *mongo_service
@@ -122,6 +124,8 @@ jobs:
       - *mysql_service
     <<: *unit_tests
   node8:
+    environment:
+      CODECOV_ENV: node8
     docker:
       - image: node:8
       - *mongo_service
@@ -130,6 +134,8 @@ jobs:
       - *mysql_service
     <<: *unit_tests
   node10:
+    environment:
+      CODECOV_ENV: node10
     docker:
       - image: node:10
       - *mongo_service
@@ -138,6 +144,8 @@ jobs:
       - *mysql_service
     <<: *unit_tests
   node11:
+    environment:
+      CODECOV_ENV: node11
     docker:
       - image: node:11
       - *mongo_service

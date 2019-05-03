@@ -1,5 +1,6 @@
+import * as cpy from 'cpy';
 import * as path from 'path';
-import { BUILD_DIRECTORY, statP, ncpP, spawnP, readFileP, writeFileP, mkdirP } from './utils';
+import { BUILD_DIRECTORY, statP, spawnP, readFileP, writeFileP, mkdirP } from './utils';
 import { readdir } from 'fs';
 import * as pify from 'pify';
 import * as semver from 'semver';
@@ -9,10 +10,12 @@ const readdirP: (path: string) => Promise<string[]> = pify(readdir);
 export async function initTestFixtures(installPlugins: boolean) {
   // Copy fixtures to build directory
   const fixtureDirectories = ['./test/fixtures'];
-  await Promise.all(fixtureDirectories.map(async (fixtureDirectory) => {
+  for (const fixtureDirectory of fixtureDirectories) {
     const newLocation = `${BUILD_DIRECTORY}/${path.relative('.', fixtureDirectory)}`;
-    await ncpP(fixtureDirectory, newLocation);
-  }));
+    await cpy(`${fixtureDirectory}/**`, BUILD_DIRECTORY, {
+      parents: true
+    });
+  };
 
   if (!installPlugins) {
     return;

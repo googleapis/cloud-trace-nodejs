@@ -1,4 +1,4 @@
-import { flatten, globP, mkdirP, ncpP, readFileP, spawnP, tmpDirP, writeFileP } from './utils';
+import { mkdirP, readFileP, spawnP, writeFileP } from './utils';
 
 const TYPES_DIRECTORY = 'src/plugins/types';
 

@@ -1,5 +1,6 @@
+import * as cpy from 'cpy';
 import * as path from 'path';
-import { globP, ncpP, spawnP, tmpDirP } from './utils';
+import { globP, spawnP, tmpDirP } from './utils';
 
 /**
  * Get the major version number of the current Node process.
@@ -40,7 +41,7 @@ export async function checkInstall() {
   });
   // Create an entry point for the package created in the temp directory
   // use-module.ts is a fixture that imports the Trace Agent
-  await ncpP('./test/fixtures/use-module.ts', `${installDir}/index.ts`);
+  await cpy('./test/fixtures/use-module.ts', installDir, { rename: 'index.ts' });
   // Compile it
   await spawnP(`node_modules${path.sep}.bin${path.sep}tsc`, ['index.ts', '--lib', 'es2015'], {
     cwd: installDir
