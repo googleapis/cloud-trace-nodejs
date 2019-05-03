@@ -183,6 +183,49 @@ describe('SpanData', () => {
       myFunction();
     });
 
+    // Dependent on ./fixtures/source-maps-test
+    describe('stack traces with/without source maps', () => {
+      const sourceMapTypes =
+          ['external-source-map', 'inline-source-map', 'inline-sources'];
+      const getSourceMapTestStackFrame = (spanData: CommonSpanData) => {
+        const stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
+        assert.ok(stack);
+        const frames = JSON.parse(stack);
+        assert.ok(frames && frames.stack_frame);
+        assert.ok(Array.isArray(frames.stack_frame));
+        const stackFrame = frames.stack_frame[1];
+        return stackFrame;
+      };
+
+      for (const sourceMapType of sourceMapTypes) {
+        it(`uses source maps when available in stack traces: ${sourceMapType}`,
+           () => {
+             const {applyGeneric} =
+                 require(`./fixtures/source-maps-test/${sourceMapType}`) as
+                 {applyGeneric: <T>(fn: () => T) => T};
+             const spanData =
+                 applyGeneric(() => new CommonSpanData(trace, 'name', '0', 0));
+             const stackFrame = getSourceMapTestStackFrame(spanData);
+             // Source maps should give us this exact information.
+             assert.ok(stackFrame.file_name.endsWith(`${sourceMapType}.ts`));
+             assert.strictEqual(stackFrame.line_number, 19);
+             assert.strictEqual(stackFrame.column_number, 52);
+           });
+      }
+
+      it(`doesn't break when there are no source maps`, () => {
+        const {applyGeneric} =
+            require(`./fixtures/source-maps-test/no-source-map`) as
+            {applyGeneric: <T>(fn: () => T) => T};
+        const spanData =
+            applyGeneric(() => new CommonSpanData(trace, 'name', '0', 0));
+        const stackFrame = getSourceMapTestStackFrame(spanData);
+        assert.ok(stackFrame.file_name.endsWith('no-source-map.js'));
+        assert.strictEqual(stackFrame.line_number, 20);
+        assert.strictEqual(stackFrame.column_number, 47);
+      });
+    });
+
     it(`doesn't call TraceWriter#writeTrace when ended`, () => {
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
       spanData.endSpan();
