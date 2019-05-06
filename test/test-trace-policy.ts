@@ -91,6 +91,59 @@ describe('TracePolicy', () => {
     });
   });
 
+  describe('Context Header Options Field', () => {
+    describe('when contextHeaderBehavior = IGNORE', () => {
+      const policy = new TracePolicyForTest(
+          {contextHeaderBehavior: TraceContextHeaderBehavior.IGNORE});
+
+      it('should ignore options bit', () => {
+        assert.ok(policy.shouldTraceForTest(
+            {traceContext: {traceId: '0', spanId: '0', options: 1}}));
+        assert.ok(policy.shouldTraceForTest(
+            {traceContext: {traceId: '0', spanId: '0', options: 0}}));
+      });
+
+      it('should not require that header exists', () => {
+        assert.ok(policy.shouldTraceForTest({traceContext: null}));
+        assert.ok(policy.shouldTraceForTest({traceContext: undefined}));
+      });
+    });
+
+    describe('when contextHeaderBehavior = REQUIRE', () => {
+      const policy = new TracePolicyForTest(
+          {contextHeaderBehavior: TraceContextHeaderBehavior.REQUIRE});
+
+      it('should respect options bit', () => {
+        assert.ok(policy.shouldTraceForTest(
+            {traceContext: {traceId: '0', spanId: '0', options: 1}}));
+        assert.ok(!policy.shouldTraceForTest(
+            {traceContext: {traceId: '0', spanId: '0', options: 0}}));
+      });
+
+      it('should require that header exists', () => {
+        assert.ok(!policy.shouldTraceForTest({traceContext: null}));
+        assert.ok(!policy.shouldTraceForTest({traceContext: undefined}));
+      });
+    });
+
+    describe('when contextHeaderBehavior = DEFAULT', () => {
+      const policy = new TracePolicyForTest(
+          {contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT});
+
+      it('should respect options bit', () => {
+        assert.ok(policy.shouldTraceForTest(
+            {traceContext: {traceId: '0', spanId: '0', options: 1}}));
+        assert.ok(!policy.shouldTraceForTest(
+            {traceContext: {traceId: '0', spanId: '0', options: 0}}));
+      });
+
+      it('should not require that header exists', () => {
+        assert.ok(policy.shouldTraceForTest({traceContext: null}));
+        assert.ok(policy.shouldTraceForTest({traceContext: undefined}));
+      });
+    });
+  });
+
   describe('Sampling', () => {
     const NUM_SECONDS = 10;
     const testCases = [0.1, 0.5, 1, 10, 50, 150, 200, 500, 1000];

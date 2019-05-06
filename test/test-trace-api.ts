@@ -193,6 +193,55 @@ describe('Trace Interface', () => {
       assert.strictEqual(traceApi.getWriterProjectId(), 'project-1');
     });
 
+    it('should pass relevant fields to the trace policy', () => {
+      class CaptureOptionsTracePolicy {
+        capturedShouldTraceParam: RequestDetails|null = null;
+        shouldTrace(options: RequestDetails) {
+          this.capturedShouldTraceParam = options;
+          return false;
+        }
+      }
+      const tracePolicy = new CaptureOptionsTracePolicy();
+      const traceAPI = createTraceAgent({}, tracePolicy);
+      // All params present
+      {
+        const rootSpanOptions =
+            {name: 'root', url: 'foo', method: 'bar', traceContext: '1/2;o=1'};
+        const beforeRootSpan = Date.now();
+        traceAPI.runInRootSpan(rootSpanOptions, (rootSpan) => {
+          assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
+          rootSpan.endSpan();
+        });
+        const afterRootSpan = Date.now();
+        assert.ok(tracePolicy.capturedShouldTraceParam);
+        const shouldTraceParam = tracePolicy.capturedShouldTraceParam!;
+        assert.strictEqual(shouldTraceParam.url, 'foo');
+        assert.strictEqual(shouldTraceParam.method, 'bar');
+        assert.ok(shouldTraceParam.timestamp >= beforeRootSpan);
+        assert.ok(shouldTraceParam.timestamp <= afterRootSpan);
+        assert.ok(shouldTraceParam.timestamp <= afterRootSpan);
+        assert.deepStrictEqual(
+            shouldTraceParam.traceContext,
+            {traceId: '1', spanId: '2', options: 1});
+        assert.strictEqual(shouldTraceParam.options, rootSpanOptions);
+      }
+      tracePolicy.capturedShouldTraceParam = null;
+      // Limited params present
+      {
+        const rootSpanOptions = {name: 'root', traceContext: 'unparseable'};
+        traceAPI.runInRootSpan(rootSpanOptions, (rootSpan) => {
+          assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
+          rootSpan.endSpan();
+        });
+        assert.ok(tracePolicy.capturedShouldTraceParam);
+        const shouldTraceParam = tracePolicy.capturedShouldTraceParam!;
+        assert.strictEqual(shouldTraceParam.url, '');
+        assert.strictEqual(shouldTraceParam.method, '');
+        assert.strictEqual(shouldTraceParam.traceContext, null);
+        assert.strictEqual(shouldTraceParam.options, rootSpanOptions);
+      }
+    });
+
     it('should respect enhancedDatabaseReporting options field', () => {
       [true, false].forEach((enhancedDatabaseReporting) => {
         const traceAPI = createTraceAgent({
