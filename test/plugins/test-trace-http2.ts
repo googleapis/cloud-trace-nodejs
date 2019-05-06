@@ -291,10 +291,17 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
               DEFAULT_SPAN_DURATION / 2,
               Date.now() - start,
             ]);
-            assert.strictEqual(
-              span.labels[TraceLabels.ERROR_DETAILS_NAME],
-              'Error [ERR_HTTP2_STREAM_ERROR]'
-            );
+            if (semver.satisfies(process.version, '>=12')) {
+              assert.strictEqual(
+                span.labels[TraceLabels.ERROR_DETAILS_NAME],
+                'Error'
+              );
+            } else {
+              assert.strictEqual(
+                span.labels[TraceLabels.ERROR_DETAILS_NAME],
+                'Error [ERR_HTTP2_STREAM_ERROR]'
+              );
+            }
             if (semver.satisfies(process.version, '>=9.11 || >=8.12')) {
               assert.strictEqual(
                 span.labels[TraceLabels.ERROR_DETAILS_MESSAGE],
