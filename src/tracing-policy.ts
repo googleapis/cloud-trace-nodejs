@@ -117,9 +117,9 @@ export class TracePolicy {
    */
   shouldTrace(options: {timestamp: number, url: string, method: string}):
       boolean {
-    return this.sampler.shouldTrace(options.timestamp) &&
-        this.urlFilter.shouldTrace(options.url) &&
-        this.methodsFilter.shouldTrace(options.method);
+    return this.urlFilter.shouldTrace(options.url) &&
+        this.methodsFilter.shouldTrace(options.method) &&
+        this.sampler.shouldTrace(options.timestamp);
   }
 
   static always(): TracePolicy {
