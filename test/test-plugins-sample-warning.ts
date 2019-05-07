@@ -33,7 +33,8 @@ describe('express + dbs', function() {
   before(function() {
     agent = require('../..').start({
       projectId: '0',
-      samplingRate: 0
+      samplingRate: 0,
+      ignoreUrls: ['/ignore-me']
     });
   });
 
@@ -103,8 +104,11 @@ describe('express + dbs', function() {
     var express = require('./plugins/fixtures/express4');
 
     var app = express();
+    app.get('/ignore-me', (req, res) => {
+      res.sendStatus(200);
+    });
     app.get('/', function (req, res) {
-      http.get('http://www.google.com/', function() {
+      http.get(`http://localhost:${common.serverPort + 2}/ignore-me`, function() {
         res.sendStatus(200);
       });
     });
@@ -128,8 +132,11 @@ describe('express + dbs', function() {
       var pool = mysql.createPool(require('./mysql-config'/*.js*/));
 
       var app = express();
+      app.get('/ignore-me', (req, res) => {
+        res.sendStatus(200);
+      });
       app.get('/', function (req, res) {
-        http.get('http://www.google.com/', function() {
+        http.get(`http://localhost:${common.serverPort + 3}/ignore-me`, function() {
           pool.getConnection(function(err, conn) {
             conn.query('SHOW COLUMNS FROM t', function(err) {
               res.sendStatus(200);
