@@ -19,14 +19,15 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-import {Config, defaultConfig} from './config';
+import {Config, defaultConfig, CLSMechanism} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
-import {Tracing, NormalizedConfig} from './tracing';
+import {Tracing, TopLevelConfig} from './tracing';
 import {FORCE_NEW, Forceable} from './util';
 import {Constants} from './constants';
-import {StackdriverTracer} from './trace-api';
+import {StackdriverTracer, TraceContextHeaderBehavior} from './trace-api';
+import {TraceCLSMechanism} from './cls';
 
 export {Config, PluginTypes};
 
@@ -35,73 +36,132 @@ let traceAgent: StackdriverTracer;
 /**
  * Normalizes the user-provided configuration object by adding default values
  * and overriding with env variables when they are provided.
- * @param projectConfig The user-provided configuration object. It will not
+ * @param userConfig The user-provided configuration object. It will not
  * be modified.
  * @return A normalized configuration object.
  */
-function initConfig(projectConfig: Forceable<Config>):
-    Forceable<NormalizedConfig> {
-  // `|| undefined` prevents environmental variables that are empty strings
-  // from overriding values provided in the config object passed to start().
-  const envConfig = {
-    logLevel: Number(process.env.GCLOUD_TRACE_LOGLEVEL) || undefined,
-    projectId: process.env.GCLOUD_PROJECT || undefined,
-    serviceContext: {
-      service:
-          process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME || undefined,
-      version: process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION ||
-          undefined,
-      minorVersion: process.env.GAE_MINOR_VERSION || undefined
-    }
-  };
+function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
+  // Helper function which returns the result of calling the second argument
+  // (a function) on the first.
+  const transform = <S, T>(x: S, fn: (x: S) => T) => fn(x);
+  // Helper function which gets the last non-null/undefined value among its
+  // arguments. The first argument must therefore be guaranteed to be
+  // non-null/undefined.
+  const lastOf =
+      <T>(defaultValue: T, ...otherValues: Array<T|null|undefined>): T => {
+        for (let i = otherValues.length - 1; i >= 0; i--) {
+          // tslint:disable:no-any
+          if (otherValues[i] != null &&
+              (typeof otherValues[i] !== 'number' ||
+               !isNaN(otherValues[i] as any))) {
+            return otherValues[i] as T;
+          }
+          // tslint:enable:no-any
+        }
+        return defaultValue;
+      };
 
-  let envSetConfig: Config = {};
+  let envSetConfig = {};
   if (!!process.env.GCLOUD_TRACE_CONFIG) {
     envSetConfig =
         require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
   }
-
-  // Internally, ignoreContextHeader is no longer being used, so convert the
-  // user's value into a value for contextHeaderBehavior. But let this value
-  // be overridden by the user's explicitly set value for contextHeaderBehavior.
-  const contextHeaderBehaviorUnderride = {
-    contextHeaderBehavior: projectConfig.ignoreContextHeader ? 'ignore' :
-                                                               'default'
-  };
-
   // Configuration order of precedence:
   // 1. Environment Variables
   // 2. Project Config
   // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
   // 4. Default Config (as specified in './config')
-  const config = extend(
-      true, {[FORCE_NEW]: projectConfig[FORCE_NEW]}, defaultConfig,
-      envSetConfig, contextHeaderBehaviorUnderride, projectConfig, envConfig,
-      {plugins: {}});
-  // The empty plugins object guarantees that plugins is a plain object,
-  // even if it's explicitly specified in the config to be a non-object.
+  const projectConfig: (typeof defaultConfig)&Forceable<Config> =
+      extend(true, {}, defaultConfig, envSetConfig, userConfig);
+  const forceNew = userConfig[FORCE_NEW];
 
-  // Enforce the upper limit for the label value size.
-  if (config.maximumLabelValueSize >
-      Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
-    config.maximumLabelValueSize = Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
-  }
-  // Make rootSpanNameOverride a function if not already.
-  if (typeof config.rootSpanNameOverride === 'string') {
-    const spanName = config.rootSpanNameOverride;
-    config.rootSpanNameOverride = () => spanName;
-  } else if (typeof config.rootSpanNameOverride !== 'function') {
-    config.rootSpanNameOverride = (name: string) => name;
-  }
-
-  // If the CLS mechanism is set to auto-determined, decide now what it should
-  // be.
-  const ahAvailable = semver.satisfies(process.version, '>=8');
-  if (config.clsMechanism === 'auto') {
-    config.clsMechanism = ahAvailable ? 'async-hooks' : 'async-listener';
-  }
-
-  return config;
+  return {
+    [FORCE_NEW]: forceNew,
+    enabled: projectConfig.enabled,
+    logLevel: lastOf(
+        projectConfig.logLevel, Number(process.env.GCLOUD_TRACE_LOGLEVEL)),
+    clsConfig: {
+      [FORCE_NEW]: forceNew,
+      mechanism: transform(
+          projectConfig.clsMechanism,
+          (clsMechanism):
+              TraceCLSMechanism => {
+                // If the CLS mechanism is set to auto-determined, decide now
+                // what it should be.
+                const ahAvailable = semver.satisfies(process.version, '>=8');
+                if (clsMechanism === 'auto') {
+                  return ahAvailable ? TraceCLSMechanism.ASYNC_HOOKS :
+                                       TraceCLSMechanism.ASYNC_LISTENER;
+                }
+                return clsMechanism as TraceCLSMechanism;
+              })
+    },
+    writerConfig: {
+      [FORCE_NEW]: forceNew,
+      projectId: lastOf<string|undefined>(
+          projectConfig.projectId, process.env.GCLOUD_PROJECT),
+      onUncaughtException: projectConfig.onUncaughtException,
+      bufferSize: projectConfig.bufferSize,
+      flushDelaySeconds: projectConfig.flushDelaySeconds,
+      stackTraceLimit: projectConfig.stackTraceLimit,
+      maximumLabelValueSize: transform(
+          projectConfig.maximumLabelValueSize,
+          (maximumLabelValueSize) => {
+            // Enforce the upper limit for the label value size.
+            if (maximumLabelValueSize >
+                Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
+              return Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
+            }
+            return maximumLabelValueSize;
+          }),
+      serviceContext: {
+        service: lastOf<string|undefined>(
+            projectConfig.serviceContext.service, process.env.GAE_MODULE_NAME,
+            process.env.GAE_SERVICE),
+        version: lastOf<string|undefined>(
+            projectConfig.serviceContext.version,
+            process.env.GAE_MODULE_VERSION, process.env.GAE_VERSION),
+        minorVersion: lastOf<string|undefined>(
+            projectConfig.serviceContext.minorVersion,
+            process.env.GAE_MINOR_VERSION)
+      }
+    },
+    pluginLoaderConfig: {
+      [FORCE_NEW]: forceNew,
+      plugins: Object.assign({}, projectConfig.plugins),
+      tracerConfig: {
+        enhancedDatabaseReporting: projectConfig.enhancedDatabaseReporting,
+        contextHeaderBehavior: lastOf<TraceContextHeaderBehavior>(
+            defaultConfig.contextHeaderBehavior as TraceContextHeaderBehavior,
+            // Internally, ignoreContextHeader is no longer being used, so
+            // convert the user's value into a value for contextHeaderBehavior.
+            // But let this value be overridden by the user's explicitly set
+            // value for contextHeaderBehavior.
+            projectConfig.ignoreContextHeader ?
+                TraceContextHeaderBehavior.IGNORE :
+                TraceContextHeaderBehavior.DEFAULT,
+            userConfig.contextHeaderBehavior as TraceContextHeaderBehavior),
+        rootSpanNameOverride: transform(
+            projectConfig.rootSpanNameOverride,
+            (rootSpanNameOverride) => {
+              // Make rootSpanNameOverride a function if not already.
+              if (typeof rootSpanNameOverride === 'string') {
+                return () => rootSpanNameOverride;
+              } else if (typeof rootSpanNameOverride !== 'function') {
+                return (name: string) => name;
+              }
+              return rootSpanNameOverride;
+            }),
+        spansPerTraceHardLimit: projectConfig.spansPerTraceHardLimit,
+        spansPerTraceSoftLimit: projectConfig.spansPerTraceSoftLimit,
+        tracePolicyConfig: {
+          samplingRate: projectConfig.samplingRate,
+          ignoreMethods: projectConfig.ignoreMethods,
+          ignoreUrls: projectConfig.ignoreUrls
+        }
+      }
+    }
+  };
 }
 
 /**
@@ -122,7 +182,8 @@ export function start(config?: Config): PluginTypes.Tracer {
   // Determine the preferred context propagation mechanism, as
   // continuation-local-storage should be loaded before any modules that do I/O.
   if (normalizedConfig.enabled &&
-      normalizedConfig.clsMechanism === 'async-listener') {
+      normalizedConfig.clsConfig.mechanism ===
+          TraceCLSMechanism.ASYNC_LISTENER) {
     // This is the earliest we can load continuation-local-storage.
     require('continuation-local-storage');
   }

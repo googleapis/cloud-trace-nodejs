@@ -16,23 +16,20 @@
 
 import * as path from 'path';
 
-import {cls, TraceCLSConfig, TraceCLSMechanism} from './cls';
-import {CLSMechanism} from './config';
+import {cls, TraceCLSConfig} from './cls';
 import {LEVELS, Logger} from './logger';
 import {StackdriverTracer} from './trace-api';
 import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
-import {Component, FORCE_NEW, Forceable, packageNameFromPath, Singleton} from './util';
+import {Component, Forceable, packageNameFromPath, Singleton} from './util';
 
-export interface TopLevelConfig {
-  enabled: boolean;
-  logLevel: number;
-  clsMechanism: CLSMechanism;
-}
-
-// PluginLoaderConfig extends TraceAgentConfig
-export type NormalizedConfig =
-    ((TraceWriterConfig&PluginLoaderConfig&TopLevelConfig)|{enabled: false});
+export type TopLevelConfig = {
+  enabled: boolean; logLevel: number; clsConfig: TraceCLSConfig;
+  writerConfig: TraceWriterConfig;
+  pluginLoaderConfig: PluginLoaderConfig;
+}|{
+  enabled: false;
+};
 
 /**
  * A class that represents automatic tracing.
@@ -41,7 +38,7 @@ export class Tracing implements Component {
   /** A logger. */
   private readonly logger: Logger;
   /** The configuration object for this instance. */
-  private readonly config: Forceable<NormalizedConfig>;
+  private readonly config: Forceable<TopLevelConfig>;
 
   /**
    * Constructs a new Tracing instance.
@@ -49,8 +46,7 @@ export class Tracing implements Component {
    * @param traceAgent An object representing the custom tracing API.
    */
   constructor(
-      config: NormalizedConfig,
-      private readonly traceAgent: StackdriverTracer) {
+      config: TopLevelConfig, private readonly traceAgent: StackdriverTracer) {
     this.config = config;
     let logLevel = config.enabled ? config.logLevel : 0;
     // Clamp the logger level.
@@ -100,13 +96,9 @@ export class Tracing implements Component {
     }
 
     // Initialize context propagation mechanism configuration.
-    const clsConfig: Forceable<TraceCLSConfig> = {
-      mechanism: this.config.clsMechanism as TraceCLSMechanism,
-      [FORCE_NEW]: this.config[FORCE_NEW]
-    };
     try {
-      traceWriter.create(this.config, this.logger);
-      cls.create(clsConfig, this.logger);
+      traceWriter.create(this.config.writerConfig, this.logger);
+      cls.create(this.config.clsConfig, this.logger);
     } catch (e) {
       this.logger.error(
           'StackdriverTracer#start: Disabling the Trace Agent for the',
@@ -121,11 +113,12 @@ export class Tracing implements Component {
       this.disable();
     });
     cls.get().enable();
-    this.traceAgent.enable(this.config, this.logger);
-    pluginLoader.create(this.config, this.logger).activate();
+    this.traceAgent.enable(
+        this.config.pluginLoaderConfig.tracerConfig, this.logger);
+    pluginLoader.create(this.config.pluginLoaderConfig, this.logger).activate();
 
-    if (typeof this.config.projectId !== 'string' &&
-        typeof this.config.projectId !== 'undefined') {
+    if (typeof this.config.writerConfig.projectId !== 'string' &&
+        typeof this.config.writerConfig.projectId !== 'undefined') {
       this.logger.error(
           'StackdriverTracer#start: config.projectId, if provided, must be a string.',
           'Disabling trace agent.');

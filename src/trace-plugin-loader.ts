@@ -35,10 +35,11 @@ import {Singleton} from './util';
  * should be patched. (See ./plugin-types for the exact interface.)
  */
 
-export interface PluginLoaderConfig extends StackdriverTracerConfig {
+export interface PluginLoaderConfig {
   // An object which contains paths to files that should be loaded as plugins
   // upon loading a module with a given name.
   plugins: {[pluginName: string]: string};
+  tracerConfig: StackdriverTracerConfig;
 }
 
 export interface ModulePluginWrapperOptions {
@@ -304,7 +305,7 @@ export class PluginLoader {
           this.pluginMap.set(
               key,
               new ModulePluginWrapper(
-                  {name: key, path: value}, config, logger));
+                  {name: key, path: value}, config.tracerConfig, logger));
         }
         nonCoreModules.push(key);
       }
@@ -312,7 +313,8 @@ export class PluginLoader {
     if (coreWrapperConfig.children.length > 0) {
       this.pluginMap.set(
           PluginLoader.CORE_MODULE,
-          new CorePluginWrapper(coreWrapperConfig, config, logger));
+          new CorePluginWrapper(
+              coreWrapperConfig, config.tracerConfig, logger));
     }
 
     // Define the function that will attach a require hook upon activate.

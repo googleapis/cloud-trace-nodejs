@@ -44,15 +44,16 @@ describe('Trace Plugin Loader', () => {
     return new PluginLoader(
         Object.assign(
             {
-              samplingRate: 0,
-              ignoreUrls: [],
-              ignoreMethods: [],
-              enhancedDatabaseReporting: false,
-              contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
-              rootSpanNameOverride: (name: string) => name,
-              projectId: '0',
-              spansPerTraceSoftLimit: Infinity,
-              spansPerTraceHardLimit: Infinity
+              tracerConfig: {
+                enhancedDatabaseReporting: false,
+                contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
+                rootSpanNameOverride: (name: string) => name,
+                projectId: '0',
+                tracePolicyConfig:
+                    {samplingRate: 0, ignoreUrls: [], ignoreMethods: []},
+                spansPerTraceSoftLimit: Infinity,
+                spansPerTraceHardLimit: Infinity
+              }
             },
             config),
         logger);
