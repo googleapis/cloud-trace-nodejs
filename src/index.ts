@@ -41,9 +41,6 @@ let traceAgent: StackdriverTracer;
  * @return A normalized configuration object.
  */
 function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
-  // Helper function which returns the result of calling the second argument
-  // (a function) on the first.
-  const transform = <S, T>(x: S, fn: (x: S) => T) => fn(x);
   // Helper function which gets the last non-null/undefined value among its
   // arguments. The first argument must therefore be guaranteed to be
   // non-null/undefined.
@@ -71,93 +68,92 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
   // 2. Project Config
   // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
   // 4. Default Config (as specified in './config')
-  const projectConfig: (typeof defaultConfig)&Forceable<Config> =
+  const mergedConfig: (typeof defaultConfig)&Forceable<Config> =
       extend(true, {}, defaultConfig, envSetConfig, userConfig);
   const forceNew = userConfig[FORCE_NEW];
 
+  const getInternalClsMechanism = (clsMechanism: string): TraceCLSMechanism => {
+    // If the CLS mechanism is set to auto-determined, decide now
+    // what it should be.
+    const ahAvailable = semver.satisfies(process.version, '>=8');
+    if (clsMechanism === 'auto') {
+      return ahAvailable ? TraceCLSMechanism.ASYNC_HOOKS :
+                           TraceCLSMechanism.ASYNC_LISTENER;
+    }
+    return clsMechanism as TraceCLSMechanism;
+  };
+  const getInternalMaximumLabelValueSize = (maximumLabelValueSize: number) => {
+    // Enforce the upper limit for the label value size.
+    if (maximumLabelValueSize > Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
+      return Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
+    }
+    return maximumLabelValueSize;
+  };
+  const getInternalRootSpanNameOverride =
+      (rootSpanNameOverride: string|((name: string) => string)) => {
+        // Make rootSpanNameOverride a function if not already.
+        if (typeof rootSpanNameOverride === 'string') {
+          return () => rootSpanNameOverride;
+        } else if (typeof rootSpanNameOverride !== 'function') {
+          return (name: string) => name;
+        }
+        return rootSpanNameOverride;
+      };
+
   return {
     [FORCE_NEW]: forceNew,
-    enabled: projectConfig.enabled,
+    enabled: mergedConfig.enabled,
     logLevel: lastOf(
-        projectConfig.logLevel, Number(process.env.GCLOUD_TRACE_LOGLEVEL)),
+        mergedConfig.logLevel, Number(process.env.GCLOUD_TRACE_LOGLEVEL)),
     clsConfig: {
       [FORCE_NEW]: forceNew,
-      mechanism: transform(
-          projectConfig.clsMechanism,
-          (clsMechanism):
-              TraceCLSMechanism => {
-                // If the CLS mechanism is set to auto-determined, decide now
-                // what it should be.
-                const ahAvailable = semver.satisfies(process.version, '>=8');
-                if (clsMechanism === 'auto') {
-                  return ahAvailable ? TraceCLSMechanism.ASYNC_HOOKS :
-                                       TraceCLSMechanism.ASYNC_LISTENER;
-                }
-                return clsMechanism as TraceCLSMechanism;
-              })
+      mechanism: getInternalClsMechanism(mergedConfig.clsMechanism)
     },
     writerConfig: {
       [FORCE_NEW]: forceNew,
       projectId: lastOf<string|undefined>(
-          projectConfig.projectId, process.env.GCLOUD_PROJECT),
-      onUncaughtException: projectConfig.onUncaughtException,
-      bufferSize: projectConfig.bufferSize,
-      flushDelaySeconds: projectConfig.flushDelaySeconds,
-      stackTraceLimit: projectConfig.stackTraceLimit,
-      maximumLabelValueSize: transform(
-          projectConfig.maximumLabelValueSize,
-          (maximumLabelValueSize) => {
-            // Enforce the upper limit for the label value size.
-            if (maximumLabelValueSize >
-                Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
-              return Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
-            }
-            return maximumLabelValueSize;
-          }),
+          mergedConfig.projectId, process.env.GCLOUD_PROJECT),
+      onUncaughtException: mergedConfig.onUncaughtException,
+      bufferSize: mergedConfig.bufferSize,
+      flushDelaySeconds: mergedConfig.flushDelaySeconds,
+      stackTraceLimit: mergedConfig.stackTraceLimit,
+      maximumLabelValueSize:
+          getInternalMaximumLabelValueSize(mergedConfig.maximumLabelValueSize),
       serviceContext: {
         service: lastOf<string|undefined>(
-            projectConfig.serviceContext.service, process.env.GAE_MODULE_NAME,
+            mergedConfig.serviceContext.service, process.env.GAE_MODULE_NAME,
             process.env.GAE_SERVICE),
         version: lastOf<string|undefined>(
-            projectConfig.serviceContext.version,
-            process.env.GAE_MODULE_VERSION, process.env.GAE_VERSION),
+            mergedConfig.serviceContext.version, process.env.GAE_MODULE_VERSION,
+            process.env.GAE_VERSION),
         minorVersion: lastOf<string|undefined>(
-            projectConfig.serviceContext.minorVersion,
+            mergedConfig.serviceContext.minorVersion,
             process.env.GAE_MINOR_VERSION)
       }
     },
     pluginLoaderConfig: {
       [FORCE_NEW]: forceNew,
-      plugins: Object.assign({}, projectConfig.plugins),
+      plugins: {...mergedConfig.plugins},
       tracerConfig: {
-        enhancedDatabaseReporting: projectConfig.enhancedDatabaseReporting,
+        enhancedDatabaseReporting: mergedConfig.enhancedDatabaseReporting,
         contextHeaderBehavior: lastOf<TraceContextHeaderBehavior>(
             defaultConfig.contextHeaderBehavior as TraceContextHeaderBehavior,
             // Internally, ignoreContextHeader is no longer being used, so
             // convert the user's value into a value for contextHeaderBehavior.
             // But let this value be overridden by the user's explicitly set
             // value for contextHeaderBehavior.
-            projectConfig.ignoreContextHeader ?
+            mergedConfig.ignoreContextHeader ?
                 TraceContextHeaderBehavior.IGNORE :
                 TraceContextHeaderBehavior.DEFAULT,
             userConfig.contextHeaderBehavior as TraceContextHeaderBehavior),
-        rootSpanNameOverride: transform(
-            projectConfig.rootSpanNameOverride,
-            (rootSpanNameOverride) => {
-              // Make rootSpanNameOverride a function if not already.
-              if (typeof rootSpanNameOverride === 'string') {
-                return () => rootSpanNameOverride;
-              } else if (typeof rootSpanNameOverride !== 'function') {
-                return (name: string) => name;
-              }
-              return rootSpanNameOverride;
-            }),
-        spansPerTraceHardLimit: projectConfig.spansPerTraceHardLimit,
-        spansPerTraceSoftLimit: projectConfig.spansPerTraceSoftLimit,
+        rootSpanNameOverride:
+            getInternalRootSpanNameOverride(mergedConfig.rootSpanNameOverride),
+        spansPerTraceHardLimit: mergedConfig.spansPerTraceHardLimit,
+        spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit,
         tracePolicyConfig: {
-          samplingRate: projectConfig.samplingRate,
-          ignoreMethods: projectConfig.ignoreMethods,
-          ignoreUrls: projectConfig.ignoreUrls
+          samplingRate: mergedConfig.samplingRate,
+          ignoreMethods: mergedConfig.ignoreMethods,
+          ignoreUrls: mergedConfig.ignoreUrls
         }
       }
     }
