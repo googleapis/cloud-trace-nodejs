@@ -99,7 +99,7 @@
     "typescript": "~3.4.0"
   },
   "dependencies": {
-    "@google-cloud/common": "^0.32.1",
+    "@google-cloud/common": "^1.0.0",
     "builtin-modules": "^3.0.0",
     "console-log-level": "^1.4.0",
     "continuation-local-storage": "^3.2.1",
