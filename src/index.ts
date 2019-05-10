@@ -19,12 +19,12 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-import {Config, defaultConfig, CLSMechanism} from './config';
+import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
 import {Tracing, TopLevelConfig} from './tracing';
-import {FORCE_NEW, Forceable} from './util';
+import {FORCE_NEW, Forceable, lastOf} from './util';
 import {Constants} from './constants';
 import {StackdriverTracer, TraceContextHeaderBehavior} from './trace-api';
 import {TraceCLSMechanism} from './cls';
@@ -41,23 +41,6 @@ let traceAgent: StackdriverTracer;
  * @return A normalized configuration object.
  */
 function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
-  // Helper function which gets the last non-null/undefined value among its
-  // arguments. The first argument must therefore be guaranteed to be
-  // non-null/undefined.
-  const lastOf =
-      <T>(defaultValue: T, ...otherValues: Array<T|null|undefined>): T => {
-        for (let i = otherValues.length - 1; i >= 0; i--) {
-          // tslint:disable:no-any
-          if (otherValues[i] != null &&
-              (typeof otherValues[i] !== 'number' ||
-               !isNaN(otherValues[i] as any))) {
-            return otherValues[i] as T;
-          }
-          // tslint:enable:no-any
-        }
-        return defaultValue;
-      };
-
   let envSetConfig = {};
   if (!!process.env.GCLOUD_TRACE_CONFIG) {
     envSetConfig =
@@ -82,22 +65,20 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
     }
     return clsMechanism as TraceCLSMechanism;
   };
-  const getInternalMaximumLabelValueSize = (maximumLabelValueSize: number) => {
-    // Enforce the upper limit for the label value size.
-    if (maximumLabelValueSize > Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
-      return Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
-    }
-    return maximumLabelValueSize;
-  };
+  const getInternalMaximumLabelValueSize = (maximumLabelValueSize: number) =>
+      Math.min(
+          maximumLabelValueSize, Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
   const getInternalRootSpanNameOverride =
       (rootSpanNameOverride: string|((name: string) => string)) => {
         // Make rootSpanNameOverride a function if not already.
-        if (typeof rootSpanNameOverride === 'string') {
-          return () => rootSpanNameOverride;
-        } else if (typeof rootSpanNameOverride !== 'function') {
-          return (name: string) => name;
+        switch (typeof rootSpanNameOverride) {
+          case 'string':
+            return () => rootSpanNameOverride;
+          case 'function':
+            return (name: string) => name;
+          default:
+            return rootSpanNameOverride;
         }
-        return rootSpanNameOverride;
       };
 
   return {
