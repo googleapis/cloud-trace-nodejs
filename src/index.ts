@@ -65,9 +65,6 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
     }
     return clsMechanism as TraceCLSMechanism;
   };
-  const getInternalMaximumLabelValueSize = (maximumLabelValueSize: number) =>
-      Math.min(
-          maximumLabelValueSize, Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
   const getInternalRootSpanNameOverride =
       (rootSpanNameOverride: string|((name: string) => string)) => {
         // Make rootSpanNameOverride a function if not already.
@@ -98,8 +95,9 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
       bufferSize: mergedConfig.bufferSize,
       flushDelaySeconds: mergedConfig.flushDelaySeconds,
       stackTraceLimit: mergedConfig.stackTraceLimit,
-      maximumLabelValueSize:
-          getInternalMaximumLabelValueSize(mergedConfig.maximumLabelValueSize),
+      maximumLabelValueSize: Math.min(
+          mergedConfig.maximumLabelValueSize,
+          Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT),
       serviceContext: {
         service: lastOf<string|undefined>(
             mergedConfig.serviceContext.service, process.env.GAE_MODULE_NAME,
