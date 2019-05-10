@@ -53,12 +53,13 @@ export enum TraceContextHeaderBehavior {
  * An interface describing configuration fields read by the StackdriverTracer
  * object. This includes fields read by the trace policy.
  */
-export interface StackdriverTracerConfig extends TracePolicyConfig {
+export interface StackdriverTracerConfig {
   enhancedDatabaseReporting: boolean;
   contextHeaderBehavior: TraceContextHeaderBehavior;
   rootSpanNameOverride: (path: string) => string;
   spansPerTraceSoftLimit: number;
   spansPerTraceHardLimit: number;
+  tracePolicyConfig: TracePolicyConfig;
 }
 
 interface IncomingTraceContext {
@@ -119,7 +120,7 @@ export class StackdriverTracer implements Tracer {
   enable(config: StackdriverTracerConfig, logger: Logger) {
     this.logger = logger;
     this.config = config;
-    this.policy = new TracePolicy(config);
+    this.policy = new TracePolicy(config.tracePolicyConfig);
     this.enabled = true;
   }
 

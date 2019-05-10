@@ -84,6 +84,20 @@ describe('Singleton', () => {
   });
 });
 
+describe('util.lastOf', () => {
+  it('should return the last non-null/undefined/NaN parameter', () => {
+    const {lastOf} = util;
+    assert.strictEqual(lastOf<number>(1), 1);
+    assert.strictEqual(lastOf<number>(1, 2, null), 2);
+    assert.strictEqual(lastOf<number>(1, null, 2), 2);
+    assert.strictEqual(lastOf<number>(1, 2, undefined), 2);
+    assert.strictEqual(lastOf<number>(1, 2, NaN), 2);
+    assert.strictEqual(lastOf<number>(1, 2, null, undefined, NaN, -NaN), 2);
+    assert.strictEqual(lastOf<number>(1, 0), 0);
+    assert.strictEqual(lastOf<number|string>(1, ''), '');
+  });
+});
+
 describe('util.truncate', () => {
   it('should truncate objects larger than size', () => {
     assert.strictEqual(util.truncate('abcdefghijklmno', 5), 'ab...');

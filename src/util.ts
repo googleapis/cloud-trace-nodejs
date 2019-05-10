@@ -93,6 +93,24 @@ export class Singleton<T, ConfigType, LoggerType> {
 }
 
 /**
+ * Returns the last parameter that is not null, undefined, or NaN.
+ * @param defaultValue The first parameter. This must not be null/undefined/NaN.
+ * @param otherValues Other parameters, which may be null/undefined/NaN.
+ */
+export function lastOf<T>(
+    defaultValue: T, ...otherValues: Array<T|null|undefined>): T {
+  for (let i = otherValues.length - 1; i >= 0; i--) {
+    // tslint:disable:no-any
+    if (otherValues[i] !== null && otherValues[i] !== undefined &&
+        (typeof otherValues[i] !== 'number' || !isNaN(otherValues[i] as any))) {
+      return otherValues[i] as T;
+    }
+    // tslint:enable:no-any
+  }
+  return defaultValue;
+}
+
+/**
  * Truncates the provided `string` to be at most `length` bytes
  * after utf8 encoding and the appending of '...'.
  * We produce the result by iterating over input characters to

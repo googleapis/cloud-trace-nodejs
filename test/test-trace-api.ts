@@ -37,9 +37,11 @@ describe('Trace Interface', () => {
               enhancedDatabaseReporting: false,
               contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
               rootSpanNameOverride: (name: string) => name,
-              samplingRate: 0,
-              ignoreUrls: [],
-              ignoreMethods: [],
+              tracePolicyConfig: {
+                samplingRate: 0,
+                ignoreUrls: [],
+                ignoreMethods: [],
+              },
               spansPerTraceSoftLimit: Infinity,
               spansPerTraceHardLimit: Infinity
             },
@@ -202,7 +204,10 @@ describe('Trace Interface', () => {
     });
 
     it('should respect trace policy', (done) => {
-      const traceAPI = createTraceAgent({samplingRate: -1 /*never*/});
+      const traceAPI = createTraceAgent({
+        tracePolicyConfig:
+            {samplingRate: -1 /*never*/, ignoreUrls: [], ignoreMethods: []}
+      });
       traceAPI.runInRootSpan({name: 'root', url: 'root'}, (rootSpan) => {
         assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
         const childSpan = rootSpan.createChildSpan({name: 'child'});
@@ -213,7 +218,10 @@ describe('Trace Interface', () => {
 
     it('should respect filter urls', () => {
       const url = 'rootUrl';
-      const traceAPI = createTraceAgent({ignoreUrls: [url]});
+      const traceAPI = createTraceAgent({
+        tracePolicyConfig:
+            {samplingRate: 0, ignoreUrls: [url], ignoreMethods: []}
+      });
       traceAPI.runInRootSpan({name: 'root', url}, (rootSpan) => {
         assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
       });
@@ -225,7 +233,10 @@ describe('Trace Interface', () => {
 
     it('should respect filter methods', () => {
       const method = 'method';
-      const traceAPI = createTraceAgent({ignoreMethods: [method]});
+      const traceAPI = createTraceAgent({
+        tracePolicyConfig:
+            {samplingRate: 0, ignoreUrls: [], ignoreMethods: [method]}
+      });
       traceAPI.runInRootSpan({name: 'root', method}, (rootSpan) => {
         assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
       });

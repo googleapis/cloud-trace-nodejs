@@ -21,7 +21,7 @@ import * as util from 'util';
 import {TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 
 import * as testTraceModule from './trace';
-import { NormalizedConfig } from '../src/tracing';
+import { TopLevelConfig } from '../src/tracing';
 import { StackdriverTracer } from '../src/trace-api';
 import {Logger} from '../src/logger';
 
@@ -94,18 +94,17 @@ describe('Behavior set by config for CLS', () => {
 });
 
 describe('Behavior set by config for Tracer', () => {
-  let capturedConfig: NormalizedConfig|null;
+  let capturedConfig: TopLevelConfig|null;
 
   // Convenience function to assert properties of capturedConfig that we want
-  // to be true on every test, and return an object with a conveniently
-  // sanitized type.
-  const getCapturedConfig = () => {
+  // to be true on every test, and return just the tracer config.
+  const getCapturedTracerConfig = () => {
     assert.ok(capturedConfig);
     const config = capturedConfig!;
     // If !config.enabled, then TSC does not permit access to other fields on
     // config. So use this structure instead of assert.ok(config.enabled).
     if (config.enabled) {
-      return config;
+      return config.pluginLoaderConfig.tracerConfig;
     } else {
       assert.fail('Configuration was not enabled.');
       throw new Error(); // unreachable.
@@ -113,7 +112,7 @@ describe('Behavior set by config for Tracer', () => {
   };
 
   class CaptureConfigTestTracing extends testTraceModule.TestTracing {
-    constructor(config: NormalizedConfig, traceAgent: StackdriverTracer) {
+    constructor(config: TopLevelConfig, traceAgent: StackdriverTracer) {
       super(config, traceAgent);
       // Capture the config object passed into this constructor.
       capturedConfig = config;
@@ -138,7 +137,7 @@ describe('Behavior set by config for Tracer', () => {
       testTraceModule.start({
         contextHeaderBehavior: 'require'
       });
-      const config = getCapturedConfig();
+      const config = getCapturedTracerConfig();
       assert.strictEqual(config.contextHeaderBehavior, 'require');
     });
 
@@ -146,13 +145,13 @@ describe('Behavior set by config for Tracer', () => {
       testTraceModule.start({
         ignoreContextHeader: false
       });
-      let config = getCapturedConfig();
+      let config = getCapturedTracerConfig();
       assert.strictEqual(config.contextHeaderBehavior, 'default');
       capturedConfig = null;
       testTraceModule.start({
         ignoreContextHeader: true
       });
-      config = getCapturedConfig();
+      config = getCapturedTracerConfig();
       assert.strictEqual(config.contextHeaderBehavior, 'ignore');
     });
 
@@ -161,14 +160,14 @@ describe('Behavior set by config for Tracer', () => {
         ignoreContextHeader: false,
         contextHeaderBehavior: 'require'
       });
-      let config = getCapturedConfig();
+      let config = getCapturedTracerConfig();
       assert.strictEqual(config.contextHeaderBehavior, 'require');
       capturedConfig = null;
       testTraceModule.start({
         ignoreContextHeader: true,
         contextHeaderBehavior: 'require'
       });
-      config = getCapturedConfig();
+      config = getCapturedTracerConfig();
       assert.strictEqual(config.contextHeaderBehavior, 'require');
     });
   });
@@ -178,7 +177,7 @@ describe('Behavior set by config for Tracer', () => {
       testTraceModule.start({
         rootSpanNameOverride: 'hello'
       });
-      const config = getCapturedConfig();
+      const config = getCapturedTracerConfig();
       assert.strictEqual(typeof config.rootSpanNameOverride, 'function');
       assert.strictEqual(config.rootSpanNameOverride(''), 'hello');
     });
@@ -190,7 +189,7 @@ describe('Behavior set by config for Tracer', () => {
         // tslint:disable-next-line:no-any
         rootSpanNameOverride: 2 as any
       });
-      const config = getCapturedConfig();
+      const config = getCapturedTracerConfig();
       assert.strictEqual(typeof config.rootSpanNameOverride, 'function');
       assert.strictEqual(config.rootSpanNameOverride('a'), 'a');
     });

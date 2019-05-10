@@ -13,33 +13,100 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-'use strict';
 
-var path = require('path');
-var assert = require('assert');
+import * as assert from 'assert';
+import * as path from 'path';
 
-// Default configuration:
-// { logLevel: 1, stackTraceLimit: 0, flushDelaySeconds: 30, samplingRate: 10 };
+import {Trace} from '../src/trace';
+import {StackdriverTracer} from '../src/trace-api';
+import {TraceWriter} from '../src/trace-writer';
+import {TopLevelConfig, Tracing} from '../src/tracing';
 
-// Fixtures configuration:
-// { logLevel: 4, stackTraceLimit: 1, flushDelaySeconds: 31 };
-process.env.GCLOUD_TRACE_CONFIG =
-  path.resolve(__dirname, '..', 'test', 'fixtures', 'test-config.js');
+import * as traceTestModule from './trace';
 
-process.env.GCLOUD_TRACE_LOGLEVEL = '2';
+describe('should respect config load order', () => {
+  let capturedConfig: TopLevelConfig|null = null;
+  class CaptureConfigTracing extends Tracing {
+    constructor(config: TopLevelConfig) {
+      super(config, new StackdriverTracer(''));
+      capturedConfig = config;
+    }
+  }
 
-var agent = require('../..').start({ logLevel: 3,
-  stackTraceLimit: 2 });
+  class NoopTraceWriter extends TraceWriter {
+    async initialize(): Promise<void> {}
+    writeTrace(trace: Trace): void {}
+  }
 
-describe('should respect config load order', function() {
-  it('should order Default -> env config -> start -> env specific', function() {
-    var config = agent.config;
+  function getCapturedConfig() {
+    assert.ok(capturedConfig!);
+    assert.ok(capturedConfig!.enabled);
+    // For coercing a desired return type.
+    if (capturedConfig && capturedConfig.enabled) {
+      return capturedConfig;
+    } else {
+      throw new Error('unreachable');
+    }
+  }
 
-    assert.strictEqual(config.logLevel, 2);
-    assert.strictEqual(config.stackTraceLimit, 2);
-    assert.strictEqual(config.flushDelaySeconds, 31);
-    assert.strictEqual(config.samplingRate, 15);
+  before(() => {
+    traceTestModule.setTraceWriterForTest(NoopTraceWriter);
+    traceTestModule.setTracingForTest(CaptureConfigTracing);
+  });
+
+  afterEach(() => {
+    capturedConfig = null;
+  });
+
+  after(() => {
+    traceTestModule.setTraceWriterForTest(traceTestModule.TestTraceWriter);
+    traceTestModule.setTracingForTest(traceTestModule.TestTracing);
+  });
+
+  describe('for config object', () => {
+    before(() => {
+      // Default configuration:
+      // { logLevel: 1, stackTraceLimit: 0, flushDelaySeconds: 30 };
+      // Fixtures configuration:
+      // { logLevel: 4, stackTraceLimit: 1, flushDelaySeconds: 31 };
+      process.env.GCLOUD_TRACE_CONFIG =
+          path.resolve(__dirname, '..', 'test', 'fixtures', 'test-config.js');
+      process.env.GCLOUD_TRACE_LOGLEVEL = '2';
+    });
+
+    after(() => {
+      delete process.env.GCLOUD_TRACE_CONFIG;
+      delete process.env.GCLOUD_TRACE_LOGLEVEL;
+    });
+
+    it('should order Default -> env config -> start -> env specific', () => {
+      traceTestModule.start({logLevel: 3, stackTraceLimit: 2});
+      const config = getCapturedConfig();
+      assert.strictEqual(config.logLevel, 2);
+      assert.strictEqual(config.writerConfig.stackTraceLimit, 2);
+      assert.strictEqual(config.writerConfig.flushDelaySeconds, 31);
+    });
+  });
+
+  describe('for project ID', () => {
+    before(() => {
+      process.env.GCLOUD_PROJECT = '1729';
+    });
+
+    after(() => {
+      delete process.env.GCLOUD_PROJECT;
+    });
+
+    it('should respect GCLOUD_PROJECT', () => {
+      traceTestModule.start();
+      const config = getCapturedConfig();
+      assert.strictEqual(config.writerConfig.projectId, '1729');
+    });
+
+    it('should prefer env to config', () => {
+      traceTestModule.start({projectId: '1927'});
+      const config = getCapturedConfig();
+      assert.strictEqual(config.writerConfig.projectId, '1729');
+    });
   });
 });
-
-export default {};

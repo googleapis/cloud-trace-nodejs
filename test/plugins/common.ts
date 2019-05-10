@@ -67,9 +67,11 @@ shimmer.wrap(trace, 'start', function(original) {
       enhancedDatabaseReporting: false,
       contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
       rootSpanNameOverride: (name: string) => name,
-      samplingRate: 0,
-      ignoreUrls: [],
-      ignoreMethods: [],
+      tracePolicyConfig: {
+        samplingRate: 0,
+        ignoreUrls: [],
+        ignoreMethods: [],
+      },
       spansPerTraceSoftLimit: Infinity,
       spansPerTraceHardLimit: Infinity
     }, new TestLogger());

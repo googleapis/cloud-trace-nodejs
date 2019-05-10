@@ -23,10 +23,11 @@ import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
-import {Tracing, NormalizedConfig} from './tracing';
-import {FORCE_NEW, Forceable} from './util';
+import {Tracing, TopLevelConfig} from './tracing';
+import {FORCE_NEW, Forceable, lastOf} from './util';
 import {Constants} from './constants';
-import {StackdriverTracer} from './trace-api';
+import {StackdriverTracer, TraceContextHeaderBehavior} from './trace-api';
+import {TraceCLSMechanism} from './cls';
 
 export {Config, PluginTypes};
 
@@ -35,73 +36,107 @@ let traceAgent: StackdriverTracer;
 /**
  * Normalizes the user-provided configuration object by adding default values
  * and overriding with env variables when they are provided.
- * @param projectConfig The user-provided configuration object. It will not
+ * @param userConfig The user-provided configuration object. It will not
  * be modified.
  * @return A normalized configuration object.
  */
-function initConfig(projectConfig: Forceable<Config>):
-    Forceable<NormalizedConfig> {
-  // `|| undefined` prevents environmental variables that are empty strings
-  // from overriding values provided in the config object passed to start().
-  const envConfig = {
-    logLevel: Number(process.env.GCLOUD_TRACE_LOGLEVEL) || undefined,
-    projectId: process.env.GCLOUD_PROJECT || undefined,
-    serviceContext: {
-      service:
-          process.env.GAE_SERVICE || process.env.GAE_MODULE_NAME || undefined,
-      version: process.env.GAE_VERSION || process.env.GAE_MODULE_VERSION ||
-          undefined,
-      minorVersion: process.env.GAE_MINOR_VERSION || undefined
-    }
-  };
-
-  let envSetConfig: Config = {};
+function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
+  let envSetConfig = {};
   if (!!process.env.GCLOUD_TRACE_CONFIG) {
     envSetConfig =
         require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
   }
-
-  // Internally, ignoreContextHeader is no longer being used, so convert the
-  // user's value into a value for contextHeaderBehavior. But let this value
-  // be overridden by the user's explicitly set value for contextHeaderBehavior.
-  const contextHeaderBehaviorUnderride = {
-    contextHeaderBehavior: projectConfig.ignoreContextHeader ? 'ignore' :
-                                                               'default'
-  };
-
   // Configuration order of precedence:
   // 1. Environment Variables
   // 2. Project Config
   // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
   // 4. Default Config (as specified in './config')
-  const config = extend(
-      true, {[FORCE_NEW]: projectConfig[FORCE_NEW]}, defaultConfig,
-      envSetConfig, contextHeaderBehaviorUnderride, projectConfig, envConfig,
-      {plugins: {}});
-  // The empty plugins object guarantees that plugins is a plain object,
-  // even if it's explicitly specified in the config to be a non-object.
+  const mergedConfig: (typeof defaultConfig)&Forceable<Config> =
+      extend(true, {}, defaultConfig, envSetConfig, userConfig);
+  const forceNew = userConfig[FORCE_NEW];
 
-  // Enforce the upper limit for the label value size.
-  if (config.maximumLabelValueSize >
-      Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT) {
-    config.maximumLabelValueSize = Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT;
-  }
-  // Make rootSpanNameOverride a function if not already.
-  if (typeof config.rootSpanNameOverride === 'string') {
-    const spanName = config.rootSpanNameOverride;
-    config.rootSpanNameOverride = () => spanName;
-  } else if (typeof config.rootSpanNameOverride !== 'function') {
-    config.rootSpanNameOverride = (name: string) => name;
-  }
+  const getInternalClsMechanism = (clsMechanism: string): TraceCLSMechanism => {
+    // If the CLS mechanism is set to auto-determined, decide now
+    // what it should be.
+    const ahAvailable = semver.satisfies(process.version, '>=8');
+    if (clsMechanism === 'auto') {
+      return ahAvailable ? TraceCLSMechanism.ASYNC_HOOKS :
+                           TraceCLSMechanism.ASYNC_LISTENER;
+    }
+    return clsMechanism as TraceCLSMechanism;
+  };
+  const getInternalRootSpanNameOverride =
+      (rootSpanNameOverride: string|((name: string) => string)) => {
+        // Make rootSpanNameOverride a function if not already.
+        switch (typeof rootSpanNameOverride) {
+          case 'string':
+            return () => rootSpanNameOverride;
+          case 'function':
+            return rootSpanNameOverride;
+          default:
+            return (name: string) => name;
+        }
+      };
 
-  // If the CLS mechanism is set to auto-determined, decide now what it should
-  // be.
-  const ahAvailable = semver.satisfies(process.version, '>=8');
-  if (config.clsMechanism === 'auto') {
-    config.clsMechanism = ahAvailable ? 'async-hooks' : 'async-listener';
-  }
-
-  return config;
+  return {
+    [FORCE_NEW]: forceNew,
+    enabled: mergedConfig.enabled,
+    logLevel: lastOf(
+        mergedConfig.logLevel, Number(process.env.GCLOUD_TRACE_LOGLEVEL)),
+    clsConfig: {
+      [FORCE_NEW]: forceNew,
+      mechanism: getInternalClsMechanism(mergedConfig.clsMechanism)
+    },
+    writerConfig: {
+      [FORCE_NEW]: forceNew,
+      projectId: lastOf<string|undefined>(
+          mergedConfig.projectId, process.env.GCLOUD_PROJECT),
+      onUncaughtException: mergedConfig.onUncaughtException,
+      bufferSize: mergedConfig.bufferSize,
+      flushDelaySeconds: mergedConfig.flushDelaySeconds,
+      stackTraceLimit: mergedConfig.stackTraceLimit,
+      maximumLabelValueSize: Math.min(
+          mergedConfig.maximumLabelValueSize,
+          Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT),
+      serviceContext: {
+        service: lastOf<string|undefined>(
+            mergedConfig.serviceContext.service, process.env.GAE_MODULE_NAME,
+            process.env.GAE_SERVICE),
+        version: lastOf<string|undefined>(
+            mergedConfig.serviceContext.version, process.env.GAE_MODULE_VERSION,
+            process.env.GAE_VERSION),
+        minorVersion: lastOf<string|undefined>(
+            mergedConfig.serviceContext.minorVersion,
+            process.env.GAE_MINOR_VERSION)
+      }
+    },
+    pluginLoaderConfig: {
+      [FORCE_NEW]: forceNew,
+      plugins: {...mergedConfig.plugins},
+      tracerConfig: {
+        enhancedDatabaseReporting: mergedConfig.enhancedDatabaseReporting,
+        contextHeaderBehavior: lastOf<TraceContextHeaderBehavior>(
+            defaultConfig.contextHeaderBehavior as TraceContextHeaderBehavior,
+            // Internally, ignoreContextHeader is no longer being used, so
+            // convert the user's value into a value for contextHeaderBehavior.
+            // But let this value be overridden by the user's explicitly set
+            // value for contextHeaderBehavior.
+            mergedConfig.ignoreContextHeader ?
+                TraceContextHeaderBehavior.IGNORE :
+                TraceContextHeaderBehavior.DEFAULT,
+            userConfig.contextHeaderBehavior as TraceContextHeaderBehavior),
+        rootSpanNameOverride:
+            getInternalRootSpanNameOverride(mergedConfig.rootSpanNameOverride),
+        spansPerTraceHardLimit: mergedConfig.spansPerTraceHardLimit,
+        spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit,
+        tracePolicyConfig: {
+          samplingRate: mergedConfig.samplingRate,
+          ignoreMethods: mergedConfig.ignoreMethods,
+          ignoreUrls: mergedConfig.ignoreUrls
+        }
+      }
+    }
+  };
 }
 
 /**
@@ -122,7 +157,8 @@ export function start(config?: Config): PluginTypes.Tracer {
   // Determine the preferred context propagation mechanism, as
   // continuation-local-storage should be loaded before any modules that do I/O.
   if (normalizedConfig.enabled &&
-      normalizedConfig.clsMechanism === 'async-listener') {
+      normalizedConfig.clsConfig.mechanism ===
+          TraceCLSMechanism.ASYNC_LISTENER) {
     // This is the earliest we can load continuation-local-storage.
     require('continuation-local-storage');
   }
