@@ -72,9 +72,9 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
           case 'string':
             return () => rootSpanNameOverride;
           case 'function':
-            return (name: string) => name;
-          default:
             return rootSpanNameOverride;
+          default:
+            return (name: string) => name;
         }
       };
 
