@@ -160,7 +160,7 @@ These mechanisms work great in most cases. However, they do have some limitation
 
 *unsupported*
 
-The way we trace modules we does not support bundled server code. Bundlers like webpack or @zeit/ncc will not work.
+The way we trace modules does not support bundled server code. Bundlers like webpack or @zeit/ncc will not work.
 
 ## Contributing changes
 
