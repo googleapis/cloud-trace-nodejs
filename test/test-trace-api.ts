@@ -17,35 +17,25 @@
 import * as assert from 'assert';
 
 import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
-import {defaultConfig} from '../src/config';
+import {defaultConfig, RequestDetails, TracePolicy} from '../src/config';
 import {SpanType} from '../src/constants';
-import {StackdriverTracer, StackdriverTracerConfig, TraceContextHeaderBehavior} from '../src/trace-api';
+import {StackdriverTracer, StackdriverTracerConfig} from '../src/trace-api';
 import {traceWriter} from '../src/trace-writer';
+import {alwaysTrace, TraceContextHeaderBehavior} from '../src/tracing-policy';
 import {FORCE_NEW} from '../src/util';
 
 import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
+import {getBaseConfig} from './utils';
 
 describe('Trace Interface', () => {
   const logger = new TestLogger();
-  function createTraceAgent(config?: Partial<StackdriverTracerConfig>):
-      StackdriverTracer {
+  function createTraceAgent(
+      config?: Partial<StackdriverTracerConfig>,
+      policy?: TracePolicy): StackdriverTracer {
     const result = new StackdriverTracer('test');
     result.enable(
-        Object.assign(
-            {
-              enhancedDatabaseReporting: false,
-              contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
-              rootSpanNameOverride: (name: string) => name,
-              tracePolicyConfig: {
-                samplingRate: 0,
-                ignoreUrls: [],
-                ignoreMethods: [],
-              },
-              spansPerTraceSoftLimit: Infinity,
-              spansPerTraceHardLimit: Infinity
-            },
-            config),
+        Object.assign(getBaseConfig(), config), policy || alwaysTrace(),
         logger);
     return result;
   }
@@ -203,54 +193,10 @@ describe('Trace Interface', () => {
       assert.strictEqual(traceApi.getWriterProjectId(), 'project-1');
     });
 
-    it('should respect trace policy', (done) => {
-      const traceAPI = createTraceAgent({
-        tracePolicyConfig:
-            {samplingRate: -1 /*never*/, ignoreUrls: [], ignoreMethods: []}
-      });
-      traceAPI.runInRootSpan({name: 'root', url: 'root'}, (rootSpan) => {
-        assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
-        const childSpan = rootSpan.createChildSpan({name: 'child'});
-        assert.strictEqual(childSpan.type, SpanType.UNTRACED);
-        done();
-      });
-    });
-
-    it('should respect filter urls', () => {
-      const url = 'rootUrl';
-      const traceAPI = createTraceAgent({
-        tracePolicyConfig:
-            {samplingRate: 0, ignoreUrls: [url], ignoreMethods: []}
-      });
-      traceAPI.runInRootSpan({name: 'root', url}, (rootSpan) => {
-        assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
-      });
-      traceAPI.runInRootSpan(
-          {name: 'root', url: 'alternativeUrl'}, (rootSpan) => {
-            assert.strictEqual(rootSpan.type, SpanType.ROOT);
-          });
-    });
-
-    it('should respect filter methods', () => {
-      const method = 'method';
-      const traceAPI = createTraceAgent({
-        tracePolicyConfig:
-            {samplingRate: 0, ignoreUrls: [], ignoreMethods: [method]}
-      });
-      traceAPI.runInRootSpan({name: 'root', method}, (rootSpan) => {
-        assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
-      });
-      traceAPI.runInRootSpan(
-          {name: 'root', method: 'alternativeMethod'}, (rootSpan) => {
-            assert.strictEqual(rootSpan.type, SpanType.ROOT);
-          });
-    });
-
     it('should respect enhancedDatabaseReporting options field', () => {
       [true, false].forEach((enhancedDatabaseReporting) => {
         const traceAPI = createTraceAgent({
           enhancedDatabaseReporting,
-          contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT
         });
         assert.strictEqual(
             traceAPI.enhancedDatabaseReportingEnabled(),
@@ -258,11 +204,11 @@ describe('Trace Interface', () => {
       });
     });
 
-    it('should respect contextHeaderBehavior options field', () => {
-      // ignore behavior
+    it('should respect propagateTraceContextFromHeader options field', () => {
+      // Don't propagate from trace context header
       createTraceAgent({
         enhancedDatabaseReporting: false,
-        contextHeaderBehavior: TraceContextHeaderBehavior.IGNORE
+        propagateTraceContextFromHeader: false
       })
           .runInRootSpan(
               {name: 'root1', traceContext: '123456/667;o=1'}, (rootSpan) => {
@@ -274,10 +220,10 @@ describe('Trace Interface', () => {
       assert.strictEqual(foundTrace.spans.length, 1);
       assert.strictEqual(foundTrace.spans[0].name, 'root1');
       assert.notStrictEqual(foundTrace.spans[0].parentSpanId, '667');
-      // default behavior
+      // Propagate from trace context header
       createTraceAgent({
         enhancedDatabaseReporting: false,
-        contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT
+        propagateTraceContextFromHeader: true
       })
           .runInRootSpan(
               {name: 'root2', traceContext: '123456/667;o=1'}, (rootSpan) => {
@@ -288,15 +234,6 @@ describe('Trace Interface', () => {
       assert.strictEqual(foundTrace.spans.length, 1);
       assert.strictEqual(foundTrace.spans[0].name, 'root2');
       assert.strictEqual(foundTrace.spans[0].parentSpanId, '667');
-      // require behavior
-      createTraceAgent({
-        enhancedDatabaseReporting: false,
-        contextHeaderBehavior: TraceContextHeaderBehavior.REQUIRE
-      }).runInRootSpan({name: 'root3'}, (rootSpan) => {
-        rootSpan.endSpan();
-      });
-      assert.strictEqual(
-          testTraceModule.getSpans(span => span.name === 'root3').length, 0);
     });
 
     it('should trace if no option flags are provided', () => {

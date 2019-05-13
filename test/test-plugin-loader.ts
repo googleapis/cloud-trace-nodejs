@@ -16,14 +16,12 @@
 
 import * as assert from 'assert';
 import * as path from 'path';
-import * as hook from 'require-in-the-middle';
-import * as shimmer from 'shimmer';
 
-import {Logger} from '../src/logger';
-import {TraceContextHeaderBehavior} from '../src/trace-api';
 import {PluginLoader, PluginLoaderState, PluginWrapper} from '../src/trace-plugin-loader';
+import {alwaysTrace} from '../src/tracing-policy';
 
 import {TestLogger} from './logger';
+import {getBaseConfig} from './utils';
 
 export interface SimplePluginLoaderConfig {
   // An object which contains paths to files that should be loaded as plugins
@@ -42,21 +40,8 @@ describe('Trace Plugin Loader', () => {
   let logger: TestLogger;
   const makePluginLoader = (config: SimplePluginLoaderConfig) => {
     return new PluginLoader(
-        Object.assign(
-            {
-              tracerConfig: {
-                enhancedDatabaseReporting: false,
-                contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
-                rootSpanNameOverride: (name: string) => name,
-                projectId: '0',
-                tracePolicyConfig:
-                    {samplingRate: 0, ignoreUrls: [], ignoreMethods: []},
-                spansPerTraceSoftLimit: Infinity,
-                spansPerTraceHardLimit: Infinity
-              }
-            },
-            config),
-        logger);
+        Object.assign({tracerConfig: getBaseConfig()}, config),
+        {tracePolicy: alwaysTrace(), logger});
   };
 
   before(() => {

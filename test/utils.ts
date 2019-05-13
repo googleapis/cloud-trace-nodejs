@@ -18,7 +18,6 @@
 
 import * as assert from 'assert';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as semver from 'semver';
 
 import {cls} from '../src/cls';
@@ -26,6 +25,8 @@ import {SpanType} from '../src/constants';
 import {Span} from '../src/plugin-types';
 import {ChildSpanData, RootSpanData} from '../src/span-data';
 import {TraceSpan} from '../src/trace';
+import {StackdriverTracerConfig} from '../src/trace-api';
+import {alwaysTrace, TraceContextHeaderBehavior} from '../src/tracing-policy';
 
 /**
  * Constants
@@ -42,6 +43,16 @@ export const SERVER_CERT = fs.readFileSync(`${__dirname}/fixtures/cert.pem`);
 /**
  * Helper Functions
  */
+
+export function getBaseConfig(): StackdriverTracerConfig {
+  return {
+    enhancedDatabaseReporting: false,
+    propagateTraceContextFromHeader: true,
+    rootSpanNameOverride: (name: string) => name,
+    spansPerTraceSoftLimit: Infinity,
+    spansPerTraceHardLimit: Infinity
+  };
+}
 
 export function isServerSpan(span: TraceSpan) {
   return span.kind === 'RPC_SERVER' && !span.name.startsWith('outer');

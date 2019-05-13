@@ -17,10 +17,12 @@
 
 import '../override-gcp-metadata';
 import { cls, TraceCLS } from '../../src/cls';
-import { StackdriverTracer, TraceContextHeaderBehavior } from '../../src/trace-api';
+import { StackdriverTracer } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
 import { SpanType } from '../../src/constants';
 import { TestLogger } from '../logger';
+import { getBaseConfig } from '../utils';
+import { alwaysTrace } from '../../src/tracing-policy';
 
 var semver = require('semver');
 
@@ -63,18 +65,7 @@ shimmer.wrap(trace, 'start', function(original) {
   return function() {
     var result = original.apply(this, arguments);
     testTraceAgent = new StackdriverTracer('test');
-    testTraceAgent.enable({
-      enhancedDatabaseReporting: false,
-      contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
-      rootSpanNameOverride: (name: string) => name,
-      tracePolicyConfig: {
-        samplingRate: 0,
-        ignoreUrls: [],
-        ignoreMethods: [],
-      },
-      spansPerTraceSoftLimit: Infinity,
-      spansPerTraceHardLimit: Infinity
-    }, new TestLogger());
+    testTraceAgent.enable(getBaseConfig(), alwaysTrace(), new TestLogger());
     return result;
   };
 });

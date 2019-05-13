@@ -19,15 +19,17 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-import {Config, defaultConfig} from './config';
+import {Config, defaultConfig, TracePolicy} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
 import {Tracing, TopLevelConfig} from './tracing';
 import {FORCE_NEW, Forceable, lastOf} from './util';
 import {Constants} from './constants';
-import {StackdriverTracer, TraceContextHeaderBehavior} from './trace-api';
 import {TraceCLSMechanism} from './cls';
+import {StackdriverTracer} from './trace-api';
+import {TracePolicy as BuiltinTracePolicy, TraceContextHeaderBehavior} from './tracing-policy';
+import {config} from './plugins/types/bluebird_3';
 
 export {Config, PluginTypes};
 
@@ -115,27 +117,22 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
       plugins: {...mergedConfig.plugins},
       tracerConfig: {
         enhancedDatabaseReporting: mergedConfig.enhancedDatabaseReporting,
-        contextHeaderBehavior: lastOf<TraceContextHeaderBehavior>(
-            defaultConfig.contextHeaderBehavior as TraceContextHeaderBehavior,
-            // Internally, ignoreContextHeader is no longer being used, so
-            // convert the user's value into a value for contextHeaderBehavior.
-            // But let this value be overridden by the user's explicitly set
-            // value for contextHeaderBehavior.
-            mergedConfig.ignoreContextHeader ?
-                TraceContextHeaderBehavior.IGNORE :
-                TraceContextHeaderBehavior.DEFAULT,
-            userConfig.contextHeaderBehavior as TraceContextHeaderBehavior),
+        propagateTraceContextFromHeader:
+            mergedConfig.propagateTraceContextFromHeader,
         rootSpanNameOverride:
             getInternalRootSpanNameOverride(mergedConfig.rootSpanNameOverride),
         spansPerTraceHardLimit: mergedConfig.spansPerTraceHardLimit,
-        spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit,
-        tracePolicyConfig: {
-          samplingRate: mergedConfig.samplingRate,
-          ignoreMethods: mergedConfig.ignoreMethods,
-          ignoreUrls: mergedConfig.ignoreUrls
-        }
+        spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit
       }
-    }
+    },
+    tracePolicyConfig: {
+      samplingRate: mergedConfig.samplingRate,
+      ignoreMethods: mergedConfig.ignoreMethods,
+      ignoreUrls: mergedConfig.ignoreUrls,
+      contextHeaderBehavior: mergedConfig.contextHeaderBehavior as
+          TraceContextHeaderBehavior
+    },
+    overrides: {tracePolicy: mergedConfig.tracePolicy}
   };
 }
 
