@@ -26,7 +26,7 @@ import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plug
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
-import {neverTrace, TraceContextHeaderBehavior} from './tracing-policy';
+import {neverTrace} from './tracing-policy';
 import * as util from './util';
 
 /**
@@ -35,16 +35,9 @@ import * as util from './util';
  */
 export interface StackdriverTracerConfig {
   enhancedDatabaseReporting: boolean;
-  propagateTraceContextFromHeader: boolean;
   rootSpanNameOverride: (path: string) => string;
   spansPerTraceSoftLimit: number;
   spansPerTraceHardLimit: number;
-}
-
-interface IncomingTraceContext {
-  traceId?: string;
-  spanId?: string;
-  options: number;
 }
 
 /**
@@ -184,28 +177,20 @@ export class StackdriverTracer implements Tracer {
       rootContext = UNTRACED_ROOT_SPAN;
     } else {
       // Create a new root span, and invoke fn with it.
-      const name = this.config!.rootSpanNameOverride(options.name);
-      if (traceContext && this.config!.propagateTraceContextFromHeader) {
-        rootContext = new RootSpanData(
-            {
-              projectId: '',
-              traceId: traceContext.traceId,
-              spans: []
-            },                   /* Trace object */
-            name,                /* Span name */
-            traceContext.spanId, /* Parent's span ID */
-            options.skipFrames || 0);
-      } else {
-        rootContext = new RootSpanData(
-            {
-              projectId: '',
-              traceId: uuid.v4().split('-').join(''),
-              spans: []
-            },    /* Trace object */
-            name, /* Span name */
-            '0',  /* Parent's span ID */
-            options.skipFrames || 0);
-      }
+      rootContext = new RootSpanData(
+          // Trace object
+          {
+            projectId: '',
+            traceId: traceContext ? traceContext.traceId :
+                                    uuid.v4().split('-').join(''),
+            spans: []
+          },
+          // Span name
+          this.config!.rootSpanNameOverride(options.name),
+          // Parent span ID
+          traceContext ? traceContext.spanId : '0',
+          // Number of stack frames to skip
+          options.skipFrames || 0);
     }
 
     return cls.get().runWithContext(() => {

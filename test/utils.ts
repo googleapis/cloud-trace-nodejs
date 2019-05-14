@@ -47,7 +47,6 @@ export const SERVER_CERT = fs.readFileSync(`${__dirname}/fixtures/cert.pem`);
 export function getBaseConfig(): StackdriverTracerConfig {
   return {
     enhancedDatabaseReporting: false,
-    propagateTraceContextFromHeader: true,
     rootSpanNameOverride: (name: string) => name,
     spansPerTraceSoftLimit: Infinity,
     spansPerTraceHardLimit: Infinity

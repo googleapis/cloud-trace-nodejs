@@ -117,8 +117,6 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
       plugins: {...mergedConfig.plugins},
       tracerConfig: {
         enhancedDatabaseReporting: mergedConfig.enhancedDatabaseReporting,
-        propagateTraceContextFromHeader:
-            mergedConfig.propagateTraceContextFromHeader,
         rootSpanNameOverride:
             getInternalRootSpanNameOverride(mergedConfig.rootSpanNameOverride),
         spansPerTraceHardLimit: mergedConfig.spansPerTraceHardLimit,

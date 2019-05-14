@@ -253,36 +253,31 @@ describe('Trace Interface', () => {
       });
     });
 
-    it('should respect propagateTraceContextFromHeader options field', () => {
-      // Don't propagate from trace context header
-      createTraceAgent({
-        enhancedDatabaseReporting: false,
-        propagateTraceContextFromHeader: false
-      })
-          .runInRootSpan(
-              {name: 'root1', traceContext: '123456/667;o=1'}, (rootSpan) => {
-                rootSpan.endSpan();
-              });
-      // The trace ID will not randomly be 123456
-      let foundTrace =
-          testTraceModule.getOneTrace(trace => trace.traceId !== '123456');
-      assert.strictEqual(foundTrace.spans.length, 1);
-      assert.strictEqual(foundTrace.spans[0].name, 'root1');
-      assert.notStrictEqual(foundTrace.spans[0].parentSpanId, '667');
+    it('should use incoming context to set trace ID when available', () => {
       // Propagate from trace context header
-      createTraceAgent({
-        enhancedDatabaseReporting: false,
-        propagateTraceContextFromHeader: true
-      })
-          .runInRootSpan(
-              {name: 'root2', traceContext: '123456/667;o=1'}, (rootSpan) => {
-                rootSpan.endSpan();
-              });
-      foundTrace =
-          testTraceModule.getOneTrace(trace => trace.traceId === '123456');
-      assert.strictEqual(foundTrace.spans.length, 1);
-      assert.strictEqual(foundTrace.spans[0].name, 'root2');
-      assert.strictEqual(foundTrace.spans[0].parentSpanId, '667');
+      {
+        createTraceAgent().runInRootSpan(
+            {name: 'root1', traceContext: '123456/667;o=1'}, (rootSpan) => {
+              rootSpan.endSpan();
+            });
+        const foundTrace =
+            testTraceModule.getOneTrace(trace => trace.traceId === '123456');
+        assert.strictEqual(foundTrace.spans.length, 1);
+        assert.strictEqual(foundTrace.spans[0].name, 'root1');
+        assert.strictEqual(foundTrace.spans[0].parentSpanId, '667');
+      }
+      // Generate a trace context
+      {createTraceAgent().runInRootSpan(
+          {name: 'root2', traceContext: 'unparseable'},
+          (rootSpan) => {
+            rootSpan.endSpan();
+          });
+       // The trace ID will not randomly be 123456
+       const foundTrace =
+           testTraceModule.getOneTrace(trace => trace.traceId !== '123456');
+       assert.strictEqual(foundTrace.spans.length, 1);
+       assert.strictEqual(foundTrace.spans[0].name, 'root2');
+       assert.notStrictEqual(foundTrace.spans[0].parentSpanId, '667');}
     });
 
     it('should trace if no option flags are provided', () => {
