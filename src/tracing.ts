@@ -17,7 +17,7 @@
 import * as path from 'path';
 
 import {cls, TraceCLSConfig} from './cls';
-import {TracePolicy} from './config';
+import {Config, TracePolicy} from './config';
 import {LEVELS, Logger} from './logger';
 import {StackdriverTracer} from './trace-api';
 import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
@@ -26,7 +26,8 @@ import {BuiltinTracePolicy, TracePolicyConfig} from './tracing-policy';
 import {Component, Forceable, packageNameFromPath, Singleton} from './util';
 
 export type TopLevelConfig = {
-  enabled: boolean; logLevel: number; clsConfig: TraceCLSConfig;
+  original: Config; enabled: boolean; logLevel: number;
+  clsConfig: TraceCLSConfig;
   writerConfig: TraceWriterConfig;
   pluginLoaderConfig: PluginLoaderConfig;
   tracePolicyConfig: TracePolicyConfig;
@@ -120,6 +121,18 @@ export class Tracing implements Component {
 
     const tracePolicy = this.config.overrides.tracePolicy ||
         new BuiltinTracePolicy(this.config.tracePolicyConfig);
+    if (this.config.overrides.tracePolicy) {
+      const unusedOptions = Object.keys(this.config.tracePolicyConfig);
+      const optionsToWarn =
+          Object.keys(this.config.original)
+              .filter(key => unusedOptions.indexOf(key) !== -1)
+              .map(key => `config.${key}`);
+      if (optionsToWarn.length > 0) {
+        this.logger.warn(
+            'StackdriverTracer#start: config.tracePolicy was specified;',
+            `ignoring user-set values for: [${optionsToWarn.join(', ')}]`);
+      }
+    }
 
     this.traceAgent.enable(
         this.config.pluginLoaderConfig.tracerConfig, tracePolicy, this.logger);
