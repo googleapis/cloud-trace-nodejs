@@ -188,9 +188,10 @@ export interface Config {
 
   /**
    * For advanced usage only.
-   * If specified, overrides the built-in trace policy object. Note that
-   * ignoreUrls, ignoreMethods, samplingRate, and contextHeaderBehavior will be
-   * ignored if this field is specified.
+   * If specified, overrides the built-in trace policy object.
+   * Note that if any of ignoreUrls, ignoreMethods, samplingRate, or
+   * contextHeaderBehavior is specified, an error will be thrown when start()
+   * is called.
    */
   tracePolicy?: TracePolicy;
 

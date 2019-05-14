@@ -154,3 +154,13 @@ describe('Behavior set by config for Tracer', () => {
     });
   });
 });
+
+describe('Behavior set by config for TracePolicy', () => {
+  it('should throw when conflicting policy options are specified', () => {
+    assert.throws(() => testTraceModule.start({
+      samplingRate: 100,
+      tracePolicy: { shouldTrace: () => true }
+    }));
+  });
+});
+

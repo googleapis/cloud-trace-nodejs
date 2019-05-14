@@ -57,6 +57,22 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
       extend(true, {}, defaultConfig, envSetConfig, userConfig);
   const forceNew = userConfig[FORCE_NEW];
 
+  // Throw for improper configurations.
+  const userSetKeys =
+      new Set([...Object.keys(envSetConfig), ...Object.keys(userConfig)]);
+  if (userSetKeys.has('tracePolicy')) {
+    // If the user specified tracePolicy, they should not have also set these
+    // other fields.
+    const forbiddenKeys =
+        ['ignoreUrls', 'ignoreMethods', 'samplingRate', 'contextHeaderBehavior']
+            .filter(key => userSetKeys.has(key))
+            .map(key => `config.${key}`);
+    if (forbiddenKeys.length > 0) {
+      throw new Error(`config.tracePolicy and any of [${
+          forbiddenKeys.join('\, ')}] can't be specified at the same time.`);
+    }
+  }
+
   const getInternalClsMechanism = (clsMechanism: string): TraceCLSMechanism => {
     // If the CLS mechanism is set to auto-determined, decide now
     // what it should be.
