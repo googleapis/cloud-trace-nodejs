@@ -47,24 +47,16 @@ import {TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
 import {tracing, Tracing} from '../src/tracing';
 import {FORCE_NEW} from '../src/util';
 
-import * as testLogger from './logger';
+import {TestLogger} from './logger';
 
 export {Config, PluginTypes};
 
 const traces: Trace[] = [];
 const spans: TraceSpan[] = [];
-let capturedLogger: testLogger.TestLogger|null = null;
 
 export class TestCLS extends TraceCLS {
   constructor(config: {}, logger: logger.Logger) {
     super({mechanism: TraceCLSMechanism.NONE}, logger);
-  }
-}
-
-export class TestLogger extends testLogger.TestLogger {
-  constructor(options?: Partial<logger.LoggerConfig>) {
-    super(options);
-    capturedLogger = this;
   }
 }
 
@@ -106,7 +98,6 @@ setTracingForTest(TestTracing);
 export type Predicate<T> = (value: T) => boolean;
 
 export function start(projectConfig?: Config): PluginTypes.Tracer {
-  capturedLogger = null;
   const agent = trace.start(Object.assign(
       {samplingRate: 0, logLevel: 4, [FORCE_NEW]: true}, projectConfig));
   return agent;
@@ -140,11 +131,6 @@ export function setPluginLoaderForTest(impl?: typeof PluginLoader) {
 
 export function setTracingForTest(impl?: typeof Tracing) {
   tracing['implementation'] = impl || Tracing;
-}
-
-export function getLogger(): testLogger.TestLogger {
-  assert.ok(capturedLogger);
-  return capturedLogger!;
 }
 
 export function getTraces(predicate?: Predicate<Trace>): Trace[] {

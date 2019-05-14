@@ -154,14 +154,3 @@ describe('Behavior set by config for Tracer', () => {
     });
   });
 });
-
-describe('Warnings for improper config', () => {
-  it('should indicate that some options can\'t be specified with a tracePolicy', () => {
-    testTraceModule.start({
-      samplingRate: 100,
-      tracePolicy: { shouldTrace: () => true }
-    });
-    const expectedWarnMsg = /config.tracePolicy.*ignoring.*\[config.samplingRate\]/;
-    assert.strictEqual(testTraceModule.getLogger().getNumLogsWith('warn', expectedWarnMsg), 1);
-  });
-});

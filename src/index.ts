@@ -83,7 +83,6 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
   return {
     [FORCE_NEW]: forceNew,
     enabled: mergedConfig.enabled,
-    original: userConfig,
     logLevel: lastOf(
         mergedConfig.logLevel, Number(process.env.GCLOUD_TRACE_LOGLEVEL)),
     clsConfig: {
