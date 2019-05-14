@@ -22,7 +22,7 @@ import {LEVELS, Logger} from './logger';
 import {StackdriverTracer} from './trace-api';
 import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
-import {TracePolicy as BuiltinTracePolicy, TracePolicyConfig} from './tracing-policy';
+import {BuiltinTracePolicy, TracePolicyConfig} from './tracing-policy';
 import {Component, Forceable, packageNameFromPath, Singleton} from './util';
 
 export type TopLevelConfig = {

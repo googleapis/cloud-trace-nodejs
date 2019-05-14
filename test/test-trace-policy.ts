@@ -17,7 +17,7 @@
 import * as assert from 'assert';
 
 import {RequestDetails} from '../src/config';
-import {TraceContextHeaderBehavior, TracePolicy, TracePolicyConfig} from '../src/tracing-policy';
+import {BuiltinTracePolicy, TraceContextHeaderBehavior, TracePolicyConfig} from '../src/tracing-policy';
 
 const traceContext = {
   traceId: '0',
@@ -28,7 +28,7 @@ const traceContext = {
 /**
  * A wrapper of TracePolicy for testing purposes.
  */
-class TracePolicyForTest extends TracePolicy {
+class TracePolicyForTest extends BuiltinTracePolicy {
   /**
    * Constructs a new TracePolicy instance, filling in default arguments.
    * @param config A partial TracePolicy configuration.

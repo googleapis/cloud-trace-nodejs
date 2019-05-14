@@ -28,7 +28,7 @@ import {FORCE_NEW, Forceable, lastOf} from './util';
 import {Constants} from './constants';
 import {TraceCLSMechanism} from './cls';
 import {StackdriverTracer} from './trace-api';
-import {TracePolicy as BuiltinTracePolicy, TraceContextHeaderBehavior} from './tracing-policy';
+import {BuiltinTracePolicy, TraceContextHeaderBehavior} from './tracing-policy';
 import {config} from './plugins/types/bluebird_3';
 
 export {Config, PluginTypes};

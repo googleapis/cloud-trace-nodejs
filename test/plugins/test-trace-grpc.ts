@@ -271,7 +271,7 @@ describeInterop('grpc', fixture => {
   var shouldTraceArgs: any[] = [];
   before(function() {
     // Set up to record invocations of shouldTrace
-    shimmer.wrap(TracingPolicy.TracePolicy.prototype, 'shouldTrace', function(original) {
+    shimmer.wrap(TracingPolicy.BuiltinTracePolicy.prototype, 'shouldTrace', function(original) {
       return function(options) {
         shouldTraceArgs.push(options);
         return original.apply(this, arguments);

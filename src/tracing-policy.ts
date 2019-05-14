@@ -1,4 +1,4 @@
-import * as config from './config';
+import {RequestDetails, TracePolicy} from './config';
 import {Constants} from './constants';
 import {TraceContext} from './util';
 
@@ -135,7 +135,7 @@ export interface TracePolicyConfig {
 /**
  * A class that makes decisions about whether a trace should be created.
  */
-export class TracePolicy implements config.TracePolicy {
+export class BuiltinTracePolicy implements TracePolicy {
   private readonly sampler: TracePolicyPredicate<number>;
   private readonly urlFilter: TracePolicyPredicate<string>;
   private readonly methodsFilter: TracePolicyPredicate<string>;
@@ -177,7 +177,7 @@ export class TracePolicy implements config.TracePolicy {
    * @param options Fields that help determine whether a trace should be
    *                created.
    */
-  shouldTrace(options: config.RequestDetails): boolean {
+  shouldTrace(options: RequestDetails): boolean {
     return this.urlFilter.shouldTrace(options.url) &&
         this.methodsFilter.shouldTrace(options.method) &&
         this.contextHeaderFilter.shouldTrace(options.traceContext) &&
@@ -185,8 +185,8 @@ export class TracePolicy implements config.TracePolicy {
   }
 }
 
-export function alwaysTrace(): TracePolicy {
-  return new TracePolicy({
+export function alwaysTrace(): BuiltinTracePolicy {
+  return new BuiltinTracePolicy({
     samplingRate: 0,
     ignoreUrls: [],
     ignoreMethods: [],
@@ -194,8 +194,8 @@ export function alwaysTrace(): TracePolicy {
   });
 }
 
-export function neverTrace(): TracePolicy {
-  return new TracePolicy({
+export function neverTrace(): BuiltinTracePolicy {
+  return new BuiltinTracePolicy({
     samplingRate: -1,
     ignoreUrls: [],
     ignoreMethods: [],
