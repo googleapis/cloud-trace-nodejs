@@ -302,7 +302,6 @@ export const defaultConfig = {
   ignoreMethods: [],
   samplingRate: 10,
   contextHeaderBehavior: 'default',
-  propagateTraceContextFromHeader: true,
   bufferSize: 1000,
   onUncaughtException: 'ignore',
   serviceContext: {}
