@@ -31,9 +31,10 @@ if (!process.env.GCLOUD_PROJECT ||
 const WRITE_CONSISTENCY_DELAY_MS = 20 * 1000;
 const projectId = process.env.GCLOUD_PROJECT;
 const keyFilename = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+const EXPECTED_ENDPOINT = 'google.datastore.v1.Datastore/RunQuery';
 
 // trace-agent must be loaded before everything else.
-require('../').start({
+const tracer = require('../').start({
   projectId: projectId,
   keyFilename: keyFilename,
   flushDelaySeconds: 1
@@ -142,8 +143,11 @@ describe('express + datastore', () => {
       const trace = traces[0];
       assert.ok(trace.spans.length >= 2, 'should be at least 2 spans: parent, child');
       const parent = trace.spans[0];
-      const child = trace.spans.find(span =>
-          span.name === 'grpc:/google.datastore.v1.Datastore/RunQuery');
+      const child = trace.spans.find(span => {
+        const datastoreUrl = `https://datastore.googleapis.com/${EXPECTED_ENDPOINT}`;
+        return span.name === `grpc:/${EXPECTED_ENDPOINT}` ||
+          span.labels[tracer.labels.HTTP_URL_LABEL_KEY] === datastoreUrl;
+      });
 
       assert.strictEqual(parent.name, testPath, 'should match unique path');
       assert.ok(child);
