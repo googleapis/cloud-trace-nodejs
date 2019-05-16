@@ -19,35 +19,15 @@ import * as is from 'is';
 import * as uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
+import {TracePolicy} from './config';
 import {Constants, SpanType} from './constants';
 import {Logger} from './logger';
 import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
-import {TracePolicy, TracePolicyConfig} from './tracing-policy';
+import {neverTrace} from './tracing-policy';
 import * as util from './util';
-
-/**
- * An enumeration of the different possible types of behavior when dealing with
- * incoming trace context. Requests are still subject to local tracing policy.
- */
-export enum TraceContextHeaderBehavior {
-  /**
-   * Respect the trace context header if it exists; otherwise, trace the
-   * request as a new trace.
-   */
-  DEFAULT = 'default',
-  /**
-   * Respect the trace context header if it exists; otherwise, treat the
-   * request as unsampled and don't trace it.
-   */
-  REQUIRE = 'require',
-  /**
-   * Trace every request as a new trace, even if trace context exists.
-   */
-  IGNORE = 'ignore'
-}
 
 /**
  * An interface describing configuration fields read by the StackdriverTracer
@@ -55,17 +35,9 @@ export enum TraceContextHeaderBehavior {
  */
 export interface StackdriverTracerConfig {
   enhancedDatabaseReporting: boolean;
-  contextHeaderBehavior: TraceContextHeaderBehavior;
   rootSpanNameOverride: (path: string) => string;
   spansPerTraceSoftLimit: number;
   spansPerTraceHardLimit: number;
-  tracePolicyConfig: TracePolicyConfig;
-}
-
-interface IncomingTraceContext {
-  traceId?: string;
-  spanId?: string;
-  options: number;
 }
 
 /**
@@ -117,10 +89,10 @@ export class StackdriverTracer implements Tracer {
    * @param logger A logger object.
    * @private
    */
-  enable(config: StackdriverTracerConfig, logger: Logger) {
+  enable(config: StackdriverTracerConfig, policy: TracePolicy, logger: Logger) {
     this.logger = logger;
     this.config = config;
-    this.policy = new TracePolicy(config.tracePolicyConfig);
+    this.policy = policy;
     this.enabled = true;
   }
 
@@ -134,7 +106,7 @@ export class StackdriverTracer implements Tracer {
     // never generates traces allows persisting wrapped methods (either because
     // they are already instantiated or the plugin doesn't unpatch them) to
     // short-circuit out of trace generation logic.
-    this.policy = TracePolicy.never();
+    this.policy = neverTrace();
     this.enabled = false;
   }
 
@@ -175,48 +147,49 @@ export class StackdriverTracer implements Tracer {
     }
 
     // Attempt to read incoming trace context.
-    const incomingTraceContext: IncomingTraceContext = {options: 1};
-    let parsedContext: util.TraceContext|null = null;
-    if (isString(options.traceContext) &&
-        this.config!.contextHeaderBehavior !==
-            TraceContextHeaderBehavior.IGNORE) {
-      parsedContext = util.parseContextFromHeader(options.traceContext);
-    }
-    if (parsedContext) {
-      if (parsedContext.options === undefined) {
-        // If there are no incoming option flags, default to 0x1.
-        parsedContext.options = 1;
+    const parseContext = (stringifiedTraceContext?: string|null) => {
+      const parsedContext = isString(stringifiedTraceContext) ?
+          util.parseContextFromHeader(stringifiedTraceContext) :
+          null;
+      if (parsedContext) {
+        if (parsedContext.options === undefined) {
+          // If there are no incoming option flags, default to 0x1.
+          parsedContext.options = 1;
+        }
       }
-      Object.assign(incomingTraceContext, parsedContext);
-    } else if (
-        this.config!.contextHeaderBehavior ===
-        TraceContextHeaderBehavior.REQUIRE) {
-      incomingTraceContext.options = 0;
-    }
+      return parsedContext as Required<util.TraceContext>| null;
+    };
+    const traceContext = parseContext(options.traceContext);
 
     // Consult the trace policy.
-    const locallyAllowed = this.policy!.shouldTrace({
+    const shouldTrace = this.policy!.shouldTrace({
       timestamp: Date.now(),
       url: options.url || '',
-      method: options.method || ''
+      method: options.method || '',
+      traceContext,
+      options
     });
-    const remotelyAllowed = !!(
-        incomingTraceContext.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
 
     let rootContext: RootSpan&RootContext;
+
     // Don't create a root span if the trace policy disallows it.
-    if (!locallyAllowed || !remotelyAllowed) {
+    if (!shouldTrace) {
       rootContext = UNTRACED_ROOT_SPAN;
     } else {
       // Create a new root span, and invoke fn with it.
-      const traceId =
-          incomingTraceContext.traceId || (uuid.v4().split('-').join(''));
-      const parentId = incomingTraceContext.spanId || '0';
-      const name = this.config!.rootSpanNameOverride(options.name);
       rootContext = new RootSpanData(
-          {projectId: '', traceId, spans: []}, /* Trace object */
-          name,                                /* Span name */
-          parentId,                            /* Parent's span ID */
+          // Trace object
+          {
+            projectId: '',
+            traceId: traceContext ? traceContext.traceId :
+                                    uuid.v4().split('-').join(''),
+            spans: []
+          },
+          // Span name
+          this.config!.rootSpanNameOverride(options.name),
+          // Parent span ID
+          traceContext ? traceContext.spanId : '0',
+          // Number of stack frames to skip
           options.skipFrames || 0);
     }
 

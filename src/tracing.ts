@@ -17,16 +17,20 @@
 import * as path from 'path';
 
 import {cls, TraceCLSConfig} from './cls';
+import {TracePolicy} from './config';
 import {LEVELS, Logger} from './logger';
 import {StackdriverTracer} from './trace-api';
 import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
 import {traceWriter, TraceWriterConfig} from './trace-writer';
+import {BuiltinTracePolicy, TracePolicyConfig} from './tracing-policy';
 import {Component, Forceable, packageNameFromPath, Singleton} from './util';
 
 export type TopLevelConfig = {
   enabled: boolean; logLevel: number; clsConfig: TraceCLSConfig;
   writerConfig: TraceWriterConfig;
   pluginLoaderConfig: PluginLoaderConfig;
+  tracePolicyConfig: TracePolicyConfig;
+  overrides: {tracePolicy?: TracePolicy;};
 }|{
   enabled: false;
 };
@@ -113,9 +117,16 @@ export class Tracing implements Component {
       this.disable();
     });
     cls.get().enable();
+
+    const tracePolicy = this.config.overrides.tracePolicy ||
+        new BuiltinTracePolicy(this.config.tracePolicyConfig);
+
     this.traceAgent.enable(
-        this.config.pluginLoaderConfig.tracerConfig, this.logger);
-    pluginLoader.create(this.config.pluginLoaderConfig, this.logger).activate();
+        this.config.pluginLoaderConfig.tracerConfig, tracePolicy, this.logger);
+    pluginLoader
+        .create(
+            this.config.pluginLoaderConfig, {logger: this.logger, tracePolicy})
+        .activate();
 
     if (typeof this.config.writerConfig.projectId !== 'string' &&
         typeof this.config.writerConfig.projectId !== 'undefined') {

@@ -65,21 +65,3 @@ export function hostname(status: number|(() => string), reply?: () => string) {
       .once()
       .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
-
-export function patchTraces<T extends {} = {}>(
-    project: string, validator?: (body: T) => boolean, reply?: () => string,
-    withError?: boolean) {
-  validator = validator || accept;
-  const interceptor =
-      nock('https://cloudtrace.googleapis.com')
-          .intercept('/v1/projects/' + project + '/traces', 'PATCH', validator);
-  let scope: nock.Scope;
-  if (withError) {
-    scope = interceptor.replyWithError(reply);
-  } else if (reply) {
-    scope = interceptor.reply(reply);
-  } else {
-    scope = interceptor.reply(200);
-  }
-  return scope;
-}

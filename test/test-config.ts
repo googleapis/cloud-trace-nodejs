@@ -131,47 +131,6 @@ describe('Behavior set by config for Tracer', () => {
     testTraceModule.setTracingForTest(testTraceModule.TestTracing);
   });
 
-
-  describe('Context header behavior', () => {
-    it('should copy over an explicitly-set value', () => {
-      testTraceModule.start({
-        contextHeaderBehavior: 'require'
-      });
-      const config = getCapturedTracerConfig();
-      assert.strictEqual(config.contextHeaderBehavior, 'require');
-    });
-
-    it('should respect the value of ignoreContextHeader if not set', () => {
-      testTraceModule.start({
-        ignoreContextHeader: false
-      });
-      let config = getCapturedTracerConfig();
-      assert.strictEqual(config.contextHeaderBehavior, 'default');
-      capturedConfig = null;
-      testTraceModule.start({
-        ignoreContextHeader: true
-      });
-      config = getCapturedTracerConfig();
-      assert.strictEqual(config.contextHeaderBehavior, 'ignore');
-    });
-
-    it('should override the value of ignoreContextHeader if both set', () => {
-      testTraceModule.start({
-        ignoreContextHeader: false,
-        contextHeaderBehavior: 'require'
-      });
-      let config = getCapturedTracerConfig();
-      assert.strictEqual(config.contextHeaderBehavior, 'require');
-      capturedConfig = null;
-      testTraceModule.start({
-        ignoreContextHeader: true,
-        contextHeaderBehavior: 'require'
-      });
-      config = getCapturedTracerConfig();
-      assert.strictEqual(config.contextHeaderBehavior, 'require');
-    });
-  });
-
   describe('Overriding root span name', () => {
     it('should convert a string to a function', () => {
       testTraceModule.start({
@@ -195,3 +154,13 @@ describe('Behavior set by config for Tracer', () => {
     });
   });
 });
+
+describe('Behavior set by config for TracePolicy', () => {
+  it('should throw when conflicting policy options are specified', () => {
+    assert.throws(() => testTraceModule.start({
+      samplingRate: 100,
+      tracePolicy: { shouldTrace: () => true }
+    }));
+  });
+});
+

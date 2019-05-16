@@ -19,6 +19,7 @@ import * as path from 'path';
 import * as hook from 'require-in-the-middle';
 import * as semver from 'semver';
 
+import {TracePolicy} from './config';
 import {Logger} from './logger';
 import {Intercept, Monkeypatch, Plugin} from './plugin-types';
 import {StackdriverTracer, StackdriverTracerConfig} from './trace-api';
@@ -88,8 +89,8 @@ export class ModulePluginWrapper implements PluginWrapper {
   private readonly unpatchFns: Array<() => void> = [];
   // A logger.
   private readonly logger: Logger;
-  // Configuration for a StackdriverTracer instance.
-  private readonly traceConfig: StackdriverTracerConfig;
+  // A trace policy to apply to created StackdriverTracer instances.
+  private readonly tracePolicy: TracePolicy;
   // Display-friendly name of the module being patched by this plugin.
   private readonly name: string;
   // The path to the plugin.
@@ -103,15 +104,18 @@ export class ModulePluginWrapper implements PluginWrapper {
    * Constructs a new PluginWrapper instance.
    * @param options Initialization fields for this object.
    * @param traceConfig Configuration for a StackdriverTracer instance.
+   * @param tracePolicy The trace policy to apply to a StackdriverTracer
+   * instance.
    * @param logger The logger to use.
    */
   constructor(
-      options: ModulePluginWrapperOptions, traceConfig: StackdriverTracerConfig,
-      logger: Logger) {
-    this.logger = logger;
+      options: ModulePluginWrapperOptions,
+      private readonly traceConfig: StackdriverTracerConfig,
+      components: PluginLoaderComponents) {
+    this.logger = components.logger;
+    this.tracePolicy = components.tracePolicy;
     this.name = options.name;
     this.path = options.path;
-    this.traceConfig = traceConfig;
   }
 
   isSupported(version: string): boolean {
@@ -200,7 +204,7 @@ export class ModulePluginWrapper implements PluginWrapper {
 
   private createTraceAgentInstance(file: string) {
     const traceApi = new StackdriverTracer(file);
-    traceApi.enable(this.traceConfig, this.logger);
+    traceApi.enable(this.traceConfig, this.tracePolicy, this.logger);
     this.traceApiInstances.push(traceApi);
     return traceApi;
   }
@@ -218,10 +222,10 @@ export class CorePluginWrapper implements PluginWrapper {
 
   constructor(
       config: CorePluginWrapperOptions, traceConfig: StackdriverTracerConfig,
-      logger: Logger) {
-    this.logger = logger;
+      components: PluginLoaderComponents) {
+    this.logger = components.logger;
     this.children = config.children.map(
-        config => new ModulePluginWrapper(config, traceConfig, logger));
+        config => new ModulePluginWrapper(config, traceConfig, components));
     // Eagerly load core plugins into memory.
     // This prevents issues related to circular dependencies.
     this.children.forEach(child => child.getPluginExportedValue());
@@ -263,6 +267,11 @@ export enum PluginLoaderState {
   DEACTIVATED
 }
 
+export interface PluginLoaderComponents {
+  logger: Logger;
+  tracePolicy: TracePolicy;
+}
+
 /**
  * A class providing functionality to hook into module loading and apply
  * plugins to enable tracing.
@@ -270,6 +279,8 @@ export enum PluginLoaderState {
 export class PluginLoader {
   // Key on which core modules are stored.
   static readonly CORE_MODULE = '[core]';
+  // A logger.
+  private readonly logger: Logger;
   // The function to call to register a require hook.
   private enableRequireHook: (onRequire: hook.OnRequireFn) => void;
   // A map mapping module names to their respective plugins.
@@ -284,7 +295,8 @@ export class PluginLoader {
    * @param config The configuration for this instance.
    * @param logger The logger to use.
    */
-  constructor(config: PluginLoaderConfig, private readonly logger: Logger) {
+  constructor(config: PluginLoaderConfig, components: PluginLoaderComponents) {
+    this.logger = components.logger;
     const nonCoreModules: string[] = [];
     // Initialize ALL of the PluginWrapper objects here.
     // See CorePluginWrapper docs for why core modules are processed
@@ -305,7 +317,7 @@ export class PluginLoader {
           this.pluginMap.set(
               key,
               new ModulePluginWrapper(
-                  {name: key, path: value}, config.tracerConfig, logger));
+                  {name: key, path: value}, config.tracerConfig, components));
         }
         nonCoreModules.push(key);
       }
@@ -314,7 +326,7 @@ export class PluginLoader {
       this.pluginMap.set(
           PluginLoader.CORE_MODULE,
           new CorePluginWrapper(
-              coreWrapperConfig, config.tracerConfig, logger));
+              coreWrapperConfig, config.tracerConfig, components));
     }
 
     // Define the function that will attach a require hook upon activate.

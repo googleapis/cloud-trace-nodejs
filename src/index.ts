@@ -19,15 +19,17 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-import {Config, defaultConfig} from './config';
+import {Config, defaultConfig, TracePolicy} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
 import {Tracing, TopLevelConfig} from './tracing';
 import {FORCE_NEW, Forceable, lastOf} from './util';
 import {Constants} from './constants';
-import {StackdriverTracer, TraceContextHeaderBehavior} from './trace-api';
 import {TraceCLSMechanism} from './cls';
+import {StackdriverTracer} from './trace-api';
+import {BuiltinTracePolicy, TraceContextHeaderBehavior} from './tracing-policy';
+import {config} from './plugins/types/bluebird_3';
 
 export {Config, PluginTypes};
 
@@ -54,6 +56,22 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
   const mergedConfig: (typeof defaultConfig)&Forceable<Config> =
       extend(true, {}, defaultConfig, envSetConfig, userConfig);
   const forceNew = userConfig[FORCE_NEW];
+
+  // Throw for improper configurations.
+  const userSetKeys =
+      new Set([...Object.keys(envSetConfig), ...Object.keys(userConfig)]);
+  if (userSetKeys.has('tracePolicy')) {
+    // If the user specified tracePolicy, they should not have also set these
+    // other fields.
+    const forbiddenKeys =
+        ['ignoreUrls', 'ignoreMethods', 'samplingRate', 'contextHeaderBehavior']
+            .filter(key => userSetKeys.has(key))
+            .map(key => `config.${key}`);
+    if (forbiddenKeys.length > 0) {
+      throw new Error(`config.tracePolicy and any of [${
+          forbiddenKeys.join('\, ')}] can't be specified at the same time.`);
+    }
+  }
 
   const getInternalClsMechanism = (clsMechanism: string): TraceCLSMechanism => {
     // If the CLS mechanism is set to auto-determined, decide now
@@ -115,27 +133,20 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
       plugins: {...mergedConfig.plugins},
       tracerConfig: {
         enhancedDatabaseReporting: mergedConfig.enhancedDatabaseReporting,
-        contextHeaderBehavior: lastOf<TraceContextHeaderBehavior>(
-            defaultConfig.contextHeaderBehavior as TraceContextHeaderBehavior,
-            // Internally, ignoreContextHeader is no longer being used, so
-            // convert the user's value into a value for contextHeaderBehavior.
-            // But let this value be overridden by the user's explicitly set
-            // value for contextHeaderBehavior.
-            mergedConfig.ignoreContextHeader ?
-                TraceContextHeaderBehavior.IGNORE :
-                TraceContextHeaderBehavior.DEFAULT,
-            userConfig.contextHeaderBehavior as TraceContextHeaderBehavior),
         rootSpanNameOverride:
             getInternalRootSpanNameOverride(mergedConfig.rootSpanNameOverride),
         spansPerTraceHardLimit: mergedConfig.spansPerTraceHardLimit,
-        spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit,
-        tracePolicyConfig: {
-          samplingRate: mergedConfig.samplingRate,
-          ignoreMethods: mergedConfig.ignoreMethods,
-          ignoreUrls: mergedConfig.ignoreUrls
-        }
+        spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit
       }
-    }
+    },
+    tracePolicyConfig: {
+      samplingRate: mergedConfig.samplingRate,
+      ignoreMethods: mergedConfig.ignoreMethods,
+      ignoreUrls: mergedConfig.ignoreUrls,
+      contextHeaderBehavior: mergedConfig.contextHeaderBehavior as
+          TraceContextHeaderBehavior
+    },
+    overrides: {tracePolicy: mergedConfig.tracePolicy}
   };
 }
 

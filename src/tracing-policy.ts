@@ -1,3 +1,7 @@
+import {RequestDetails, TracePolicy} from './config';
+import {Constants} from './constants';
+import {TraceContext} from './util';
+
 /**
  * Copyright 2015 Google Inc. All Rights Reserved.
  *
@@ -13,6 +17,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * An enumeration of the different possible types of behavior when dealing with
+ * incoming trace context. Requests are still subject to local tracing policy.
+ */
+export enum TraceContextHeaderBehavior {
+  /**
+   * Respect the trace context header if it exists; otherwise, trace the
+   * request as a new trace.
+   */
+  DEFAULT = 'default',
+  /**
+   * Respect the trace context header if it exists; otherwise, treat the
+   * request as unsampled and don't trace it.
+   */
+  REQUIRE = 'require',
+  /**
+   * Trace every request as a new trace, even if trace context exists.
+   */
+  IGNORE = 'ignore'
+}
 
 interface TracePolicyPredicate<T> {
   shouldTrace: (value: T) => boolean;
@@ -60,6 +85,31 @@ class MethodsFilter implements TracePolicyPredicate<string> {
   }
 }
 
+class ContextHeaderFilter implements
+    TracePolicyPredicate<Required<TraceContext>|null> {
+  constructor(private readonly contextHeaderBehavior:
+                  TraceContextHeaderBehavior) {}
+
+  shouldTrace(header: Required<TraceContext>|null) {
+    switch (this.contextHeaderBehavior) {
+      case TraceContextHeaderBehavior.IGNORE: {
+        return true;
+      }
+      case TraceContextHeaderBehavior.REQUIRE: {
+        // There must be an incoming header, and its LSB must be 1.
+        return !!(
+            header && header.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
+      }
+      default: {  // TraceContextHeaderBehavior.DEFAULT
+        // If there is a header, its LSB must be 1. Otherwise, we assume that
+        // it would be 1.
+        return !!(
+            !header || header.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
+      }
+    }
+  }
+}
+
 /**
  * Options for constructing a TracePolicy instance.
  */
@@ -76,15 +126,21 @@ export interface TracePolicyConfig {
    * A field that controls a method filter.
    */
   ignoreMethods: string[];
+  /**
+   * A field that controls filtering based on incoming trace context.
+   */
+  contextHeaderBehavior: TraceContextHeaderBehavior;
 }
 
 /**
  * A class that makes decisions about whether a trace should be created.
  */
-export class TracePolicy {
+export class BuiltinTracePolicy implements TracePolicy {
   private readonly sampler: TracePolicyPredicate<number>;
   private readonly urlFilter: TracePolicyPredicate<string>;
   private readonly methodsFilter: TracePolicyPredicate<string>;
+  private readonly contextHeaderFilter:
+      TracePolicyPredicate<Required<TraceContext>|null>;
 
   /**
    * Constructs a new TracePolicy instance.
@@ -108,6 +164,12 @@ export class TracePolicy {
     } else {
       this.methodsFilter = new MethodsFilter(config.ignoreMethods);
     }
+    if (config.contextHeaderBehavior === TraceContextHeaderBehavior.IGNORE) {
+      this.contextHeaderFilter = {shouldTrace: () => true};
+    } else {
+      this.contextHeaderFilter =
+          new ContextHeaderFilter(config.contextHeaderBehavior);
+    }
   }
 
   /**
@@ -115,20 +177,28 @@ export class TracePolicy {
    * @param options Fields that help determine whether a trace should be
    *                created.
    */
-  shouldTrace(options: {timestamp: number, url: string, method: string}):
-      boolean {
+  shouldTrace(options: RequestDetails): boolean {
     return this.urlFilter.shouldTrace(options.url) &&
         this.methodsFilter.shouldTrace(options.method) &&
+        this.contextHeaderFilter.shouldTrace(options.traceContext) &&
         this.sampler.shouldTrace(options.timestamp);
   }
+}
 
-  static always(): TracePolicy {
-    return new TracePolicy(
-        {samplingRate: 0, ignoreUrls: [], ignoreMethods: []});
-  }
+export function alwaysTrace(): BuiltinTracePolicy {
+  return new BuiltinTracePolicy({
+    samplingRate: 0,
+    ignoreUrls: [],
+    ignoreMethods: [],
+    contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT
+  });
+}
 
-  static never(): TracePolicy {
-    return new TracePolicy(
-        {samplingRate: -1, ignoreUrls: [], ignoreMethods: []});
-  }
+export function neverTrace(): BuiltinTracePolicy {
+  return new BuiltinTracePolicy({
+    samplingRate: -1,
+    ignoreUrls: [],
+    ignoreMethods: [],
+    contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT
+  });
 }
