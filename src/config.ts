@@ -214,6 +214,13 @@ export interface Config {
   tracePolicy?: TracePolicy;
 
   /**
+   * If specified, the Trace Agent will use this context header propagation
+   * implementation instead of @opencensus/propagation-stackdriver, the default
+   * trace context header format.
+   */
+  propagation?: OpenCensusPropagation;
+
+  /**
    * Buffer the captured traces for `flushDelaySeconds` seconds before
    * publishing to the Stackdriver Trace API, unless the buffer fills up first.
    * Also see `bufferSize`.
