@@ -22,7 +22,7 @@ import * as semver from 'semver';
 import {TracePolicy} from './config';
 import {Logger} from './logger';
 import {Intercept, Monkeypatch, Plugin} from './plugin-types';
-import {StackdriverTracer, StackdriverTracerConfig} from './trace-api';
+import {StackdriverTracer, StackdriverTracerComponents, StackdriverTracerConfig} from './trace-api';
 import {Singleton} from './util';
 
 /**
@@ -90,7 +90,7 @@ export class ModulePluginWrapper implements PluginWrapper {
   // A logger.
   private readonly logger: Logger;
   // A trace policy to apply to created StackdriverTracer instances.
-  private readonly tracePolicy: TracePolicy;
+  private readonly components: StackdriverTracerComponents;
   // Display-friendly name of the module being patched by this plugin.
   private readonly name: string;
   // The path to the plugin.
@@ -111,9 +111,9 @@ export class ModulePluginWrapper implements PluginWrapper {
   constructor(
       options: ModulePluginWrapperOptions,
       private readonly traceConfig: StackdriverTracerConfig,
-      components: PluginLoaderComponents) {
+      components: StackdriverTracerComponents) {
     this.logger = components.logger;
-    this.tracePolicy = components.tracePolicy;
+    this.components = components;
     this.name = options.name;
     this.path = options.path;
   }
@@ -204,7 +204,7 @@ export class ModulePluginWrapper implements PluginWrapper {
 
   private createTraceAgentInstance(file: string) {
     const traceApi = new StackdriverTracer(file);
-    traceApi.enable(this.traceConfig, this.tracePolicy, this.logger);
+    traceApi.enable(this.traceConfig, this.components);
     this.traceApiInstances.push(traceApi);
     return traceApi;
   }
@@ -222,7 +222,7 @@ export class CorePluginWrapper implements PluginWrapper {
 
   constructor(
       config: CorePluginWrapperOptions, traceConfig: StackdriverTracerConfig,
-      components: PluginLoaderComponents) {
+      components: StackdriverTracerComponents) {
     this.logger = components.logger;
     this.children = config.children.map(
         config => new ModulePluginWrapper(config, traceConfig, components));
@@ -267,11 +267,6 @@ export enum PluginLoaderState {
   DEACTIVATED
 }
 
-export interface PluginLoaderComponents {
-  logger: Logger;
-  tracePolicy: TracePolicy;
-}
-
 /**
  * A class providing functionality to hook into module loading and apply
  * plugins to enable tracing.
@@ -295,7 +290,8 @@ export class PluginLoader {
    * @param config The configuration for this instance.
    * @param logger The logger to use.
    */
-  constructor(config: PluginLoaderConfig, components: PluginLoaderComponents) {
+  constructor(
+      config: PluginLoaderConfig, components: StackdriverTracerComponents) {
     this.logger = components.logger;
     const nonCoreModules: string[] = [];
     // Initialize ALL of the PluginWrapper objects here.

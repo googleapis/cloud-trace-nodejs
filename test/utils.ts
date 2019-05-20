@@ -21,12 +21,12 @@ import * as fs from 'fs';
 import * as semver from 'semver';
 
 import {cls} from '../src/cls';
+import {OpenCensusPropagation} from '../src/config';
 import {SpanType} from '../src/constants';
 import {Span} from '../src/plugin-types';
 import {ChildSpanData, RootSpanData} from '../src/span-data';
 import {TraceSpan} from '../src/trace';
 import {StackdriverTracerConfig} from '../src/trace-api';
-import {alwaysTrace, TraceContextHeaderBehavior} from '../src/tracing-policy';
 
 /**
  * Constants
@@ -39,6 +39,16 @@ export const ASSERT_SPAN_TIME_TOLERANCE_MS = 5;
 
 export const SERVER_KEY = fs.readFileSync(`${__dirname}/fixtures/key.pem`);
 export const SERVER_CERT = fs.readFileSync(`${__dirname}/fixtures/cert.pem`);
+
+/**
+ * Misc. Implementations
+ */
+export class NoPropagation implements OpenCensusPropagation {
+  extract() {
+    return null;
+  }
+  inject() {}
+}
 
 /**
  * Helper Functions

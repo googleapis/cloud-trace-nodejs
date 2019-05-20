@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import {v1 as stackdriverPropagation} from '@opencensus/propagation-stackdriver';
 import * as path from 'path';
 
 import {cls, TraceCLSConfig} from './cls';
-import {TracePolicy} from './config';
+import {OpenCensusPropagation, TracePolicy} from './config';
 import {LEVELS, Logger} from './logger';
 import {StackdriverTracer} from './trace-api';
 import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
@@ -30,7 +31,8 @@ export type TopLevelConfig = {
   writerConfig: TraceWriterConfig;
   pluginLoaderConfig: PluginLoaderConfig;
   tracePolicyConfig: TracePolicyConfig;
-  overrides: {tracePolicy?: TracePolicy;};
+  overrides:
+      {tracePolicy?: TracePolicy; propagation?: OpenCensusPropagation;};
 }|{
   enabled: false;
 };
@@ -120,12 +122,14 @@ export class Tracing implements Component {
 
     const tracePolicy = this.config.overrides.tracePolicy ||
         new BuiltinTracePolicy(this.config.tracePolicyConfig);
+    const propagation =
+        this.config.overrides.propagation || stackdriverPropagation;
+
+    const tracerComponents = {logger: this.logger, tracePolicy, propagation};
 
     this.traceAgent.enable(
-        this.config.pluginLoaderConfig.tracerConfig, tracePolicy, this.logger);
-    pluginLoader
-        .create(
-            this.config.pluginLoaderConfig, {logger: this.logger, tracePolicy})
+        this.config.pluginLoaderConfig.tracerConfig, tracerComponents);
+    pluginLoader.create(this.config.pluginLoaderConfig, tracerComponents)
         .activate();
 
     if (typeof this.config.writerConfig.projectId !== 'string' &&

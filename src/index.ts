@@ -146,7 +146,10 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
       contextHeaderBehavior: mergedConfig.contextHeaderBehavior as
           TraceContextHeaderBehavior
     },
-    overrides: {tracePolicy: mergedConfig.tracePolicy}
+    overrides: {
+      tracePolicy: mergedConfig.tracePolicy,
+      propagation: mergedConfig.propagation
+    }
   };
 }
 

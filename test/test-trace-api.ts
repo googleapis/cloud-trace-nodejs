@@ -17,26 +17,32 @@
 import * as assert from 'assert';
 
 import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
-import {defaultConfig, RequestDetails, TracePolicy} from '../src/config';
+import {defaultConfig, GetHeaderFunction as HeaderGetter, OpenCensusPropagation, RequestDetails, SetHeaderFunction as HeaderSetter, TracePolicy} from '../src/config';
 import {SpanType} from '../src/constants';
-import {StackdriverTracer, StackdriverTracerConfig} from '../src/trace-api';
+import {StackdriverTracer, StackdriverTracerComponents, StackdriverTracerConfig} from '../src/trace-api';
 import {traceWriter} from '../src/trace-writer';
-import {alwaysTrace, TraceContextHeaderBehavior} from '../src/tracing-policy';
-import {FORCE_NEW} from '../src/util';
+import {alwaysTrace} from '../src/tracing-policy';
+import {FORCE_NEW, TraceContext} from '../src/util';
 
 import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
-import {getBaseConfig} from './utils';
+import {getBaseConfig, NoPropagation} from './utils';
 
 describe('Trace Interface', () => {
   const logger = new TestLogger();
   function createTraceAgent(
       config?: Partial<StackdriverTracerConfig>,
-      policy?: TracePolicy): StackdriverTracer {
+      components?: Partial<StackdriverTracerComponents>): StackdriverTracer {
     const result = new StackdriverTracer('test');
     result.enable(
-        Object.assign(getBaseConfig(), config), policy || alwaysTrace(),
-        logger);
+        Object.assign(getBaseConfig(), config),
+        Object.assign(
+            {
+              tracePolicy: alwaysTrace(),
+              logger,
+              propagation: new NoPropagation()
+            },
+            components));
     return result;
   }
 
@@ -202,11 +208,15 @@ describe('Trace Interface', () => {
         }
       }
       const tracePolicy = new CaptureOptionsTracePolicy();
-      const traceAPI = createTraceAgent({}, tracePolicy);
+      const traceAPI = createTraceAgent({}, {tracePolicy});
       // All params present
       {
-        const rootSpanOptions =
-            {name: 'root', url: 'foo', method: 'bar', traceContext: '1/2;o=1'};
+        const rootSpanOptions = {
+          name: 'root',
+          url: 'foo',
+          method: 'bar',
+          traceContext: {traceId: '1', spanId: '2', options: 1}
+        };
         const beforeRootSpan = Date.now();
         traceAPI.runInRootSpan(rootSpanOptions, (rootSpan) => {
           assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
@@ -221,14 +231,13 @@ describe('Trace Interface', () => {
         assert.ok(shouldTraceParam.timestamp <= afterRootSpan);
         assert.ok(shouldTraceParam.timestamp <= afterRootSpan);
         assert.deepStrictEqual(
-            shouldTraceParam.traceContext,
-            {traceId: '1', spanId: '2', options: 1});
+            shouldTraceParam.traceContext, rootSpanOptions.traceContext);
         assert.strictEqual(shouldTraceParam.options, rootSpanOptions);
       }
       tracePolicy.capturedShouldTraceParam = null;
       // Limited params present
       {
-        const rootSpanOptions = {name: 'root', traceContext: 'unparseable'};
+        const rootSpanOptions = {name: 'root'};
         traceAPI.runInRootSpan(rootSpanOptions, (rootSpan) => {
           assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
           rootSpan.endSpan();
@@ -240,6 +249,28 @@ describe('Trace Interface', () => {
         assert.strictEqual(shouldTraceParam.traceContext, null);
         assert.strictEqual(shouldTraceParam.options, rootSpanOptions);
       }
+    });
+
+    it('should expose methods for trace context header propagation', () => {
+      class TestPropagation implements OpenCensusPropagation {
+        extract({getHeader}: HeaderGetter) {
+          return {traceId: getHeader('a') as string, spanId: '0', options: 1};
+        }
+        inject({setHeader}: HeaderSetter, traceContext: TraceContext) {
+          setHeader(traceContext.traceId, 'y');
+        }
+      }
+      const propagation = new TestPropagation();
+      const tracer = createTraceAgent({}, {propagation});
+      const result = tracer.propagation.extract(s => `${s}${s}`);
+      assert.deepStrictEqual(result, {traceId: 'aa', spanId: '0', options: 1});
+      let setHeaderCalled = false;
+      tracer.propagation.inject((key: string, value: string) => {
+        assert.strictEqual(key, 'x');
+        assert.strictEqual(value, 'y');
+        setHeaderCalled = true;
+      }, {traceId: 'x', spanId: '0', options: 1});
+      assert.ok(setHeaderCalled);
     });
 
     it('should respect enhancedDatabaseReporting options field', () => {
@@ -257,7 +288,11 @@ describe('Trace Interface', () => {
       // Propagate from trace context header
       {
         createTraceAgent().runInRootSpan(
-            {name: 'root1', traceContext: '123456/667;o=1'}, (rootSpan) => {
+            {
+              name: 'root1',
+              traceContext: {traceId: '123456', spanId: '667', options: 1}
+            },
+            (rootSpan) => {
               rootSpan.endSpan();
             });
         const foundTrace =
@@ -268,7 +303,7 @@ describe('Trace Interface', () => {
       }
       // Generate a trace context
       {createTraceAgent().runInRootSpan(
-          {name: 'root2', traceContext: 'unparseable'},
+          {name: 'root2'},
           (rootSpan) => {
             rootSpan.endSpan();
           });
@@ -283,7 +318,8 @@ describe('Trace Interface', () => {
     it('should trace if no option flags are provided', () => {
       createTraceAgent({enhancedDatabaseReporting: false})
           .runInRootSpan(
-              {name: 'root', traceContext: '123456/667'}, (rootSpan) => {
+              {name: 'root', traceContext: {traceId: '123456', spanId: '667'}},
+              (rootSpan) => {
                 rootSpan.endSpan();
               });
       const foundTrace =
@@ -295,25 +331,25 @@ describe('Trace Interface', () => {
       it('should behave as expected', () => {
         const fakeTraceId = 'ffeeddccbbaa99887766554433221100';
         const traceApi = createTraceAgent();
-        const tracedContext = fakeTraceId + '/0;o=1';
-        const untracedContext = fakeTraceId + '/0;o=0';
-        const unspecifiedContext = fakeTraceId + '/0';
-        assert.strictEqual(
+        const tracedContext = {traceId: fakeTraceId, spanId: '0', options: 1};
+        const untracedContext = {traceId: fakeTraceId, spanId: '0', options: 0};
+        const unspecifiedContext = {traceId: fakeTraceId, spanId: '0'};
+        assert.deepStrictEqual(
             traceApi.getResponseTraceContext(tracedContext, true),
             tracedContext);
-        assert.strictEqual(
+        assert.deepStrictEqual(
             traceApi.getResponseTraceContext(tracedContext, false),
             untracedContext);
-        assert.strictEqual(
+        assert.deepStrictEqual(
             traceApi.getResponseTraceContext(untracedContext, true),
             untracedContext);
-        assert.strictEqual(
+        assert.deepStrictEqual(
             traceApi.getResponseTraceContext(untracedContext, false),
             untracedContext);
-        assert.strictEqual(
+        assert.deepStrictEqual(
             traceApi.getResponseTraceContext(unspecifiedContext, true),
             untracedContext);
-        assert.strictEqual(
+        assert.deepStrictEqual(
             traceApi.getResponseTraceContext(unspecifiedContext, false),
             untracedContext);
       });

@@ -15,14 +15,13 @@
  */
 
 import {EventEmitter} from 'events';
-import * as is from 'is';
 import * as uuid from 'uuid';
 
 import {cls, RootContext} from './cls';
-import {TracePolicy} from './config';
+import {OpenCensusPropagation, TracePolicy} from './config';
 import {Constants, SpanType} from './constants';
 import {Logger} from './logger';
-import {Func, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
+import {Func, Propagation, RootSpan, RootSpanOptions, Span, SpanOptions, Tracer} from './plugin-types';
 import {RootSpanData, UNCORRELATED_CHILD_SPAN, UNCORRELATED_ROOT_SPAN, UNTRACED_CHILD_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
 import {TraceLabels} from './trace-labels';
 import {traceWriter} from './trace-writer';
@@ -41,11 +40,12 @@ export interface StackdriverTracerConfig {
 }
 
 /**
- * Type guard that returns whether an object is a string or not.
+ * A collection of externally-instantiated objects used by StackdriverTracer.
  */
-// tslint:disable-next-line:no-any
-function isString(obj: any): obj is string {
-  return is.string(obj);
+export interface StackdriverTracerComponents {
+  logger: Logger;
+  tracePolicy: TracePolicy;
+  propagation: OpenCensusPropagation;
 }
 
 /**
@@ -57,10 +57,48 @@ export class StackdriverTracer implements Tracer {
   readonly labels = TraceLabels;
   readonly spanTypes = SpanType;
   readonly traceContextUtils = {
-    encodeAsString: util.generateTraceContext,
-    decodeFromString: util.parseContextFromHeader,
     encodeAsByteArray: util.serializeTraceContext,
     decodeFromByteArray: util.deserializeTraceContext
+  };
+  readonly propagation: Propagation = {
+    extract: (getHeader) => {
+      // If enabled, this.propagationMechanism is non-null.
+      if (!this.enabled) {
+        return null;
+      }
+      // OpenCensus propagation libraries expect span IDs to be size-16 hex
+      // strings. In the future it might be worthwhile to change how span IDs
+      // are stored in this library to avoid excessive base 10<->16 conversions.
+      const result = this.headerPropagation!.extract({
+        getHeader: (...args) => {
+          const result = getHeader(...args);
+          if (result === null) {
+            return;  // undefined
+          }
+          return result;
+        }
+      });
+      if (result) {
+        result.spanId = util.hexToDec(result.spanId);
+      }
+      return result;
+    },
+    inject:
+        (setHeader, value) => {
+          // If enabled, this.propagationMechanism is non-null.
+          // Also, don't inject a falsey value.
+          if (!this.enabled || !value) {
+            return;
+          }
+          // Convert back to base-10 span IDs. See the wrapper for `extract`
+          // for more details.
+          value = Object.assign({}, value, {
+            spanId:
+                `0000000000000000${util.decToHex(value.spanId).slice(2)}`.slice(
+                    -16)
+          });
+          this.headerPropagation!.inject({setHeader}, value);
+        }
   };
 
   private enabled = false;
@@ -69,6 +107,8 @@ export class StackdriverTracer implements Tracer {
   private logger: Logger|null = null;
   private config: StackdriverTracerConfig|null = null;
   private policy: TracePolicy|null = null;
+  // The underlying propagation mechanism used by this.propagation.
+  private headerPropagation: OpenCensusPropagation|null = null;
 
   /**
    * Constructs a new StackdriverTracer instance.
@@ -86,13 +126,17 @@ export class StackdriverTracer implements Tracer {
    * beforehand.
    * @param config An object specifying how this instance should
    * be configured.
-   * @param logger A logger object.
+   * @param components An collection of externally-instantiated objects used
+   * by this instance.
    * @private
    */
-  enable(config: StackdriverTracerConfig, policy: TracePolicy, logger: Logger) {
-    this.logger = logger;
+  enable(
+      config: StackdriverTracerConfig,
+      components: StackdriverTracerComponents) {
     this.config = config;
-    this.policy = policy;
+    this.logger = components.logger;
+    this.policy = components.tracePolicy;
+    this.headerPropagation = components.propagation;
     this.enabled = true;
   }
 
@@ -146,20 +190,22 @@ export class StackdriverTracer implements Tracer {
       return fn(UNCORRELATED_ROOT_SPAN);
     }
 
-    // Attempt to read incoming trace context.
-    const parseContext = (stringifiedTraceContext?: string|null) => {
-      const parsedContext = isString(stringifiedTraceContext) ?
-          util.parseContextFromHeader(stringifiedTraceContext) :
-          null;
-      if (parsedContext) {
-        if (parsedContext.options === undefined) {
-          // If there are no incoming option flags, default to 0x1.
-          parsedContext.options = 1;
-        }
-      }
-      return parsedContext as Required<util.TraceContext>| null;
-    };
-    const traceContext = parseContext(options.traceContext);
+    // Ensure that the trace context, if it exists, has an options field.
+    const canonicalizeTraceContext =
+        (traceContext?: util.TraceContext|null) => {
+          if (!traceContext) {
+            return null;
+          }
+          if (traceContext.options !== undefined) {
+            return traceContext as Required<util.TraceContext>;
+          }
+          return {
+            traceId: traceContext.traceId,
+            spanId: traceContext.spanId,
+            options: 1
+          };
+        };
+    const traceContext = canonicalizeTraceContext(options.traceContext);
 
     // Consult the trace policy.
     const shouldTrace = this.policy!.shouldTrace({
@@ -208,8 +254,7 @@ export class StackdriverTracer implements Tracer {
   getCurrentContextId(): string|null {
     // In v3, this will be deprecated for getCurrentRootSpan.
     const traceContext = this.getCurrentRootSpan().getTraceContext();
-    const parsedTraceContext = util.parseContextFromHeader(traceContext);
-    return parsedTraceContext ? parsedTraceContext.traceId : null;
+    return traceContext ? traceContext.traceId : null;
   }
 
   getProjectId(): Promise<string> {
@@ -315,18 +360,16 @@ export class StackdriverTracer implements Tracer {
     return span.type === SpanType.ROOT || span.type === SpanType.CHILD;
   }
 
-  getResponseTraceContext(incomingTraceContext: string|null, isTraced: boolean):
-      string {
+  getResponseTraceContext(
+      incomingTraceContext: util.TraceContext|null, isTraced: boolean) {
     if (!this.isActive() || !incomingTraceContext) {
-      return '';
+      return null;
     }
-
-    const traceContext = util.parseContextFromHeader(incomingTraceContext);
-    if (!traceContext) {
-      return '';
-    }
-    traceContext.options = (traceContext.options || 0) & (isTraced ? 1 : 0);
-    return util.generateTraceContext(traceContext);
+    return {
+      traceId: incomingTraceContext.traceId,
+      spanId: incomingTraceContext.spanId,
+      options: (incomingTraceContext.options || 0) & (isTraced ? 1 : 0)
+    };
   }
 
   wrap<T>(fn: Func<T>): Func<T> {

@@ -158,11 +158,13 @@ describe('SpanData', () => {
       });
     });
 
-    it('exposes a method to provide serialized trace context', () => {
+    it('exposes a method to provide trace context', () => {
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
-      assert.deepStrictEqual(
-          spanData.getTraceContext(),
-          `${spanData.trace.traceId}/${spanData.span.spanId};o=1`);
+      assert.deepStrictEqual(spanData.getTraceContext(), {
+        traceId: spanData.trace.traceId,
+        spanId: spanData.span.spanId,
+        options: 1
+      });
     });
 
     it('captures stack traces', () => {

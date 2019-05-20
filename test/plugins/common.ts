@@ -16,6 +16,7 @@
 'use strict';
 
 import '../override-gcp-metadata';
+import {v1 as stackdriverPropagation} from '@opencensus/propagation-stackdriver';
 import { cls, TraceCLS } from '../../src/cls';
 import { StackdriverTracer } from '../../src/trace-api';
 import { traceWriter } from '../../src/trace-writer';
@@ -65,7 +66,11 @@ shimmer.wrap(trace, 'start', function(original) {
   return function() {
     var result = original.apply(this, arguments);
     testTraceAgent = new StackdriverTracer('test');
-    testTraceAgent.enable(getBaseConfig(), alwaysTrace(), new TestLogger());
+    testTraceAgent.enable(getBaseConfig(), {
+      tracePolicy: alwaysTrace(),
+      logger: new TestLogger(),
+      propagation: stackdriverPropagation
+    });
     return result;
   };
 });
