@@ -90,8 +90,6 @@ describe('Trace Writer', () => {
     onUncaughtException: 'ignore',
     bufferSize: Infinity,
     flushDelaySeconds: 3600,
-    stackTraceLimit: 10,
-    maximumLabelValueSize: 1 << 16,
     serviceContext: {},
   };
   const logger = new TestLogger();

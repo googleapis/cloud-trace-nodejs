@@ -14,27 +14,22 @@
  * limitations under the License.
  */
 
-'use strict';
+import * as assert from 'assert';
 
 import { Constants } from '../src/constants';
-import { traceWriter } from '../src/trace-writer';
-import { FORCE_NEW } from '../src/util';
 
-var assert = require('assert');
-var trace = require('../..');
+import * as traceTestModule from './trace';
 
-describe('maximumLabelValueSize configuration', function() {
-  it('should not allow values above server maximum', function() {
-    trace.start({[FORCE_NEW]: true, maximumLabelValueSize: 1000000});
-    var valueMax = traceWriter.get().getConfig().maximumLabelValueSize;
+describe('maximumLabelValueSize configuration', () => {
+  it('should not allow values above server maximum', () => {
+    traceTestModule.start({ maximumLabelValueSize: 1000000 });
+    const valueMax = traceTestModule.get().getConfig().maximumLabelValueSize;
     assert.strictEqual(valueMax, Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
   });
 
-  it('should not modify values below server maximum', function() {
-    trace.start({[FORCE_NEW]: true, maximumLabelValueSize: 10});
-    var valueMax = traceWriter.get().getConfig().maximumLabelValueSize;
+  it('should not modify values below server maximum', () => {
+    traceTestModule.start({ maximumLabelValueSize: 10 });
+    const valueMax = traceTestModule.get().getConfig().maximumLabelValueSize;
     assert.strictEqual(valueMax, 10);
   });
 });
-
-export default {};

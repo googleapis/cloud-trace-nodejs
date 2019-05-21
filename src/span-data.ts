@@ -21,7 +21,7 @@ import { Constants, SpanType } from './constants';
 import { RootSpan, Span, SpanOptions } from './plugin-types';
 import { SpanKind, Trace, TraceSpan } from './trace';
 import { TraceLabels } from './trace-labels';
-import { traceWriter } from './trace-writer';
+import { TraceWriter } from './trace-writer';
 import * as traceUtil from './util';
 
 // Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
@@ -41,12 +41,20 @@ function randomSpanId() {
   return parseInt(spanRandomBuffer().toString('hex'), 16).toString();
 }
 
+export interface SpanLabelLimits {
+  stackTraceLimit: number;
+  maximumLabelValueSize: number;
+}
+
 /**
  * Represents a real trace span.
  */
 export abstract class BaseSpanData implements Span {
   readonly span: TraceSpan;
   abstract readonly type: SpanType;
+  // A TraceWriter instance. If not assigned via assignTraceWriter, the trace
+  // won't be enqueued for later publish.
+  protected traceWriter: TraceWriter | null = null;
 
   /**
    * Creates a trace context object.
@@ -61,6 +69,7 @@ export abstract class BaseSpanData implements Span {
     readonly trace: Trace,
     spanName: string,
     parentSpanId: string,
+    protected readonly config: SpanLabelLimits,
     skipFrames: number
   ) {
     this.span = {
@@ -78,7 +87,7 @@ export abstract class BaseSpanData implements Span {
     this.trace.spans.push(this.span);
 
     const stackFrames = traceUtil.createStackTrace(
-      traceWriter.get().getConfig().stackTraceLimit,
+      this.config.stackTraceLimit,
       skipFrames,
       this.constructor
     );
@@ -108,7 +117,7 @@ export abstract class BaseSpanData implements Span {
     const stringValue = typeof value === 'string' ? value : util.inspect(value);
     const v = traceUtil.truncate(
       stringValue,
-      traceWriter.get().getConfig().maximumLabelValueSize
+      this.config.maximumLabelValueSize
     );
     this.span.labels[k] = v;
   }
@@ -119,6 +128,15 @@ export abstract class BaseSpanData implements Span {
     }
     timestamp = timestamp || new Date();
     this.span.endTime = timestamp.toISOString();
+  }
+
+  /**
+   * Assigns a TraceWriter, which ensures that when this span ends, the span
+   * will be enqueued for publishing.
+   * @param traceWriter A TraceWriter instance.
+   */
+  assignTraceWriter(traceWriter: TraceWriter) {
+    this.traceWriter = traceWriter;
   }
 }
 
@@ -135,9 +153,10 @@ export class RootSpanData extends BaseSpanData implements RootSpan {
     trace: Trace,
     spanName: string,
     parentSpanId: string,
+    config: SpanLabelLimits,
     skipFrames: number
   ) {
-    super(trace, spanName, parentSpanId, skipFrames);
+    super(trace, spanName, parentSpanId, config, skipFrames);
     this.span.kind = SpanKind.RPC_SERVER;
   }
 
@@ -148,6 +167,7 @@ export class RootSpanData extends BaseSpanData implements RootSpan {
       this.trace /* Trace object */,
       options.name /* Span name */,
       this.span.spanId /* Parent's span ID */,
+      this.config /* Span label limits */,
       skipFrames
     ); /* # of frames to skip in stack trace */
     this.children.push(child);
@@ -159,14 +179,16 @@ export class RootSpanData extends BaseSpanData implements RootSpan {
       return;
     }
     super.endSpan(timestamp);
-    traceWriter.get().writeTrace(this.trace);
-    this.children.forEach(child => {
-      if (!child.span.endTime) {
-        // Child hasn't ended yet.
-        // Inform the child that it needs to self-publish.
-        child.shouldSelfPublish = true;
-      }
-    });
+    if (this.traceWriter) {
+      this.traceWriter.writeTrace(this.trace);
+      this.children.forEach(child => {
+        if (!child.span.endTime) {
+          // Child hasn't ended yet.
+          // Inform the child that it needs to self-publish.
+          child.assignTraceWriter(this.traceWriter!);
+        }
+      });
+    }
     // We no longer need to keep track of our children.
     this.children = [];
   }
@@ -177,17 +199,15 @@ export class RootSpanData extends BaseSpanData implements RootSpan {
  */
 export class ChildSpanData extends BaseSpanData {
   readonly type = SpanType.CHILD;
-  // Whether this span should publish itself. This is meant to be set to true
-  // by the parent RootSpanData.
-  shouldSelfPublish = false;
 
   constructor(
     trace: Trace,
     spanName: string,
     parentSpanId: string,
+    config: SpanLabelLimits,
     skipFrames: number
   ) {
-    super(trace, spanName, parentSpanId, skipFrames);
+    super(trace, spanName, parentSpanId, config, skipFrames);
     this.span.kind = SpanKind.RPC_CLIENT;
   }
 
@@ -196,9 +216,9 @@ export class ChildSpanData extends BaseSpanData {
       return;
     }
     super.endSpan(timestamp);
-    if (this.shouldSelfPublish) {
-      // Also, publish just this span.
-      traceWriter.get().writeTrace({
+    // Also, publish just this span.
+    if (this.traceWriter) {
+      this.traceWriter.writeTrace({
         projectId: this.trace.projectId,
         traceId: this.trace.traceId,
         spans: [this.span],

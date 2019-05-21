@@ -88,7 +88,10 @@ describe('should respect config load order', () => {
       traceTestModule.start({ logLevel: 3, stackTraceLimit: 2 });
       const config = getCapturedConfig();
       assert.strictEqual(config.logLevel, 2);
-      assert.strictEqual(config.writerConfig.stackTraceLimit, 2);
+      assert.strictEqual(
+        config.pluginLoaderConfig.tracerConfig.stackTraceLimit,
+        2
+      );
       assert.strictEqual(config.writerConfig.flushDelaySeconds, 31);
     });
   });

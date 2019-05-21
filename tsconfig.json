@@ -31,6 +31,7 @@
     "test/test-cls.ts",
     "test/test-cls-ah.ts",
     "test/test-config-cls.ts",
+    "test/test-config-max-label-size.ts",
     "test/test-config-plugins.ts",
     "test/test-config-priority.ts",
     "test/test-default-ignore-ah-health.ts",

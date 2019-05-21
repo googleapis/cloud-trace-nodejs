@@ -43,8 +43,6 @@ export interface TraceWriterConfig extends common.GoogleAuthOptions {
   onUncaughtException: string;
   bufferSize: number;
   flushDelaySeconds: number;
-  stackTraceLimit: number;
-  maximumLabelValueSize: number;
   serviceContext: { service?: string; version?: string; minorVersion?: string };
 }
 

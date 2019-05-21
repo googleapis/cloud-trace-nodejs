@@ -16,44 +16,38 @@
 
 import * as assert from 'assert';
 
-import { Constants, SpanType } from '../src/constants';
-import { BaseSpanData, ChildSpanData, RootSpanData } from '../src/span-data';
+import { Constants } from '../src/constants';
+import { ChildSpanData, RootSpanData, SpanLabelLimits } from '../src/span-data';
 import { Trace } from '../src/trace';
 import { TraceLabels } from '../src/trace-labels';
-import {
-  traceWriter,
-  TraceWriter,
-  TraceWriterConfig,
-} from '../src/trace-writer';
+import { TraceWriter, TraceWriterConfig } from '../src/trace-writer';
 
 import { TestLogger } from './logger';
-import * as traceAgentModule from './trace';
 import { wait } from './utils';
 
 describe('SpanData', () => {
+  const limits: SpanLabelLimits = {
+    maximumLabelValueSize: 16,
+    stackTraceLimit: 2,
+  };
+
   class CaptureSpanTraceWriter extends TraceWriter {
     writeTrace(trace: Trace) {
       assert.strictEqual(capturedTrace, null);
       capturedTrace = trace;
     }
   }
+  let traceWriter: TraceWriter;
   let capturedTrace: Trace | null;
   let trace: Trace;
 
   before(() => {
-    traceAgentModule.setTraceWriterForTest(CaptureSpanTraceWriter);
-    traceWriter.create(
+    traceWriter = new CaptureSpanTraceWriter(
       {
         onUncaughtException: 'ignore',
-        maximumLabelValueSize: 16,
-        stackTraceLimit: 2,
       } as TraceWriterConfig,
       new TestLogger()
     );
-  });
-
-  after(() => {
-    traceAgentModule.setTraceWriterForTest(traceAgentModule.TestTraceWriter);
   });
 
   beforeEach(() => {
@@ -68,12 +62,12 @@ describe('SpanData', () => {
     class CommonSpanData extends ChildSpanData {}
 
     it('exposes a Trace field', () => {
-      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
       assert.strictEqual(spanData.trace, trace);
     });
 
     it('creates a TraceSpan structure with expected fields', () => {
-      const spanData = new CommonSpanData(trace, 'name', '400', 0);
+      const spanData = new CommonSpanData(trace, 'name', '400', limits, 0);
       assert.strictEqual(spanData.span.name, 'name');
       assert.strictEqual(spanData.span.parentSpanId, '400');
       assert.ok(spanData.span.spanId.match(/[0-9A-F]{12}/));
@@ -83,7 +77,7 @@ describe('SpanData', () => {
       const numSpans = 5;
       const spanIds: Set<string> = new Set();
       for (let i = 0; i < numSpans; i++) {
-        const spanData = new CommonSpanData(trace, 'name', '400', 0);
+        const spanData = new CommonSpanData(trace, 'name', '400', limits, 0);
         spanIds.add(spanData.span.spanId);
       }
       assert.strictEqual(spanIds.size, numSpans);
@@ -91,7 +85,7 @@ describe('SpanData', () => {
 
     it('accurately records timestamps', async () => {
       const startLowerBound = Date.now();
-      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
       const startUpperBound = Date.now();
       await wait(100);
       const endLowerBound = Date.now();
@@ -117,7 +111,7 @@ describe('SpanData', () => {
     });
 
     it('accepts a custom span end time', () => {
-      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
       const startTime = new Date(spanData.span.startTime).getTime();
       // This input Date is far enough in the future that it's unlikely that the
       // time this function was called could be close to it.
@@ -128,7 +122,7 @@ describe('SpanData', () => {
 
     it('truncates large span names to limit', () => {
       const name = 'a'.repeat(200);
-      const spanData = new CommonSpanData(trace, name, '0', 0);
+      const spanData = new CommonSpanData(trace, name, '0', limits, 0);
       assert.strictEqual(
         spanData.span.name,
         `${name.slice(0, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT - 3)}...`
@@ -136,7 +130,7 @@ describe('SpanData', () => {
     });
 
     it('adds labels of different types', () => {
-      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
       spanData.addLabel('key', 'value');
       spanData.addLabel('id', 42);
       spanData.addLabel('obj', { a: true });
@@ -151,7 +145,7 @@ describe('SpanData', () => {
     });
 
     it('truncates long keys', () => {
-      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
       const longKey = 'a'.repeat(200);
       spanData.addLabel(longKey, 'val');
       delete spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
@@ -164,20 +158,17 @@ describe('SpanData', () => {
     });
 
     it('truncates long labels', () => {
-      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
       const longVal = 'value-value-value';
       spanData.addLabel('longKey', longVal);
       delete spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.deepStrictEqual(spanData.span.labels, {
-        longKey: `${longVal.slice(
-          0,
-          traceWriter.get().getConfig().maximumLabelValueSize - 3
-        )}...`,
+        longKey: `${longVal.slice(0, limits.maximumLabelValueSize - 3)}...`,
       });
     });
 
     it('exposes a method to provide trace context', () => {
-      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
       assert.deepStrictEqual(spanData.getTraceContext(), {
         traceId: spanData.trace.traceId,
         spanId: spanData.span.spanId,
@@ -187,17 +178,14 @@ describe('SpanData', () => {
 
     it('captures stack traces', () => {
       function myFunction() {
-        const spanData = new CommonSpanData(trace, 'name', '0', 0);
+        const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
         const stack = spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
         assert.ok(stack);
         const frames = JSON.parse(stack);
         assert.ok(frames && frames.stack_frame);
         assert.ok(Array.isArray(frames.stack_frame));
         // Check stack size
-        assert.strictEqual(
-          frames.stack_frame.length,
-          traceWriter.get().getConfig().stackTraceLimit
-        );
+        assert.strictEqual(frames.stack_frame.length, limits.stackTraceLimit);
         // Check top frame
         assert.strictEqual(frames.stack_frame[0].method_name, 'myFunction');
       }
@@ -229,7 +217,7 @@ describe('SpanData', () => {
             applyGeneric: <T>(fn: () => T) => T;
           };
           const spanData = applyGeneric(
-            () => new CommonSpanData(trace, 'name', '0', 0)
+            () => new CommonSpanData(trace, 'name', '0', limits, 0)
           );
           const stackFrame = getSourceMapTestStackFrame(spanData);
           // Source maps should give us this exact information.
@@ -246,7 +234,7 @@ describe('SpanData', () => {
           applyGeneric: <T>(fn: () => T) => T;
         };
         const spanData = applyGeneric(
-          () => new CommonSpanData(trace, 'name', '0', 0)
+          () => new CommonSpanData(trace, 'name', '0', limits, 0)
         );
         const stackFrame = getSourceMapTestStackFrame(spanData);
         assert.ok(stackFrame.file_name.endsWith('no-source-map.js'));
@@ -255,17 +243,25 @@ describe('SpanData', () => {
       });
     });
 
-    it(`doesn't call TraceWriter#writeTrace when ended`, () => {
-      const spanData = new CommonSpanData(trace, 'name', '0', 0);
+    it(`doesn't call TraceWriter#writeTrace when ended by default`, () => {
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
       spanData.endSpan();
       // writeTrace writes to capturedTrace.
       assert.ok(!capturedTrace);
+    });
+
+    it(`calls TraceWriter#writeTrace when a TraceWriter is assigned`, () => {
+      const spanData = new CommonSpanData(trace, 'name', '0', limits, 0);
+      spanData.assignTraceWriter(traceWriter);
+      spanData.endSpan();
+      // writeTrace writes to capturedTrace.
+      assert.ok(capturedTrace);
     });
   });
 
   describe('RootSpanData', () => {
     it('creates child spans', () => {
-      const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
+      const rootSpanData = new RootSpanData(trace, 'root', '0', limits, 0);
       const childSpanData = rootSpanData.createChildSpan({
         name: 'child',
       }) as ChildSpanData;
@@ -275,14 +271,9 @@ describe('SpanData', () => {
       );
     });
 
-    it('writes to a Trace Writer when ended', () => {
-      const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
-      rootSpanData.endSpan();
-      assert.strictEqual(capturedTrace, rootSpanData.trace);
-    });
-
     it(`doesn't write to a Trace Writer more than once`, () => {
-      const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
+      const rootSpanData = new RootSpanData(trace, 'root', '0', limits, 0);
+      rootSpanData.assignTraceWriter(traceWriter);
       rootSpanData.endSpan();
       assert.strictEqual(capturedTrace, rootSpanData.trace);
       capturedTrace = null;
@@ -291,7 +282,8 @@ describe('SpanData', () => {
     });
 
     it('if already ended, allows open child spans to publish themselves later', () => {
-      const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
+      const rootSpanData = new RootSpanData(trace, 'root', '0', limits, 0);
+      rootSpanData.assignTraceWriter(traceWriter);
       const firstChildSpanData = rootSpanData.createChildSpan({
         name: 'short-child',
       }) as ChildSpanData;

@@ -60,6 +60,8 @@ export function getBaseConfig(): StackdriverTracerConfig {
     rootSpanNameOverride: (name: string) => name,
     spansPerTraceSoftLimit: Infinity,
     spansPerTraceHardLimit: Infinity,
+    maximumLabelValueSize: 1 << 16,
+    stackTraceLimit: 10,
   };
 }
 

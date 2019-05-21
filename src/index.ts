@@ -136,11 +136,6 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
       onUncaughtException: mergedConfig.onUncaughtException,
       bufferSize: mergedConfig.bufferSize,
       flushDelaySeconds: mergedConfig.flushDelaySeconds,
-      stackTraceLimit: mergedConfig.stackTraceLimit,
-      maximumLabelValueSize: Math.min(
-        mergedConfig.maximumLabelValueSize,
-        Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT
-      ),
       serviceContext: {
         service: lastOf<string | undefined>(
           mergedConfig.serviceContext.service,
@@ -168,6 +163,11 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
         ),
         spansPerTraceHardLimit: mergedConfig.spansPerTraceHardLimit,
         spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit,
+        stackTraceLimit: mergedConfig.stackTraceLimit,
+        maximumLabelValueSize: Math.min(
+          mergedConfig.maximumLabelValueSize,
+          Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT
+        ),
       },
     },
     tracePolicyConfig: {

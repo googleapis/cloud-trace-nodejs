@@ -32,6 +32,7 @@ import {
 } from './plugin-types';
 import {
   RootSpanData,
+  SpanLabelLimits,
   UNCORRELATED_CHILD_SPAN,
   UNCORRELATED_ROOT_SPAN,
   UNTRACED_CHILD_SPAN,
@@ -46,7 +47,7 @@ import * as util from './util';
  * An interface describing configuration fields read by the StackdriverTracer
  * object. This includes fields read by the trace policy.
  */
-export interface StackdriverTracerConfig {
+export interface StackdriverTracerConfig extends SpanLabelLimits {
   enhancedDatabaseReporting: boolean;
   rootSpanNameOverride: (path: string) => string;
   spansPerTraceSoftLimit: number;
@@ -241,7 +242,7 @@ export class StackdriverTracer implements Tracer {
       rootContext = UNTRACED_ROOT_SPAN;
     } else {
       // Create a new root span, and invoke fn with it.
-      rootContext = new RootSpanData(
+      const rootSpan = new RootSpanData(
         // Trace object
         {
           projectId: '',
@@ -257,9 +258,13 @@ export class StackdriverTracer implements Tracer {
         this.config!.rootSpanNameOverride(options.name),
         // Parent span ID
         traceContext ? traceContext.spanId : '0',
+        // Label limits
+        this.config!,
         // Number of stack frames to skip
         options.skipFrames || 0
       );
+      rootSpan.assignTraceWriter(traceWriter.get());
+      rootContext = rootSpan;
     }
 
     return cls.get().runWithContext(() => {
