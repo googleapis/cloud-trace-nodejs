@@ -16,11 +16,11 @@
 
 import * as assert from 'assert';
 
-import {Logger} from '../src/logger';
-import {Trace} from '../src/trace';
-import {TraceWriterConfig} from '../src/trace-writer';
+import { Logger } from '../src/logger';
+import { Trace } from '../src/trace';
+import { TraceWriterConfig } from '../src/trace-writer';
 
-import {TestLogger} from './logger';
+import { TestLogger } from './logger';
 import * as trace from './trace';
 
 /**
@@ -31,13 +31,14 @@ function removeAllUncaughtExceptionListeners() {
   const listeners = process.listeners('uncaughtException');
   process.removeAllListeners('uncaughtException');
   return () => {
-    listeners.forEach(
-        listener => process.addListener('uncaughtException', listener));
+    listeners.forEach(listener =>
+      process.addListener('uncaughtException', listener)
+    );
   };
 }
 
 describe('Trace Writer', () => {
-  const autoQueuedTrace = {traceId: '0', spans: [], projectId: '0'};
+  const autoQueuedTrace = { traceId: '0', spans: [], projectId: '0' };
   let capturedPublishedTraces: string;
   let capturedLogger: CaptureInstanceTestLogger;
 
@@ -78,36 +79,36 @@ describe('Trace Writer', () => {
     trace.setLoggerForTest(TestLogger);
   });
 
-  it(`should publish on unhandled exception for 'flush' config option`,
-     (done) => {
-       const restoreOriginalUncaughtExceptionListeners =
-           removeAllUncaughtExceptionListeners();
-       trace.start({onUncaughtException: 'flush', projectId: '0'});
-       setImmediate(() => {
-         setImmediate(() => {
-           removeAllUncaughtExceptionListeners();
-           restoreOriginalUncaughtExceptionListeners();
-           assert.strictEqual(
-               capturedPublishedTraces,
-               JSON.stringify({traces: [autoQueuedTrace]}));
-           done();
-         });
-         throw new Error();
-       });
-     });
+  it(`should publish on unhandled exception for 'flush' config option`, done => {
+    const restoreOriginalUncaughtExceptionListeners = removeAllUncaughtExceptionListeners();
+    trace.start({ onUncaughtException: 'flush', projectId: '0' });
+    setImmediate(() => {
+      setImmediate(() => {
+        removeAllUncaughtExceptionListeners();
+        restoreOriginalUncaughtExceptionListeners();
+        assert.strictEqual(
+          capturedPublishedTraces,
+          JSON.stringify({ traces: [autoQueuedTrace] })
+        );
+        done();
+      });
+      throw new Error();
+    });
+  });
 
   it(`should not assign an oUE listener for 'ignore' config option`, () => {
-    const restoreOriginalUncaughtExceptionListeners =
-        removeAllUncaughtExceptionListeners();
-    trace.start({onUncaughtException: 'ignore'});
+    const restoreOriginalUncaughtExceptionListeners = removeAllUncaughtExceptionListeners();
+    trace.start({ onUncaughtException: 'ignore' });
     assert.strictEqual(process.listenerCount('onHandledException'), 0);
     restoreOriginalUncaughtExceptionListeners();
   });
 
   it('should log and disable on invalid config values', () => {
-    trace.start({onUncaughtException: 'invalidValue'});
+    trace.start({ onUncaughtException: 'invalidValue' });
     assert.ok(capturedLogger);
     assert.strictEqual(
-        capturedLogger.getNumLogsWith('error', 'Disabling the Trace Agent'), 1);
+      capturedLogger.getNumLogsWith('error', 'Disabling the Trace Agent'),
+      1
+    );
   });
 });

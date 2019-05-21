@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import {IncomingMessage, ServerResponse} from 'http';
+import { IncomingMessage, ServerResponse } from 'http';
 import * as shimmer from 'shimmer';
-import {parse as urlParse} from 'url';
+import { parse as urlParse } from 'url';
 
-import {PluginTypes} from '..';
+import { PluginTypes } from '..';
 
-import {hapi_16, hapi_17} from './types';
+import { hapi_16, hapi_17 } from './types';
 
 // Used when patching Hapi 17.
 const ORIGINAL = Symbol();
@@ -30,30 +30,36 @@ interface Hapi17RequestExecutePrivate {
   (this: hapi_17.Request): Promise<void>;
   [ORIGINAL]?: Hapi17RequestExecutePrivate;
 }
-type Hapi17Request = hapi_17.Request&{
+type Hapi17Request = hapi_17.Request & {
   _execute: Hapi17RequestExecutePrivate;
 };
 
 function instrument<T>(
-    api: PluginTypes.Tracer, request: hapi_16.Request|hapi_17.Request,
-    continueCb: () => T): T {
+  api: PluginTypes.Tracer,
+  request: hapi_16.Request | hapi_17.Request,
+  continueCb: () => T
+): T {
   const req = request.raw.req;
   const res = request.raw.res;
   const originalEnd = res.end;
   const options = {
-    name: req.url ? (urlParse(req.url).pathname || '') : '',
+    name: req.url ? urlParse(req.url).pathname || '' : '',
     url: req.url,
     method: req.method,
     traceContext: api.propagation.extract(key => req.headers[key]),
-    skipFrames: 2
+    skipFrames: 2,
   };
-  return api.runInRootSpan(options, (root) => {
+  return api.runInRootSpan(options, root => {
     // Set response trace context.
-    const responseTraceContext =
-        api.getResponseTraceContext(options.traceContext, api.isRealSpan(root));
+    const responseTraceContext = api.getResponseTraceContext(
+      options.traceContext,
+      api.isRealSpan(root)
+    );
     if (responseTraceContext) {
       api.propagation.inject(
-          (k, v) => res.setHeader(k, v), responseTraceContext);
+        (k, v) => res.setHeader(k, v),
+        responseTraceContext
+      );
     }
 
     if (!api.isRealSpan(root)) {
@@ -64,7 +70,8 @@ function instrument<T>(
     api.wrapEmitter(res);
 
     const url = `${req.headers['X-Forwarded-Proto'] || 'http'}://${
-        req.headers.host}${req.url}`;
+      req.headers.host
+    }${req.url}`;
 
     // we use the path part of the url as the span name and add the full
     // url as a label
@@ -92,7 +99,9 @@ function instrument<T>(
     req.once('aborted', () => {
       root.addLabel(api.labels.ERROR_DETAILS_NAME, 'aborted');
       root.addLabel(
-          api.labels.ERROR_DETAILS_MESSAGE, 'client aborted the request');
+        api.labels.ERROR_DETAILS_MESSAGE,
+        'client aborted the request'
+      );
       root.endSpan();
     });
 
@@ -104,7 +113,7 @@ const plugin: PluginTypes.Plugin = [
   {
     versions: '8 - 16',
     patch: (hapi, api) => {
-      shimmer.wrap(hapi.Server.prototype, 'connection', (connection) => {
+      shimmer.wrap(hapi.Server.prototype, 'connection', connection => {
         return function connectionTrace(this: hapi_16.Server) {
           const server = connection.apply(this, arguments);
           server.ext('onRequest', function handler(request, reply) {
@@ -114,9 +123,9 @@ const plugin: PluginTypes.Plugin = [
         };
       });
     },
-    unpatch: (hapi) => {
+    unpatch: hapi => {
       shimmer.unwrap(hapi.Server.prototype, 'connection');
-    }
+    },
   } as PluginTypes.Monkeypatch<Hapi16Module>,
   /**
    * In Hapi 17, the work that is done on behalf of a request stems from
@@ -132,20 +141,22 @@ const plugin: PluginTypes.Plugin = [
       // TODO(kjin): shimmer cannot wrap AsyncFunction objects.
       // Once shimmer introduces this functionality, change this code to use it.
       const origExecute = Request.prototype._execute;
-      Request.prototype._execute =
-          Object.assign(function _executeWrap(this: hapi_17.Request) {
-            return instrument(api, this, () => {
-              return origExecute.apply(this, arguments);
-            });
-          }, {[ORIGINAL]: origExecute});
+      Request.prototype._execute = Object.assign(
+        function _executeWrap(this: hapi_17.Request) {
+          return instrument(api, this, () => {
+            return origExecute.apply(this, arguments);
+          });
+        },
+        { [ORIGINAL]: origExecute }
+      );
     },
     // Request is a class name.
     // tslint:disable-next-line:variable-name
-    unpatch: (Request) => {
+    unpatch: Request => {
       if (Request.prototype._execute[ORIGINAL]) {
         Request.prototype._execute = Request.prototype._execute[ORIGINAL]!;
       }
-    }
-  } as PluginTypes.Monkeypatch<{prototype: Hapi17Request}>
+    },
+  } as PluginTypes.Monkeypatch<{ prototype: Hapi17Request }>,
 ];
 export = plugin;

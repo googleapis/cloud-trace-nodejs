@@ -19,9 +19,9 @@ import axiosModule from 'axios';
 import * as semver from 'semver';
 
 import * as testTraceModule from './trace';
-import {assertSpanDuration, wait} from './utils';
-import {Hapi17} from './web-frameworks/hapi17';
-import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
+import { assertSpanDuration, wait } from './utils';
+import { Hapi17 } from './web-frameworks/hapi17';
+import { Hapi12, Hapi15, Hapi16, Hapi8 } from './web-frameworks/hapi8_16';
 
 // The list of web frameworks to test.
 const FRAMEWORKS = [Hapi12, Hapi15, Hapi16, Hapi8, Hapi17];
@@ -40,7 +40,7 @@ describe('Web framework tracing', () => {
     testTraceModule.setPluginLoaderForTest(testTraceModule.TestPluginLoader);
   });
 
-  FRAMEWORKS.forEach((webFrameworkConstructor) => {
+  FRAMEWORKS.forEach(webFrameworkConstructor => {
     const commonName = webFrameworkConstructor.commonName;
     const versionRange = webFrameworkConstructor.versionRange;
 
@@ -66,32 +66,38 @@ describe('Web framework tracing', () => {
             hasResponse: false,
             blocking: false,
             fn: async () => {
-              const child =
-                  testTraceModule.get().createChildSpan({name: 'my-tail-work'});
+              const child = testTraceModule
+                .get()
+                .createChildSpan({ name: 'my-tail-work' });
               await wait(100);
               child.endSpan();
-            }
+            },
           });
           framework.addHandler({
             path: '/tail',
             hasResponse: true,
-            fn: async () => (
-                {statusCode: 200, message: 'there is still work to be done'})
+            fn: async () => ({
+              statusCode: 200,
+              message: 'there is still work to be done',
+            }),
           });
           // A Promise that resolves when the tail call is finished.
-          const tailCallMade =
-              new Promise((resolve) => framework.once('tail', resolve));
+          const tailCallMade = new Promise(resolve =>
+            framework.once('tail', resolve)
+          );
           // Start listening.
           const port = await framework.listen(0);
           // Hit the server.
-          await testTraceModule.get().runInRootSpan(
-              {name: 'outer'}, async (span) => {
-                await axios.get(`http://localhost:${port}/tail`);
-                span.endSpan();
-              });
+          await testTraceModule
+            .get()
+            .runInRootSpan({ name: 'outer' }, async span => {
+              await axios.get(`http://localhost:${port}/tail`);
+              span.endSpan();
+            });
           // A child span should have been observed by the Trace Writer.
-          const childSpanBeforeEnd =
-              testTraceModule.getOneSpan(span => span.name === 'my-tail-work');
+          const childSpanBeforeEnd = testTraceModule.getOneSpan(
+            span => span.name === 'my-tail-work'
+          );
           assert.ok(!childSpanBeforeEnd.endTime);
           // Simulate a "flush". The Trace Writer itself will not publish a
           // span that doesn't have an end time.
@@ -99,10 +105,13 @@ describe('Web framework tracing', () => {
           await tailCallMade;
           // The same child span should have been observed again by the
           // Trace Writer.
-          const childSpanAfterEnd =
-              testTraceModule.getOneSpan(span => span.name === 'my-tail-work');
+          const childSpanAfterEnd = testTraceModule.getOneSpan(
+            span => span.name === 'my-tail-work'
+          );
           assert.strictEqual(
-              childSpanAfterEnd.spanId, childSpanBeforeEnd.spanId);
+            childSpanAfterEnd.spanId,
+            childSpanBeforeEnd.spanId
+          );
           // The child span only needs to be at least 100ms.
           assertSpanDuration(childSpanAfterEnd, [100, Infinity]);
         } finally {

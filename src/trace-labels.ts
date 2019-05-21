@@ -93,5 +93,5 @@ export const TraceLabels = {
    * The well-known label for agent metadata. Values should have the form
    * "<name> <version>".
    */
-  AGENT_DATA: '/agent'
+  AGENT_DATA: '/agent',
 };

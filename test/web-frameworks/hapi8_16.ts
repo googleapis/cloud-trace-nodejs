@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 
-import {hapi_16} from '../../src/plugins/types';
+import { hapi_16 } from '../../src/plugins/types';
 
-import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkResponse} from './base';
+import {
+  WebFramework,
+  WebFrameworkAddHandlerOptions,
+  WebFrameworkResponse,
+} from './base';
 
 export class Hapi extends EventEmitter implements WebFramework {
   server: hapi_16.Server;
@@ -50,7 +54,7 @@ export class Hapi extends EventEmitter implements WebFramework {
               return;
             }
             reply(response.message).statusCode = response.statusCode;
-          }
+          },
         });
       } else {
         if (options.blocking) {
@@ -76,16 +80,18 @@ export class Hapi extends EventEmitter implements WebFramework {
   }
 
   async listen(port: number): Promise<number> {
-    this.server.connection({host: 'localhost', port});
+    this.server.connection({ host: 'localhost', port });
     this.queuedHandlers.forEach(fn => fn());
     this.queuedHandlers = [];
-    await new Promise((resolve, reject) => this.server.start((err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    }));
+    await new Promise((resolve, reject) =>
+      this.server.start(err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      })
+    );
     return Number(this.server.info!.port);
   }
 
@@ -94,15 +100,16 @@ export class Hapi extends EventEmitter implements WebFramework {
   }
 }
 
-const makeHapiClass = (version: number) => class extends Hapi {
-  static commonName = `hapi@${version}`;
-  static expectedTopStackFrame = 'handler';
-  static versionRange = '*';
+const makeHapiClass = (version: number) =>
+  class extends Hapi {
+    static commonName = `hapi@${version}`;
+    static expectedTopStackFrame = 'handler';
+    static versionRange = '*';
 
-  constructor() {
-    super(`../plugins/fixtures/hapi${version}`);
-  }
-};
+    constructor() {
+      super(`../plugins/fixtures/hapi${version}`);
+    }
+  };
 
 // tslint:disable:variable-name (Hapi* are class names)
 export const Hapi8 = makeHapiClass(8);

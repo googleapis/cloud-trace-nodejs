@@ -17,38 +17,44 @@
 import * as httpMethods from 'methods';
 import * as shimmer from 'shimmer';
 
-import {PluginTypes} from '..';
+import { PluginTypes } from '..';
 
-import {express_4} from './types';
+import { express_4 } from './types';
 
 // application is an undocumented member of the express object.
-type Express4Module = typeof express_4&{application: express_4.Application};
+type Express4Module = typeof express_4 & { application: express_4.Application };
 
-const methods: Array<keyof express_4.Application> =
-    (httpMethods as Array<keyof express_4.Application>)
-        .concat('use', 'route', 'param', 'all');
+const methods: Array<keyof express_4.Application> = (httpMethods as Array<
+  keyof express_4.Application
+>).concat('use', 'route', 'param', 'all');
 
 const SUPPORTED_VERSIONS = '4.x';
 
 function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
   const labels = api.labels;
   function middleware(
-      req: express_4.Request, res: express_4.Response,
-      next: express_4.NextFunction) {
+    req: express_4.Request,
+    res: express_4.Response,
+    next: express_4.NextFunction
+  ) {
     const options = {
       name: req.path,
-      traceContext: api.propagation.extract((key) => req.get(key)),
+      traceContext: api.propagation.extract(key => req.get(key)),
       url: req.originalUrl,
       method: req.method,
-      skipFrames: 1
+      skipFrames: 1,
     };
-    api.runInRootSpan(options, (rootSpan) => {
+    api.runInRootSpan(options, rootSpan => {
       // Set response trace context.
       const responseTraceContext = api.getResponseTraceContext(
-          options.traceContext, api.isRealSpan(rootSpan));
+        options.traceContext,
+        api.isRealSpan(rootSpan)
+      );
       if (responseTraceContext) {
         api.propagation.inject(
-            (k, v) => res.setHeader(k, v), responseTraceContext);
+          (k, v) => res.setHeader(k, v),
+          responseTraceContext
+        );
       }
 
       if (!api.isRealSpan(rootSpan)) {
@@ -83,8 +89,9 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
   }
 
   function applicationActionWrap<T extends Function>(method: T): () => T {
-    return function expressActionTrace(this: express_4.Application&
-                                       PluginTypes.TraceAgentExtension) {
+    return function expressActionTrace(
+      this: express_4.Application & PluginTypes.TraceAgentExtension
+    ) {
       if (!this._google_trace_patched && !this._router) {
         this._google_trace_patched = true;
         this.use(middleware);
@@ -93,21 +100,23 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
     };
   }
 
-  methods.forEach((method) => {
+  methods.forEach(method => {
     shimmer.wrap(express.application, method, applicationActionWrap);
   });
 }
 
 function unpatchModuleRoot(express: Express4Module) {
-  methods.forEach((method) => {
+  methods.forEach(method => {
     shimmer.unwrap(express.application, method);
   });
 }
 
-const plugin: PluginTypes.Plugin = [{
-  versions: SUPPORTED_VERSIONS,
-  patch: patchModuleRoot,
-  unpatch: unpatchModuleRoot
-} as PluginTypes.Monkeypatch<Express4Module>];
+const plugin: PluginTypes.Plugin = [
+  {
+    versions: SUPPORTED_VERSIONS,
+    patch: patchModuleRoot,
+    unpatch: unpatchModuleRoot,
+  } as PluginTypes.Monkeypatch<Express4Module>,
+];
 
 export = plugin;

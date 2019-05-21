@@ -17,14 +17,14 @@
 // This file only describes public-facing interfaces.
 // tslint:disable:no-any
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 
-import {Constants, SpanType} from './constants';
-import {StackdriverTracerConfig} from './trace-api';
-import {TraceLabels} from './trace-labels';
-import {TraceContext} from './util';
+import { Constants, SpanType } from './constants';
+import { StackdriverTracerConfig } from './trace-api';
+import { TraceLabels } from './trace-labels';
+import { TraceContext } from './util';
 
-export {TraceContext};
+export { TraceContext };
 
 export type Func<T> = (...args: any[]) => T;
 
@@ -41,7 +41,7 @@ export interface Span {
    * Gets the current trace context, or null if it can't be retrieved.
    * @return The trace context.
    */
-  getTraceContext(): TraceContext|null;
+  getTraceContext(): TraceContext | null;
 
   /**
    * Adds a key-value pair as a label to the trace span. The value will be
@@ -107,7 +107,7 @@ export interface RootSpanOptions extends SpanOptions {
   /**
    * An existing trace context, if it exists.
    */
-  traceContext?: TraceContext|null;
+  traceContext?: TraceContext | null;
 }
 
 export interface Tracer {
@@ -158,7 +158,7 @@ export interface Tracer {
    * guarantee is that the value would unique for every root span.
    * @returns an id for the current context, or null if there is none
    */
-  getCurrentContextId(): string|null;
+  getCurrentContextId(): string | null;
 
   /**
    * Returns the projectId that was either configured or auto-discovered by the
@@ -171,7 +171,7 @@ export interface Tracer {
    * TraceWriter. Note that the auto-discovery is done asynchronously, so this
    * may return falsey until the projectId auto-discovery completes.
    */
-  getWriterProjectId(): string|null;
+  getWriterProjectId(): string | null;
 
   /**
    * Creates and returns a new Span object nested within the current root
@@ -203,8 +203,9 @@ export interface Tracer {
    * Otherwise, null.
    */
   getResponseTraceContext(
-      incomingTraceContext: TraceContext|null, isTraced: boolean): TraceContext
-      |null;
+    incomingTraceContext: TraceContext | null,
+    isTraced: boolean
+  ): TraceContext | null;
 
   /**
    * Binds the trace context to the given function.
@@ -241,12 +242,16 @@ export interface Tracer {
   readonly propagation: Propagation;
 }
 
-export type GetHeaderFunction = (key: string) => string[]|string|null|undefined;
+export type GetHeaderFunction = (
+  key: string
+) => string[] | string | null | undefined;
 export type SetHeaderFunction = (key: string, value: string) => void;
 export interface Propagation {
   extract: (getHeader: GetHeaderFunction) => TraceContext | null;
-  inject:
-      (setHeader: SetHeaderFunction, traceContext: TraceContext|null) => void;
+  inject: (
+    setHeader: SetHeaderFunction,
+    traceContext: TraceContext | null
+  ) => void;
 }
 
 export interface Monkeypatch<T> {
@@ -262,6 +267,6 @@ export interface Intercept<T> {
   intercept: (module: T, agent: Tracer) => T;
 }
 
-export type Patch<T> = Monkeypatch<T>|Intercept<T>;
+export type Patch<T> = Monkeypatch<T> | Intercept<T>;
 
 export type Plugin = Array<Patch<any>>;

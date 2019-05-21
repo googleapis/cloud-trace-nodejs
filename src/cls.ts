@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import * as semver from 'semver';
 
-import {AsyncHooksCLS} from './cls/async-hooks';
-import {AsyncListenerCLS} from './cls/async-listener';
-import {CLS, Func} from './cls/base';
-import {NullCLS} from './cls/null';
-import {SingularCLS} from './cls/singular';
-import {SpanType} from './constants';
-import {Logger} from './logger';
-import {RootSpan} from './plugin-types';
-import {UNCORRELATED_ROOT_SPAN, UNTRACED_ROOT_SPAN} from './span-data';
-import {Trace, TraceSpan} from './trace';
-import {Singleton} from './util';
+import { AsyncHooksCLS } from './cls/async-hooks';
+import { AsyncListenerCLS } from './cls/async-listener';
+import { CLS, Func } from './cls/base';
+import { NullCLS } from './cls/null';
+import { SingularCLS } from './cls/singular';
+import { SpanType } from './constants';
+import { Logger } from './logger';
+import { RootSpan } from './plugin-types';
+import { UNCORRELATED_ROOT_SPAN, UNTRACED_ROOT_SPAN } from './span-data';
+import { Trace, TraceSpan } from './trace';
+import { Singleton } from './util';
 
 const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 
@@ -38,7 +38,7 @@ export interface RealRootContext {
 }
 
 export interface PhantomRootContext {
-  readonly type: SpanType.UNCORRELATED|SpanType.UNTRACED;
+  readonly type: SpanType.UNCORRELATED | SpanType.UNTRACED;
 }
 
 /**
@@ -51,7 +51,7 @@ export interface PhantomRootContext {
  * When we store an actual root span, the only information we need is its
  * current trace/span fields.
  */
-export type RootContext = RootSpan&(RealRootContext|PhantomRootContext);
+export type RootContext = RootSpan & (RealRootContext | PhantomRootContext);
 
 /**
  * An enumeration of the possible mechanisms for supporting context propagation
@@ -77,7 +77,7 @@ export enum TraceCLSMechanism {
    * Do not write root span context; in other words, querying the current root
    * span context will always result in a default value.
    */
-  NONE = 'none'
+  NONE = 'none',
 }
 
 /**
@@ -88,7 +88,7 @@ export interface TraceCLSConfig {
 }
 
 interface CLSConstructor {
-  new(defaultContext: RootContext): CLS<RootContext>;
+  new (defaultContext: RootContext): CLS<RootContext>;
 }
 
 /**
@@ -118,8 +118,11 @@ export class TraceCLS implements CLS<RootContext> {
     switch (config.mechanism) {
       case TraceCLSMechanism.ASYNC_HOOKS:
         if (!asyncHooksAvailable) {
-          throw new Error(`CLS mechanism [${
-              config.mechanism}] is not compatible with Node <8.`);
+          throw new Error(
+            `CLS mechanism [${
+              config.mechanism
+            }] is not compatible with Node <8.`
+          );
         }
         this.CLSClass = AsyncHooksCLS;
         this.rootSpanStackOffset = 4;
@@ -138,10 +141,12 @@ export class TraceCLS implements CLS<RootContext> {
         break;
       default:
         throw new Error(
-            `CLS mechanism [${config.mechanism}] was not recognized.`);
+          `CLS mechanism [${config.mechanism}] was not recognized.`
+        );
     }
     this.logger.info(
-        `TraceCLS#constructor: Created [${config.mechanism}] CLS instance.`);
+      `TraceCLS#constructor: Created [${config.mechanism}] CLS instance.`
+    );
     this.currentCLS = new NullCLS(TraceCLS.UNTRACED);
     this.currentCLS.enable();
   }

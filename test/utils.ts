@@ -20,13 +20,13 @@ import * as assert from 'assert';
 import * as fs from 'fs';
 import * as semver from 'semver';
 
-import {cls} from '../src/cls';
-import {OpenCensusPropagation} from '../src/config';
-import {SpanType} from '../src/constants';
-import {Span} from '../src/plugin-types';
-import {ChildSpanData, RootSpanData} from '../src/span-data';
-import {TraceSpan} from '../src/trace';
-import {StackdriverTracerConfig} from '../src/trace-api';
+import { cls } from '../src/cls';
+import { OpenCensusPropagation } from '../src/config';
+import { SpanType } from '../src/constants';
+import { Span } from '../src/plugin-types';
+import { ChildSpanData, RootSpanData } from '../src/span-data';
+import { TraceSpan } from '../src/trace';
+import { StackdriverTracerConfig } from '../src/trace-api';
 
 /**
  * Constants
@@ -59,7 +59,7 @@ export function getBaseConfig(): StackdriverTracerConfig {
     enhancedDatabaseReporting: false,
     rootSpanNameOverride: (name: string) => name,
     spansPerTraceSoftLimit: Infinity,
-    spansPerTraceHardLimit: Infinity
+    spansPerTraceHardLimit: Infinity,
   };
 }
 
@@ -83,12 +83,12 @@ export function assertSpanDuration(span: TraceSpan, bounds: [number, number?]) {
   const lowerBound = bounds[0];
   const upperBound = bounds[1] !== undefined ? bounds[1] : bounds[0];
   assert.ok(
-      spanDuration >= lowerBound - ASSERT_SPAN_TIME_TOLERANCE_MS &&
-          spanDuration <= upperBound + ASSERT_SPAN_TIME_TOLERANCE_MS,
-      `Span duration of ${
-          spanDuration} ms is not in the acceptable expected range of [${
-          bounds[0]}, ${bounds[1]}] ms (w/ ${
-          ASSERT_SPAN_TIME_TOLERANCE_MS} ms leniency)`);
+    spanDuration >= lowerBound - ASSERT_SPAN_TIME_TOLERANCE_MS &&
+      spanDuration <= upperBound + ASSERT_SPAN_TIME_TOLERANCE_MS,
+    `Span duration of ${spanDuration} ms is not in the acceptable expected range of [${
+      bounds[0]
+    }, ${bounds[1]}] ms (w/ ${ASSERT_SPAN_TIME_TOLERANCE_MS} ms leniency)`
+  );
 }
 
 export function asRootSpanData(arg: Span): RootSpanData {
@@ -105,7 +105,7 @@ export function hasContext() {
   return cls.get().getContext().type !== SpanType.UNCORRELATED;
 }
 
-export function plan(done: MochaDone, num: number): MochaDone {
+export function plan(done: Mocha.Done, num: number): Mocha.Done {
   return (err?: Error) => {
     if (err) {
       num = 0;
@@ -126,40 +126,42 @@ export function plan(done: MochaDone, num: number): MochaDone {
  * contains the data used by `npm run init-test-fixtures` to create all module
  * fixtures for testing.
  */
-type PluginFixtures = {
+interface PluginFixtures {
   /**
    * Each fixture (module, version) is represented as an entry here. The
    * structure of the value is a rough subset of package.json, with extra fields
    * denoted by leading underscores.
    */
   [fixture: string]: {
-    dependencies: {[moduleName: string]: string;};
-    engines?: {node?: string;};
+    dependencies: { [moduleName: string]: string };
+    engines?: { node?: string };
     /**
      * If there are multiple top-level dependencies, specifies which one is the
      * "main" one
      */
     _mainModule?: string;
-  }
-};
+  };
+}
 
 /**
  * An object containing helpful information and functions for a fixture.
  */
-type FixtureHelper<T> = {
+interface FixtureHelper<T> {
   /** The module version encapsulated by the fixture. */
   version: string;
   /** The parsed module version. */
-  parsedVersion: {major: number, minor: number, patch: number};
+  parsedVersion: { major: number; minor: number; patch: number };
   /** When called, loads the fixture. */
   require: () => T;
   /**
    * Returns it.skip if the selected module's version is in the version range
    * given; returns it otherwise.
    */
-  skip: (it: Mocha.TestFunction, versionRange: string) =>
-      Mocha.PendingTestFunction;
-};
+  skip: (
+    it: Mocha.TestFunction,
+    versionRange: string
+  ) => Mocha.PendingTestFunction;
+}
 
 /**
  * Given a module name, return a list of objects that are useful for importing
@@ -170,37 +172,38 @@ function getFixturesForModule<T>(moduleName: string): Array<FixtureHelper<T>> {
   const pluginFixtures: PluginFixtures = require('./fixtures/plugin-fixtures');
   const keys = Object.keys(pluginFixtures);
   return keys
-      .filter(key => {
-        const value = pluginFixtures[key];
-        let mainModule: string;
-        if (value._mainModule) {
-          mainModule = value._mainModule;
-        } else {
-          const dependencies = Object.keys(value.dependencies);
-          if (dependencies.length === 0) {
-            // No main module?
-            return;
-          }
-          mainModule = dependencies[0];
+    .filter(key => {
+      const value = pluginFixtures[key];
+      let mainModule: string;
+      if (value._mainModule) {
+        mainModule = value._mainModule;
+      } else {
+        const dependencies = Object.keys(value.dependencies);
+        if (dependencies.length === 0) {
+          // No main module?
+          return;
         }
-        const moduleNameMatches = mainModule === moduleName;
-        const versionCompatible = !value.engines || !value.engines.node ||
-            semver.satisfies(process.version, value.engines.node);
-        return moduleNameMatches && versionCompatible;
-      })
-      .map(key => {
-        const version = require(`./plugins/fixtures/${key}/node_modules/${
-                                    moduleName}/package.json`)
-                            .version as string;
-        const parsedVersion = semver.parse(version)!;
-        const getModule: () => T = () => require(`./plugins/fixtures/${key}`);
-        // Convenience function -- returns if.skip if the selected module's
-        // version is in the version range given.
-        const skip = (it: Mocha.TestFunction, versionRange: string) => {
-          return semver.satisfies(version, versionRange) ? it.skip : it;
-        };
-        return {version, parsedVersion, require: getModule, skip};
-      });
+        mainModule = dependencies[0];
+      }
+      const moduleNameMatches = mainModule === moduleName;
+      const versionCompatible =
+        !value.engines ||
+        !value.engines.node ||
+        semver.satisfies(process.version, value.engines.node);
+      return moduleNameMatches && versionCompatible;
+    })
+    .map(key => {
+      const version = require(`./plugins/fixtures/${key}/node_modules/${moduleName}/package.json`)
+        .version as string;
+      const parsedVersion = semver.parse(version)!;
+      const getModule: () => T = () => require(`./plugins/fixtures/${key}`);
+      // Convenience function -- returns if.skip if the selected module's
+      // version is in the version range given.
+      const skip = (it: Mocha.TestFunction, versionRange: string) => {
+        return semver.satisfies(version, versionRange) ? it.skip : it;
+      };
+      return { version, parsedVersion, require: getModule, skip };
+    });
 }
 
 /**
@@ -210,11 +213,12 @@ function getFixturesForModule<T>(moduleName: string): Array<FixtureHelper<T>> {
  * @param describeFn A test suite to run.
  */
 export function describeInterop<T>(
-    moduleName: string, describeFn: (fixture: FixtureHelper<T>) => void): void {
+  moduleName: string,
+  describeFn: (fixture: FixtureHelper<T>) => void
+): void {
   const fixtures = getFixturesForModule<T>(moduleName);
   for (const fixture of fixtures) {
-    describe(
-        `Trace Agent interop w/ ${moduleName}@${fixture.version}`,
-        () => describeFn(fixture));
+    describe(`Trace Agent interop w/ ${moduleName}@${fixture.version}`, () =>
+      describeFn(fixture));
   }
 }

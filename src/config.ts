@@ -16,13 +16,20 @@
 
 import * as path from 'path';
 
-const pluginDirectory =
-    path.join(path.resolve(__dirname, '..'), 'src', 'plugins');
+const pluginDirectory = path.join(
+  path.resolve(__dirname, '..'),
+  'src',
+  'plugins'
+);
 
 export type CLSMechanism =
-    'async-hooks'|'async-listener'|'auto'|'none'|'singular';
+  | 'async-hooks'
+  | 'async-listener'
+  | 'auto'
+  | 'none'
+  | 'singular';
 
-export type ContextHeaderBehavior = 'default'|'ignore'|'require';
+export type ContextHeaderBehavior = 'default' | 'ignore' | 'require';
 
 export interface RequestDetails {
   /**
@@ -40,7 +47,7 @@ export interface RequestDetails {
   /**
    * The parsed trace context, if it exists.
    */
-  traceContext: {traceId: string; spanId: string; options: number;}|null;
+  traceContext: { traceId: string; spanId: string; options: number } | null;
   /**
    * The original options object used to create the root span that corresponds
    * to this request.
@@ -52,22 +59,28 @@ export interface TracePolicy {
   shouldTrace: (requestDetails: RequestDetails) => boolean;
 }
 
-export type GetHeaderFunction = {
-  getHeader: (key: string) => string[]|string|undefined;
-};
-export type SetHeaderFunction = {
+export interface GetHeaderFunction {
+  getHeader: (key: string) => string[] | string | undefined;
+}
+export interface SetHeaderFunction {
   setHeader: (key: string, value: string) => void;
-};
+}
 export interface OpenCensusPropagation {
-  extract: (getHeader: GetHeaderFunction) => {
+  extract: (
+    getHeader: GetHeaderFunction
+  ) => {
     traceId: string;
     spanId: string;
-    options?: number
+    options?: number;
   } | null;
-  inject: (setHeader: SetHeaderFunction, traceContext: {
-    traceId: string; spanId: string;
-    options?: number
-  }) => void;
+  inject: (
+    setHeader: SetHeaderFunction,
+    traceContext: {
+      traceId: string;
+      spanId: string;
+      options?: number;
+    }
+  ) => void;
 }
 
 /**
@@ -99,7 +112,7 @@ export interface Config {
    * specified as a function, the function will be invoked with the request path
    * as an argument, and its return value will be used as the span name.
    */
-  rootSpanNameOverride?: string|((name: string) => string);
+  rootSpanNameOverride?: string | ((name: string) => string);
 
   /**
    * The trace context propagation mechanism to use. The following options are
@@ -153,7 +166,7 @@ export interface Config {
    * value. Disabling any of the default plugins may cause unwanted behavior,
    * so use caution.
    */
-  plugins?: {[pluginName: string]: string;};
+  plugins?: { [pluginName: string]: string };
 
   /**
    * The max number of frames to include on traces; pass a value of 0 to
@@ -171,7 +184,7 @@ export interface Config {
    * while having an ignoreUrls value of ['^/$'] will ignore only '/' URLs.
    * Health checker probe URLs (/_ah/health) are ignored by default.
    */
-  ignoreUrls?: Array<string|RegExp>;
+  ignoreUrls?: Array<string | RegExp>;
 
   /**
    * Request methods that match any string in ignoreMethods will not be traced.
@@ -268,7 +281,7 @@ export interface Config {
    * The contents of a key file. If this field is set, its contents will be
    * used for authentication instead of your application default credentials.
    */
-  credentials?: {client_email?: string; private_key?: string;};
+  credentials?: { client_email?: string; private_key?: string };
 
   /**
    * A path to a key file relative to the current working directory. If this
@@ -284,7 +297,11 @@ export interface Config {
    * from a specific service within a project. These fields will automatically
    * be set through environment variables on Google App Engine.
    */
-  serviceContext?: {service?: string; version?: string; minorVersion?: string;};
+  serviceContext?: {
+    service?: string;
+    version?: string;
+    minorVersion?: string;
+  };
 }
 
 /**
@@ -304,22 +321,22 @@ export const defaultConfig = {
   maximumLabelValueSize: 512,
   plugins: {
     // enable all by default
-    'bluebird': path.join(pluginDirectory, 'plugin-bluebird.js'),
-    'connect': path.join(pluginDirectory, 'plugin-connect.js'),
-    'express': path.join(pluginDirectory, 'plugin-express.js'),
+    bluebird: path.join(pluginDirectory, 'plugin-bluebird.js'),
+    connect: path.join(pluginDirectory, 'plugin-connect.js'),
+    express: path.join(pluginDirectory, 'plugin-express.js'),
     'generic-pool': path.join(pluginDirectory, 'plugin-generic-pool.js'),
-    'grpc': path.join(pluginDirectory, 'plugin-grpc.js'),
-    'hapi': path.join(pluginDirectory, 'plugin-hapi.js'),
-    'http': path.join(pluginDirectory, 'plugin-http.js'),
-    'http2': path.join(pluginDirectory, 'plugin-http2.js'),
-    'koa': path.join(pluginDirectory, 'plugin-koa.js'),
+    grpc: path.join(pluginDirectory, 'plugin-grpc.js'),
+    hapi: path.join(pluginDirectory, 'plugin-hapi.js'),
+    http: path.join(pluginDirectory, 'plugin-http.js'),
+    http2: path.join(pluginDirectory, 'plugin-http2.js'),
+    koa: path.join(pluginDirectory, 'plugin-koa.js'),
     'mongodb-core': path.join(pluginDirectory, 'plugin-mongodb-core.js'),
-    'mongoose': path.join(pluginDirectory, 'plugin-mongoose.js'),
-    'mysql': path.join(pluginDirectory, 'plugin-mysql.js'),
-    'mysql2': path.join(pluginDirectory, 'plugin-mysql2.js'),
-    'pg': path.join(pluginDirectory, 'plugin-pg.js'),
-    'redis': path.join(pluginDirectory, 'plugin-redis.js'),
-    'restify': path.join(pluginDirectory, 'plugin-restify.js')
+    mongoose: path.join(pluginDirectory, 'plugin-mongoose.js'),
+    mysql: path.join(pluginDirectory, 'plugin-mysql.js'),
+    mysql2: path.join(pluginDirectory, 'plugin-mysql2.js'),
+    pg: path.join(pluginDirectory, 'plugin-pg.js'),
+    redis: path.join(pluginDirectory, 'plugin-redis.js'),
+    restify: path.join(pluginDirectory, 'plugin-restify.js'),
   },
   stackTraceLimit: 10,
   flushDelaySeconds: 30,
@@ -329,5 +346,5 @@ export const defaultConfig = {
   contextHeaderBehavior: 'default',
   bufferSize: 1000,
   onUncaughtException: 'ignore',
-  serviceContext: {}
+  serviceContext: {},
 };

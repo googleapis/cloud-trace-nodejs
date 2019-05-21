@@ -1,6 +1,6 @@
-import {RequestDetails, TracePolicy} from './config';
-import {Constants} from './constants';
-import {TraceContext} from './util';
+import { RequestDetails, TracePolicy } from './config';
+import { Constants } from './constants';
+import { TraceContext } from './util';
 
 /**
  * Copyright 2015 Google Inc. All Rights Reserved.
@@ -36,7 +36,7 @@ export enum TraceContextHeaderBehavior {
   /**
    * Trace every request as a new trace, even if trace context exists.
    */
-  IGNORE = 'ignore'
+  IGNORE = 'ignore',
 }
 
 interface TracePolicyPredicate<T> {
@@ -65,12 +65,14 @@ class Sampler implements TracePolicyPredicate<number> {
 }
 
 class URLFilter implements TracePolicyPredicate<string> {
-  constructor(private readonly filterUrls: Array<string|RegExp>) {}
+  constructor(private readonly filterUrls: Array<string | RegExp>) {}
 
   shouldTrace(url: string) {
-    return !this.filterUrls.some((candidate) => {
-      return (typeof candidate === 'string' && candidate === url) ||
-          !!url.match(candidate);
+    return !this.filterUrls.some(candidate => {
+      return (
+        (typeof candidate === 'string' && candidate === url) ||
+        !!url.match(candidate)
+      );
     });
   }
 }
@@ -79,18 +81,19 @@ class MethodsFilter implements TracePolicyPredicate<string> {
   constructor(private readonly filterMethods: string[]) {}
 
   shouldTrace(method: string) {
-    return !this.filterMethods.some((candidate) => {
-      return (candidate.toLowerCase() === method.toLowerCase());
+    return !this.filterMethods.some(candidate => {
+      return candidate.toLowerCase() === method.toLowerCase();
     });
   }
 }
 
-class ContextHeaderFilter implements
-    TracePolicyPredicate<Required<TraceContext>|null> {
-  constructor(private readonly contextHeaderBehavior:
-                  TraceContextHeaderBehavior) {}
+class ContextHeaderFilter
+  implements TracePolicyPredicate<Required<TraceContext> | null> {
+  constructor(
+    private readonly contextHeaderBehavior: TraceContextHeaderBehavior
+  ) {}
 
-  shouldTrace(header: Required<TraceContext>|null) {
+  shouldTrace(header: Required<TraceContext> | null) {
     switch (this.contextHeaderBehavior) {
       case TraceContextHeaderBehavior.IGNORE: {
         return true;
@@ -98,13 +101,16 @@ class ContextHeaderFilter implements
       case TraceContextHeaderBehavior.REQUIRE: {
         // There must be an incoming header, and its LSB must be 1.
         return !!(
-            header && header.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
+          header && header.options & Constants.TRACE_OPTIONS_TRACE_ENABLED
+        );
       }
-      default: {  // TraceContextHeaderBehavior.DEFAULT
+      default: {
+        // TraceContextHeaderBehavior.DEFAULT
         // If there is a header, its LSB must be 1. Otherwise, we assume that
         // it would be 1.
         return !!(
-            !header || header.options & Constants.TRACE_OPTIONS_TRACE_ENABLED);
+          !header || header.options & Constants.TRACE_OPTIONS_TRACE_ENABLED
+        );
       }
     }
   }
@@ -121,7 +127,7 @@ export interface TracePolicyConfig {
   /**
    * A field that controls a url-based filter.
    */
-  ignoreUrls: Array<string|RegExp>;
+  ignoreUrls: Array<string | RegExp>;
   /**
    * A field that controls a method filter.
    */
@@ -139,8 +145,9 @@ export class BuiltinTracePolicy implements TracePolicy {
   private readonly sampler: TracePolicyPredicate<number>;
   private readonly urlFilter: TracePolicyPredicate<string>;
   private readonly methodsFilter: TracePolicyPredicate<string>;
-  private readonly contextHeaderFilter:
-      TracePolicyPredicate<Required<TraceContext>|null>;
+  private readonly contextHeaderFilter: TracePolicyPredicate<Required<
+    TraceContext
+  > | null>;
 
   /**
    * Constructs a new TracePolicy instance.
@@ -148,27 +155,28 @@ export class BuiltinTracePolicy implements TracePolicy {
    */
   constructor(config: TracePolicyConfig) {
     if (config.samplingRate === 0) {
-      this.sampler = {shouldTrace: () => true};
+      this.sampler = { shouldTrace: () => true };
     } else if (config.samplingRate < 0) {
-      this.sampler = {shouldTrace: () => false};
+      this.sampler = { shouldTrace: () => false };
     } else {
       this.sampler = new Sampler(config.samplingRate);
     }
     if (config.ignoreUrls.length === 0) {
-      this.urlFilter = {shouldTrace: () => true};
+      this.urlFilter = { shouldTrace: () => true };
     } else {
       this.urlFilter = new URLFilter(config.ignoreUrls);
     }
     if (config.ignoreMethods.length === 0) {
-      this.methodsFilter = {shouldTrace: () => true};
+      this.methodsFilter = { shouldTrace: () => true };
     } else {
       this.methodsFilter = new MethodsFilter(config.ignoreMethods);
     }
     if (config.contextHeaderBehavior === TraceContextHeaderBehavior.IGNORE) {
-      this.contextHeaderFilter = {shouldTrace: () => true};
+      this.contextHeaderFilter = { shouldTrace: () => true };
     } else {
-      this.contextHeaderFilter =
-          new ContextHeaderFilter(config.contextHeaderBehavior);
+      this.contextHeaderFilter = new ContextHeaderFilter(
+        config.contextHeaderBehavior
+      );
     }
   }
 
@@ -178,10 +186,12 @@ export class BuiltinTracePolicy implements TracePolicy {
    *                created.
    */
   shouldTrace(options: RequestDetails): boolean {
-    return this.urlFilter.shouldTrace(options.url) &&
-        this.methodsFilter.shouldTrace(options.method) &&
-        this.contextHeaderFilter.shouldTrace(options.traceContext) &&
-        this.sampler.shouldTrace(options.timestamp);
+    return (
+      this.urlFilter.shouldTrace(options.url) &&
+      this.methodsFilter.shouldTrace(options.method) &&
+      this.contextHeaderFilter.shouldTrace(options.traceContext) &&
+      this.sampler.shouldTrace(options.timestamp)
+    );
   }
 }
 
@@ -190,7 +200,7 @@ export function alwaysTrace(): BuiltinTracePolicy {
     samplingRate: 0,
     ignoreUrls: [],
     ignoreMethods: [],
-    contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT
+    contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
   });
 }
 
@@ -199,6 +209,6 @@ export function neverTrace(): BuiltinTracePolicy {
     samplingRate: -1,
     ignoreUrls: [],
     ignoreMethods: [],
-    contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT
+    contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
   });
 }

@@ -15,18 +15,22 @@
  */
 
 import * as http from 'http';
-import {AddressInfo} from 'net';
+import { AddressInfo } from 'net';
 
-import {connect_3} from '../../src/plugins/types';
+import { connect_3 } from '../../src/plugins/types';
 
-import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkResponse} from './base';
+import {
+  WebFramework,
+  WebFrameworkAddHandlerOptions,
+  WebFrameworkResponse,
+} from './base';
 
 export class Connect3 implements WebFramework {
   static commonName = 'connect@3';
   static expectedTopStackFrame = 'middleware';
   static versionRange = '*';
   app: connect_3.Server;
-  server: http.Server|null = null;
+  server: http.Server | null = null;
 
   constructor() {
     const connect = require('../plugins/fixtures/connect3') as typeof connect_3;
@@ -35,31 +39,36 @@ export class Connect3 implements WebFramework {
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
     if (!options.hasResponse && !options.blocking) {
-      throw new Error(`${
-          this.constructor
-              .name} wrapper for testing doesn't support non-blocking handlers.`);
+      throw new Error(
+        `${
+          this.constructor.name
+        } wrapper for testing doesn't support non-blocking handlers.`
+      );
     }
     this.app.use(
-        options.path,
-        async (
-            req: http.IncomingMessage, res: http.ServerResponse,
-            next: Function) => {
-          let response: WebFrameworkResponse|void;
-          try {
-            response = await options.fn(req.headers);
-          } catch (e) {
-            // Unlike in Express, there doesn't seem to be an easily documented
-            // way to silence errors
-            next(e);
-            return;
-          }
-          if (response) {
-            res.statusCode = response.statusCode;
-            res.end(response.message);
-          } else {
-            next();
-          }
-        });
+      options.path,
+      async (
+        req: http.IncomingMessage,
+        res: http.ServerResponse,
+        next: Function
+      ) => {
+        let response: WebFrameworkResponse | void;
+        try {
+          response = await options.fn(req.headers);
+        } catch (e) {
+          // Unlike in Express, there doesn't seem to be an easily documented
+          // way to silence errors
+          next(e);
+          return;
+        }
+        if (response) {
+          res.statusCode = response.statusCode;
+          res.end(response.message);
+        } else {
+          next();
+        }
+      }
+    );
   }
 
   listen(port: number): number {

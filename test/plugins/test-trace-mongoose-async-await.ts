@@ -18,9 +18,9 @@ import * as assert from 'assert';
 import * as mongooseTypes from 'mongoose';
 
 import * as traceTestModule from '../trace';
-import {describeInterop} from '../utils';
+import { describeInterop } from '../utils';
 
-describeInterop<typeof mongooseTypes>('mongoose', (fixture) => {
+describeInterop<typeof mongooseTypes>('mongoose', fixture => {
   let mongoose: typeof mongooseTypes;
   // Simple will be treated as a class constructor.
   // tslint:disable-next-line:variable-name
@@ -30,10 +30,10 @@ describeInterop<typeof mongooseTypes>('mongoose', (fixture) => {
    * Common logic used in multiple tests -- inserts an object into the database.
    * @param doc
    */
-  async function insertTestData(doc: {f1: string, f2: boolean, f3: number}) {
+  async function insertTestData(doc: { f1: string; f2: boolean; f3: number }) {
     const data = new Simple(doc);
     const tracer = traceTestModule.get();
-    await tracer.runInRootSpan({name: 'insert-test-data'}, async (span) => {
+    await tracer.runInRootSpan({ name: 'insert-test-data' }, async span => {
       assert.ok(tracer.isRealSpan(span));
       await data.save();
       span.endSpan();
@@ -47,8 +47,8 @@ describeInterop<typeof mongooseTypes>('mongoose', (fixture) => {
     mongoose = fixture.require();
     await mongoose.connect('mongodb://localhost:27017/testdb');
 
-    const {Schema} = mongoose;
-    const simpleSchema = new Schema({f1: String, f2: Boolean, f3: Number});
+    const { Schema } = mongoose;
+    const simpleSchema = new Schema({ f1: String, f2: Boolean, f3: Number });
     Simple = mongoose.model('Simple', simpleSchema);
   });
 
@@ -64,23 +64,25 @@ describeInterop<typeof mongooseTypes>('mongoose', (fixture) => {
   });
 
   it('Traces creates with async/await', async () => {
-    await insertTestData({f1: 'val', f2: false, f3: 1729});
-    const trace = traceTestModule.getOneTrace(
-        trace => trace.spans.some(span => span.name === 'insert-test-data'));
+    await insertTestData({ f1: 'val', f2: false, f3: 1729 });
+    const trace = traceTestModule.getOneTrace(trace =>
+      trace.spans.some(span => span.name === 'insert-test-data')
+    );
     assert.strictEqual(trace.spans.length, 2);
     assert.strictEqual(trace.spans[1].name, 'mongo-insert');
   });
 
   it('Traces queries with async/await', async () => {
-    await insertTestData({f1: 'sim', f2: false, f3: 1729});
+    await insertTestData({ f1: 'sim', f2: false, f3: 1729 });
     const tracer = traceTestModule.get();
-    await tracer.runInRootSpan({name: 'query-test-data'}, async (span) => {
+    await tracer.runInRootSpan({ name: 'query-test-data' }, async span => {
       assert.ok(tracer.isRealSpan(span));
-      await Simple.findOne({f1: 'sim'});
+      await Simple.findOne({ f1: 'sim' });
       span.endSpan();
     });
-    const trace = traceTestModule.getOneTrace(
-        trace => trace.spans.some(span => span.name === 'query-test-data'));
+    const trace = traceTestModule.getOneTrace(trace =>
+      trace.spans.some(span => span.name === 'query-test-data')
+    );
     assert.strictEqual(trace.spans.length, 2);
     assert.strictEqual(trace.spans[1].name, 'mongo-cursor');
   });

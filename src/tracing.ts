@@ -14,28 +14,34 @@
  * limitations under the License.
  */
 
-import {v1 as stackdriverPropagation} from '@opencensus/propagation-stackdriver';
+import { StackdriverFormat } from '@opencensus/propagation-stackdriver';
 import * as path from 'path';
 
-import {cls, TraceCLSConfig} from './cls';
-import {OpenCensusPropagation, TracePolicy} from './config';
-import {LEVELS, Logger} from './logger';
-import {StackdriverTracer} from './trace-api';
-import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
-import {traceWriter, TraceWriterConfig} from './trace-writer';
-import {BuiltinTracePolicy, TracePolicyConfig} from './tracing-policy';
-import {Component, Forceable, packageNameFromPath, Singleton} from './util';
+import { cls, TraceCLSConfig } from './cls';
+import { OpenCensusPropagation, TracePolicy } from './config';
+import { LEVELS, Logger } from './logger';
+import { StackdriverTracer } from './trace-api';
+import { pluginLoader, PluginLoaderConfig } from './trace-plugin-loader';
+import { traceWriter, TraceWriterConfig } from './trace-writer';
+import { BuiltinTracePolicy, TracePolicyConfig } from './tracing-policy';
+import { Component, Forceable, packageNameFromPath, Singleton } from './util';
 
-export type TopLevelConfig = {
-  enabled: boolean; logLevel: number; clsConfig: TraceCLSConfig;
-  writerConfig: TraceWriterConfig;
-  pluginLoaderConfig: PluginLoaderConfig;
-  tracePolicyConfig: TracePolicyConfig;
-  overrides:
-      {tracePolicy?: TracePolicy; propagation?: OpenCensusPropagation;};
-}|{
-  enabled: false;
-};
+export type TopLevelConfig =
+  | {
+      enabled: boolean;
+      logLevel: number;
+      clsConfig: TraceCLSConfig;
+      writerConfig: TraceWriterConfig;
+      pluginLoaderConfig: PluginLoaderConfig;
+      tracePolicyConfig: TracePolicyConfig;
+      overrides: {
+        tracePolicy?: TracePolicy;
+        propagation?: OpenCensusPropagation;
+      };
+    }
+  | {
+      enabled: false;
+    };
 
 /**
  * A class that represents automatic tracing.
@@ -52,7 +58,9 @@ export class Tracing implements Component {
    * @param traceAgent An object representing the custom tracing API.
    */
   constructor(
-      config: TopLevelConfig, private readonly traceAgent: StackdriverTracer) {
+    config: TopLevelConfig,
+    private readonly traceAgent: StackdriverTracer
+  ) {
     this.config = config;
     let logLevel = config.enabled ? config.logLevel : 0;
     // Clamp the logger level.
@@ -62,11 +70,11 @@ export class Tracing implements Component {
     } else if (logLevel >= defaultLevels.length) {
       logLevel = defaultLevels.length - 1;
     }
-    this.logger = new Logger(
-        {level: defaultLevels[logLevel], tag: '@google-cloud/trace-agent'});
+    this.logger = new Logger({
+      level: defaultLevels[logLevel],
+      tag: '@google-cloud/trace-agent',
+    });
   }
-
-
 
   /**
    * Logs an error message detailing the list of modules that were loaded before
@@ -80,16 +88,20 @@ export class Tracing implements Component {
     const traceModuleName = path.join('@google-cloud', 'trace-agent');
     for (let i = 0; i < filesLoadedBeforeTrace.length; i++) {
       const moduleName = packageNameFromPath(filesLoadedBeforeTrace[i]);
-      if (moduleName && moduleName !== traceModuleName &&
-          modulesLoadedBeforeTrace.indexOf(moduleName) === -1) {
+      if (
+        moduleName &&
+        moduleName !== traceModuleName &&
+        modulesLoadedBeforeTrace.indexOf(moduleName) === -1
+      ) {
         modulesLoadedBeforeTrace.push(moduleName);
       }
     }
     if (modulesLoadedBeforeTrace.length > 0) {
       this.logger.error(
-          'StackdriverTracer#start: Tracing might not work as the following modules',
-          'were loaded before the trace agent was initialized:',
-          `[${modulesLoadedBeforeTrace.sort().join(', ')}]`);
+        'StackdriverTracer#start: Tracing might not work as the following modules',
+        'were loaded before the trace agent was initialized:',
+        `[${modulesLoadedBeforeTrace.sort().join(', ')}]`
+      );
     }
   }
 
@@ -107,36 +119,48 @@ export class Tracing implements Component {
       cls.create(this.config.clsConfig, this.logger);
     } catch (e) {
       this.logger.error(
-          'StackdriverTracer#start: Disabling the Trace Agent for the',
-          `following reason: ${e.message}`);
+        'StackdriverTracer#start: Disabling the Trace Agent for the',
+        `following reason: ${e.message}`
+      );
       this.disable();
       return;
     }
-    traceWriter.get().initialize().catch((err) => {
-      this.logger.error(
+    traceWriter
+      .get()
+      .initialize()
+      .catch(err => {
+        this.logger.error(
           'StackdriverTracer#start: Disabling the Trace Agent for the',
-          `following reason: ${err.message}`);
-      this.disable();
-    });
+          `following reason: ${err.message}`
+        );
+        this.disable();
+      });
     cls.get().enable();
 
-    const tracePolicy = this.config.overrides.tracePolicy ||
-        new BuiltinTracePolicy(this.config.tracePolicyConfig);
+    const tracePolicy =
+      this.config.overrides.tracePolicy ||
+      new BuiltinTracePolicy(this.config.tracePolicyConfig);
     const propagation =
-        this.config.overrides.propagation || stackdriverPropagation;
+      this.config.overrides.propagation || new StackdriverFormat();
 
-    const tracerComponents = {logger: this.logger, tracePolicy, propagation};
+    const tracerComponents = { logger: this.logger, tracePolicy, propagation };
 
     this.traceAgent.enable(
-        this.config.pluginLoaderConfig.tracerConfig, tracerComponents);
-    pluginLoader.create(this.config.pluginLoaderConfig, tracerComponents)
-        .activate();
+      this.config.pluginLoaderConfig.tracerConfig,
+      tracerComponents
+    );
+    pluginLoader
+      .create(this.config.pluginLoaderConfig, tracerComponents)
+      .activate();
 
-    if (typeof this.config.writerConfig.projectId !== 'string' &&
-        typeof this.config.writerConfig.projectId !== 'undefined') {
+    if (
+      typeof this.config.writerConfig.projectId !== 'string' &&
+      typeof this.config.writerConfig.projectId !== 'undefined'
+    ) {
       this.logger.error(
-          'StackdriverTracer#start: config.projectId, if provided, must be a string.',
-          'Disabling trace agent.');
+        'StackdriverTracer#start: config.projectId, if provided, must be a string.',
+        'Disabling trace agent.'
+      );
       this.disable();
       return;
     }

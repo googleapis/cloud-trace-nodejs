@@ -15,15 +15,15 @@
  */
 
 import * as assert from 'assert';
-import {inspect} from 'util';
+import { inspect } from 'util';
 
-import {Constants} from '../src/constants';
-import {Logger} from '../src/logger';
+import { Constants } from '../src/constants';
+import { Logger } from '../src/logger';
 import * as util from '../src/util';
 
-import {TestLogger} from './logger';
+import { TestLogger } from './logger';
 
-const notNull = <T>(x: T|null|undefined): T => {
+const notNull = <T>(x: T | null | undefined): T => {
   assert.notStrictEqual(x, null);
   assert.notStrictEqual(x, undefined);
   return x as T;
@@ -57,7 +57,10 @@ describe('Singleton', () => {
     it('creates a new instance when [FORCE_NEW] is true in the config', () => {
       const singleton = new util.Singleton(MyClass);
       const createResult1 = singleton.create({}, logger);
-      const createResult2 = singleton.create({[util.FORCE_NEW]: true}, logger);
+      const createResult2 = singleton.create(
+        { [util.FORCE_NEW]: true },
+        logger
+      );
       assert.notStrictEqual(createResult1, createResult2);
     });
   });
@@ -77,7 +80,7 @@ describe('Singleton', () => {
     it('does not return a stale value', () => {
       const singleton = new util.Singleton(MyClass);
       singleton.create({}, logger);
-      const createResult = singleton.create({[util.FORCE_NEW]: true}, logger);
+      const createResult = singleton.create({ [util.FORCE_NEW]: true }, logger);
       const getResult = singleton.get();
       assert.strictEqual(getResult, createResult);
     });
@@ -86,7 +89,7 @@ describe('Singleton', () => {
 
 describe('util.lastOf', () => {
   it('should return the last non-null/undefined/NaN parameter', () => {
-    const {lastOf} = util;
+    const { lastOf } = util;
     assert.strictEqual(lastOf<number>(1), 1);
     assert.strictEqual(lastOf<number>(1, 2, null), 2);
     assert.strictEqual(lastOf<number>(1, null, 2), 2);
@@ -94,7 +97,7 @@ describe('util.lastOf', () => {
     assert.strictEqual(lastOf<number>(1, 2, NaN), 2);
     assert.strictEqual(lastOf<number>(1, 2, null, undefined, NaN, -NaN), 2);
     assert.strictEqual(lastOf<number>(1, 0), 0);
-    assert.strictEqual(lastOf<number|string>(1, ''), '');
+    assert.strictEqual(lastOf<number | string>(1, ''), '');
   });
 });
 
@@ -110,8 +113,9 @@ describe('util.truncate', () => {
   it('should handle unicode characters', () => {
     const longName = new Array(120).join('☃');
     assert.strictEqual(
-        util.truncate(longName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT),
-        `${new Array(42).join('☃')}...`);
+      util.truncate(longName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT),
+      `${new Array(42).join('☃')}...`
+    );
   });
 });
 
@@ -124,16 +128,23 @@ describe('util.parseContextFromHeader', () => {
       assert.strictEqual(result.options, 1);
     });
 
-    it('should return expected values:' +
-           '123456/123456123456123456123456123456123456;o=1',
-       () => {
-         const result = notNull(util.parseContextFromHeader(
-             '123456/123456123456123456123456123456123456;o=1'));
-         assert.strictEqual(result.traceId, '123456');
-         assert.strictEqual(
-             result.spanId, '123456123456123456123456123456123456');
-         assert.strictEqual(result.options, 1);
-       });
+    it(
+      'should return expected values:' +
+        '123456/123456123456123456123456123456123456;o=1',
+      () => {
+        const result = notNull(
+          util.parseContextFromHeader(
+            '123456/123456123456123456123456123456123456;o=1'
+          )
+        );
+        assert.strictEqual(result.traceId, '123456');
+        assert.strictEqual(
+          result.spanId,
+          '123456123456123456123456123456123456'
+        );
+        assert.strictEqual(result.options, 1);
+      }
+    );
 
     it('should return expected values: 123456/667', () => {
       const result = notNull(util.parseContextFromHeader('123456/667'));
@@ -145,8 +156,15 @@ describe('util.parseContextFromHeader', () => {
 
   describe('invalid inputs', () => {
     const inputs = [
-      '', null, undefined, '123456', '123456;o=1', 'o=1;123456', '123;456;o=1',
-      '123/o=1;456', '123/abc/o=1'
+      '',
+      null,
+      undefined,
+      '123456',
+      '123456;o=1',
+      'o=1;123456',
+      '123;456;o=1',
+      '123/o=1;456',
+      '123/abc/o=1',
     ];
     inputs.forEach(s => {
       it(`should reject ${s}`, () => {
@@ -161,8 +179,8 @@ describe('util.parseContextFromHeader', () => {
 
 describe('util.generateTraceContext', () => {
   const inputs: util.TraceContext[] = [
-    {traceId: '123456', spanId: '667', options: 1},
-    {traceId: '123456', spanId: '667', options: undefined}
+    { traceId: '123456', spanId: '667', options: 1 },
+    { traceId: '123456', spanId: '667', options: undefined },
   ];
 
   inputs.forEach(s => {
@@ -183,67 +201,72 @@ describe('util.generateTraceContext', () => {
 describe('binary trace context', () => {
   const commonTraceId = 'ffeeddccbbaa99887766554433221100';
   const testCases: Array<{
-    structured: util.TraceContext | null; binary: string; description: string;
-  }> =
-      [
-        {
-          structured: {
-            traceId: commonTraceId,
-            spanId: 0x111111111111.toString(),
-            options: 1
-          },
-          binary: `0000${commonTraceId}01${'0000111111111111'}02${'01'}`,
-          description: 'trace context with 48-bit span ID'
-        },
-        {
-          structured: {
-            traceId: commonTraceId,
-            spanId: '8603657889541918976',
-            options: 1
-          },
-          binary: `0000${commonTraceId}01${'7766554433221100'}02${'01'}`,
-          description: 'trace context with 64-bit span ID'
-        },
-        {
-          structured: {traceId: commonTraceId, spanId: '1', options: 255},
-          binary: `0000${commonTraceId}01${'0000000000000001'}02${'ff'}`,
-          description: 'trace context with 8-bit options'
-        },
-        {
-          structured: {traceId: commonTraceId, spanId: '1'},
-          binary: `0000${commonTraceId}01${'0000000000000001'}02${'00'}`,
-          description: 'trace context with no options'
-        },
-        {
-          structured: null,
-          binary: '00',
-          description: 'incomplete binary trace context (by returning null)'
-        },
-        {
-          structured: null,
-          binary: '0'.repeat(58),
-          description: 'bad binary trace context (by returning null)'
-        }
-      ];
+    structured: util.TraceContext | null;
+    binary: string;
+    description: string;
+  }> = [
+    {
+      structured: {
+        traceId: commonTraceId,
+        spanId: (0x111111111111).toString(),
+        options: 1,
+      },
+      binary: `0000${commonTraceId}01${'0000111111111111'}02${'01'}`,
+      description: 'trace context with 48-bit span ID',
+    },
+    {
+      structured: {
+        traceId: commonTraceId,
+        spanId: '8603657889541918976',
+        options: 1,
+      },
+      binary: `0000${commonTraceId}01${'7766554433221100'}02${'01'}`,
+      description: 'trace context with 64-bit span ID',
+    },
+    {
+      structured: { traceId: commonTraceId, spanId: '1', options: 255 },
+      binary: `0000${commonTraceId}01${'0000000000000001'}02${'ff'}`,
+      description: 'trace context with 8-bit options',
+    },
+    {
+      structured: { traceId: commonTraceId, spanId: '1' },
+      binary: `0000${commonTraceId}01${'0000000000000001'}02${'00'}`,
+      description: 'trace context with no options',
+    },
+    {
+      structured: null,
+      binary: '00',
+      description: 'incomplete binary trace context (by returning null)',
+    },
+    {
+      structured: null,
+      binary: '0'.repeat(58),
+      description: 'bad binary trace context (by returning null)',
+    },
+  ];
 
   describe('util.serializeTraceContext', () => {
     testCases.forEach(
-        testCase => testCase.structured &&
-            it(`should serialize ${testCase.description}`, () => {
-                      assert.deepStrictEqual(
-                          util.serializeTraceContext(testCase.structured!)
-                              .toString('hex'),
-                          testCase.binary);
-                    }));
+      testCase =>
+        testCase.structured &&
+        it(`should serialize ${testCase.description}`, () => {
+          assert.deepStrictEqual(
+            util.serializeTraceContext(testCase.structured!).toString('hex'),
+            testCase.binary
+          );
+        })
+    );
   });
 
   describe('util.deserializeTraceContext', () => {
-    testCases.forEach(
-        testCase => it(`should deserialize ${testCase.description}`, () => {
-          assert.deepStrictEqual(
-              util.deserializeTraceContext(Buffer.from(testCase.binary, 'hex')),
-              testCase.structured &&
-                  Object.assign({options: 0}, testCase.structured));
-        }));
+    testCases.forEach(testCase =>
+      it(`should deserialize ${testCase.description}`, () => {
+        assert.deepStrictEqual(
+          util.deserializeTraceContext(Buffer.from(testCase.binary, 'hex')),
+          testCase.structured &&
+            Object.assign({ options: 0 }, testCase.structured)
+        );
+      })
+    );
   });
 });
