@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import * as shimmer from 'shimmer';
 
-import {Patch, Plugin, Span, Tracer} from '../plugin-types';
+import { Patch, Plugin, Span, Tracer } from '../plugin-types';
 
-import {pg_6, pg_7} from './types';
+import { pg_6, pg_7 } from './types';
 
 // TS: Client#query also accepts a callback as a last argument, but TS cannot
 // detect this as it's a dependent type. So we don't specify it here.
 type ClientQueryArguments =
-    [Submittable & pg_7.QueryConfig]|[string]|[string, {}];
-type PG7QueryReturnValue = (pg_7.QueryConfig&({submit: Function}&EventEmitter)|
-                            pg_7.Query)|Promise<pg_7.QueryResult>;
-type Callback<T> = (err: Error|null, res?: T) => void;
+  | [Submittable & pg_7.QueryConfig]
+  | [string]
+  | [string, {}];
+type PG7QueryReturnValue =
+  | (pg_7.QueryConfig & ({ submit: Function } & EventEmitter) | pg_7.Query)
+  | Promise<pg_7.QueryResult>;
+type Callback<T> = (err: Error | null, res?: T) => void;
 
 const noOp = () => {};
 
@@ -49,7 +52,10 @@ function populateLabelsFromInputs(span: Span, args: ClientQueryArguments) {
 }
 
 function populateLabelsFromOutputs(
-    span: Span, err: Error|null, res?: pg_7.QueryResult) {
+  span: Span,
+  err: Error | null,
+  res?: pg_7.QueryResult
+) {
   if (err) {
     span.addLabel('error', err);
   }
@@ -65,14 +71,14 @@ function populateLabelsFromOutputs(
  * Partial shape of objects returned by Client#query. Only contains methods that
  * are significant to the query lifecycle.
  */
-type Submittable = {
+interface Submittable {
   // Called when the query is completed.
   handleReadyForQuery: () => void;
   // Called when an error occurs.
   handleError: () => void;
   // A field that is populated when the Submittable is a Query object.
   _result?: pg_7.QueryResult;
-};
+}
 
 /**
  * Utility class to help organize patching logic.
@@ -82,23 +88,25 @@ class PostgresPatchUtility {
   readonly maybePopulateLabelsFromOutputs: typeof populateLabelsFromOutputs;
 
   constructor(private readonly tracer: Tracer) {
-    this.maybePopulateLabelsFromInputs =
-        tracer.enhancedDatabaseReportingEnabled() ? populateLabelsFromInputs :
-                                                    noOp;
-    this.maybePopulateLabelsFromOutputs =
-        tracer.enhancedDatabaseReportingEnabled() ? populateLabelsFromOutputs :
-                                                    noOp;
+    this.maybePopulateLabelsFromInputs = tracer.enhancedDatabaseReportingEnabled()
+      ? populateLabelsFromInputs
+      : noOp;
+    this.maybePopulateLabelsFromOutputs = tracer.enhancedDatabaseReportingEnabled()
+      ? populateLabelsFromOutputs
+      : noOp;
   }
 
   patchSubmittable(pgQuery: Submittable, span: Span): Submittable {
     let spanEnded = false;
-    const {maybePopulateLabelsFromOutputs} = this;
+    const { maybePopulateLabelsFromOutputs } = this;
     if (pgQuery.handleError) {
-      shimmer.wrap(pgQuery, 'handleError', (origCallback) => {
+      shimmer.wrap(pgQuery, 'handleError', origCallback => {
         // Elements of args are not individually accessed.
         // tslint:disable:no-any
         return this.tracer.wrap(function(
-            this: Submittable, ...args: any[]): void {
+          this: Submittable,
+          ...args: any[]
+        ): void {
           // tslint:enable:no-any
           if (!spanEnded) {
             const err: Error = args[0];
@@ -113,11 +121,13 @@ class PostgresPatchUtility {
       });
     }
     if (pgQuery.handleReadyForQuery) {
-      shimmer.wrap(pgQuery, 'handleReadyForQuery', (origCallback) => {
+      shimmer.wrap(pgQuery, 'handleReadyForQuery', origCallback => {
         // Elements of args are not individually accessed.
         // tslint:disable:no-any
         return this.tracer.wrap(function(
-            this: Submittable, ...args: any[]): void {
+          this: Submittable,
+          ...args: any[]
+        ): void {
           // tslint:enable:no-any
           if (!spanEnded) {
             maybePopulateLabelsFromOutputs(span, null, this._result);
@@ -133,28 +143,33 @@ class PostgresPatchUtility {
     return pgQuery;
   }
 
-  patchCallback(callback: Callback<pg_7.QueryResult>, span: Span):
-      Callback<pg_7.QueryResult> {
-    return this.tracer.wrap((err: Error|null, res?: pg_7.QueryResult) => {
+  patchCallback(
+    callback: Callback<pg_7.QueryResult>,
+    span: Span
+  ): Callback<pg_7.QueryResult> {
+    return this.tracer.wrap((err: Error | null, res?: pg_7.QueryResult) => {
       this.maybePopulateLabelsFromOutputs(span, err, res);
       span.endSpan();
       callback(err, res);
     });
   }
 
-  patchPromise(promise: Promise<pg_7.QueryResult>, span: Span):
-      Promise<pg_7.QueryResult> {
-    return promise = promise.then(
-               (res) => {
-                 this.maybePopulateLabelsFromOutputs(span, null, res);
-                 span.endSpan();
-                 return res;
-               },
-               (err) => {
-                 this.maybePopulateLabelsFromOutputs(span, err);
-                 span.endSpan();
-                 throw err;
-               });
+  patchPromise(
+    promise: Promise<pg_7.QueryResult>,
+    span: Span
+  ): Promise<pg_7.QueryResult> {
+    return (promise = promise.then(
+      res => {
+        this.maybePopulateLabelsFromOutputs(span, null, res);
+        span.endSpan();
+        return res;
+      },
+      err => {
+        this.maybePopulateLabelsFromOutputs(span, err);
+        span.endSpan();
+        throw err;
+      }
+    ));
   }
 }
 
@@ -167,7 +182,7 @@ const plugin: Plugin = [
     patch: (Client, api) => {
       const pgPatch = new PostgresPatchUtility(api);
 
-      shimmer.wrap(Client.prototype, 'query', (query) => {
+      shimmer.wrap(Client.prototype, 'query', query => {
         // Every call to Client#query will have a Submittable object associated
         // with it. We need to patch two handlers (handleReadyForQuery and
         // handleError) to end a span.
@@ -180,9 +195,11 @@ const plugin: Plugin = [
         //   either handleReadyForQuery or handleError. So we don't need to
         //   separately patch the callback.
         return function query_trace(
-            this: pg_6.Client, ...args: ClientQueryArguments) {
+          this: pg_6.Client,
+          ...args: ClientQueryArguments
+        ) {
           if (args.length >= 1) {
-            const span = api.createChildSpan({name: 'pg-query'});
+            const span = api.createChildSpan({ name: 'pg-query' });
             if (!api.isRealSpan(span)) {
               return query.apply(this, args);
             }
@@ -193,7 +210,9 @@ const plugin: Plugin = [
               return query.apply(this, args);
             } else {
               return pgPatch.patchSubmittable(
-                  query.apply(this, args) as Submittable, span);
+                query.apply(this, args) as Submittable,
+                span
+              );
             }
           } else {
             // query was called with no arguments.
@@ -208,7 +227,7 @@ const plugin: Plugin = [
     // tslint:disable-next-line:variable-name
     unpatch(Client) {
       shimmer.unwrap(Client.prototype, 'query');
-    }
+    },
   } as Patch<typeof pg_6.Client>,
   {
     file: 'lib/client.js',
@@ -217,9 +236,9 @@ const plugin: Plugin = [
     // tslint:disable-next-line:variable-name
     patch: (Client, api) => {
       const pgPatch = new PostgresPatchUtility(api);
-      shimmer.wrap(Client.prototype, 'query', (query) => {
+      shimmer.wrap(Client.prototype, 'query', query => {
         return function query_trace(this: pg_7.Client) {
-          const span = api.createChildSpan({name: 'pg-query'});
+          const span = api.createChildSpan({ name: 'pg-query' });
           if (!api.isRealSpan(span)) {
             return query.apply(this, arguments);
           }
@@ -237,8 +256,10 @@ const plugin: Plugin = [
           // See: https://node-postgres.com/guides/upgrading
           const argLength = arguments.length;
           if (argLength >= 1) {
-            const args: ClientQueryArguments =
-                Array.prototype.slice.call(arguments, 0);
+            const args: ClientQueryArguments = Array.prototype.slice.call(
+              arguments,
+              0
+            );
 
             // Extract query text and values, if needed.
             pgPatch.maybePopulateLabelsFromInputs(span, args);
@@ -248,7 +269,9 @@ const plugin: Plugin = [
             const callback = args[args.length - 1];
             if (typeof callback === 'function') {
               args[args.length - 1] = pgPatch.patchCallback(
-                  callback as Callback<pg_7.QueryResult>, span);
+                callback as Callback<pg_7.QueryResult>,
+                span
+              );
             } else if (typeof args[0] === 'object') {
               pgPatch.patchSubmittable(args[0] as Submittable, span);
             }
@@ -275,8 +298,8 @@ const plugin: Plugin = [
     // tslint:disable-next-line:variable-name
     unpatch(Client) {
       shimmer.unwrap(Client.prototype, 'query');
-    }
-  } as Patch<typeof pg_7.Client>
+    },
+  } as Patch<typeof pg_7.Client>,
 ];
 
 export = plugin;

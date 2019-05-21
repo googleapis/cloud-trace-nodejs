@@ -19,19 +19,22 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-import {Config, defaultConfig, TracePolicy} from './config';
+import { Config, defaultConfig, TracePolicy } from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
-import {Tracing, TopLevelConfig} from './tracing';
-import {FORCE_NEW, Forceable, lastOf} from './util';
-import {Constants} from './constants';
-import {TraceCLSMechanism} from './cls';
-import {StackdriverTracer} from './trace-api';
-import {BuiltinTracePolicy, TraceContextHeaderBehavior} from './tracing-policy';
-import {config} from './plugins/types/bluebird_3';
+import { Tracing, TopLevelConfig } from './tracing';
+import { FORCE_NEW, Forceable, lastOf } from './util';
+import { Constants } from './constants';
+import { TraceCLSMechanism } from './cls';
+import { StackdriverTracer } from './trace-api';
+import {
+  BuiltinTracePolicy,
+  TraceContextHeaderBehavior,
+} from './tracing-policy';
+import { config } from './plugins/types/bluebird_3';
 
-export {Config, PluginTypes};
+export { Config, PluginTypes };
 
 let traceAgent: StackdriverTracer;
 
@@ -45,31 +48,46 @@ let traceAgent: StackdriverTracer;
 function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
   let envSetConfig = {};
   if (!!process.env.GCLOUD_TRACE_CONFIG) {
-    envSetConfig =
-        require(path.resolve(process.env.GCLOUD_TRACE_CONFIG!)) as Config;
+    envSetConfig = require(path.resolve(
+      process.env.GCLOUD_TRACE_CONFIG!
+    )) as Config;
   }
   // Configuration order of precedence:
   // 1. Environment Variables
   // 2. Project Config
   // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
   // 4. Default Config (as specified in './config')
-  const mergedConfig: (typeof defaultConfig)&Forceable<Config> =
-      extend(true, {}, defaultConfig, envSetConfig, userConfig);
+  const mergedConfig: (typeof defaultConfig) & Forceable<Config> = extend(
+    true,
+    {},
+    defaultConfig,
+    envSetConfig,
+    userConfig
+  );
   const forceNew = userConfig[FORCE_NEW];
 
   // Throw for improper configurations.
-  const userSetKeys =
-      new Set([...Object.keys(envSetConfig), ...Object.keys(userConfig)]);
+  const userSetKeys = new Set([
+    ...Object.keys(envSetConfig),
+    ...Object.keys(userConfig),
+  ]);
   if (userSetKeys.has('tracePolicy')) {
     // If the user specified tracePolicy, they should not have also set these
     // other fields.
-    const forbiddenKeys =
-        ['ignoreUrls', 'ignoreMethods', 'samplingRate', 'contextHeaderBehavior']
-            .filter(key => userSetKeys.has(key))
-            .map(key => `config.${key}`);
+    const forbiddenKeys = [
+      'ignoreUrls',
+      'ignoreMethods',
+      'samplingRate',
+      'contextHeaderBehavior',
+    ]
+      .filter(key => userSetKeys.has(key))
+      .map(key => `config.${key}`);
     if (forbiddenKeys.length > 0) {
-      throw new Error(`config.tracePolicy and any of [${
-          forbiddenKeys.join('\, ')}] can't be specified at the same time.`);
+      throw new Error(
+        `config.tracePolicy and any of [${forbiddenKeys.join(
+          ', '
+        )}] can't be specified at the same time.`
+      );
     }
   }
 
@@ -78,78 +96,90 @@ function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
     // what it should be.
     const ahAvailable = semver.satisfies(process.version, '>=8');
     if (clsMechanism === 'auto') {
-      return ahAvailable ? TraceCLSMechanism.ASYNC_HOOKS :
-                           TraceCLSMechanism.ASYNC_LISTENER;
+      return ahAvailable
+        ? TraceCLSMechanism.ASYNC_HOOKS
+        : TraceCLSMechanism.ASYNC_LISTENER;
     }
     return clsMechanism as TraceCLSMechanism;
   };
-  const getInternalRootSpanNameOverride =
-      (rootSpanNameOverride: string|((name: string) => string)) => {
-        // Make rootSpanNameOverride a function if not already.
-        switch (typeof rootSpanNameOverride) {
-          case 'string':
-            return () => rootSpanNameOverride;
-          case 'function':
-            return rootSpanNameOverride;
-          default:
-            return (name: string) => name;
-        }
-      };
+  const getInternalRootSpanNameOverride = (
+    rootSpanNameOverride: string | ((name: string) => string)
+  ) => {
+    // Make rootSpanNameOverride a function if not already.
+    switch (typeof rootSpanNameOverride) {
+      case 'string':
+        return () => rootSpanNameOverride;
+      case 'function':
+        return rootSpanNameOverride;
+      default:
+        return (name: string) => name;
+    }
+  };
 
   return {
     [FORCE_NEW]: forceNew,
     enabled: mergedConfig.enabled,
     logLevel: lastOf(
-        mergedConfig.logLevel, Number(process.env.GCLOUD_TRACE_LOGLEVEL)),
+      mergedConfig.logLevel,
+      Number(process.env.GCLOUD_TRACE_LOGLEVEL)
+    ),
     clsConfig: {
       [FORCE_NEW]: forceNew,
-      mechanism: getInternalClsMechanism(mergedConfig.clsMechanism)
+      mechanism: getInternalClsMechanism(mergedConfig.clsMechanism),
     },
     writerConfig: {
       [FORCE_NEW]: forceNew,
-      projectId: lastOf<string|undefined>(
-          mergedConfig.projectId, process.env.GCLOUD_PROJECT),
+      projectId: lastOf<string | undefined>(
+        mergedConfig.projectId,
+        process.env.GCLOUD_PROJECT
+      ),
       onUncaughtException: mergedConfig.onUncaughtException,
       bufferSize: mergedConfig.bufferSize,
       flushDelaySeconds: mergedConfig.flushDelaySeconds,
       stackTraceLimit: mergedConfig.stackTraceLimit,
       maximumLabelValueSize: Math.min(
-          mergedConfig.maximumLabelValueSize,
-          Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT),
+        mergedConfig.maximumLabelValueSize,
+        Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT
+      ),
       serviceContext: {
-        service: lastOf<string|undefined>(
-            mergedConfig.serviceContext.service, process.env.GAE_MODULE_NAME,
-            process.env.GAE_SERVICE),
-        version: lastOf<string|undefined>(
-            mergedConfig.serviceContext.version, process.env.GAE_MODULE_VERSION,
-            process.env.GAE_VERSION),
-        minorVersion: lastOf<string|undefined>(
-            mergedConfig.serviceContext.minorVersion,
-            process.env.GAE_MINOR_VERSION)
-      }
+        service: lastOf<string | undefined>(
+          mergedConfig.serviceContext.service,
+          process.env.GAE_MODULE_NAME,
+          process.env.GAE_SERVICE
+        ),
+        version: lastOf<string | undefined>(
+          mergedConfig.serviceContext.version,
+          process.env.GAE_MODULE_VERSION,
+          process.env.GAE_VERSION
+        ),
+        minorVersion: lastOf<string | undefined>(
+          mergedConfig.serviceContext.minorVersion,
+          process.env.GAE_MINOR_VERSION
+        ),
+      },
     },
     pluginLoaderConfig: {
       [FORCE_NEW]: forceNew,
-      plugins: {...mergedConfig.plugins},
+      plugins: { ...mergedConfig.plugins },
       tracerConfig: {
         enhancedDatabaseReporting: mergedConfig.enhancedDatabaseReporting,
-        rootSpanNameOverride:
-            getInternalRootSpanNameOverride(mergedConfig.rootSpanNameOverride),
+        rootSpanNameOverride: getInternalRootSpanNameOverride(
+          mergedConfig.rootSpanNameOverride
+        ),
         spansPerTraceHardLimit: mergedConfig.spansPerTraceHardLimit,
-        spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit
-      }
+        spansPerTraceSoftLimit: mergedConfig.spansPerTraceSoftLimit,
+      },
     },
     tracePolicyConfig: {
       samplingRate: mergedConfig.samplingRate,
       ignoreMethods: mergedConfig.ignoreMethods,
       ignoreUrls: mergedConfig.ignoreUrls,
-      contextHeaderBehavior: mergedConfig.contextHeaderBehavior as
-          TraceContextHeaderBehavior
+      contextHeaderBehavior: mergedConfig.contextHeaderBehavior as TraceContextHeaderBehavior,
     },
     overrides: {
       tracePolicy: mergedConfig.tracePolicy,
-      propagation: mergedConfig.propagation
-    }
+      propagation: mergedConfig.propagation,
+    },
   };
 }
 
@@ -170,22 +200,25 @@ export function start(config?: Config): PluginTypes.Tracer {
   const normalizedConfig = initConfig(config || {});
   // Determine the preferred context propagation mechanism, as
   // continuation-local-storage should be loaded before any modules that do I/O.
-  if (normalizedConfig.enabled &&
-      normalizedConfig.clsConfig.mechanism ===
-          TraceCLSMechanism.ASYNC_LISTENER) {
+  if (
+    normalizedConfig.enabled &&
+    normalizedConfig.clsConfig.mechanism === TraceCLSMechanism.ASYNC_LISTENER
+  ) {
     // This is the earliest we can load continuation-local-storage.
     require('continuation-local-storage');
   }
 
   if (!traceAgent) {
-    traceAgent = new (require('./trace-api').StackdriverTracer)();
+    traceAgent = new (require('./trace-api')).StackdriverTracer();
   }
 
   try {
     let tracing: Tracing;
     try {
-      tracing =
-          require('./tracing').tracing.create(normalizedConfig, traceAgent);
+      tracing = require('./tracing').tracing.create(
+        normalizedConfig,
+        traceAgent
+      );
     } catch (e) {
       // An error could be thrown if create() is called multiple times.
       // It's not a helpful error message for the end user, so make it more
@@ -207,7 +240,7 @@ export function start(config?: Config): PluginTypes.Tracer {
  */
 export function get(): PluginTypes.Tracer {
   if (!traceAgent) {
-    traceAgent = new (require('./trace-api').StackdriverTracer)();
+    traceAgent = new (require('./trace-api')).StackdriverTracer();
   }
   return traceAgent;
 }

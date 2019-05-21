@@ -19,11 +19,15 @@ import * as path from 'path';
 import * as hook from 'require-in-the-middle';
 import * as semver from 'semver';
 
-import {TracePolicy} from './config';
-import {Logger} from './logger';
-import {Intercept, Monkeypatch, Plugin} from './plugin-types';
-import {StackdriverTracer, StackdriverTracerComponents, StackdriverTracerConfig} from './trace-api';
-import {Singleton} from './util';
+import { TracePolicy } from './config';
+import { Logger } from './logger';
+import { Intercept, Monkeypatch, Plugin } from './plugin-types';
+import {
+  StackdriverTracer,
+  StackdriverTracerComponents,
+  StackdriverTracerConfig,
+} from './trace-api';
+import { Singleton } from './util';
 
 /**
  * Plugins are user-provided objects containing functions that should be run
@@ -39,7 +43,7 @@ import {Singleton} from './util';
 export interface PluginLoaderConfig {
   // An object which contains paths to files that should be loaded as plugins
   // upon loading a module with a given name.
-  plugins: {[pluginName: string]: string};
+  plugins: { [pluginName: string]: string };
   tracerConfig: StackdriverTracerConfig;
 }
 
@@ -109,9 +113,10 @@ export class ModulePluginWrapper implements PluginWrapper {
    * @param logger The logger to use.
    */
   constructor(
-      options: ModulePluginWrapperOptions,
-      private readonly traceConfig: StackdriverTracerConfig,
-      components: StackdriverTracerComponents) {
+    options: ModulePluginWrapperOptions,
+    private readonly traceConfig: StackdriverTracerConfig,
+    components: StackdriverTracerComponents
+  ) {
     this.logger = components.logger;
     this.components = components;
     this.name = options.name;
@@ -153,45 +158,57 @@ export class ModulePluginWrapper implements PluginWrapper {
     const plugin = this.getPluginExportedValue();
     // Get a list of supported patches. This is the subset of objects in the
     // plugin exported value with matching file/version fields.
-    const supportedPatches: Array<Partial<Monkeypatch<T>&Intercept<T>>> =
-        plugin.filter(
-            patch => semver.satisfies(version, patch.versions || '*') &&
-                (file === patch.file || (!file && !patch.file)));
+    const supportedPatches: Array<
+      Partial<Monkeypatch<T> & Intercept<T>>
+    > = plugin.filter(
+      patch =>
+        semver.satisfies(version, patch.versions || '*') &&
+        (file === patch.file || (!file && !patch.file))
+    );
     if (supportedPatches.length > 1) {
-      this.logger.warn(`PluginWrapper#applyPlugin: [${
-          logString}] Plugin has more than one patch/intercept object for this file. Applying all.`);
+      this.logger.warn(
+        `PluginWrapper#applyPlugin: [${logString}] Plugin has more than one patch/intercept object for this file. Applying all.`
+      );
     }
 
     // Apply each patch object.
-    return supportedPatches.reduce<T>((exportedValue, patch) => {
-      // TODO(kjin): The only benefit of creating a new StackdriverTracer object
-      // per patched file is to give us granularity in log messages. See if we
-      // can refactor the StackdriverTracer class to avoid this.
+    return supportedPatches.reduce<T>(
+      (exportedValue, patch) => {
+        // TODO(kjin): The only benefit of creating a new StackdriverTracer object
+        // per patched file is to give us granularity in log messages. See if we
+        // can refactor the StackdriverTracer class to avoid this.
 
-      this.logger.info(
-          `PluginWrapper#applyPlugin: [${logString}] Applying plugin.`);
-      if (patch.patch) {
-        patch.patch(exportedValue, this.createTraceAgentInstance(logString));
-        // Queue a function to run if the plugin gets disabled.
-        if (patch.unpatch) {
-          const unpatch = patch.unpatch;
-          this.unpatchFns.push(() => {
-            this.logger.info(
-                `PluginWrapper#unapplyAll: [${logString}] Unpatching file.`);
-            unpatch(exportedValue);
-          });
+        this.logger.info(
+          `PluginWrapper#applyPlugin: [${logString}] Applying plugin.`
+        );
+        if (patch.patch) {
+          patch.patch(exportedValue, this.createTraceAgentInstance(logString));
+          // Queue a function to run if the plugin gets disabled.
+          if (patch.unpatch) {
+            const unpatch = patch.unpatch;
+            this.unpatchFns.push(() => {
+              this.logger.info(
+                `PluginWrapper#unapplyAll: [${logString}] Unpatching file.`
+              );
+              unpatch(exportedValue);
+            });
+          }
+          // The patch object should only have either patch() or intercept().
+          if (patch.intercept) {
+            this.logger.warn(
+              `PluginWrapper#applyPlugin: [${logString}] Patch object has both patch() and intercept() for this file. Only applying patch().`
+            );
+          }
+        } else if (patch.intercept) {
+          exportedValue = patch.intercept(
+            exportedValue,
+            this.createTraceAgentInstance(file)
+          );
         }
-        // The patch object should only have either patch() or intercept().
-        if (patch.intercept) {
-          this.logger.warn(`PluginWrapper#applyPlugin: [${
-              logString}] Patch object has both patch() and intercept() for this file. Only applying patch().`);
-        }
-      } else if (patch.intercept) {
-        exportedValue =
-            patch.intercept(exportedValue, this.createTraceAgentInstance(file));
-      }
-      return exportedValue;
-    }, moduleExports as T);
+        return exportedValue;
+      },
+      moduleExports as T
+    );
   }
 
   // Helper function to get the cached plugin value if it wasn't loaded yet.
@@ -221,11 +238,14 @@ export class CorePluginWrapper implements PluginWrapper {
   private readonly children: ModulePluginWrapper[];
 
   constructor(
-      config: CorePluginWrapperOptions, traceConfig: StackdriverTracerConfig,
-      components: StackdriverTracerComponents) {
+    config: CorePluginWrapperOptions,
+    traceConfig: StackdriverTracerConfig,
+    components: StackdriverTracerComponents
+  ) {
     this.logger = components.logger;
     this.children = config.children.map(
-        config => new ModulePluginWrapper(config, traceConfig, components));
+      config => new ModulePluginWrapper(config, traceConfig, components)
+    );
     // Eagerly load core plugins into memory.
     // This prevents issues related to circular dependencies.
     this.children.forEach(child => child.getPluginExportedValue());
@@ -254,9 +274,9 @@ export class CorePluginWrapper implements PluginWrapper {
    */
   applyPlugin<T>(moduleExports: T, file: string, version: string): T {
     return this.children.reduce(
-        (exportedValue, child) =>
-            child.applyPlugin(exportedValue, file, version),
-        moduleExports);
+      (exportedValue, child) => child.applyPlugin(exportedValue, file, version),
+      moduleExports
+    );
   }
 }
 
@@ -264,7 +284,7 @@ export class CorePluginWrapper implements PluginWrapper {
 export enum PluginLoaderState {
   NO_HOOK,
   ACTIVATED,
-  DEACTIVATED
+  DEACTIVATED,
 }
 
 /**
@@ -281,7 +301,7 @@ export class PluginLoader {
   // A map mapping module names to their respective plugins.
   private readonly pluginMap: Map<string, PluginWrapper> = new Map();
   // A map caching version strings for a module based on their base path.
-  private readonly moduleVersionCache: Map<string, string|null> = new Map();
+  private readonly moduleVersionCache: Map<string, string | null> = new Map();
   // The current state of the plugin loader.
   private internalState: PluginLoaderState = PluginLoaderState.NO_HOOK;
 
@@ -291,38 +311,48 @@ export class PluginLoader {
    * @param logger The logger to use.
    */
   constructor(
-      config: PluginLoaderConfig, components: StackdriverTracerComponents) {
+    config: PluginLoaderConfig,
+    components: StackdriverTracerComponents
+  ) {
     this.logger = components.logger;
     const nonCoreModules: string[] = [];
     // Initialize ALL of the PluginWrapper objects here.
     // See CorePluginWrapper docs for why core modules are processed
     // differently.
-    const coreWrapperConfig: CorePluginWrapperOptions = {children: []};
+    const coreWrapperConfig: CorePluginWrapperOptions = { children: [] };
     Object.keys(config.plugins).forEach(key => {
       const value = config.plugins[key];
       // Core module plugins share a common key.
-      const coreModule = key === PluginLoader.CORE_MODULE ||
-          builtinModules.indexOf(key) !== -1;
+      const coreModule =
+        key === PluginLoader.CORE_MODULE || builtinModules.indexOf(key) !== -1;
 
       if (value) {
         // Convert the given string value to a PluginConfigEntry
         // (unless it's falsey).
         if (coreModule) {
-          coreWrapperConfig.children.push({name: key, path: value});
+          coreWrapperConfig.children.push({ name: key, path: value });
         } else {
           this.pluginMap.set(
-              key,
-              new ModulePluginWrapper(
-                  {name: key, path: value}, config.tracerConfig, components));
+            key,
+            new ModulePluginWrapper(
+              { name: key, path: value },
+              config.tracerConfig,
+              components
+            )
+          );
         }
         nonCoreModules.push(key);
       }
     });
     if (coreWrapperConfig.children.length > 0) {
       this.pluginMap.set(
-          PluginLoader.CORE_MODULE,
-          new CorePluginWrapper(
-              coreWrapperConfig, config.tracerConfig, components));
+        PluginLoader.CORE_MODULE,
+        new CorePluginWrapper(
+          coreWrapperConfig,
+          config.tracerConfig,
+          components
+        )
+      );
     }
 
     // Define the function that will attach a require hook upon activate.
@@ -331,10 +361,11 @@ export class PluginLoader {
     // * This hook is called at least for each file that is loaded for
     //   modules with associated plugins.
     // TODO(kjin): This should be encapsulated in a class.
-    this.enableRequireHook = (onRequire) => {
-      const builtins =
-          this.pluginMap.has(PluginLoader.CORE_MODULE) ? builtinModules : [];
-      hook(builtins.concat(nonCoreModules), {internals: true}, onRequire);
+    this.enableRequireHook = onRequire => {
+      const builtins = this.pluginMap.has(PluginLoader.CORE_MODULE)
+        ? builtinModules
+        : [];
+      hook(builtins.concat(nonCoreModules), { internals: true }, onRequire);
     };
   }
 
@@ -379,8 +410,9 @@ export class PluginLoader {
                 // Warn for pre-releases.
                 if (!!semver.prerelease(version)) {
                   if (isMainModule) {
-                    this.logger.warn(`PluginLoader#onRequire: [${name}@${
-                        version}] This module is in pre-release. Applying plugin anyways.`);
+                    this.logger.warn(
+                      `PluginLoader#onRequire: [${name}@${version}] This module is in pre-release. Applying plugin anyways.`
+                    );
                   }
                   version = version.split('-')[0];
                 }
@@ -389,16 +421,21 @@ export class PluginLoader {
                 const plugin = this.pluginMap.get(name);
                 if (plugin) {
                   if (plugin.isSupported(version)) {
-                    exportedValue =
-                        plugin.applyPlugin(exportedValue, file, version!);
+                    exportedValue = plugin.applyPlugin(
+                      exportedValue,
+                      file,
+                      version!
+                    );
                   } else {
-                    this.logger.warn(`PluginLoader#onRequire: [${name}@${
-                        version}] This module is not supported by the configured set of plugins.`);
+                    this.logger.warn(
+                      `PluginLoader#onRequire: [${name}@${version}] This module is not supported by the configured set of plugins.`
+                    );
                   }
                 }
               } else if (isMainModule) {
-                this.logger.error(`PluginLoader#activate: [${
-                    name}] This module's version could not be determined. Not applying plugins.`);
+                this.logger.error(
+                  `PluginLoader#activate: [${name}] This module's version could not be determined. Not applying plugins.`
+                );
               }
             }
           }
@@ -446,7 +483,7 @@ export class PluginLoader {
    * @param moduleStr The module string; in the form of either `${module}` or
    *   `${module}/${relPath}`
    */
-  static parseModuleString(moduleStr: string): {name: string, file: string} {
+  static parseModuleString(moduleStr: string): { name: string; file: string } {
     // Canonicalize the name by using only '/'.
     const parts = moduleStr.replace(/\\/g, '/').split('/');
     // The separation index between name/file depends on whether the module
@@ -454,7 +491,7 @@ export class PluginLoader {
     const indexOfFile = parts[0].startsWith('@') ? 2 : 1;
     return {
       name: parts.slice(0, indexOfFile).join('/'),
-      file: parts.slice(indexOfFile).join('/')
+      file: parts.slice(indexOfFile).join('/'),
     };
   }
 
@@ -462,26 +499,29 @@ export class PluginLoader {
   // file, or null if it can't be read or parsed.
   // A falsey baseDir suggests a core module, for which the running Node
   // version is returned instead.
-  private getVersion(baseDir?: string): string|null {
+  private getVersion(baseDir?: string): string | null {
     if (baseDir) {
       if (this.moduleVersionCache.has(baseDir)) {
         return this.moduleVersionCache.get(baseDir)!;
       } else {
         const pjsonPath = path.join(baseDir, 'package.json');
-        let version: string|null;
+        let version: string | null;
         try {
           version = require(pjsonPath).version;
           // Treat the version as if it's not there if it can't be parsed,
           // since for our purposes it's all the same.
           if (!semver.parse(version!)) {
-            this.logger.error(`PluginLoader#getVersion: [${pjsonPath}|${
-                version}] Version string could not be parsed.`);
+            this.logger.error(
+              `PluginLoader#getVersion: [${pjsonPath}|${version}] Version string could not be parsed.`
+            );
             version = null;
           }
         } catch (e) {
-          this.logger.error(`PluginLoader#getVersion: [${
-              pjsonPath}] An error occurred while retrieving version string. ${
-              e.message}`);
+          this.logger.error(
+            `PluginLoader#getVersion: [${pjsonPath}] An error occurred while retrieving version string. ${
+              e.message
+            }`
+          );
           version = null;
         }
         // Cache this value for future lookups.
@@ -489,8 +529,9 @@ export class PluginLoader {
         this.moduleVersionCache.set(baseDir, version);
         return version;
       }
-    } else {                            // core module
-      return process.version.slice(1);  // starts with v
+    } else {
+      // core module
+      return process.version.slice(1); // starts with v
     }
   }
 }

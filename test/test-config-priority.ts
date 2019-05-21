@@ -17,15 +17,15 @@
 import * as assert from 'assert';
 import * as path from 'path';
 
-import {Trace} from '../src/trace';
-import {StackdriverTracer} from '../src/trace-api';
-import {TraceWriter} from '../src/trace-writer';
-import {TopLevelConfig, Tracing} from '../src/tracing';
+import { Trace } from '../src/trace';
+import { StackdriverTracer } from '../src/trace-api';
+import { TraceWriter } from '../src/trace-writer';
+import { TopLevelConfig, Tracing } from '../src/tracing';
 
 import * as traceTestModule from './trace';
 
 describe('should respect config load order', () => {
-  let capturedConfig: TopLevelConfig|null = null;
+  let capturedConfig: TopLevelConfig | null = null;
   class CaptureConfigTracing extends Tracing {
     constructor(config: TopLevelConfig) {
       super(config, new StackdriverTracer(''));
@@ -69,8 +69,13 @@ describe('should respect config load order', () => {
       // { logLevel: 1, stackTraceLimit: 0, flushDelaySeconds: 30 };
       // Fixtures configuration:
       // { logLevel: 4, stackTraceLimit: 1, flushDelaySeconds: 31 };
-      process.env.GCLOUD_TRACE_CONFIG =
-          path.resolve(__dirname, '..', 'test', 'fixtures', 'test-config.js');
+      process.env.GCLOUD_TRACE_CONFIG = path.resolve(
+        __dirname,
+        '..',
+        'test',
+        'fixtures',
+        'test-config.js'
+      );
       process.env.GCLOUD_TRACE_LOGLEVEL = '2';
     });
 
@@ -80,7 +85,7 @@ describe('should respect config load order', () => {
     });
 
     it('should order Default -> env config -> start -> env specific', () => {
-      traceTestModule.start({logLevel: 3, stackTraceLimit: 2});
+      traceTestModule.start({ logLevel: 3, stackTraceLimit: 2 });
       const config = getCapturedConfig();
       assert.strictEqual(config.logLevel, 2);
       assert.strictEqual(config.writerConfig.stackTraceLimit, 2);
@@ -104,7 +109,7 @@ describe('should respect config load order', () => {
     });
 
     it('should prefer env to config', () => {
-      traceTestModule.start({projectId: '1927'});
+      traceTestModule.start({ projectId: '1927' });
       const config = getCapturedConfig();
       assert.strictEqual(config.writerConfig.projectId, '1729');
     });

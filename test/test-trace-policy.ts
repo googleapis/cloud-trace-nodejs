@@ -16,13 +16,17 @@
 
 import * as assert from 'assert';
 
-import {RequestDetails} from '../src/config';
-import {BuiltinTracePolicy, TraceContextHeaderBehavior, TracePolicyConfig} from '../src/tracing-policy';
+import { RequestDetails } from '../src/config';
+import {
+  BuiltinTracePolicy,
+  TraceContextHeaderBehavior,
+  TracePolicyConfig,
+} from '../src/tracing-policy';
 
 const traceContext = {
   traceId: '0',
   spanId: '0',
-  options: 1
+  options: 1,
 };
 
 /**
@@ -34,14 +38,17 @@ class TracePolicyForTest extends BuiltinTracePolicy {
    * @param config A partial TracePolicy configuration.
    */
   constructor(config: Partial<TracePolicyConfig>) {
-    super(Object.assign(
+    super(
+      Object.assign(
         {
           samplingRate: 0,
           ignoreUrls: [],
           ignoreMethods: [],
-          contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT
+          contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
         },
-        config));
+        config
+      )
+    );
   }
 
   /**
@@ -50,96 +57,128 @@ class TracePolicyForTest extends BuiltinTracePolicy {
    * @param requestDetails A partial object passed to shouldTrace.
    */
   shouldTraceForTest(requestDetails: Partial<RequestDetails>): boolean {
-    return this.shouldTrace(Object.assign(
-        {timestamp: 0, url: '', method: '', traceContext, options: {}},
-        requestDetails));
+    return this.shouldTrace(
+      Object.assign(
+        { timestamp: 0, url: '', method: '', traceContext, options: {} },
+        requestDetails
+      )
+    );
   }
 }
 
 describe('TracePolicy', () => {
   describe('URL Filtering', () => {
     it('should not allow filtered urls', () => {
-      const policy =
-          new TracePolicyForTest({ignoreUrls: ['/_ah/health', /\/book*/]});
-      assert.ok(!policy.shouldTraceForTest({
-        url: '/_ah/health',
-      }));
-      assert.ok(!policy.shouldTraceForTest({
-        url: '/book/test',
-      }));
+      const policy = new TracePolicyForTest({
+        ignoreUrls: ['/_ah/health', /\/book*/],
+      });
+      assert.ok(
+        !policy.shouldTraceForTest({
+          url: '/_ah/health',
+        })
+      );
+      assert.ok(
+        !policy.shouldTraceForTest({
+          url: '/book/test',
+        })
+      );
     });
 
     it('should allow non-filtered urls', () => {
-      const policy = new TracePolicyForTest({ignoreUrls: ['/_ah/health']});
-      assert.ok(policy.shouldTraceForTest({url: '/_ah/background'}));
+      const policy = new TracePolicyForTest({ ignoreUrls: ['/_ah/health'] });
+      assert.ok(policy.shouldTraceForTest({ url: '/_ah/background' }));
     });
   });
 
   describe('Method Filtering', () => {
     it('should not allow filtered methods', () => {
-      const policy =
-          new TracePolicyForTest({ignoreMethods: ['method1', 'method2']});
-      assert.ok(!policy.shouldTraceForTest({method: 'method1'}));
-      assert.ok(!policy.shouldTraceForTest({method: 'method2'}));
+      const policy = new TracePolicyForTest({
+        ignoreMethods: ['method1', 'method2'],
+      });
+      assert.ok(!policy.shouldTraceForTest({ method: 'method1' }));
+      assert.ok(!policy.shouldTraceForTest({ method: 'method2' }));
     });
 
     it('should allow non-filtered methods', () => {
-      const policy = new TracePolicyForTest({ignoreMethods: ['method']});
-      assert.ok(policy.shouldTraceForTest({
-        method: 'method1',
-      }));
+      const policy = new TracePolicyForTest({ ignoreMethods: ['method'] });
+      assert.ok(
+        policy.shouldTraceForTest({
+          method: 'method1',
+        })
+      );
     });
   });
 
   describe('Context Header Options Field', () => {
     describe('when contextHeaderBehavior = IGNORE', () => {
-      const policy = new TracePolicyForTest(
-          {contextHeaderBehavior: TraceContextHeaderBehavior.IGNORE});
+      const policy = new TracePolicyForTest({
+        contextHeaderBehavior: TraceContextHeaderBehavior.IGNORE,
+      });
 
       it('should ignore options bit', () => {
-        assert.ok(policy.shouldTraceForTest(
-            {traceContext: {traceId: '0', spanId: '0', options: 1}}));
-        assert.ok(policy.shouldTraceForTest(
-            {traceContext: {traceId: '0', spanId: '0', options: 0}}));
+        assert.ok(
+          policy.shouldTraceForTest({
+            traceContext: { traceId: '0', spanId: '0', options: 1 },
+          })
+        );
+        assert.ok(
+          policy.shouldTraceForTest({
+            traceContext: { traceId: '0', spanId: '0', options: 0 },
+          })
+        );
       });
 
       it('should not require that header exists', () => {
-        assert.ok(policy.shouldTraceForTest({traceContext: null}));
-        assert.ok(policy.shouldTraceForTest({traceContext: undefined}));
+        assert.ok(policy.shouldTraceForTest({ traceContext: null }));
+        assert.ok(policy.shouldTraceForTest({ traceContext: undefined }));
       });
     });
 
     describe('when contextHeaderBehavior = REQUIRE', () => {
-      const policy = new TracePolicyForTest(
-          {contextHeaderBehavior: TraceContextHeaderBehavior.REQUIRE});
+      const policy = new TracePolicyForTest({
+        contextHeaderBehavior: TraceContextHeaderBehavior.REQUIRE,
+      });
 
       it('should respect options bit', () => {
-        assert.ok(policy.shouldTraceForTest(
-            {traceContext: {traceId: '0', spanId: '0', options: 1}}));
-        assert.ok(!policy.shouldTraceForTest(
-            {traceContext: {traceId: '0', spanId: '0', options: 0}}));
+        assert.ok(
+          policy.shouldTraceForTest({
+            traceContext: { traceId: '0', spanId: '0', options: 1 },
+          })
+        );
+        assert.ok(
+          !policy.shouldTraceForTest({
+            traceContext: { traceId: '0', spanId: '0', options: 0 },
+          })
+        );
       });
 
       it('should require that header exists', () => {
-        assert.ok(!policy.shouldTraceForTest({traceContext: null}));
-        assert.ok(!policy.shouldTraceForTest({traceContext: undefined}));
+        assert.ok(!policy.shouldTraceForTest({ traceContext: null }));
+        assert.ok(!policy.shouldTraceForTest({ traceContext: undefined }));
       });
     });
 
     describe('when contextHeaderBehavior = DEFAULT', () => {
-      const policy = new TracePolicyForTest(
-          {contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT});
+      const policy = new TracePolicyForTest({
+        contextHeaderBehavior: TraceContextHeaderBehavior.DEFAULT,
+      });
 
       it('should respect options bit', () => {
-        assert.ok(policy.shouldTraceForTest(
-            {traceContext: {traceId: '0', spanId: '0', options: 1}}));
-        assert.ok(!policy.shouldTraceForTest(
-            {traceContext: {traceId: '0', spanId: '0', options: 0}}));
+        assert.ok(
+          policy.shouldTraceForTest({
+            traceContext: { traceId: '0', spanId: '0', options: 1 },
+          })
+        );
+        assert.ok(
+          !policy.shouldTraceForTest({
+            traceContext: { traceId: '0', spanId: '0', options: 0 },
+          })
+        );
       });
 
       it('should not require that header exists', () => {
-        assert.ok(policy.shouldTraceForTest({traceContext: null}));
-        assert.ok(policy.shouldTraceForTest({traceContext: undefined}));
+        assert.ok(policy.shouldTraceForTest({ traceContext: null }));
+        assert.ok(policy.shouldTraceForTest({ traceContext: undefined }));
       });
     });
   });
@@ -149,31 +188,36 @@ describe('TracePolicy', () => {
     const testCases = [0.1, 0.5, 1, 10, 50, 150, 200, 500, 1000];
     for (const testCase of testCases) {
       it(`should throttle traces when samplingRate = ` + testCase, () => {
-        const policy = new TracePolicyForTest({samplingRate: testCase});
+        const policy = new TracePolicyForTest({ samplingRate: testCase });
         const expected = NUM_SECONDS * testCase;
         let actual = 0;
         const start = Date.now();
-        for (let timestamp = start; timestamp < start + 1000 * NUM_SECONDS;
-             timestamp++) {
-          if (policy.shouldTraceForTest({timestamp})) {
+        for (
+          let timestamp = start;
+          timestamp < start + 1000 * NUM_SECONDS;
+          timestamp++
+        ) {
+          if (policy.shouldTraceForTest({ timestamp })) {
             actual++;
           }
         }
         assert.ok(
-            actual <= expected,
-            `Expected less than ${expected} traced but got ${actual}`);
+          actual <= expected,
+          `Expected less than ${expected} traced but got ${actual}`
+        );
         assert.ok(
-            actual > expected * 0.8,
-            `Expected close to (>=0.8*) ${expected} traced but got ${actual}`);
+          actual > expected * 0.8,
+          `Expected close to (>=0.8*) ${expected} traced but got ${actual}`
+        );
       });
     }
 
     it('should always sample when samplingRate = 0', () => {
-      const policy = new TracePolicyForTest({samplingRate: 0});
+      const policy = new TracePolicyForTest({ samplingRate: 0 });
       let numSamples = 0;
       const start = Date.now();
       for (let timestamp = start; timestamp < start + 1000; timestamp++) {
-        if (policy.shouldTraceForTest({timestamp})) {
+        if (policy.shouldTraceForTest({ timestamp })) {
           numSamples++;
         }
       }
@@ -181,11 +225,11 @@ describe('TracePolicy', () => {
     });
 
     it('should never sample when samplingRate < 0', () => {
-      const policy = new TracePolicyForTest({samplingRate: -1});
+      const policy = new TracePolicyForTest({ samplingRate: -1 });
       let numSamples = 0;
       const start = Date.now();
       for (let timestamp = start; timestamp < start + 1000; timestamp++) {
-        if (policy.shouldTraceForTest({timestamp})) {
+        if (policy.shouldTraceForTest({ timestamp })) {
           numSamples++;
         }
       }

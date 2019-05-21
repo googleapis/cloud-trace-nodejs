@@ -17,11 +17,11 @@
 import * as crypto from 'crypto';
 import * as util from 'util';
 
-import {Constants, SpanType} from './constants';
-import {RootSpan, Span, SpanOptions} from './plugin-types';
-import {SpanKind, Trace, TraceSpan} from './trace';
-import {TraceLabels} from './trace-labels';
-import {traceWriter} from './trace-writer';
+import { Constants, SpanType } from './constants';
+import { RootSpan, Span, SpanOptions } from './plugin-types';
+import { SpanKind, Trace, TraceSpan } from './trace';
+import { TraceLabels } from './trace-labels';
+import { traceWriter } from './trace-writer';
 import * as traceUtil from './util';
 
 // Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
@@ -32,9 +32,9 @@ const SPAN_ID_RANDOM_BYTES = 6;
 const spanIdBuffer = Buffer.alloc(SPAN_ID_RANDOM_BYTES);
 const randomFillSync = crypto.randomFillSync;
 const randomBytes = crypto.randomBytes;
-const spanRandomBuffer = randomFillSync ?
-    () => randomFillSync(spanIdBuffer) :
-    () => randomBytes(SPAN_ID_RANDOM_BYTES);
+const spanRandomBuffer = randomFillSync
+  ? () => randomFillSync(spanIdBuffer)
+  : () => randomBytes(SPAN_ID_RANDOM_BYTES);
 
 function randomSpanId() {
   // tslint:disable-next-line:ban Needed to parse hexadecimal.
@@ -58,30 +58,39 @@ export abstract class BaseSpanData implements Span {
    *                   when collecting the stack trace.
    */
   constructor(
-      readonly trace: Trace, spanName: string, parentSpanId: string,
-      skipFrames: number) {
+    readonly trace: Trace,
+    spanName: string,
+    parentSpanId: string,
+    skipFrames: number
+  ) {
     this.span = {
-      name:
-          traceUtil.truncate(spanName, Constants.TRACE_SERVICE_SPAN_NAME_LIMIT),
-      startTime: (new Date()).toISOString(),
+      name: traceUtil.truncate(
+        spanName,
+        Constants.TRACE_SERVICE_SPAN_NAME_LIMIT
+      ),
+      startTime: new Date().toISOString(),
       endTime: '',
       spanId: randomSpanId(),
       kind: SpanKind.SPAN_KIND_UNSPECIFIED,
       parentSpanId,
-      labels: {}
+      labels: {},
     };
     this.trace.spans.push(this.span);
 
     const stackFrames = traceUtil.createStackTrace(
-        traceWriter.get().getConfig().stackTraceLimit, skipFrames,
-        this.constructor);
+      traceWriter.get().getConfig().stackTraceLimit,
+      skipFrames,
+      this.constructor
+    );
     if (stackFrames.length > 0) {
       // Developer note: This is not equivalent to using addLabel, because the
       // stack trace label has its own size constraints.
-      this.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY] =
-          traceUtil.truncate(
-              JSON.stringify({stack_frame: stackFrames}),
-              Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT);
+      this.span.labels[
+        TraceLabels.STACK_TRACE_DETAILS_KEY
+      ] = traceUtil.truncate(
+        JSON.stringify({ stack_frame: stackFrames }),
+        Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT
+      );
     }
   }
 
@@ -89,7 +98,7 @@ export abstract class BaseSpanData implements Span {
     return {
       traceId: this.trace.traceId.toString(),
       spanId: this.span.spanId.toString(),
-      options: 1  // always traced
+      options: 1, // always traced
     };
   }
 
@@ -98,7 +107,9 @@ export abstract class BaseSpanData implements Span {
     const k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
     const stringValue = typeof value === 'string' ? value : util.inspect(value);
     const v = traceUtil.truncate(
-        stringValue, traceWriter.get().getConfig().maximumLabelValueSize);
+      stringValue,
+      traceWriter.get().getConfig().maximumLabelValueSize
+    );
     this.span.labels[k] = v;
   }
 
@@ -121,20 +132,24 @@ export class RootSpanData extends BaseSpanData implements RootSpan {
   private children: ChildSpanData[] = [];
 
   constructor(
-      trace: Trace, spanName: string, parentSpanId: string,
-      skipFrames: number) {
+    trace: Trace,
+    spanName: string,
+    parentSpanId: string,
+    skipFrames: number
+  ) {
     super(trace, spanName, parentSpanId, skipFrames);
     this.span.kind = SpanKind.RPC_SERVER;
   }
 
   createChildSpan(options?: SpanOptions): Span {
-    options = options || {name: ''};
+    options = options || { name: '' };
     const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
     const child = new ChildSpanData(
-        this.trace,       /* Trace object */
-        options.name,     /* Span name */
-        this.span.spanId, /* Parent's span ID */
-        skipFrames);      /* # of frames to skip in stack trace */
+      this.trace /* Trace object */,
+      options.name /* Span name */,
+      this.span.spanId /* Parent's span ID */,
+      skipFrames
+    ); /* # of frames to skip in stack trace */
     this.children.push(child);
     return child;
   }
@@ -167,8 +182,11 @@ export class ChildSpanData extends BaseSpanData {
   shouldSelfPublish = false;
 
   constructor(
-      trace: Trace, spanName: string, parentSpanId: string,
-      skipFrames: number) {
+    trace: Trace,
+    spanName: string,
+    parentSpanId: string,
+    skipFrames: number
+  ) {
     super(trace, spanName, parentSpanId, skipFrames);
     this.span.kind = SpanKind.RPC_CLIENT;
   }
@@ -183,33 +201,38 @@ export class ChildSpanData extends BaseSpanData {
       traceWriter.get().writeTrace({
         projectId: this.trace.projectId,
         traceId: this.trace.traceId,
-        spans: [this.span]
+        spans: [this.span],
       });
     }
   }
 }
 
 // Helper function to generate static virtual trace spans.
-function createPhantomSpanData<T extends SpanType>(spanType: T): Span&
-    {readonly type: T} {
-  return Object.freeze(Object.assign(
+function createPhantomSpanData<T extends SpanType>(
+  spanType: T
+): Span & { readonly type: T } {
+  return Object.freeze(
+    Object.assign(
       {
         getTraceContext() {
           return null;
         },
         // tslint:disable-next-line:no-any
         addLabel(key: string, value: any) {},
-        endSpan() {}
+        endSpan() {},
       },
-      {type: spanType}));
+      { type: spanType }
+    )
+  );
 }
 
 /**
  * A virtual trace span that indicates that a real child span couldn't be
  * created because the correct root span couldn't be determined.
  */
-export const UNCORRELATED_CHILD_SPAN =
-    createPhantomSpanData(SpanType.UNCORRELATED);
+export const UNCORRELATED_CHILD_SPAN = createPhantomSpanData(
+  SpanType.UNCORRELATED
+);
 
 /**
  * A virtual trace span that indicates that a real child span couldn't be
@@ -222,22 +245,28 @@ export const UNTRACED_CHILD_SPAN = createPhantomSpanData(SpanType.UNTRACED);
  * A virtual trace span that indicates that a real root span couldn't be
  * created because an active root span context already exists.
  */
-export const UNCORRELATED_ROOT_SPAN = Object.freeze(Object.assign(
+export const UNCORRELATED_ROOT_SPAN = Object.freeze(
+  Object.assign(
     {
       createChildSpan() {
         return UNCORRELATED_CHILD_SPAN;
-      }
+      },
     },
-    UNCORRELATED_CHILD_SPAN));
+    UNCORRELATED_CHILD_SPAN
+  )
+);
 
 /**
  * A virtual trace span that indicates that a real root span couldn't be
  * created because it was disallowed by user configuration.
  */
-export const UNTRACED_ROOT_SPAN = Object.freeze(Object.assign(
+export const UNTRACED_ROOT_SPAN = Object.freeze(
+  Object.assign(
     {
       createChildSpan() {
         return UNTRACED_CHILD_SPAN;
-      }
+      },
     },
-    UNTRACED_CHILD_SPAN));
+    UNTRACED_CHILD_SPAN
+  )
+);

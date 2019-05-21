@@ -14,37 +14,42 @@
  * limitations under the License.
  */
 
-import {IncomingMessage, ServerResponse} from 'http';
-import {parse as urlParse} from 'url';
+import { IncomingMessage, ServerResponse } from 'http';
+import { parse as urlParse } from 'url';
 
-import {PluginTypes} from '..';
+import { PluginTypes } from '..';
 
-import {connect_3} from './types';
+import { connect_3 } from './types';
 
 type Connect3 = typeof connect_3;
 // Connect docs note that routed requests have an originalUrl property.
 // https://github.com/senchalabs/connect/tree/3.6.5#appuseroute-fn
-type Request = IncomingMessage&{originalUrl?: string};
+type Request = IncomingMessage & { originalUrl?: string };
 
 const SUPPORTED_VERSIONS = '3.x';
 
-function createMiddleware(api: PluginTypes.Tracer):
-    connect_3.NextHandleFunction {
+function createMiddleware(
+  api: PluginTypes.Tracer
+): connect_3.NextHandleFunction {
   return function middleware(req: Request, res, next) {
     const options = {
-      name: req.originalUrl ? (urlParse(req.originalUrl).pathname || '') : '',
+      name: req.originalUrl ? urlParse(req.originalUrl).pathname || '' : '',
       url: req.originalUrl,
       method: req.method,
-      traceContext: api.propagation.extract((key) => req.headers[key]),
-      skipFrames: 1
+      traceContext: api.propagation.extract(key => req.headers[key]),
+      skipFrames: 1,
     };
-    api.runInRootSpan(options, (root) => {
+    api.runInRootSpan(options, root => {
       // Set response trace context.
       const responseTraceContext = api.getResponseTraceContext(
-          options.traceContext, api.isRealSpan(root));
+        options.traceContext,
+        api.isRealSpan(root)
+      );
       if (responseTraceContext) {
         api.propagation.inject(
-            (k, v) => res.setHeader(k, v), responseTraceContext);
+          (k, v) => res.setHeader(k, v),
+          responseTraceContext
+        );
       }
 
       if (!api.isRealSpan(root)) {
@@ -55,7 +60,8 @@ function createMiddleware(api: PluginTypes.Tracer):
       api.wrapEmitter(res);
 
       const url = `${req.headers['X-Forwarded-Proto'] || 'http'}://${
-          req.headers.host}${req.originalUrl}`;
+        req.headers.host
+      }${req.originalUrl}`;
 
       // we use the path part of the url as the span name and add the full
       // url as a label
@@ -81,16 +87,18 @@ function createMiddleware(api: PluginTypes.Tracer):
   };
 }
 
-const plugin: PluginTypes.Plugin = [{
-  file: '',
-  versions: SUPPORTED_VERSIONS,
-  intercept: (connect, api) => {
-    return function(this: {}) {
-      const app = connect();
-      app.use(createMiddleware(api));
-      return app;
-    };
-  }
-} as PluginTypes.Intercept<Connect3>];
+const plugin: PluginTypes.Plugin = [
+  {
+    file: '',
+    versions: SUPPORTED_VERSIONS,
+    intercept: (connect, api) => {
+      return function(this: {}) {
+        const app = connect();
+        app.use(createMiddleware(api));
+        return app;
+      };
+    },
+  } as PluginTypes.Intercept<Connect3>,
+];
 
 export = plugin;

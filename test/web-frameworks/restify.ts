@@ -16,9 +16,13 @@
 
 import * as http from 'http';
 
-import {restify_5} from '../../src/plugins/types';
+import { restify_5 } from '../../src/plugins/types';
 
-import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkResponse} from './base';
+import {
+  WebFramework,
+  WebFrameworkAddHandlerOptions,
+  WebFrameworkResponse,
+} from './base';
 
 export class Restify implements WebFramework {
   server: restify_5.Server;
@@ -30,9 +34,11 @@ export class Restify implements WebFramework {
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
     if (!options.hasResponse && !options.blocking) {
-      throw new Error(`${
-          this.constructor
-              .name} wrapper for testing doesn't support non-blocking handlers.`);
+      throw new Error(
+        `${
+          this.constructor.name
+        } wrapper for testing doesn't support non-blocking handlers.`
+      );
     }
     if (options.hasResponse) {
       this.server.get(options.path, async (req, res, next) => {
@@ -75,15 +81,15 @@ export class Restify implements WebFramework {
 }
 
 const makeRestifyClass = (version: number, nodeVersion?: string) =>
-    class extends Restify {
-  static commonName = `restify@${version}`;
-  static expectedTopStackFrame = 'middleware';
-  static versionRange = nodeVersion || '*';
+  class extends Restify {
+    static commonName = `restify@${version}`;
+    static expectedTopStackFrame = 'middleware';
+    static versionRange = nodeVersion || '*';
 
-  constructor() {
-    super(`../plugins/fixtures/restify${version}`);
-  }
-};
+    constructor() {
+      super(`../plugins/fixtures/restify${version}`);
+    }
+  };
 
 // tslint:disable:variable-name (Restify* are class names)
 export const Restify3 = makeRestifyClass(3, '<7');

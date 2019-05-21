@@ -15,18 +15,22 @@
  */
 
 import * as http from 'http';
-import {AddressInfo} from 'net';
+import { AddressInfo } from 'net';
 
-import {express_4} from '../../src/plugins/types';
+import { express_4 } from '../../src/plugins/types';
 
-import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkResponse} from './base';
+import {
+  WebFramework,
+  WebFrameworkAddHandlerOptions,
+  WebFrameworkResponse,
+} from './base';
 
 export class Express4 implements WebFramework {
   static commonName = 'express@4';
   static expectedTopStackFrame = 'middleware';
   static versionRange = '*';
   app: express_4.Application;
-  server: http.Server|null = null;
+  server: http.Server | null = null;
 
   constructor() {
     const express = require('../plugins/fixtures/express4') as typeof express_4;
@@ -35,12 +39,14 @@ export class Express4 implements WebFramework {
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
     if (!options.hasResponse && !options.blocking) {
-      throw new Error(`${
-          this.constructor
-              .name} wrapper for testing doesn't support non-blocking handlers.`);
+      throw new Error(
+        `${
+          this.constructor.name
+        } wrapper for testing doesn't support non-blocking handlers.`
+      );
     }
     this.app.get(options.path, async (req, res, next) => {
-      let response: WebFrameworkResponse|void;
+      let response: WebFrameworkResponse | void;
       try {
         response = await options.fn(req.headers);
       } catch (e) {

@@ -16,10 +16,12 @@
 import * as path from 'path';
 import * as sourceMapSupport from 'source-map-support';
 
-const {hexToDec, decToHex}: {[key: string]: (input: string) => string} =
-    require('hex2dec');
+const {
+  hexToDec,
+  decToHex,
+}: { [key: string]: (input: string) => string } = require('hex2dec');
 
-export {hexToDec, decToHex};
+export { hexToDec, decToHex };
 
 // This symbol must be exported (for now).
 // See: https://github.com/Microsoft/TypeScript/issues/20080
@@ -44,18 +46,19 @@ export interface StackFrame {
 }
 
 export interface Constructor<T, ConfigType, LoggerType> {
-  new(config: ConfigType, logger: LoggerType): T;
+  new (config: ConfigType, logger: LoggerType): T;
   prototype: T;
   name: string;
 }
 
 export const FORCE_NEW = Symbol('force-new');
 
-export type Forceable<T> = T&{[FORCE_NEW]?: boolean};
+export type Forceable<T> = T & { [FORCE_NEW]?: boolean };
 
-export type Component = {
-  enable(): void; disable(): void;
-};
+export interface Component {
+  enable(): void;
+  disable(): void;
+}
 
 /**
  * A class that provides access to a singleton.
@@ -65,7 +68,7 @@ export type Component = {
  */
 export class Singleton<T, ConfigType, LoggerType> {
   // Note: private[symbol] is enforced by clang-format.
-  private[kSingleton]: T|null = null;
+  private [kSingleton]: T | null = null;
 
   constructor(private implementation: Constructor<T, ConfigType, LoggerType>) {}
 
@@ -100,11 +103,16 @@ export class Singleton<T, ConfigType, LoggerType> {
  * @param otherValues Other parameters, which may be null/undefined/NaN.
  */
 export function lastOf<T>(
-    defaultValue: T, ...otherValues: Array<T|null|undefined>): T {
+  defaultValue: T,
+  ...otherValues: Array<T | null | undefined>
+): T {
   for (let i = otherValues.length - 1; i >= 0; i--) {
     // tslint:disable:no-any
-    if (otherValues[i] !== null && otherValues[i] !== undefined &&
-        (typeof otherValues[i] !== 'number' || !isNaN(otherValues[i] as any))) {
+    if (
+      otherValues[i] !== null &&
+      otherValues[i] !== undefined &&
+      (typeof otherValues[i] !== 'number' || !isNaN(otherValues[i] as any))
+    ) {
       return otherValues[i] as T;
     }
     // tslint:enable:no-any
@@ -133,10 +141,16 @@ export function truncate(str: string, length: number) {
 // Includes support for npm '@org/name' packages
 // Regex: .*?node_modules(?!.*node_modules)\/(@[^\/]*\/[^\/]*|[^\/]*).*
 // Tests: https://regex101.com/r/lW2bE3/6
-const moduleRegex = new RegExp([
-  '.*?node_modules(?!.*node_modules)\\', '(@[^\\', ']*\\', '[^\\', ']*|[^\\',
-  ']*).*'
-].join(path.sep));
+const moduleRegex = new RegExp(
+  [
+    '.*?node_modules(?!.*node_modules)\\',
+    '(@[^\\',
+    ']*\\',
+    '[^\\',
+    ']*|[^\\',
+    ']*).*',
+  ].join(path.sep)
+);
 
 export interface TraceContext {
   traceId: string;
@@ -154,19 +168,23 @@ export interface TraceContext {
  * @param str string representation of the trace headers
  * @return object with keys. null if there is a problem.
  */
-export function parseContextFromHeader(str: string): TraceContext|null {
+export function parseContextFromHeader(str: string): TraceContext | null {
   if (!str) {
     return null;
   }
   const matches = str.match(/^([0-9a-fA-F]+)(?:\/([0-9]+))(?:;o=(.*))?/);
-  if (!matches || matches.length !== 4 || matches[0] !== str ||
-      (matches[2] && isNaN(Number(matches[2])))) {
+  if (
+    !matches ||
+    matches.length !== 4 ||
+    matches[0] !== str ||
+    (matches[2] && isNaN(Number(matches[2])))
+  ) {
     return null;
   }
   return {
     traceId: matches[1],
     spanId: matches[2],
-    options: isNaN(Number(matches[3])) ? undefined : Number(matches[3])
+    options: isNaN(Number(matches[3])) ? undefined : Number(matches[3]),
   };
 }
 
@@ -208,8 +226,10 @@ export function packageNameFromPath(importPath: string) {
  *   causes it to ignore the frames above the top-most call to this function.
  */
 export function createStackTrace(
-    numFrames: number, skipFrames: number,
-    constructorOpt?: Function): StackFrame[] {
+  numFrames: number,
+  skipFrames: number,
+  constructorOpt?: Function
+): StackFrame[] {
   // This is a mechanism to get the structured stack trace out of V8.
   // prepareStackTrace is called the first time the Error#stack property is
   // accessed. The original behavior is to format the stack as an exception
@@ -225,11 +245,13 @@ export function createStackTrace(
   Error.stackTraceLimit = numFrames + skipFrames;
 
   const origPrepare = Error.prepareStackTrace;
-  Error.prepareStackTrace =
-      (error: Error, structured: NodeJS.CallSite[]): NodeJS.CallSite[] => {
-        return structured.map(sourceMapSupport.wrapCallSite);
-      };
-  const e: {stack?: NodeJS.CallSite[]} = {};
+  Error.prepareStackTrace = (
+    error: Error,
+    structured: NodeJS.CallSite[]
+  ): NodeJS.CallSite[] => {
+    return structured.map(sourceMapSupport.wrapCallSite);
+  };
+  const e: { stack?: NodeJS.CallSite[] } = {};
   Error.captureStackTrace(e, constructorOpt);
 
   const stackFrames: StackFrame[] = [];
@@ -242,14 +264,15 @@ export function createStackTrace(
       // undefined. Docs say undefined but we guard it here just in case.
       const functionName = callSite.getFunctionName();
       const methodName = callSite.getMethodName();
-      const name = (methodName && functionName) ?
-          functionName + ' [as ' + methodName + ']' :
-          functionName || methodName || '<anonymous function>';
+      const name =
+        methodName && functionName
+          ? functionName + ' [as ' + methodName + ']'
+          : functionName || methodName || '<anonymous function>';
       const stackFrame: StackFrame = {
         method_name: name,
         file_name: callSite.getFileName() || undefined,
         line_number: callSite.getLineNumber() || undefined,
-        column_number: callSite.getColumnNumber() || undefined
+        column_number: callSite.getColumnNumber() || undefined,
       };
       stackFrames.push(stackFrame);
     });
@@ -283,8 +306,9 @@ export function serializeTraceContext(traceContext: TraceContext): Buffer {
   // Convert Span ID from decimal to base 16 representation, then left pad into
   // a length-16 hex string. (decToHex prepends its output with '0x', so we
   // also slice that off.)
-  const base16SpanId =
-      `0000000000000000${decToHex(traceContext.spanId).slice(2)}`.slice(-16);
+  const base16SpanId = `0000000000000000${decToHex(traceContext.spanId).slice(
+    2
+  )}`.slice(-16);
   result.write(base16SpanId, 19, 8, 'hex');
   result.writeUInt8(2, 27);
   result.writeUInt8(traceContext.options || 0, 28);
@@ -297,15 +321,19 @@ export function serializeTraceContext(traceContext: TraceContext): Buffer {
  * null.
  * @param buffer The trace context to deserialize.
  */
-export function deserializeTraceContext(buffer: Buffer): TraceContext|null {
-  const result: TraceContext = {traceId: '', spanId: ''};
+export function deserializeTraceContext(buffer: Buffer): TraceContext | null {
+  const result: TraceContext = { traceId: '', spanId: '' };
   // Length must be 29.
   if (buffer.length !== 29) {
     return null;
   }
   // Check version and field numbers.
-  if (buffer.readUInt8(0) !== 0 || buffer.readUInt8(1) !== 0 ||
-      buffer.readUInt8(18) !== 1 || buffer.readUInt8(27) !== 2) {
+  if (
+    buffer.readUInt8(0) !== 0 ||
+    buffer.readUInt8(1) !== 0 ||
+    buffer.readUInt8(18) !== 1 ||
+    buffer.readUInt8(27) !== 2
+  ) {
     return null;
   }
   // See serializeTraceContext for byte offsets.

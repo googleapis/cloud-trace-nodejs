@@ -15,32 +15,32 @@
  */
 
 import * as httpModule from 'http';
-import {Agent, ClientRequest, ClientRequestArgs, get, request} from 'http';
+import { Agent, ClientRequest, ClientRequestArgs, get, request } from 'http';
 import * as httpsModule from 'https';
 import * as is from 'is';
 import * as semver from 'semver';
 import * as shimmer from 'shimmer';
 import * as url from 'url';
 
-import {Plugin, Tracer} from '../plugin-types';
+import { Plugin, Tracer } from '../plugin-types';
 
 type HttpModule = typeof httpModule;
 type HttpsModule = typeof httpsModule;
 type RequestFunction = typeof request;
 
 const ERR_HTTP_HEADERS_SENT = 'ERR_HTTP_HEADERS_SENT';
-const ERR_HTTP_HEADERS_SENT_MSG = 'Can\'t set headers after they are sent.';
+const ERR_HTTP_HEADERS_SENT_MSG = "Can't set headers after they are sent.";
 
 // tslint:disable:no-any
 const isString = is.string as (value: any) => value is string;
 // url.URL is used for type checking, but doesn't exist in Node <7.
 // This function works around that.
-const isURL = semver.satisfies(process.version, '>=7') ?
-    ((value: any): value is url.URL => value instanceof url.URL) :
-    ((value: any): value is url.URL => false);
+const isURL = semver.satisfies(process.version, '>=7')
+  ? (value: any): value is url.URL => value instanceof url.URL
+  : (value: any): value is url.URL => false;
 // tslint:enable:no-any
 
-function getSpanName(options: ClientRequestArgs|url.URL) {
+function getSpanName(options: ClientRequestArgs | url.URL) {
   // c.f. _http_client.js ClientRequest constructor
   return options.hostname || options.host || 'localhost';
 }
@@ -51,22 +51,25 @@ function getSpanName(options: ClientRequestArgs|url.URL) {
  * all-caps for simplicity purposes.
  * @param options Options for http.request.
  */
-function hasExpectHeader(options: ClientRequestArgs|url.URL): boolean {
+function hasExpectHeader(options: ClientRequestArgs | url.URL): boolean {
   return !!(
-      (options as ClientRequestArgs).headers &&
-      ((options as ClientRequestArgs).headers!.Expect ||
-       (options as ClientRequestArgs).headers!.expect ||
-       (options as ClientRequestArgs).headers!.EXPECT));
+    (options as ClientRequestArgs).headers &&
+    ((options as ClientRequestArgs).headers!.Expect ||
+      (options as ClientRequestArgs).headers!.expect ||
+      (options as ClientRequestArgs).headers!.EXPECT)
+  );
 }
 
 function extractUrl(
-    options: ClientRequestArgs|url.URL, fallbackProtocol: string) {
+  options: ClientRequestArgs | url.URL,
+  fallbackProtocol: string
+) {
   let path;
   if (isURL(options)) {
     // pathname only exists on a URL object.
     path = options.pathname || '/';
   } else {
-    const agent = options._defaultAgent as Agent & {protocol?: string};
+    const agent = options._defaultAgent as Agent & { protocol?: string };
     if (agent) {
       fallbackProtocol = agent.protocol || fallbackProtocol;
     }
@@ -75,7 +78,7 @@ function extractUrl(
   }
   const protocol = options.protocol || fallbackProtocol;
   const host = options.hostname || options.host || 'localhost';
-  const portString = options.port ? (':' + options.port) : '';
+  const portString = options.port ? ':' + options.port : '';
 
   // In theory we should use url.format here. However, that is
   // broken. See: https://github.com/joyent/node/issues/9117 and
@@ -86,12 +89,18 @@ function extractUrl(
 
 // tslint:disable-next-line:no-any
 function isTraceAgentRequest(options: any, api: Tracer) {
-  return options && options.headers &&
-      !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER];
+  return (
+    options &&
+    options.headers &&
+    !!options.headers[api.constants.TRACE_AGENT_REQUEST_HEADER]
+  );
 }
 
 function makeRequestTrace(
-    protocol: string, request: RequestFunction, api: Tracer): RequestFunction {
+  protocol: string,
+  request: RequestFunction,
+  api: Tracer
+): RequestFunction {
   // On Node 8+ we use the following function to patch both request and get.
   // Here `request` may also happen to be `get`.
   return function requestTrace(options, callback): ClientRequest {
@@ -114,7 +123,7 @@ function makeRequestTrace(
       options = url.parse(options);
     }
 
-    const span = api.createChildSpan({name: getSpanName(options)});
+    const span = api.createChildSpan({ name: getSpanName(options) });
     if (!api.isRealSpan(span)) {
       return request(options, callback);
     }
@@ -149,7 +158,7 @@ function makeRequestTrace(
       }, span.getTraceContext());
     }
 
-    const req = request(options, (res) => {
+    const req = request(options, res => {
       api.wrapEmitter(res);
       let numBytes = 0;
       let listenerAttached = false;
@@ -161,11 +170,11 @@ function makeRequestTrace(
       // not observe data read by explicitly calling `read` on the request. We
       // expect this to be very uncommon as it is not mentioned in any of the
       // official documentation.
-      shimmer.wrap(res, 'on', (on) => {
+      shimmer.wrap(res, 'on', on => {
         return function on_trace(this: {}, eventName: string) {
           if (eventName === 'data' && !listenerAttached) {
             listenerAttached = true;
-            on.call(this, 'data', (chunk: string|Buffer) => {
+            on.call(this, 'data', (chunk: string | Buffer) => {
               numBytes += chunk.length;
             });
           }
@@ -194,8 +203,10 @@ function makeRequestTrace(
         try {
           req.setHeader(key, value);
         } catch (e) {
-          if (e.code === ERR_HTTP_HEADERS_SENT ||
-              e.message === ERR_HTTP_HEADERS_SENT_MSG) {
+          if (
+            e.code === ERR_HTTP_HEADERS_SENT ||
+            e.message === ERR_HTTP_HEADERS_SENT_MSG
+          ) {
             // Swallow the error.
             // This would happen in the pathological case where the Expect
             // header exists but is not detected by hasExpectHeader.
@@ -210,37 +221,41 @@ function makeRequestTrace(
 }
 
 function patchHttp(http: HttpModule, api: Tracer) {
-  shimmer.wrap(http, 'request', (request) => {
+  shimmer.wrap(http, 'request', request => {
     return makeRequestTrace('http:', request, api);
   });
 
   if (semver.satisfies(process.version, '>=8.0.0')) {
     // http.get in Node 8 calls the private copy of request rather than the one
     // we have patched on module.export, so patch get as well.
-    shimmer.wrap(http, 'get', (): typeof http.get => {
-      // Re-implement http.get. This needs to be done (instead of using
-      // makeRequestTrace to patch it) because we need to set the trace
-      // context header before the returned ClientRequest is ended.
-      // The Node.js docs state that the only differences between request and
-      // get are that (1) get defaults to the HTTP GET method and (2) the
-      // returned request object is ended immediately.
-      // The former is already true (at least in supported Node versions up to
-      // v9), so we simply follow the latter.
-      // Ref:
-      // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
-      return function getTrace(options, callback) {
-        const req = http.request(options, callback);
-        req.end();
-        return req;
-      };
-    });
+    shimmer.wrap(
+      http,
+      'get',
+      (): typeof http.get => {
+        // Re-implement http.get. This needs to be done (instead of using
+        // makeRequestTrace to patch it) because we need to set the trace
+        // context header before the returned ClientRequest is ended.
+        // The Node.js docs state that the only differences between request and
+        // get are that (1) get defaults to the HTTP GET method and (2) the
+        // returned request object is ended immediately.
+        // The former is already true (at least in supported Node versions up to
+        // v9), so we simply follow the latter.
+        // Ref:
+        // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
+        return function getTrace(options, callback) {
+          const req = http.request(options, callback);
+          req.end();
+          return req;
+        };
+      }
+    );
   }
 }
 
 // https.get depends on Node http internals in 8.9.0 and 9+ instead of the
 // public http module.
 function patchHttps(https: HttpsModule, api: Tracer) {
-  shimmer.wrap(https, 'request', (request) => {
+  shimmer.wrap(https, 'request', request => {
     return makeRequestTrace('https:', request, api);
   });
   shimmer.wrap(https, 'get', function getWrap(): typeof httpsModule.get {
@@ -275,13 +290,13 @@ const plugin: Plugin = [
     versions: '<8.9.0 || ^8.9.1',
     // require http if it wasn't patched yet, because the https client uses
     // the public 'http' module.
-    patch: () => require('http')
+    patch: () => require('http'),
   },
   {
     file: 'https',
     versions: '=8.9.0 || >=9.0.0',
     patch: patchHttps,
     unpatch: unpatchHttps,
-  }
+  },
 ];
 export = plugin;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {LEVELS, Logger, LoggerConfig} from '../src/logger';
+import { LEVELS, Logger, LoggerConfig } from '../src/logger';
 
 const PASS_THROUGH_LOG_LEVEL = Number(process.env.GCLOUD_TEST_LOG_LEVEL || 0);
 // Capture the value of common.Logger so that we don't enter an infinite loop
@@ -26,13 +26,18 @@ const OriginalLogger = Logger;
 type LoggerFunction<R> = (message: any, ...args: any[]) => R;
 
 export class TestLogger extends Logger {
-  private logs: {[k in keyof Logger]:
-                     string[]} = {error: [], warn: [], info: [], debug: []};
-  private innerLogger =
-      new OriginalLogger({level: LEVELS[PASS_THROUGH_LOG_LEVEL]});
+  private logs: { [k in keyof Logger]: string[] } = {
+    error: [],
+    warn: [],
+    info: [],
+    debug: [],
+  };
+  private innerLogger = new OriginalLogger({
+    level: LEVELS[PASS_THROUGH_LOG_LEVEL],
+  });
 
   constructor(options?: Partial<LoggerConfig>) {
-    super(Object.assign({tag: '@google-cloud/trace-agent'}, options));
+    super(Object.assign({ tag: '@google-cloud/trace-agent' }, options));
   }
 
   private makeLoggerFn(logLevel: keyof Logger): LoggerFunction<this> {
@@ -55,7 +60,7 @@ export class TestLogger extends Logger {
     return this.logs[logLevel];
   }
 
-  getNumLogsWith(logLevel: keyof Logger, strOrReg: string|RegExp): number {
+  getNumLogsWith(logLevel: keyof Logger, strOrReg: string | RegExp): number {
     if (typeof strOrReg === 'string') {
       return this.logs[logLevel].filter(line => line.includes(strOrReg)).length;
     } else {
@@ -64,7 +69,8 @@ export class TestLogger extends Logger {
   }
 
   clearLogs(): void {
-    (Object.keys(this.logs) as Array<keyof Logger>)
-        .forEach(logLevel => this.logs[logLevel].length = 0);
+    (Object.keys(this.logs) as Array<keyof Logger>).forEach(
+      logLevel => (this.logs[logLevel].length = 0)
+    );
   }
 }

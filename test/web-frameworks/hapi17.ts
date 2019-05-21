@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 
-import {hapi_17} from '../../src/plugins/types';
+import { hapi_17 } from '../../src/plugins/types';
 
-import {WebFramework, WebFrameworkAddHandlerOptions, WebFrameworkHandlerFunction, WebFrameworkResponse} from './base';
+import {
+  WebFramework,
+  WebFrameworkAddHandlerOptions,
+  WebFrameworkHandlerFunction,
+  WebFrameworkResponse,
+} from './base';
 
 const TAIL_WORK = Symbol('tail work for hapi');
 
-type AppState = {
+interface AppState {
   [TAIL_WORK]?: Array<Promise<void>>;
-};
+}
 
 export class Hapi17 extends EventEmitter implements WebFramework {
   static commonName = `hapi@17`;
@@ -44,9 +49,10 @@ export class Hapi17 extends EventEmitter implements WebFramework {
     const hapi = require('../plugins/fixtures/hapi17') as typeof hapi_17;
     this.server = new hapi.Server();
     this.server.events.on('response', (request: hapi_17.Request) => {
-      Promise.all((request.app as AppState)[TAIL_WORK] || [])
-          .then(
-              () => this.emit('tail'), (err: Error) => this.emit('tail', err));
+      Promise.all((request.app as AppState)[TAIL_WORK] || []).then(
+        () => this.emit('tail'),
+        (err: Error) => this.emit('tail', err)
+      );
     });
   }
 
@@ -61,38 +67,41 @@ export class Hapi17 extends EventEmitter implements WebFramework {
 
     // Only register a new plugin for the first occurrence of this path.
     if (shouldRegister) {
-      this.registering = this.registering.then(() => this.server.register({
-        plugin: {
-          name: options.path,
-          register: async (server, registerOpts) => {
-            server.route({
-              method: 'GET',
-              path: options.path,
-              handler: async (request, h) => {
-                let result;
-                for (const localOptions of this.routes.get(options.path)!) {
-                  if (localOptions.hasResponse || localOptions.blocking) {
-                    result = await localOptions.fn(request.raw.req.headers);
-                    if (result) {
-                      return result;
+      this.registering = this.registering.then(() =>
+        this.server.register({
+          plugin: {
+            name: options.path,
+            register: async (server, registerOpts) => {
+              server.route({
+                method: 'GET',
+                path: options.path,
+                handler: async (request, h) => {
+                  let result;
+                  for (const localOptions of this.routes.get(options.path)!) {
+                    if (localOptions.hasResponse || localOptions.blocking) {
+                      result = await localOptions.fn(request.raw.req.headers);
+                      if (result) {
+                        return result;
+                      }
+                    } else {
+                      // Use Hapi 17's application state to keep track of
+                      // tail work.
+                      const appState: AppState = request.app;
+                      if (!appState[TAIL_WORK]) {
+                        appState[TAIL_WORK] = [];
+                      }
+                      appState[TAIL_WORK]!.push(
+                        localOptions.fn(request.raw.req.headers)
+                      );
                     }
-                  } else {
-                    // Use Hapi 17's application state to keep track of
-                    // tail work.
-                    const appState: AppState = request.app;
-                    if (!appState[TAIL_WORK]) {
-                      appState[TAIL_WORK] = [];
-                    }
-                    appState[TAIL_WORK]!.push(
-                        localOptions.fn(request.raw.req.headers));
                   }
-                }
-                return h.continue;
-              }
-            });
-          }
-        }
-      }));
+                  return h.continue;
+                },
+              });
+            },
+          },
+        })
+      );
     }
   }
 

@@ -15,25 +15,25 @@
  */
 
 import * as assert from 'assert';
-import {EventEmitter} from 'events';
+import { EventEmitter } from 'events';
 import * as semver from 'semver';
-import {inspect} from 'util';
+import { inspect } from 'util';
 
-import {TraceCLS, TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
-import {AsyncHooksCLS} from '../src/cls/async-hooks';
-import {AsyncListenerCLS} from '../src/cls/async-listener';
-import {CLS} from '../src/cls/base';
-import {NullCLS} from '../src/cls/null';
-import {SingularCLS} from '../src/cls/singular';
-import {SpanType} from '../src/constants';
-import {createStackTrace, FORCE_NEW} from '../src/util';
+import { TraceCLS, TraceCLSConfig, TraceCLSMechanism } from '../src/cls';
+import { AsyncHooksCLS } from '../src/cls/async-hooks';
+import { AsyncListenerCLS } from '../src/cls/async-listener';
+import { CLS } from '../src/cls/base';
+import { NullCLS } from '../src/cls/null';
+import { SingularCLS } from '../src/cls/singular';
+import { SpanType } from '../src/constants';
+import { createStackTrace, FORCE_NEW } from '../src/util';
 
-import {TestLogger} from './logger';
-import {plan} from './utils';
+import { TestLogger } from './logger';
+import { plan } from './utils';
 
-type CLSConstructor = {
+interface CLSConstructor {
   new (defaultValue: string): CLS<string>;
-};
+}
 
 describe('Continuation-Local Storage', () => {
   const asyncAwaitSupported = semver.satisfies(process.version, '>=8');
@@ -70,9 +70,9 @@ describe('Continuation-Local Storage', () => {
   });
 
   describe('Implementations', () => {
-    const testCases: CLSConstructor[] = asyncAwaitSupported ?
-        [AsyncHooksCLS, AsyncListenerCLS] :
-        [AsyncListenerCLS];
+    const testCases: CLSConstructor[] = asyncAwaitSupported
+      ? [AsyncHooksCLS, AsyncListenerCLS]
+      : [AsyncListenerCLS];
 
     for (const testCase of testCases) {
       describe(`CLS for class ${testCase.name}`, () => {
@@ -105,7 +105,7 @@ describe('Continuation-Local Storage', () => {
         // requiring opening sockets or files of any kind. The responsibility
         // of testing behavior like this should fall on the context
         // propagation libraries themselves.
-        it('Propagates context across event ticks', (done) => {
+        it('Propagates context across event ticks', done => {
           const progress = plan(done, 3);
           c.runWithContext(() => {
             process.nextTick(() => {
@@ -194,7 +194,7 @@ describe('Continuation-Local Storage', () => {
           ee.emit('c');
         });
 
-        it('Supports nesting contexts', (done) => {
+        it('Supports nesting contexts', done => {
           c.runWithContext(() => {
             c.runWithContext(() => {
               setImmediate(() => {
@@ -206,14 +206,13 @@ describe('Continuation-Local Storage', () => {
           }, 'outer');
         });
 
-        it('Supports basic context propagation across Promise#then calls',
-           () => {
-             return c.runWithContext(() => {
-               return Promise.resolve().then(() => {
-                 assert.strictEqual(c.getContext(), 'modified');
-               });
-             }, 'modified');
-           });
+        it('Supports basic context propagation across Promise#then calls', () => {
+          return c.runWithContext(() => {
+            return Promise.resolve().then(() => {
+              assert.strictEqual(c.getContext(), 'modified');
+            });
+          }, 'modified');
+        });
       });
     }
 
@@ -229,25 +228,27 @@ describe('Continuation-Local Storage', () => {
   });
 
   describe('TraceCLS', () => {
-    const validTestCases:
-        Array<{config: TraceCLSConfig, expectedDefaultType: SpanType}> = [
-          {
-            config: {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
-            expectedDefaultType: SpanType.UNCORRELATED
-          },
-          {
-            config: {mechanism: TraceCLSMechanism.SINGULAR},
-            expectedDefaultType: SpanType.UNCORRELATED
-          },
-          {
-            config: {mechanism: TraceCLSMechanism.NONE},
-            expectedDefaultType: SpanType.UNTRACED
-          }
-        ];
+    const validTestCases: Array<{
+      config: TraceCLSConfig;
+      expectedDefaultType: SpanType;
+    }> = [
+      {
+        config: { mechanism: TraceCLSMechanism.ASYNC_LISTENER },
+        expectedDefaultType: SpanType.UNCORRELATED,
+      },
+      {
+        config: { mechanism: TraceCLSMechanism.SINGULAR },
+        expectedDefaultType: SpanType.UNCORRELATED,
+      },
+      {
+        config: { mechanism: TraceCLSMechanism.NONE },
+        expectedDefaultType: SpanType.UNTRACED,
+      },
+    ];
     if (asyncAwaitSupported) {
       validTestCases.push({
-        config: {mechanism: TraceCLSMechanism.ASYNC_HOOKS},
-        expectedDefaultType: SpanType.UNCORRELATED
+        config: { mechanism: TraceCLSMechanism.ASYNC_HOOKS },
+        expectedDefaultType: SpanType.UNCORRELATED,
       });
     }
     for (const testCase of validTestCases) {
@@ -260,7 +261,7 @@ describe('Continuation-Local Storage', () => {
             c = new TraceCLS(testCase.config, logger);
             c.enable();
           } catch {
-            c = {disable: () => {}} as TraceCLS;
+            c = { disable: () => {} } as TraceCLS;
           }
         });
 
@@ -269,17 +270,15 @@ describe('Continuation-Local Storage', () => {
           logger.clearLogs();
         });
 
-        it(`when disabled, doesn't throw and has reasonable default values`,
-           () => {
-             c.disable();
-             assert.ok(!c.isEnabled());
-             assert.ok(c.getContext().type, SpanType.UNTRACED);
-             assert.ok(
-                 c.runWithContext(() => 'hi', TraceCLS.UNCORRELATED), 'hi');
-             const fn = () => {};
-             assert.strictEqual(c.bindWithCurrentContext(fn), fn);
-             c.patchEmitterToPropagateContext(new EventEmitter());
-           });
+        it(`when disabled, doesn't throw and has reasonable default values`, () => {
+          c.disable();
+          assert.ok(!c.isEnabled());
+          assert.ok(c.getContext().type, SpanType.UNTRACED);
+          assert.ok(c.runWithContext(() => 'hi', TraceCLS.UNCORRELATED), 'hi');
+          const fn = () => {};
+          assert.strictEqual(c.bindWithCurrentContext(fn), fn);
+          c.patchEmitterToPropagateContext(new EventEmitter());
+        });
 
         it('[sanity check]', () => {
           assert.ok(c.isEnabled());
@@ -288,8 +287,9 @@ describe('Continuation-Local Storage', () => {
 
         it('constructs the correct underlying CLS mechanism', () => {
           assert.strictEqual(
-              logger.getNumLogsWith('info', `[${testCase.config.mechanism}]`),
-              1);
+            logger.getNumLogsWith('info', `[${testCase.config.mechanism}]`),
+            1
+          );
         });
 
         it('exposes the correct number of stack frames to remove', () => {
@@ -304,13 +304,13 @@ describe('Continuation-Local Storage', () => {
       });
     }
 
-    const invalidTestCases: TraceCLSConfig[] = asyncAwaitSupported ?
-        [
-          {mechanism: 'unknown'} as any  // tslint:disable-line:no-any
-        ] :
-        [
-          {mechanism: 'unknown'} as any,  // tslint:disable-line:no-any
-          {mechanism: 'async-hooks'}
+    const invalidTestCases: TraceCLSConfig[] = asyncAwaitSupported
+      ? [
+          { mechanism: 'unknown' } as any, // tslint:disable-line:no-any
+        ]
+      : [
+          { mechanism: 'unknown' } as any, // tslint:disable-line:no-any
+          { mechanism: 'async-hooks' },
         ];
 
     for (const testCase of invalidTestCases) {

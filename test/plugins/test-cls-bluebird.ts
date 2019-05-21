@@ -16,8 +16,8 @@
 
 import * as assert from 'assert';
 
-import {bluebird_3 as BluebirdPromise} from '../../src/plugins/types';
-import {Trace} from '../../src/trace';
+import { bluebird_3 as BluebirdPromise } from '../../src/plugins/types';
+import { Trace } from '../../src/trace';
 import * as traceTestModule from '../trace';
 
 /**
@@ -44,42 +44,43 @@ interface TestCase<T = void> {
  * 2. Within a then callback to the above mentioned Promise, construct a child
  *    span.
  */
-const getTracesForPromiseImplementation =
-    <T>(makePromise: () => BluebirdPromise<T>,
-        thenFn: (promise: BluebirdPromise<T>, cb: () => void) =>
-            void): Promise<[Trace, Trace]> => {
-      return new Promise((resolve, reject) => {
-        const tracer = traceTestModule.get();
-        let p: BluebirdPromise<T>;
-        const firstSpan = tracer.runInRootSpan({name: 'first'}, span => {
-          p = makePromise();
-          return span;
-        });
-        tracer.runInRootSpan({name: 'second'}, secondSpan => {
-          // Note to maintainers: Do NOT convert this to async/await,
-          // as it changes context propagation behavior.
-          thenFn(p, () => {
-            tracer.createChildSpan().endSpan();
-            secondSpan.endSpan();
-            firstSpan.endSpan();
-            setImmediate(() => {
-              try {
-                const trace1 = traceTestModule.getOneTrace(
-                    trace => trace.spans.some(root => root.name === 'first'));
-                const trace2 = traceTestModule.getOneTrace(
-                    trace => trace.spans.some(root => root.name === 'second'));
-                traceTestModule.clearTraceData();
-                resolve([trace1, trace2]);
-              } catch (e) {
-                traceTestModule.clearTraceData();
-                reject(e);
-              }
-            });
-          });
+const getTracesForPromiseImplementation = <T>(
+  makePromise: () => BluebirdPromise<T>,
+  thenFn: (promise: BluebirdPromise<T>, cb: () => void) => void
+): Promise<[Trace, Trace]> => {
+  return new Promise((resolve, reject) => {
+    const tracer = traceTestModule.get();
+    let p: BluebirdPromise<T>;
+    const firstSpan = tracer.runInRootSpan({ name: 'first' }, span => {
+      p = makePromise();
+      return span;
+    });
+    tracer.runInRootSpan({ name: 'second' }, secondSpan => {
+      // Note to maintainers: Do NOT convert this to async/await,
+      // as it changes context propagation behavior.
+      thenFn(p, () => {
+        tracer.createChildSpan().endSpan();
+        secondSpan.endSpan();
+        firstSpan.endSpan();
+        setImmediate(() => {
+          try {
+            const trace1 = traceTestModule.getOneTrace(trace =>
+              trace.spans.some(root => root.name === 'first')
+            );
+            const trace2 = traceTestModule.getOneTrace(trace =>
+              trace.spans.some(root => root.name === 'second')
+            );
+            traceTestModule.clearTraceData();
+            resolve([trace1, trace2]);
+          } catch (e) {
+            traceTestModule.clearTraceData();
+            reject(e);
+          }
         });
       });
-    };
-
+    });
+  });
+};
 
 describe('Patch plugin for bluebird', () => {
   // BPromise is a class.
@@ -102,44 +103,45 @@ describe('Patch plugin for bluebird', () => {
     {
       description: 'immediate resolve + child from then callback',
       makePromise: () => new BPromise(res => res()),
-      thenFn: (p, cb) => p.then(cb)
+      thenFn: (p, cb) => p.then(cb),
     } as TestCase,
     {
       description: 'deferred resolve + child from then callback',
       makePromise: () => new BPromise(res => setTimeout(res, 0)),
-      thenFn: (p, cb) => p.then(cb)
+      thenFn: (p, cb) => p.then(cb),
     } as TestCase,
     {
       description: 'bound, deferred resolve + child from then callback',
       makePromise: () => new BPromise<void>(res => setTimeout(res, 0)).bind({}),
-      thenFn: (p, cb) => p.then(cb)
+      thenFn: (p, cb) => p.then(cb),
     } as TestCase,
     {
       description: 'deferred resolve + child from spread callback',
       makePromise: () => new BPromise(res => setTimeout(() => res([]), 0)),
-      thenFn: (p, cb) => p.spread(cb)
+      thenFn: (p, cb) => p.spread(cb),
     } as TestCase<never[]>,
     {
       description: 'deferred rejection + child from then callback',
       makePromise: () => new BPromise((res, rej) => setTimeout(rej, 0)),
-      thenFn: (p, cb) => p.then(null, cb)
+      thenFn: (p, cb) => p.then(null, cb),
     } as TestCase,
     {
       description: 'deferred rejection + child from catch callback',
       makePromise: () => new BPromise((res, rej) => setTimeout(rej, 0)),
-      thenFn: (p, cb) => p.catch(cb)
+      thenFn: (p, cb) => p.catch(cb),
     } as TestCase,
     {
       description: 'deferred rejection + child from error callback',
-      makePromise: () => new BPromise(
-          (res, rej) =>
-              setTimeout(() => rej(new BPromise.OperationalError()), 0)),
-      thenFn: (p, cb) => p.error(cb)
+      makePromise: () =>
+        new BPromise((res, rej) =>
+          setTimeout(() => rej(new BPromise.OperationalError()), 0)
+        ),
+      thenFn: (p, cb) => p.error(cb),
     } as TestCase,
     {
       description: 'deferred rejection + child from finally callback',
       makePromise: () => new BPromise((res, rej) => setTimeout(rej, 0)),
-      thenFn: (p, cb) => p.catch(() => {}).finally(cb)
+      thenFn: (p, cb) => p.catch(() => {}).finally(cb),
     } as TestCase,
     {
       description: 'immediate resolve + child after await',
@@ -147,7 +149,7 @@ describe('Patch plugin for bluebird', () => {
       thenFn: async (p, cb) => {
         await p;
         cb();
-      }
+      },
     } as TestCase,
     {
       description: 'deferred resolve + child after await',
@@ -155,23 +157,25 @@ describe('Patch plugin for bluebird', () => {
       thenFn: async (p, cb) => {
         await p;
         cb();
-      }
-    } as TestCase
+      },
+    } as TestCase,
   ];
 
   // tslint:disable-next-line:no-any
   testCases.forEach((testCase: TestCase<any>) => {
     it(`enables context propagation in the same way as native promises for test case: ${
-           testCase.description}`,
-       async () => {
-         const actual = (await getTracesForPromiseImplementation(
-                             testCase.makePromise, testCase.thenFn))
-                            .map(trace => trace.spans.length)
-                            .join(', ');
-         // In each case, the second trace should have the child span.
-         // The format here is "[numSpansInFirstTrace],
-         // [numSpansInSecondTrace]".
-         assert.strictEqual(actual, '1, 2');
-       });
+      testCase.description
+    }`, async () => {
+      const actual = (await getTracesForPromiseImplementation(
+        testCase.makePromise,
+        testCase.thenFn
+      ))
+        .map(trace => trace.spans.length)
+        .join(', ');
+      // In each case, the second trace should have the child span.
+      // The format here is "[numSpansInFirstTrace],
+      // [numSpansInSecondTrace]".
+      assert.strictEqual(actual, '1, 2');
+    });
   });
 });
