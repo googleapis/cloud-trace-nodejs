@@ -18,7 +18,7 @@ import * as crypto from 'crypto';
 import * as util from 'util';
 
 import { Constants, SpanType } from './constants';
-import { RootSpan, Span, SpanOptions } from './plugin-types';
+import { RootSpan, Span, SpanOptions, TraceContext } from './plugin-types';
 import { SpanKind, Trace, TraceSpan } from './trace';
 import { TraceLabels } from './trace-labels';
 import { traceWriter } from './trace-writer';
@@ -227,6 +227,47 @@ function createPhantomSpanData<T extends SpanType>(
 }
 
 /**
+ * Helper (and base) class for UntracedRootSpanData. Represents an untraced
+ * child span.
+ */
+class UntracedSpanData implements Span {
+  readonly type = SpanType.UNTRACED;
+  protected readonly traceContext: TraceContext;
+
+  constructor(traceId: string) {
+    this.traceContext = {
+      traceId,
+      spanId: randomSpanId(),
+      options: 0, // Not traced.
+    };
+  }
+
+  getTraceContext(): traceUtil.TraceContext | null {
+    return this.traceContext;
+  }
+
+  // No-op.
+  addLabel(): void {}
+  // No-op.
+  endSpan(): void {}
+}
+
+/**
+ * Represents an "untraced" root span (aka not published).
+ * For distributed trace context propagation purposes.
+ */
+export class UntracedRootSpanData extends UntracedSpanData implements RootSpan {
+  private child: Span | null = null;
+
+  createChildSpan(): Span {
+    if (!this.child) {
+      this.child = new UntracedSpanData(this.traceContext.traceId);
+    }
+    return this.child;
+  }
+}
+
+/**
  * A virtual trace span that indicates that a real child span couldn't be
  * created because the correct root span couldn't be determined.
  */
@@ -236,10 +277,9 @@ export const UNCORRELATED_CHILD_SPAN = createPhantomSpanData(
 
 /**
  * A virtual trace span that indicates that a real child span couldn't be
- * created because the corresponding root span was disallowed by user
- * configuration.
+ * created because the Trace Agent was disabled.
  */
-export const UNTRACED_CHILD_SPAN = createPhantomSpanData(SpanType.UNTRACED);
+export const DISABLED_CHILD_SPAN = createPhantomSpanData(SpanType.UNTRACED);
 
 /**
  * A virtual trace span that indicates that a real root span couldn't be
@@ -260,13 +300,13 @@ export const UNCORRELATED_ROOT_SPAN = Object.freeze(
  * A virtual trace span that indicates that a real root span couldn't be
  * created because it was disallowed by user configuration.
  */
-export const UNTRACED_ROOT_SPAN = Object.freeze(
+export const DISABLED_ROOT_SPAN = Object.freeze(
   Object.assign(
     {
       createChildSpan() {
-        return UNTRACED_CHILD_SPAN;
+        return DISABLED_CHILD_SPAN;
       },
     },
-    UNTRACED_CHILD_SPAN
+    DISABLED_CHILD_SPAN
   )
 );

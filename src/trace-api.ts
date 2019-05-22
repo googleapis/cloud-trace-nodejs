@@ -34,8 +34,9 @@ import {
   RootSpanData,
   UNCORRELATED_CHILD_SPAN,
   UNCORRELATED_ROOT_SPAN,
-  UNTRACED_CHILD_SPAN,
-  UNTRACED_ROOT_SPAN,
+  DISABLED_CHILD_SPAN,
+  DISABLED_ROOT_SPAN,
+  UntracedRootSpanData,
 } from './span-data';
 import { TraceLabels } from './trace-labels';
 import { traceWriter } from './trace-writer';
@@ -191,7 +192,7 @@ export class StackdriverTracer implements Tracer {
 
   runInRootSpan<T>(options: RootSpanOptions, fn: (span: RootSpan) => T): T {
     if (!this.isActive()) {
-      return fn(UNTRACED_ROOT_SPAN);
+      return fn(DISABLED_ROOT_SPAN);
     }
 
     options = options || { name: '' };
@@ -234,23 +235,25 @@ export class StackdriverTracer implements Tracer {
       options,
     });
 
+    const traceId = traceContext
+      ? traceContext.traceId
+      : uuid
+          .v4()
+          .split('-')
+          .join('');
     let rootContext: RootSpan & RootContext;
 
-    // Don't create a root span if the trace policy disallows it.
+    // Create an "untraced" root span (one that won't be published) if the
+    // trace policy disallows it.
     if (!shouldTrace) {
-      rootContext = UNTRACED_ROOT_SPAN;
+      rootContext = new UntracedRootSpanData(traceId);
     } else {
       // Create a new root span, and invoke fn with it.
       rootContext = new RootSpanData(
         // Trace object
         {
           projectId: '',
-          traceId: traceContext
-            ? traceContext.traceId
-            : uuid
-                .v4()
-                .split('-')
-                .join(''),
+          traceId,
           spans: [],
         },
         // Span name
@@ -269,7 +272,7 @@ export class StackdriverTracer implements Tracer {
 
   getCurrentRootSpan(): RootSpan {
     if (!this.isActive()) {
-      return UNTRACED_ROOT_SPAN;
+      return DISABLED_ROOT_SPAN;
     }
     return cls.get().getContext();
   }
@@ -301,7 +304,7 @@ export class StackdriverTracer implements Tracer {
 
   createChildSpan(options?: SpanOptions): Span {
     if (!this.isActive()) {
-      return UNTRACED_CHILD_SPAN;
+      return DISABLED_CHILD_SPAN;
     }
 
     options = options || { name: '' };
@@ -388,9 +391,8 @@ export class StackdriverTracer implements Tracer {
       );
       return childContext;
     } else if (rootSpan.type === SpanType.UNTRACED) {
-      // Context wasn't lost, but there's no root span, indicating that this
-      // request should not be traced.
-      return UNTRACED_CHILD_SPAN;
+      // "Untraced" child spans don't incur a memory penalty.
+      return rootSpan.createChildSpan();
     } else {
       // Context was lost.
       this.logger!.warn(
