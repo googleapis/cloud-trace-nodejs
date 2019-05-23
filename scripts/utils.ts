@@ -1,19 +1,19 @@
-import { mkdir, Stats, stat, readFile, writeFile } from 'fs';
+import { mkdir, stat, readFile, writeFile } from 'fs';
 import * as glob from 'glob';
 import * as path from 'path';
-import * as pify from 'pify';
+import {promisify} from 'util';
 import { ChildProcess, ForkOptions, fork, SpawnOptions, spawn } from 'child_process';
 import * as once from 'once';
 import * as tmp from 'tmp';
 
 export const BUILD_DIRECTORY = 'build';
 
-export const globP: (pattern: string) => Promise<string[]> = pify(glob);
-export const mkdirP: (dir: string) => Promise<void> = pify(mkdir);
-export const readFileP: (path: string, encoding?: string) => Promise<Buffer|string> = pify(readFile);
-export const writeFileP: (path: string, data: Buffer|string, encoding?: string) => Promise<void> = pify(writeFile);
-export const statP: (path: string) => Promise<Stats> = pify(stat);
-export const tmpDirP: () => Promise<string> = pify(tmp.dir);
+export const globP = promisify(glob);
+export const mkdirP = promisify(mkdir);
+export const readFileP = promisify(readFile);
+export const writeFileP = promisify(writeFile);
+export const statP = promisify(stat);
+export const tmpDirP = promisify(tmp.dir) as () => Promise<string>;
 
 export function nodule(nodule: string) {
   return path.relative(BUILD_DIRECTORY, `node_modules/${nodule}`);
