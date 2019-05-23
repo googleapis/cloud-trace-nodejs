@@ -2,10 +2,10 @@ import * as cpy from 'cpy';
 import * as path from 'path';
 import { BUILD_DIRECTORY, statP, spawnP, readFileP, writeFileP, mkdirP } from './utils';
 import { readdir } from 'fs';
-import * as pify from 'pify';
+import {promisify} from 'util';
 import * as semver from 'semver';
 
-const readdirP: (path: string) => Promise<string[]> = pify(readdir);
+const readdirP: (path: string) => Promise<string[]> = promisify(readdir);
 
 export async function initTestFixtures(installPlugins: boolean) {
   // Copy fixtures to build directory
@@ -40,7 +40,7 @@ export async function initTestFixtures(installPlugins: boolean) {
 
     /**
      * This is the general approach:
-     * 
+     *
      *  if package supports this Node version:
      *    if fixtures don't already exist for this package:
      *      create fixtures
