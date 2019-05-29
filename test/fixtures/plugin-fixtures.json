@@ -29,17 +29,9 @@
       "google-gax": "^0.16.0"
     }
   },
-  "grpc1.6": {
+  "grpc1.20": {
     "dependencies": {
-      "grpc": "~1.6.0"
-    },
-    "engines": {
-      "node": "<10"
-    }
-  },
-  "grpc1.7": {
-    "dependencies": {
-      "grpc": "^1.7.0"
+      "grpc": "^1.20.2"
     }
   },
   "hapi-plugin-mysql3": {
@@ -179,14 +171,20 @@
       "hiredis": "^0.4.1",
       "redis": "~2.3.x"
     },
-    "_mainModule": "redis"
+    "_mainModule": "redis",
+    "engines": {
+      "node": "<12"
+    }
   },
   "redis2.3-hiredis0.5": {
     "dependencies": {
       "hiredis": "^0.5.0",
       "redis": "~2.3.x"
     },
-    "_mainModule": "redis"
+    "_mainModule": "redis",
+    "engines": {
+      "node": "<12"
+    }
   },
   "redis2.3": {
     "dependencies": {

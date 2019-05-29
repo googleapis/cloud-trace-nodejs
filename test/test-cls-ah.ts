@@ -67,7 +67,7 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
   });
 
   it('Correctly assumes the type of Promise resources', () => {
-    const actual: Array<Promise<void>> = [];
+    let numPromiseInitHookInvocations = 0;
     const expected: Array<Promise<void>> = [];
     const hook = asyncHooks
       .createHook({
@@ -78,14 +78,14 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
           resource: { promise: Promise<void> }
         ) => {
           if (type === 'PROMISE') {
-            actual.push(resource.promise);
+            numPromiseInitHookInvocations++;
           }
         },
       })
       .enable();
     expected.push(Promise.resolve());
-    expected.push(actual[0].then(() => {}));
-    assert.deepStrictEqual(actual, expected);
+    expected.push(expected[0].then(() => {}));
+    assert.deepStrictEqual(numPromiseInitHookInvocations, expected.length);
     hook.disable();
   });
 
