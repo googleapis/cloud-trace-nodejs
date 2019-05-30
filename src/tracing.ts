@@ -27,18 +27,18 @@ import { BuiltinTracePolicy, TracePolicyConfig } from './tracing-policy';
 import { Component, Forceable, packageNameFromPath, Singleton } from './util';
 
 export type TopLevelConfig =
-  | {
+  | Forceable<{
       enabled: boolean;
       logLevel: number;
-      clsConfig: TraceCLSConfig;
-      writerConfig: TraceWriterConfig;
-      pluginLoaderConfig: PluginLoaderConfig;
+      clsConfig: Forceable<TraceCLSConfig>;
+      writerConfig: Forceable<TraceWriterConfig>;
+      pluginLoaderConfig: Forceable<PluginLoaderConfig>;
       tracePolicyConfig: TracePolicyConfig;
       overrides: {
         tracePolicy?: TracePolicy;
         propagation?: OpenCensusPropagation;
       };
-    }
+    }>
   | {
       enabled: false;
     };

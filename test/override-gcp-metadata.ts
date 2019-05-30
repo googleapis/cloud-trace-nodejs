@@ -22,12 +22,14 @@ import { AxiosRequestConfig } from 'axios';
 
 shimmer.wrap(rax, 'attach', attach => {
   return (arg) => {
-    shimmer.wrap(arg, 'request', request => {
-      return (config: AxiosRequestConfig) => {
-        delete config['raxConfig'];
-        return request(config);
-      }
-    });
-    return arg;
+    if (arg) {
+      shimmer.wrap(arg, 'request', request => {
+        return (config: AxiosRequestConfig) => {
+          delete config['raxConfig'];
+          return request(config);
+        }
+      });
+    }
+    return attach(arg);
   }
 });

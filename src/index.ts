@@ -28,11 +28,7 @@ import { FORCE_NEW, Forceable, lastOf } from './util';
 import { Constants } from './constants';
 import { TraceCLSMechanism } from './cls';
 import { StackdriverTracer } from './trace-api';
-import {
-  BuiltinTracePolicy,
-  TraceContextHeaderBehavior,
-} from './tracing-policy';
-import { config } from './plugins/types/bluebird_3';
+import { TraceContextHeaderBehavior } from './tracing-policy';
 
 export { Config, PluginTypes };
 
@@ -45,7 +41,7 @@ let traceAgent: StackdriverTracer;
  * be modified.
  * @return A normalized configuration object.
  */
-function initConfig(userConfig: Forceable<Config>): Forceable<TopLevelConfig> {
+function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
   let envSetConfig = {};
   if (!!process.env.GCLOUD_TRACE_CONFIG) {
     envSetConfig = require(path.resolve(
