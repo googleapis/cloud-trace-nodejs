@@ -37,6 +37,8 @@ headers[Constants.TRACE_AGENT_REQUEST_HEADER] = 1;
 
 /* A list of scopes needed to operate with the trace API */
 const SCOPES: string[] = ['https://www.googleapis.com/auth/trace.append'];
+/* The API endpoint of the Stackdriver Trace service */
+const TRACE_API_ENDPOINT = 'cloudtrace.googleapis.com';
 
 export interface TraceWriterConfig extends common.GoogleAuthOptions {
   projectId?: string;
@@ -118,7 +120,8 @@ export class TraceWriter extends common.Service {
       {
         packageJson: pjson,
         projectIdRequired: false,
-        baseUrl: 'https://cloudtrace.googleapis.com/v1',
+        apiEndpoint: TRACE_API_ENDPOINT,
+        baseUrl: `https://${TRACE_API_ENDPOINT}/v1`,
         scopes: SCOPES,
       },
       config
