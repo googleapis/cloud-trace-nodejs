@@ -32,7 +32,7 @@ import {
   StackdriverTracerConfig,
 } from '../src/trace-api';
 import { traceWriter } from '../src/trace-writer';
-import { alwaysTrace } from '../src/tracing-policy';
+import { alwaysTrace, neverTrace } from '../src/tracing-policy';
 import { FORCE_NEW, TraceContext } from '../src/util';
 
 import { TestLogger } from './logger';
@@ -200,18 +200,35 @@ describe('Trace Interface', () => {
       });
     });
 
-    it('should return null context id when one does not exist', () => {
+    it('should return null context ID when one does not exist', () => {
       const traceAPI = createTraceAgent();
       assert.strictEqual(traceAPI.getCurrentContextId(), null);
     });
 
-    it('should return the appropriate trace id', () => {
+    it('should return the appropriate context ID', () => {
       const traceAPI = createTraceAgent();
       traceAPI.runInRootSpan({ name: 'root' }, rootSpan => {
         const id = traceAPI.getCurrentContextId();
+        assert.ok(rootSpan.getTraceContext());
+        assert.strictEqual(id, rootSpan.getTraceContext()!.traceId);
         rootSpan.endSpan();
         // getOneTrace asserts that there is exactly one trace.
         testTraceModule.getOneTrace(trace => trace.traceId === id);
+      });
+    });
+
+    it('should return a context ID even if in an untraced request', () => {
+      const traceAPI = createTraceAgent({}, { tracePolicy: neverTrace() });
+      traceAPI.runInRootSpan({ name: '' }, rootSpan => {
+        assert.strictEqual(rootSpan.type, SpanType.UNSAMPLED);
+        assert.notStrictEqual(traceAPI.getCurrentContextId(), null);
+        assert.ok(rootSpan.getTraceContext());
+        assert.strictEqual(
+          traceAPI.getCurrentContextId(),
+          rootSpan.getTraceContext()!.traceId
+        );
+        assert.ok(rootSpan.createChildSpan().getTraceContext());
+        assert.ok(traceAPI.createChildSpan().getTraceContext());
       });
     });
 
@@ -245,7 +262,7 @@ describe('Trace Interface', () => {
         };
         const beforeRootSpan = Date.now();
         traceAPI.runInRootSpan(rootSpanOptions, rootSpan => {
-          assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
+          assert.strictEqual(rootSpan.type, SpanType.UNSAMPLED);
           rootSpan.endSpan();
         });
         const afterRootSpan = Date.now();
@@ -267,7 +284,7 @@ describe('Trace Interface', () => {
       {
         const rootSpanOptions = { name: 'root' };
         traceAPI.runInRootSpan(rootSpanOptions, rootSpan => {
-          assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
+          assert.strictEqual(rootSpan.type, SpanType.UNSAMPLED);
           rootSpan.endSpan();
         });
         assert.ok(tracePolicy.capturedShouldTraceParam);

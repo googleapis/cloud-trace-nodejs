@@ -57,17 +57,17 @@ export enum SpanType {
   UNCORRELATED = 'UNCORRELATED',
 
   /**
-   * This span object was created in circumstances where a trace span could not
-   * be created for one of the following reasons:
-   * (1) The Trace Agent is disabled, either explicitly or because a project ID
-   *     couldn't be determined.
-   * (2) The configured tracing policy disallows tracing for this request
-   *     (due to sampling restrictions, ignored URLs, etc.)
-   * (3) The current incoming request contains trace context headers that
-   *     explicitly disable local tracing for the request.
+   * This span object was created by a disabled Trace Agent, either explicitly
+   * or because a project ID couldn't be determined.
+   */
+  DISABLED = 'DISABLED',
+
+  /**
+   * This span object represents an unsampled request, and will not be
+   * published.
    * Getting a span object of this type should not be considered an error.
    */
-  UNTRACED = 'UNTRACED',
+  UNSAMPLED = 'UNSAMPLED',
 
   /**
    * This span object was created by StackdriverTracer#runInRootSpan, and

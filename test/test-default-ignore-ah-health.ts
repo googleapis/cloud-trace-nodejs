@@ -22,7 +22,7 @@ describe('Trace API', () => {
   it('should ignore /_ah/health traces by default', () => {
     const traceApi = trace.start();
     traceApi.runInRootSpan({ name: 'root', url: '/_ah/health' }, rootSpan => {
-      assert.strictEqual(rootSpan.type, traceApi.spanTypes.UNTRACED);
+      assert.strictEqual(rootSpan.type, traceApi.spanTypes.UNSAMPLED);
     });
   });
 });
