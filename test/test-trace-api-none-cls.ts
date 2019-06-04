@@ -74,7 +74,7 @@ describe('Custom Trace API with CLS disabled', () => {
       traceApi.runInRootSpan({ name: 'root' }, identity)
     );
     const child = traceApi.createChildSpan({ name: 'child' });
-    assert.strictEqual(child.type, SpanType.UNTRACED);
+    assert.strictEqual(child.type, SpanType.UNCORRELATED);
     child.endSpan();
     root.endSpan();
   });

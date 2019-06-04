@@ -31,18 +31,18 @@ describe('index.js', function() {
     assert.ok(!disabledAgent.isActive()); // ensure it's disabled first
     let ranInRootSpan = false;
     disabledAgent.runInRootSpan({ name: '' }, (span) => {
-      assert.strictEqual(span.type, SpanType.UNTRACED);
+      assert.strictEqual(span.type, SpanType.DISABLED);
       ranInRootSpan = true;
     });
     assert.ok(ranInRootSpan);
     assert.strictEqual(disabledAgent.enhancedDatabaseReportingEnabled(), false);
     assert.strictEqual(disabledAgent.getCurrentContextId(), null);
     assert.strictEqual(disabledAgent.getWriterProjectId(), null);
-    assert.strictEqual(disabledAgent.getCurrentRootSpan().type, SpanType.UNTRACED);
+    assert.strictEqual(disabledAgent.getCurrentRootSpan().type, SpanType.DISABLED);
     // getting project ID should reject.
     await disabledAgent.getProjectId().then(
         () => Promise.reject(new Error()), () => Promise.resolve());
-    assert.strictEqual(disabledAgent.createChildSpan({ name: '' }).type, SpanType.UNTRACED);
+    assert.strictEqual(disabledAgent.createChildSpan({ name: '' }).type, SpanType.DISABLED);
     assert.strictEqual(disabledAgent.getResponseTraceContext({
       traceId: '1',
       spanId: '1'

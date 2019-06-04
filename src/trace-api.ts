@@ -390,9 +390,11 @@ export class StackdriverTracer implements Tracer {
         }] Created child span [${options.name}]`
       );
       return childContext;
-    } else if (rootSpan.type === SpanType.UNTRACED) {
+    } else if (rootSpan.type === SpanType.UNSAMPLED) {
       // "Untraced" child spans don't incur a memory penalty.
       return rootSpan.createChildSpan();
+    } else if (rootSpan.type === SpanType.DISABLED) {
+      return DISABLED_CHILD_SPAN;
     } else {
       // Context was lost.
       this.logger!.warn(

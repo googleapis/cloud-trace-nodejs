@@ -38,7 +38,7 @@ export interface RealRootContext {
 }
 
 export interface PhantomRootContext {
-  readonly type: SpanType.UNCORRELATED | SpanType.UNTRACED;
+  readonly type: SpanType.UNCORRELATED | SpanType.UNSAMPLED | SpanType.DISABLED;
 }
 
 /**
@@ -156,9 +156,7 @@ export class TraceCLS implements CLS<RootContext> {
   }
 
   enable(): void {
-    // if this.CLSClass = NullCLS, the user specifically asked not to use
-    // any context propagation mechanism. So nothing should change.
-    if (!this.enabled && this.CLSClass !== NullCLS) {
+    if (!this.enabled) {
       this.logger.info('TraceCLS#enable: Enabling CLS.');
       this.currentCLS.disable();
       this.currentCLS = new this.CLSClass(TraceCLS.UNCORRELATED);

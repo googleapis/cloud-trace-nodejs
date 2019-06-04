@@ -242,7 +242,7 @@ describe('Continuation-Local Storage', () => {
       },
       {
         config: { mechanism: TraceCLSMechanism.NONE },
-        expectedDefaultType: SpanType.UNTRACED,
+        expectedDefaultType: SpanType.UNCORRELATED,
       },
     ];
     if (asyncAwaitSupported) {
@@ -273,7 +273,7 @@ describe('Continuation-Local Storage', () => {
         it(`when disabled, doesn't throw and has reasonable default values`, () => {
           c.disable();
           assert.ok(!c.isEnabled());
-          assert.ok(c.getContext().type, SpanType.UNTRACED);
+          assert.ok(c.getContext().type, SpanType.UNSAMPLED);
           assert.ok(c.runWithContext(() => 'hi', TraceCLS.UNCORRELATED), 'hi');
           const fn = () => {};
           assert.strictEqual(c.bindWithCurrentContext(fn), fn);

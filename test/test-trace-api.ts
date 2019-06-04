@@ -220,7 +220,7 @@ describe('Trace Interface', () => {
     it('should return a context ID even if in an untraced request', () => {
       const traceAPI = createTraceAgent({}, { tracePolicy: neverTrace() });
       traceAPI.runInRootSpan({ name: '' }, rootSpan => {
-        assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
+        assert.strictEqual(rootSpan.type, SpanType.UNSAMPLED);
         assert.notStrictEqual(traceAPI.getCurrentContextId(), null);
         assert.ok(rootSpan.getTraceContext());
         assert.strictEqual(
@@ -262,7 +262,7 @@ describe('Trace Interface', () => {
         };
         const beforeRootSpan = Date.now();
         traceAPI.runInRootSpan(rootSpanOptions, rootSpan => {
-          assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
+          assert.strictEqual(rootSpan.type, SpanType.UNSAMPLED);
           rootSpan.endSpan();
         });
         const afterRootSpan = Date.now();
@@ -284,7 +284,7 @@ describe('Trace Interface', () => {
       {
         const rootSpanOptions = { name: 'root' };
         traceAPI.runInRootSpan(rootSpanOptions, rootSpan => {
-          assert.strictEqual(rootSpan.type, SpanType.UNTRACED);
+          assert.strictEqual(rootSpan.type, SpanType.UNSAMPLED);
           rootSpan.endSpan();
         });
         assert.ok(tracePolicy.capturedShouldTraceParam);

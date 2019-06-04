@@ -231,7 +231,7 @@ function createPhantomSpanData<T extends SpanType>(
  * child span.
  */
 class UntracedSpanData implements Span {
-  readonly type = SpanType.UNTRACED;
+  readonly type = SpanType.UNSAMPLED;
   protected readonly traceContext: TraceContext;
 
   constructor(traceId: string) {
@@ -279,7 +279,7 @@ export const UNCORRELATED_CHILD_SPAN = createPhantomSpanData(
  * A virtual trace span that indicates that a real child span couldn't be
  * created because the Trace Agent was disabled.
  */
-export const DISABLED_CHILD_SPAN = createPhantomSpanData(SpanType.UNTRACED);
+export const DISABLED_CHILD_SPAN = createPhantomSpanData(SpanType.DISABLED);
 
 /**
  * A virtual trace span that indicates that a real root span couldn't be
