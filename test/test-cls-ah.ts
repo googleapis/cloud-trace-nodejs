@@ -200,9 +200,7 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
     for (const testCase of testCases) {
       const skipIfTestSpecifies = !!testCase.skip ? it.skip : it;
       skipIfTestSpecifies(
-        `Doesn't retain stale references when running ${
-          testCase.description
-        } in a context`,
+        `Doesn't retain stale references when running ${testCase.description} in a context`,
         async () => {
           createdPromiseIDs.length = 0;
           try {

@@ -119,9 +119,7 @@ export class TraceCLS implements CLS<RootContext> {
       case TraceCLSMechanism.ASYNC_HOOKS:
         if (!asyncHooksAvailable) {
           throw new Error(
-            `CLS mechanism [${
-              config.mechanism
-            }] is not compatible with Node <8.`
+            `CLS mechanism [${config.mechanism}] is not compatible with Node <8.`
           );
         }
         this.CLSClass = AsyncHooksCLS;

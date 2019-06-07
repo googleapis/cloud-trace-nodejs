@@ -42,9 +42,7 @@ export class Koa1 implements WebFramework {
   addHandler(options: WebFrameworkAddHandlerOptions): void {
     if (!options.hasResponse && !options.blocking) {
       throw new Error(
-        `${
-          this.constructor.name
-        } wrapper for testing doesn't support non-blocking handlers.`
+        `${this.constructor.name} wrapper for testing doesn't support non-blocking handlers.`
       );
     }
     this.app.use(function*(next) {

@@ -201,9 +201,7 @@ export class StackdriverTracer implements Tracer {
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanType.ROOT && !rootSpan.span.endTime) {
       this.logger!.warn(
-        `TraceApi#runInRootSpan: [${
-          this.pluginNameToLog
-        }] Cannot create nested root spans.`
+        `TraceApi#runInRootSpan: [${this.pluginNameToLog}] Cannot create nested root spans.`
       );
       return fn(UNCORRELATED_ROOT_SPAN);
     }
@@ -319,11 +317,7 @@ export class StackdriverTracer implements Tracer {
         // seems to have some value, but isn't representable. The user probably
         // needs a custom outer span that encompasses the entirety of work.
         this.logger!.warn(
-          `TraceApi#createChildSpan: [${
-            this.pluginNameToLog
-          }] Creating phantom child span [${options.name}] because root span [${
-            rootSpan.span.name
-          }] was already closed.`
+          `TraceApi#createChildSpan: [${this.pluginNameToLog}] Creating phantom child span [${options.name}] because root span [${rootSpan.span.name}] was already closed.`
         );
         return UNCORRELATED_CHILD_SPAN;
       }
@@ -385,9 +379,7 @@ export class StackdriverTracer implements Tracer {
         skipFrames: options.skipFrames ? options.skipFrames + 1 : 1,
       });
       this.logger!.info(
-        `TraceApi#createChildSpan: [${
-          this.pluginNameToLog
-        }] Created child span [${options.name}]`
+        `TraceApi#createChildSpan: [${this.pluginNameToLog}] Created child span [${options.name}]`
       );
       return childContext;
     } else if (rootSpan.type === SpanType.UNSAMPLED) {
@@ -398,11 +390,7 @@ export class StackdriverTracer implements Tracer {
     } else {
       // Context was lost.
       this.logger!.warn(
-        `TraceApi#createChildSpan: [${
-          this.pluginNameToLog
-        }] Creating phantom child span [${
-          options.name
-        }] because there is no root span.`
+        `TraceApi#createChildSpan: [${this.pluginNameToLog}] Creating phantom child span [${options.name}] because there is no root span.`
       );
       return UNCORRELATED_CHILD_SPAN;
     }
