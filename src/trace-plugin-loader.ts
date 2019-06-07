@@ -518,9 +518,7 @@ export class PluginLoader {
           }
         } catch (e) {
           this.logger.error(
-            `PluginLoader#getVersion: [${pjsonPath}] An error occurred while retrieving version string. ${
-              e.message
-            }`
+            `PluginLoader#getVersion: [${pjsonPath}] An error occurred while retrieving version string. ${e.message}`
           );
           version = null;
         }

@@ -228,27 +228,23 @@ function patchHttp(http: HttpModule, api: Tracer) {
   if (semver.satisfies(process.version, '>=8.0.0')) {
     // http.get in Node 8 calls the private copy of request rather than the one
     // we have patched on module.export, so patch get as well.
-    shimmer.wrap(
-      http,
-      'get',
-      (): typeof http.get => {
-        // Re-implement http.get. This needs to be done (instead of using
-        // makeRequestTrace to patch it) because we need to set the trace
-        // context header before the returned ClientRequest is ended.
-        // The Node.js docs state that the only differences between request and
-        // get are that (1) get defaults to the HTTP GET method and (2) the
-        // returned request object is ended immediately.
-        // The former is already true (at least in supported Node versions up to
-        // v9), so we simply follow the latter.
-        // Ref:
-        // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
-        return function getTrace(options, callback) {
-          const req = http.request(options, callback);
-          req.end();
-          return req;
-        };
-      }
-    );
+    shimmer.wrap(http, 'get', (): typeof http.get => {
+      // Re-implement http.get. This needs to be done (instead of using
+      // makeRequestTrace to patch it) because we need to set the trace
+      // context header before the returned ClientRequest is ended.
+      // The Node.js docs state that the only differences between request and
+      // get are that (1) get defaults to the HTTP GET method and (2) the
+      // returned request object is ended immediately.
+      // The former is already true (at least in supported Node versions up to
+      // v9), so we simply follow the latter.
+      // Ref:
+      // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
+      return function getTrace(options, callback) {
+        const req = http.request(options, callback);
+        req.end();
+        return req;
+      };
+    });
   }
 }
 

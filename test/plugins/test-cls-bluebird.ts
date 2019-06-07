@@ -163,9 +163,7 @@ describe('Patch plugin for bluebird', () => {
 
   // tslint:disable-next-line:no-any
   testCases.forEach((testCase: TestCase<any>) => {
-    it(`enables context propagation in the same way as native promises for test case: ${
-      testCase.description
-    }`, async () => {
+    it(`enables context propagation in the same way as native promises for test case: ${testCase.description}`, async () => {
       const actual = (await getTracesForPromiseImplementation(
         testCase.makePromise,
         testCase.thenFn

@@ -85,9 +85,7 @@ export function assertSpanDuration(span: TraceSpan, bounds: [number, number?]) {
   assert.ok(
     spanDuration >= lowerBound - ASSERT_SPAN_TIME_TOLERANCE_MS &&
       spanDuration <= upperBound + ASSERT_SPAN_TIME_TOLERANCE_MS,
-    `Span duration of ${spanDuration} ms is not in the acceptable expected range of [${
-      bounds[0]
-    }, ${bounds[1]}] ms (w/ ${ASSERT_SPAN_TIME_TOLERANCE_MS} ms leniency)`
+    `Span duration of ${spanDuration} ms is not in the acceptable expected range of [${bounds[0]}, ${bounds[1]}] ms (w/ ${ASSERT_SPAN_TIME_TOLERANCE_MS} ms leniency)`
   );
 }
 

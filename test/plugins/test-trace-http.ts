@@ -249,9 +249,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       });
 
       for (const testCase of testCases) {
-        it(`creates spans with accurate timespans when ${
-          testCase.description
-        }`, async () => {
+        it(`creates spans with accurate timespans when ${testCase.description}`, async () => {
           let recordedTime = 0;
           await testTraceModule
             .get()
