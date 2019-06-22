@@ -24,7 +24,7 @@ export enum SpanKind {
 }
 
 export interface TraceSpan {
-  labels: { [key: string]: string };
+  labels: {[key: string]: string};
   startTime: string;
   endTime: string;
   kind: SpanKind;

@@ -18,7 +18,7 @@ import * as assert from 'assert';
 import * as asyncHooksModule from 'async_hooks';
 import * as semver from 'semver';
 
-import { AsyncHooksCLS } from '../src/cls/async-hooks';
+import {AsyncHooksCLS} from '../src/cls/async-hooks';
 
 type AsyncHooksModule = typeof asyncHooksModule;
 
@@ -75,7 +75,7 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
           uid: number,
           type: string,
           tid: number,
-          resource: { promise: Promise<void> }
+          resource: {promise: Promise<void>}
         ) => {
           if (type === 'PROMISE') {
             numPromiseInitHookInvocations++;
@@ -149,7 +149,7 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
       skip?: boolean;
       fn: () => {};
     }> = [
-      { description: 'a no-op async function', fn: async () => {} },
+      {description: 'a no-op async function', fn: async () => {}},
       {
         description: 'an async function that throws',
         fn: async () => {

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
-import { hapi_17 } from '../../src/plugins/types';
+import {hapi_17} from '../../src/plugins/types';
 
 import {
   WebFramework,

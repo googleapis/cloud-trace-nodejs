@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { ServerResponse } from 'http';
+import {ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
-import { parse as urlParse } from 'url';
+import {parse as urlParse} from 'url';
 
-import { PluginTypes } from '..';
+import {PluginTypes} from '..';
 
-import { restify_5 } from './types';
+import {restify_5} from './types';
 
 type Restify5 = typeof restify_5;
-type Request = restify_5.Request & { route?: { path: string | RegExp } };
+type Request = restify_5.Request & {route?: {path: string | RegExp}};
 type Response = restify_5.Response;
 type Next = restify_5.Next;
 type CreateServerFn = (options?: restify_5.ServerOptions) => restify_5.Server;

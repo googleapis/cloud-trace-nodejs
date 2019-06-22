@@ -17,10 +17,10 @@
 import * as assert from 'assert';
 import * as knexTypes from 'knex';
 
-import { Tracer } from '../../src/plugin-types';
-import { TraceLabels } from '../../src/trace-labels';
+import {Tracer} from '../../src/plugin-types';
+import {TraceLabels} from '../../src/trace-labels';
 import * as traceTestModule from '../trace';
-import { describeInterop, hasContext, wait } from '../utils';
+import {describeInterop, hasContext, wait} from '../utils';
 
 const TABLE_NAME = 't';
 
@@ -30,7 +30,7 @@ const obj = {
 };
 
 describeInterop<typeof knexTypes>('knex', fixture => {
-  const { version, parsedVersion } = fixture;
+  const {version, parsedVersion} = fixture;
 
   let knex: knexTypes;
   let tracer: Tracer;
@@ -38,7 +38,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
   before(() => {
     traceTestModule.setCLSForTest();
     traceTestModule.setPluginLoaderForTest();
-    tracer = traceTestModule.start({ enhancedDatabaseReporting: true });
+    tracer = traceTestModule.start({enhancedDatabaseReporting: true});
     knex = fixture.require()({
       client: 'mysql',
       connection: require('../mysql-config'),
@@ -79,7 +79,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
   });
 
   it('should perform basic operations using ' + version, () => {
-    return tracer.runInRootSpan({ name: 'outer' }, rootSpan => {
+    return tracer.runInRootSpan({name: 'outer'}, rootSpan => {
       return knex(TABLE_NAME)
         .select()
         .then(res => {
@@ -104,7 +104,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
   });
 
   it('should propagate context using ' + version, () => {
-    return tracer.runInRootSpan({ name: 'outer' }, rootSpan => {
+    return tracer.runInRootSpan({name: 'outer'}, rootSpan => {
       return knex
         .select()
         .from(TABLE_NAME)
@@ -116,7 +116,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
   });
 
   it('should remove trace frames from stack using ' + version, () => {
-    return tracer.runInRootSpan({ name: 'outer' }, rootSpan => {
+    return tracer.runInRootSpan({name: 'outer'}, rootSpan => {
       return knex
         .select()
         .from(TABLE_NAME)
@@ -140,7 +140,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
   });
 
   it('should work with events using ' + version, () => {
-    return tracer.runInRootSpan({ name: 'outer' }, rootSpan => {
+    return tracer.runInRootSpan({name: 'outer'}, rootSpan => {
       return knex
         .select()
         .from(TABLE_NAME)
@@ -171,7 +171,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
   });
 
   it('should work without events or callback using ' + version, () => {
-    return tracer.runInRootSpan({ name: 'outer' }, rootSpan => {
+    return tracer.runInRootSpan({name: 'outer'}, rootSpan => {
       return knex
         .select()
         .from(TABLE_NAME)
@@ -194,8 +194,8 @@ describeInterop<typeof knexTypes>('knex', fixture => {
   });
 
   it('should perform basic transaction using ' + version, () => {
-    const obj2 = { k: 2, v: 'obj2' };
-    return tracer.runInRootSpan({ name: 'outer' }, rootSpan => {
+    const obj2 = {k: 2, v: 'obj2'};
+    return tracer.runInRootSpan({name: 'outer'}, rootSpan => {
       return knex
         .transaction(trx => {
           knex

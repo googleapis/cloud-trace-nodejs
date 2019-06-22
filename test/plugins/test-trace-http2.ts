@@ -21,8 +21,8 @@ import * as http2Types from 'http2';
 import * as semver from 'semver';
 import * as stream from 'stream';
 
-import { Constants, SpanType } from '../../src/constants';
-import { TraceLabels } from '../../src/trace-labels';
+import {Constants, SpanType} from '../../src/constants';
+import {TraceLabels} from '../../src/trace-labels';
 import * as traceTestModule from '../trace';
 import {
   assertSpanDuration,
@@ -65,7 +65,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
       server = http2.createServer();
       server.on('stream', s => {
         setTimeout(() => {
-          s.respond({ ':status': 200 });
+          s.respond({':status': 200});
           s.end(serverRes);
         }, DEFAULT_SPAN_DURATION);
       });
@@ -85,11 +85,11 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
 
     it('should accurately measure request time', done => {
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const start = Date.now();
           const session = http2.connect(`http://localhost:${serverPort}`);
-          const s = session.request({ ':path': '/' });
+          const s = session.request({':path': '/'});
           s.setEncoding('utf8');
           let result = '';
           s.on('data', (data: string) => {
@@ -111,10 +111,10 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
 
     it('should propagate context', done => {
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const session = http2.connect(`http://localhost:${serverPort}`);
-          const s = session.request({ ':path': '/' });
+          const s = session.request({':path': '/'});
           s.on('data', () => {
             assert.ok(hasContext());
           }).on('end', () => {
@@ -130,10 +130,10 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
 
     it('should not trace api requests', done => {
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const session = http2.connect(`http://localhost:${serverPort}`);
-          const headers: http2Types.OutgoingHttpHeaders = { ':path': '/' };
+          const headers: http2Types.OutgoingHttpHeaders = {':path': '/'};
           headers[Constants.TRACE_AGENT_REQUEST_HEADER] = 'yay';
           const s = session.request(headers);
           s.end();
@@ -153,7 +153,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
 
     it('should not break with no headers', done => {
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const session = http2.connect(`http://localhost:${serverPort}`);
           // `headers` are not passed
@@ -183,11 +183,11 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
 
     it('should leave request streams in paused mode', done => {
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const start = Date.now();
           const session = http2.connect(`http://localhost:${serverPort}`);
-          const s = session.request({ ':path': '/' });
+          const s = session.request({':path': '/'});
           let result = '';
           const writable = new stream.Writable();
           writable._write = (chunk, encoding, next) => {
@@ -214,10 +214,10 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
 
     it('should not include query parameters in span name', done => {
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const session = http2.connect(`http://localhost:${serverPort}`);
-          const s = session.request({ ':path': '/?foo=bar' });
+          const s = session.request({':path': '/?foo=bar'});
           s.on('data', () => {}); // enter flowing mode
           s.end();
           setTimeout(() => {
@@ -234,10 +234,10 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
 
     it('custom port number must be included in the url label', done => {
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const session = http2.connect(`http://localhost:${serverPort}`);
-          const s = session.request({ ':path': '/' });
+          const s = session.request({':path': '/'});
           s.on('data', () => {}); // enter flowing mode
           s.end();
           setTimeout(() => {
@@ -260,8 +260,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
       server.on(
         'stream',
         (
-          s: http2Types.ServerHttp2Stream &
-            ({ rstWithInternalError: () => void })
+          s: http2Types.ServerHttp2Stream & ({rstWithInternalError: () => void})
         ) => {
           // In Node 9.9+, the error handler is not added by default.
           s.on('error', () => {});
@@ -277,11 +276,11 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
         }
       );
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const start = Date.now();
           const session = http2.connect(`http://localhost:${serverPort}`);
-          const s = session.request({ ':path': '/' });
+          const s = session.request({':path': '/'});
           s.on('error', () => {
             rootSpan.endSpan();
             const span = traceTestModule.getOneSpan(
@@ -324,7 +323,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
 
     it('should accurately measure request time, event emitter', done => {
       server.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const start = Date.now();
           const session = http2.connect(`http://localhost:${serverPort}`);
@@ -357,17 +356,17 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
       const slowServer: http2Types.Http2Server = http2.createServer();
       slowServer.on('stream', s => {
         setTimeout(() => {
-          s.respond({ ':status': count++ });
+          s.respond({':status': count++});
           s.end();
         }, 5000);
       });
       slowServer.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           let completed = 0;
           for (let i = 0; i < 5; i++) {
             const session = http2.connect(`http://localhost:${serverPort}`);
-            const s = session.request({ ':path': '/' });
+            const s = session.request({':path': '/'});
             s.on('data', () => {}).on('end', () => {
               if (++completed === 5) {
                 rootSpan.endSpan();
@@ -408,18 +407,18 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
       );
       secureServer.on('stream', s => {
         setTimeout(() => {
-          s.respond({ ':status': 200 });
+          s.respond({':status': 200});
           s.end(serverRes);
         }, DEFAULT_SPAN_DURATION);
       });
       secureServer.listen(serverPort, () => {
-        traceTestModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        traceTestModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(rootSpan.type === SpanType.ROOT);
           const start = Date.now();
           const session = http2.connect(`https://localhost:${serverPort}`, {
             rejectUnauthorized: false,
           });
-          const s = session.request({ ':path': '/' });
+          const s = session.request({':path': '/'});
           s.setEncoding('utf8');
           let result = '';
           s.on('data', (data: string) => {

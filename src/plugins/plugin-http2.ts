@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 // This is imported only for types. Generated .js file should NOT load 'http2'.
 // `http2` must be used only in type annotations, not in expressions.
 import * as http2 from 'http2';
 import * as shimmer from 'shimmer';
-import { URL } from 'url';
+import {URL} from 'url';
 
-import { Tracer } from '../plugin-types';
+import {Tracer} from '../plugin-types';
 
 type Http2Module = typeof http2;
 

@@ -38,7 +38,7 @@
 import * as assert from 'assert';
 
 import * as testTraceModule from '../trace';
-import { describeInterop } from '../utils';
+import {describeInterop} from '../utils';
 
 interface ApiCallSettings {
   merge: () => {
@@ -54,7 +54,7 @@ type InnerApiCall<I, O> = (
 ) => void;
 type OuterApiCall<I, O> = (
   request: I,
-  options: { timeout: number },
+  options: {timeout: number},
   callback: Callback<O>
 ) => void;
 interface GaxModule {
@@ -84,20 +84,20 @@ describeInterop<GaxModule>('google-gax', fixture => {
       // Simulate an RPC.
       testTraceModule
         .get()
-        .createChildSpan({ name: 'in-request' })
+        .createChildSpan({name: 'in-request'})
         .endSpan();
       setImmediate(() => cb(null, {}));
     }) as InnerApiCall<{}, {}>);
     const apiCall = googleGax.createApiCall(authPromise, {
-      merge: () => ({ otherArgs: {} }),
+      merge: () => ({otherArgs: {}}),
     });
 
-    testTraceModule.get().runInRootSpan({ name: 'root' }, root => {
-      apiCall({}, { timeout: 20 }, err => {
+    testTraceModule.get().runInRootSpan({name: 'root'}, root => {
+      apiCall({}, {timeout: 20}, err => {
         assert.ifError(err);
         testTraceModule
           .get()
-          .createChildSpan({ name: 'in-callback' })
+          .createChildSpan({name: 'in-callback'})
           .endSpan();
         root.endSpan();
 

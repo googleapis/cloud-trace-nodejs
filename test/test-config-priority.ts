@@ -17,10 +17,10 @@
 import * as assert from 'assert';
 import * as path from 'path';
 
-import { Trace } from '../src/trace';
-import { StackdriverTracer } from '../src/trace-api';
-import { TraceWriter } from '../src/trace-writer';
-import { TopLevelConfig, Tracing } from '../src/tracing';
+import {Trace} from '../src/trace';
+import {StackdriverTracer} from '../src/trace-api';
+import {TraceWriter} from '../src/trace-writer';
+import {TopLevelConfig, Tracing} from '../src/tracing';
 
 import * as traceTestModule from './trace';
 
@@ -85,7 +85,7 @@ describe('should respect config load order', () => {
     });
 
     it('should order Default -> env config -> start -> env specific', () => {
-      traceTestModule.start({ logLevel: 3, stackTraceLimit: 2 });
+      traceTestModule.start({logLevel: 3, stackTraceLimit: 2});
       const config = getCapturedConfig();
       assert.strictEqual(config.logLevel, 2);
       assert.strictEqual(config.writerConfig.stackTraceLimit, 2);
@@ -109,7 +109,7 @@ describe('should respect config load order', () => {
     });
 
     it('should prefer env to config', () => {
-      traceTestModule.start({ projectId: '1927' });
+      traceTestModule.start({projectId: '1927'});
       const config = getCapturedConfig();
       assert.strictEqual(config.writerConfig.authOptions.projectId, '1729');
     });

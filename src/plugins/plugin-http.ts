@@ -15,14 +15,14 @@
  */
 
 import * as httpModule from 'http';
-import { Agent, ClientRequest, ClientRequestArgs, get, request } from 'http';
+import {Agent, ClientRequest, ClientRequestArgs, get, request} from 'http';
 import * as httpsModule from 'https';
 import * as is from 'is';
 import * as semver from 'semver';
 import * as shimmer from 'shimmer';
 import * as url from 'url';
 
-import { Plugin, Tracer } from '../plugin-types';
+import {Plugin, Tracer} from '../plugin-types';
 
 type HttpModule = typeof httpModule;
 type HttpsModule = typeof httpsModule;
@@ -69,7 +69,7 @@ function extractUrl(
     // pathname only exists on a URL object.
     path = options.pathname || '/';
   } else {
-    const agent = options._defaultAgent as Agent & { protocol?: string };
+    const agent = options._defaultAgent as Agent & {protocol?: string};
     if (agent) {
       fallbackProtocol = agent.protocol || fallbackProtocol;
     }
@@ -123,7 +123,7 @@ function makeRequestTrace(
       options = url.parse(options);
     }
 
-    const span = api.createChildSpan({ name: getSpanName(options) });
+    const span = api.createChildSpan({name: getSpanName(options)});
     if (!api.isRealSpan(span)) {
       return request(options, callback);
     }

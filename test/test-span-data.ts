@@ -16,19 +16,15 @@
 
 import * as assert from 'assert';
 
-import { Constants, SpanType } from '../src/constants';
-import { BaseSpanData, ChildSpanData, RootSpanData } from '../src/span-data';
-import { Trace } from '../src/trace';
-import { TraceLabels } from '../src/trace-labels';
-import {
-  traceWriter,
-  TraceWriter,
-  TraceWriterConfig,
-} from '../src/trace-writer';
+import {Constants, SpanType} from '../src/constants';
+import {BaseSpanData, ChildSpanData, RootSpanData} from '../src/span-data';
+import {Trace} from '../src/trace';
+import {TraceLabels} from '../src/trace-labels';
+import {traceWriter, TraceWriter, TraceWriterConfig} from '../src/trace-writer';
 
-import { TestLogger } from './logger';
+import {TestLogger} from './logger';
 import * as traceAgentModule from './trace';
-import { wait } from './utils';
+import {wait} from './utils';
 
 describe('SpanData', () => {
   class CaptureSpanTraceWriter extends TraceWriter {
@@ -57,7 +53,7 @@ describe('SpanData', () => {
   });
 
   beforeEach(() => {
-    trace = { projectId: '0', traceId: 'trace-id', spans: [] };
+    trace = {projectId: '0', traceId: 'trace-id', spans: []};
     capturedTrace = null;
   });
 
@@ -139,7 +135,7 @@ describe('SpanData', () => {
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
       spanData.addLabel('key', 'value');
       spanData.addLabel('id', 42);
-      spanData.addLabel('obj', { a: true });
+      spanData.addLabel('obj', {a: true});
       spanData.addLabel('sym', Symbol('a'));
       delete spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.deepStrictEqual(spanData.span.labels, {

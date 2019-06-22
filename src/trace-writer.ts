@@ -16,14 +16,14 @@
 
 import * as common from '@google-cloud/common';
 import * as gcpMetadata from 'gcp-metadata';
-import { OutgoingHttpHeaders } from 'http';
+import {OutgoingHttpHeaders} from 'http';
 import * as os from 'os';
 
-import { Constants } from './constants';
-import { Logger } from './logger';
-import { SpanKind, Trace } from './trace';
-import { TraceLabels } from './trace-labels';
-import { Singleton } from './util';
+import {Constants} from './constants';
+import {Logger} from './logger';
+import {SpanKind, Trace} from './trace';
+import {TraceLabels} from './trace-labels';
+import {Singleton} from './util';
 
 const pjson = require('../../package.json');
 
@@ -47,7 +47,7 @@ export interface TraceWriterConfig {
   flushDelaySeconds: number;
   stackTraceLimit: number;
   maximumLabelValueSize: number;
-  serviceContext: { service?: string; version?: string; minorVersion?: string };
+  serviceContext: {service?: string; version?: string; minorVersion?: string};
 }
 
 export interface LabelObject {
@@ -221,7 +221,7 @@ export class TraceWriter extends common.Service {
 
   private async getHostname(): Promise<string> {
     try {
-      return await gcpMetadata.instance({ property: 'hostname', headers });
+      return await gcpMetadata.instance({property: 'hostname', headers});
     } catch (err) {
       if (err.code !== 'ENOTFOUND') {
         // We are running on GCP.
@@ -237,7 +237,7 @@ export class TraceWriter extends common.Service {
 
   private async getInstanceId(): Promise<number | null> {
     try {
-      return await gcpMetadata.instance({ property: 'id', headers });
+      return await gcpMetadata.instance({property: 'id', headers});
     } catch (err) {
       if (err.code !== 'ENOTFOUND') {
         // We are running on GCP.
@@ -329,7 +329,7 @@ export class TraceWriter extends common.Service {
         'TraceWriter#flushBuffer: Flushing traces',
         flushedTraces
       );
-      this.publish(JSON.stringify({ traces: flushedTraces }));
+      this.publish(JSON.stringify({traces: flushedTraces}));
     };
 
     // TODO(kjin): We should always be following the 'else' path.
@@ -358,7 +358,7 @@ export class TraceWriter extends common.Service {
   protected publish(json: string) {
     const hostname = 'cloudtrace.googleapis.com';
     const uri = `https://${hostname}/v1/projects/${this.projectId}/traces`;
-    const options = { method: 'PATCH', uri, body: json, headers };
+    const options = {method: 'PATCH', uri, body: json, headers};
     this.logger.info('TraceWriter#publish: Publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
       const statusCode = response && response.statusCode;

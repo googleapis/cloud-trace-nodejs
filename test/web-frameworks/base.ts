@@ -1,4 +1,4 @@
-import { IncomingHttpHeaders } from 'http';
+import {IncomingHttpHeaders} from 'http';
 
 /**
  * Copyright 2018 Google LLC

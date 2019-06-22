@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { IncomingMessage, ServerResponse } from 'http';
+import {IncomingMessage, ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
-import { parse as urlParse } from 'url';
+import {parse as urlParse} from 'url';
 
-import { PluginTypes } from '..';
+import {PluginTypes} from '..';
 
-import { koa_1, koa_2 } from './types';
+import {koa_1, koa_2} from './types';
 
 type Koa1Module = typeof koa_1;
 type Koa2Module = typeof koa_2;
@@ -32,7 +32,7 @@ type KoaContext = (koa_1.Context | koa_2.Context) & {
 interface KoaModule<T> {
   // TypeScript isn't expressive enough, but KoaModule#use should return `this`.
   // tslint:disable-next-line:no-any
-  readonly prototype: { use: (m: T) => any };
+  readonly prototype: {use: (m: T) => any};
 }
 
 // Function signature for createMiddleware[2x]

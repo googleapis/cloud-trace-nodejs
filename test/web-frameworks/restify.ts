@@ -16,7 +16,7 @@
 
 import * as http from 'http';
 
-import { restify_5 } from '../../src/plugins/types';
+import {restify_5} from '../../src/plugins/types';
 
 import {
   WebFramework,

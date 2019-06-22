@@ -15,22 +15,22 @@
  */
 
 import * as assert from 'assert';
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import * as fs from 'fs';
 import * as httpModule from 'http';
 import * as httpsModule from 'https';
-import { AddressInfo } from 'net';
+import {AddressInfo} from 'net';
 import * as path from 'path';
 import * as semver from 'semver';
 import * as stream from 'stream';
-import { URL } from 'url';
+import {URL} from 'url';
 
-import { Constants } from '../../src/constants';
-import { SpanKind, TraceSpan } from '../../src/trace';
-import { parseContextFromHeader, TraceContext } from '../../src/util';
+import {Constants} from '../../src/constants';
+import {SpanKind, TraceSpan} from '../../src/trace';
+import {parseContextFromHeader, TraceContext} from '../../src/util';
 import * as testTraceModule from '../trace';
-import { assertSpanDuration, DEFAULT_SPAN_DURATION } from '../utils';
-import { Express4 } from '../web-frameworks/express';
+import {assertSpanDuration, DEFAULT_SPAN_DURATION} from '../utils';
+import {Express4} from '../web-frameworks/express';
 
 // This type describes (http|https).(get|request).
 type HttpRequest = (
@@ -102,7 +102,7 @@ class Express4Secure extends Express4 {
     // The types of (http|https).Server are not compatible, but we don't
     // access any properties that aren't present on both in the test.
     this.server = (this.https.createServer(
-      { key: Express4Secure.key, cert: Express4Secure.cert },
+      {key: Express4Secure.key, cert: Express4Secure.cert},
       this.app
     ) as {}) as httpModule.Server;
     this.server.listen(port);
@@ -126,7 +126,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
   // tslint:disable-next-line:variable-name
   const ServerFramework = servers[nodule];
   describe(`${nodule} client tracing`, () => {
-    let http: { get: HttpRequest; request: HttpRequest };
+    let http: {get: HttpRequest; request: HttpRequest};
     before(() => {
       testTraceModule.setCLSForTest();
       testTraceModule.setPluginLoaderForTest();
@@ -152,7 +152,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           fn: async () => {
             const waitForResponse = new WaitForResponse();
             http.get(
-              { port, rejectUnauthorized: false },
+              {port, rejectUnauthorized: false},
               waitForResponse.handleResponse
             );
             await waitForResponse.done;
@@ -162,7 +162,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           description: 'calling http.get and using return value',
           fn: async () => {
             const waitForResponse = new WaitForResponse();
-            const req = http.get({ port, rejectUnauthorized: false });
+            const req = http.get({port, rejectUnauthorized: false});
             req.on('response', waitForResponse.handleResponse);
             await waitForResponse.done;
           },
@@ -171,7 +171,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           description: 'calling http.get and piping from res',
           fn: async () => {
             const waitForResponse = new WaitForResponse();
-            http.get({ port, rejectUnauthorized: false }, res => {
+            http.get({port, rejectUnauthorized: false}, res => {
               let result = '';
               const writable = new stream.Writable();
               writable._write = (chunk, encoding, next) => {
@@ -193,7 +193,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           fn: async () => {
             const waitForResponse = new WaitForResponse();
             const req = http.request(
-              { port, rejectUnauthorized: false },
+              {port, rejectUnauthorized: false},
               waitForResponse.handleResponse
             );
             req.end();
@@ -207,7 +207,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
             // Express4 instance.
             server.server!.timeout = DEFAULT_SPAN_DURATION / 2;
             const waitForResponse = new WaitForResponse();
-            const req = http.get({ port, rejectUnauthorized: false });
+            const req = http.get({port, rejectUnauthorized: false});
             req.on('error', () => {
               waitForResponse.handleDone();
             });
@@ -222,7 +222,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
               {
                 port,
                 rejectUnauthorized: false,
-                headers: { [key]: '100-continue' },
+                headers: {[key]: '100-continue'},
               },
               waitForResponse.handleResponse
             );
@@ -238,7 +238,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           hasResponse: true,
           fn: async () => {
             await wait(DEFAULT_SPAN_DURATION);
-            return { statusCode: 200, message: 'hi' };
+            return {statusCode: 200, message: 'hi'};
           },
         });
         port = server.listen(0);
@@ -253,7 +253,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           let recordedTime = 0;
           await testTraceModule
             .get()
-            .runInRootSpan({ name: 'outer' }, async rootSpan => {
+            .runInRootSpan({name: 'outer'}, async rootSpan => {
               assert.ok(testTraceModule.get().isRealSpan(rootSpan));
               recordedTime = Date.now();
               await testCase.fn();
@@ -277,14 +277,14 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
         path: '/',
         hasResponse: true,
         fn: async () => {
-          return { statusCode: 200, message: 'hi' };
+          return {statusCode: 200, message: 'hi'};
         },
       });
       const port = server.listen(0);
       try {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async rootSpan => {
+          .runInRootSpan({name: 'outer'}, async rootSpan => {
             assert.ok(testTraceModule.get().isRealSpan(rootSpan));
             const waitForResponse = new WaitForResponse();
             http.get(
@@ -317,18 +317,18 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           serverCapturedTraceContext = parseContextFromHeader(
             traceContext as string
           );
-          return { statusCode: 200, message: 'hi' };
+          return {statusCode: 200, message: 'hi'};
         },
       });
       const port = server.listen(0);
       try {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'root' }, async rootSpan => {
+          .runInRootSpan({name: 'root'}, async rootSpan => {
             assert.ok(testTraceModule.get().isRealSpan(rootSpan));
             const waitForResponse = new WaitForResponse();
             http.get(
-              { port, rejectUnauthorized: false },
+              {port, rejectUnauthorized: false},
               waitForResponse.handleResponse
             );
             await waitForResponse.done;
@@ -359,18 +359,18 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
         path: '/',
         hasResponse: true,
         fn: async () => {
-          return { statusCode: 200, message: 'hi' };
+          return {statusCode: 200, message: 'hi'};
         },
       });
       const port = server.listen(0);
       try {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async rootSpan => {
+          .runInRootSpan({name: 'outer'}, async rootSpan => {
             assert.ok(testTraceModule.get().isRealSpan(rootSpan));
             const waitForResponse = new WaitForResponse();
             http.get(
-              { port, rejectUnauthorized: false },
+              {port, rejectUnauthorized: false},
               waitForResponse.handleResponse
             );
             await waitForResponse.done;
@@ -379,7 +379,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
             // We make sure that trace context is still accessible here.
             const afterHttpSpan = testTraceModule
               .get()
-              .createChildSpan({ name: 'after-http' });
+              .createChildSpan({name: 'after-http'});
             assert.ok(testTraceModule.get().isRealSpan(afterHttpSpan));
             afterHttpSpan.endSpan();
             rootSpan.endSpan();
@@ -395,14 +395,14 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
         path: '/',
         hasResponse: true,
         fn: async () => {
-          return { statusCode: 200, message: 'hi' };
+          return {statusCode: 200, message: 'hi'};
         },
       });
       const port = server.listen(0);
       try {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async rootSpan => {
+          .runInRootSpan({name: 'outer'}, async rootSpan => {
             assert.ok(testTraceModule.get().isRealSpan(rootSpan));
             const waitForResponse = new WaitForResponse();
             const headers: httpModule.OutgoingHttpHeaders = {};
@@ -410,7 +410,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
               testTraceModule.get().constants.TRACE_AGENT_REQUEST_HEADER
             ] = 'yay';
             http.get(
-              { port, rejectUnauthorized: false, headers },
+              {port, rejectUnauthorized: false, headers},
               waitForResponse.handleResponse
             );
             await waitForResponse.done;
@@ -427,7 +427,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
 
     it('should not break with no target', () => {
       return new Promise(resolve =>
-        testTraceModule.get().runInRootSpan({ name: 'outer' }, rootSpan => {
+        testTraceModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(testTraceModule.get().isRealSpan(rootSpan));
           (http.get as (arg?: {}) => EventEmitter)().on('error', err => {
             resolve();
@@ -445,20 +445,20 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
         hasResponse: true,
         fn: async () => {
           await wait(DEFAULT_SPAN_DURATION);
-          return { statusCode: statusCode++, message: 'hi' };
+          return {statusCode: statusCode++, message: 'hi'};
         },
       });
       const port = server.listen(0);
       try {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async rootSpan => {
+          .runInRootSpan({name: 'outer'}, async rootSpan => {
             await Promise.all(
               [0, 1, 2, 3, 4].map(async i => {
                 assert.ok(testTraceModule.get().isRealSpan(rootSpan));
                 const waitForResponse = new WaitForResponse();
                 http.get(
-                  { port, rejectUnauthorized: false },
+                  {port, rejectUnauthorized: false},
                   waitForResponse.handleResponse
                 );
                 await waitForResponse.done;
@@ -500,23 +500,23 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           hasResponse: true,
           fn: async () => {
             await wait(DEFAULT_SPAN_DURATION);
-            return { statusCode: 200, message: 'hi' };
+            return {statusCode: 200, message: 'hi'};
           },
         });
         port = server.listen(0);
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async rootSpan => {
+          .runInRootSpan({name: 'outer'}, async rootSpan => {
             assert.ok(testTraceModule.get().isRealSpan(rootSpan));
             let waitForResponse = new WaitForResponse();
             http.get(
-              { port, rejectUnauthorized: false, path: '/?foo=bar' },
+              {port, rejectUnauthorized: false, path: '/?foo=bar'},
               waitForResponse.handleResponse
             );
             await waitForResponse.done;
             server.server!.timeout = DEFAULT_SPAN_DURATION / 2;
             waitForResponse = new WaitForResponse();
-            http.get({ port, rejectUnauthorized: false }).on('error', () => {
+            http.get({port, rejectUnauthorized: false}).on('error', () => {
               waitForResponse.handleDone();
             });
             await waitForResponse.done;

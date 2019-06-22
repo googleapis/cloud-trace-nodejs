@@ -15,21 +15,21 @@
  */
 
 import * as assert from 'assert';
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import * as semver from 'semver';
-import { inspect } from 'util';
+import {inspect} from 'util';
 
-import { TraceCLS, TraceCLSConfig, TraceCLSMechanism } from '../src/cls';
-import { AsyncHooksCLS } from '../src/cls/async-hooks';
-import { AsyncListenerCLS } from '../src/cls/async-listener';
-import { CLS } from '../src/cls/base';
-import { NullCLS } from '../src/cls/null';
-import { SingularCLS } from '../src/cls/singular';
-import { SpanType } from '../src/constants';
-import { createStackTrace, FORCE_NEW } from '../src/util';
+import {TraceCLS, TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
+import {AsyncHooksCLS} from '../src/cls/async-hooks';
+import {AsyncListenerCLS} from '../src/cls/async-listener';
+import {CLS} from '../src/cls/base';
+import {NullCLS} from '../src/cls/null';
+import {SingularCLS} from '../src/cls/singular';
+import {SpanType} from '../src/constants';
+import {createStackTrace, FORCE_NEW} from '../src/util';
 
-import { TestLogger } from './logger';
-import { plan } from './utils';
+import {TestLogger} from './logger';
+import {plan} from './utils';
 
 interface CLSConstructor {
   new (defaultValue: string): CLS<string>;
@@ -233,21 +233,21 @@ describe('Continuation-Local Storage', () => {
       expectedDefaultType: SpanType;
     }> = [
       {
-        config: { mechanism: TraceCLSMechanism.ASYNC_LISTENER },
+        config: {mechanism: TraceCLSMechanism.ASYNC_LISTENER},
         expectedDefaultType: SpanType.UNCORRELATED,
       },
       {
-        config: { mechanism: TraceCLSMechanism.SINGULAR },
+        config: {mechanism: TraceCLSMechanism.SINGULAR},
         expectedDefaultType: SpanType.UNCORRELATED,
       },
       {
-        config: { mechanism: TraceCLSMechanism.NONE },
+        config: {mechanism: TraceCLSMechanism.NONE},
         expectedDefaultType: SpanType.UNCORRELATED,
       },
     ];
     if (asyncAwaitSupported) {
       validTestCases.push({
-        config: { mechanism: TraceCLSMechanism.ASYNC_HOOKS },
+        config: {mechanism: TraceCLSMechanism.ASYNC_HOOKS},
         expectedDefaultType: SpanType.UNCORRELATED,
       });
     }
@@ -261,7 +261,7 @@ describe('Continuation-Local Storage', () => {
             c = new TraceCLS(testCase.config, logger);
             c.enable();
           } catch {
-            c = { disable: () => {} } as TraceCLS;
+            c = {disable: () => {}} as TraceCLS;
           }
         });
 
@@ -306,11 +306,11 @@ describe('Continuation-Local Storage', () => {
 
     const invalidTestCases: TraceCLSConfig[] = asyncAwaitSupported
       ? [
-          { mechanism: 'unknown' } as any, // tslint:disable-line:no-any
+          {mechanism: 'unknown'} as any, // tslint:disable-line:no-any
         ]
       : [
-          { mechanism: 'unknown' } as any, // tslint:disable-line:no-any
-          { mechanism: 'async-hooks' },
+          {mechanism: 'unknown'} as any, // tslint:disable-line:no-any
+          {mechanism: 'async-hooks'},
         ];
 
     for (const testCase of invalidTestCases) {

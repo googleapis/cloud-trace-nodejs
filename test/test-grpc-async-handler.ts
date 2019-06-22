@@ -17,9 +17,9 @@
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpcModule from 'grpc';
 
-import { Tester, TesterClient } from './test-grpc-proto';
+import {Tester, TesterClient} from './test-grpc-proto';
 import * as traceTestModule from './trace';
-import { describeInterop } from './utils';
+import {describeInterop} from './utils';
 
 type Grpc = typeof grpcModule;
 
@@ -57,17 +57,17 @@ describeInterop<Grpc>('grpc', fixture => {
       server = new grpc.Server();
       server.addService<Tester>(testerService, {
         testUnary: async (call, callback) => {
-          callback(null, { n: 0 });
+          callback(null, {n: 0});
         },
         testClientStream: async (call, callback) => {
-          callback(null, { n: 0 });
+          callback(null, {n: 0});
         },
         testServerStream: async call => {
-          call.write({ n: 0 });
+          call.write({n: 0});
           call.end();
         },
         testBidiStream: async call => {
-          call.write({ n: 0 });
+          call.write({n: 0});
           call.end();
         },
       });
@@ -93,9 +93,9 @@ describeInterop<Grpc>('grpc', fixture => {
 
     it('should work with async unary call handlers', async () => {
       const tracer = traceTestModule.get();
-      await tracer.runInRootSpan({ name: 'client-outer' }, async span => {
+      await tracer.runInRootSpan({name: 'client-outer'}, async span => {
         await new Promise((resolve, reject) =>
-          client.TestUnary({ n: 0 }, (err, res) =>
+          client.TestUnary({n: 0}, (err, res) =>
             err ? reject(err) : resolve()
           )
         );
@@ -112,7 +112,7 @@ describeInterop<Grpc>('grpc', fixture => {
 
     it('should work with async client streaming handlers', async () => {
       const tracer = traceTestModule.get();
-      await tracer.runInRootSpan({ name: 'client-outer' }, async span => {
+      await tracer.runInRootSpan({name: 'client-outer'}, async span => {
         await new Promise((resolve, reject) =>
           client
             .TestClientStream((err, res) => (err ? reject(err) : resolve()))
@@ -131,10 +131,10 @@ describeInterop<Grpc>('grpc', fixture => {
 
     it('should work with async server streaming handlers', async () => {
       const tracer = traceTestModule.get();
-      await tracer.runInRootSpan({ name: 'client-outer' }, async span => {
+      await tracer.runInRootSpan({name: 'client-outer'}, async span => {
         await new Promise((resolve, reject) =>
           client
-            .TestServerStream({ n: 0 })
+            .TestServerStream({n: 0})
             .on('error', reject)
             .on('data', () => {})
             .on('end', resolve)
@@ -152,7 +152,7 @@ describeInterop<Grpc>('grpc', fixture => {
 
     it('should work with async bidi streaming handlers', async () => {
       const tracer = traceTestModule.get();
-      await tracer.runInRootSpan({ name: 'client-outer' }, async span => {
+      await tracer.runInRootSpan({name: 'client-outer'}, async span => {
         await new Promise((resolve, reject) =>
           client
             .TestBidiStream()

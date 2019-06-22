@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { IncomingMessage, ServerResponse } from 'http';
+import {IncomingMessage, ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
-import { parse as urlParse } from 'url';
+import {parse as urlParse} from 'url';
 
-import { PluginTypes } from '..';
+import {PluginTypes} from '..';
 
-import { hapi_16, hapi_17 } from './types';
+import {hapi_16, hapi_17} from './types';
 
 // Used when patching Hapi 17.
 const ORIGINAL = Symbol();
@@ -147,7 +147,7 @@ const plugin: PluginTypes.Plugin = [
             return origExecute.apply(this, arguments);
           });
         },
-        { [ORIGINAL]: origExecute }
+        {[ORIGINAL]: origExecute}
       );
     },
     // Request is a class name.
@@ -157,6 +157,6 @@ const plugin: PluginTypes.Plugin = [
         Request.prototype._execute = Request.prototype._execute[ORIGINAL]!;
       }
     },
-  } as PluginTypes.Monkeypatch<{ prototype: Hapi17Request }>,
+  } as PluginTypes.Monkeypatch<{prototype: Hapi17Request}>,
 ];
 export = plugin;

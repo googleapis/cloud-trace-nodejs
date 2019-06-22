@@ -15,13 +15,13 @@
  */
 
 import * as assert from 'assert';
-import { inspect } from 'util';
+import {inspect} from 'util';
 
-import { Constants } from '../src/constants';
-import { Logger } from '../src/logger';
+import {Constants} from '../src/constants';
+import {Logger} from '../src/logger';
 import * as util from '../src/util';
 
-import { TestLogger } from './logger';
+import {TestLogger} from './logger';
 
 const notNull = <T>(x: T | null | undefined): T => {
   assert.notStrictEqual(x, null);
@@ -57,10 +57,7 @@ describe('Singleton', () => {
     it('creates a new instance when [FORCE_NEW] is true in the config', () => {
       const singleton = new util.Singleton(MyClass);
       const createResult1 = singleton.create({}, logger);
-      const createResult2 = singleton.create(
-        { [util.FORCE_NEW]: true },
-        logger
-      );
+      const createResult2 = singleton.create({[util.FORCE_NEW]: true}, logger);
       assert.notStrictEqual(createResult1, createResult2);
     });
   });
@@ -80,7 +77,7 @@ describe('Singleton', () => {
     it('does not return a stale value', () => {
       const singleton = new util.Singleton(MyClass);
       singleton.create({}, logger);
-      const createResult = singleton.create({ [util.FORCE_NEW]: true }, logger);
+      const createResult = singleton.create({[util.FORCE_NEW]: true}, logger);
       const getResult = singleton.get();
       assert.strictEqual(getResult, createResult);
     });
@@ -89,7 +86,7 @@ describe('Singleton', () => {
 
 describe('util.lastOf', () => {
   it('should return the last non-null/undefined/NaN parameter', () => {
-    const { lastOf } = util;
+    const {lastOf} = util;
     assert.strictEqual(lastOf<number>(1), 1);
     assert.strictEqual(lastOf<number>(1, 2, null), 2);
     assert.strictEqual(lastOf<number>(1, null, 2), 2);
@@ -179,8 +176,8 @@ describe('util.parseContextFromHeader', () => {
 
 describe('util.generateTraceContext', () => {
   const inputs: util.TraceContext[] = [
-    { traceId: '123456', spanId: '667', options: 1 },
-    { traceId: '123456', spanId: '667', options: undefined },
+    {traceId: '123456', spanId: '667', options: 1},
+    {traceId: '123456', spanId: '667', options: undefined},
   ];
 
   inputs.forEach(s => {
@@ -224,12 +221,12 @@ describe('binary trace context', () => {
       description: 'trace context with 64-bit span ID',
     },
     {
-      structured: { traceId: commonTraceId, spanId: '1', options: 255 },
+      structured: {traceId: commonTraceId, spanId: '1', options: 255},
       binary: `0000${commonTraceId}01${'0000000000000001'}02${'ff'}`,
       description: 'trace context with 8-bit options',
     },
     {
-      structured: { traceId: commonTraceId, spanId: '1' },
+      structured: {traceId: commonTraceId, spanId: '1'},
       binary: `0000${commonTraceId}01${'0000000000000001'}02${'00'}`,
       description: 'trace context with no options',
     },
@@ -264,7 +261,7 @@ describe('binary trace context', () => {
         assert.deepStrictEqual(
           util.deserializeTraceContext(Buffer.from(testCase.binary, 'hex')),
           testCase.structured &&
-            Object.assign({ options: 0 }, testCase.structured)
+            Object.assign({options: 0}, testCase.structured)
         );
       })
     );

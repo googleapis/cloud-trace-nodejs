@@ -15,9 +15,9 @@
  */
 
 import * as http from 'http';
-import { AddressInfo } from 'net';
+import {AddressInfo} from 'net';
 
-import { express_4 } from '../../src/plugins/types';
+import {express_4} from '../../src/plugins/types';
 
 import {
   WebFramework,

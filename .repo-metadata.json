@@ -1,0 +1,12 @@
+{
+  "name": "trace",
+  "name_pretty": "Stackdriver Trace",
+  "product_documentation": "https://cloud.google.com/trace",
+  "client_documentation": "https://googleapis.dev/nodejs/trace/latest/",
+  "issue_tracker": "https://issuetracker.google.com/savedsearches/559776",
+  "release_level": "beta",
+  "language": "nodejs",
+  "repo": "googleapis/cloud-trace-nodejs",
+  "distribution_name": "@google-cloud/trace-agent",
+  "api_id": "cloudtrace.googleapis.com"
+}

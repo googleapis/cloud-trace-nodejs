@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import * as uuid from 'uuid';
 
-import { cls, RootContext } from './cls';
-import { OpenCensusPropagation, TracePolicy } from './config';
-import { Constants, SpanType } from './constants';
-import { Logger } from './logger';
+import {cls, RootContext} from './cls';
+import {OpenCensusPropagation, TracePolicy} from './config';
+import {Constants, SpanType} from './constants';
+import {Logger} from './logger';
 import {
   Func,
   Propagation,
@@ -38,9 +38,9 @@ import {
   DISABLED_ROOT_SPAN,
   UntracedRootSpanData,
 } from './span-data';
-import { TraceLabels } from './trace-labels';
-import { traceWriter } from './trace-writer';
-import { neverTrace } from './tracing-policy';
+import {TraceLabels} from './trace-labels';
+import {traceWriter} from './trace-writer';
+import {neverTrace} from './tracing-policy';
 import * as util from './util';
 
 /**
@@ -111,7 +111,7 @@ export class StackdriverTracer implements Tracer {
           -16
         ),
       });
-      this.headerPropagation!.inject({ setHeader }, value);
+      this.headerPropagation!.inject({setHeader}, value);
     },
   };
 
@@ -195,7 +195,7 @@ export class StackdriverTracer implements Tracer {
       return fn(DISABLED_ROOT_SPAN);
     }
 
-    options = options || { name: '' };
+    options = options || {name: ''};
 
     // Don't create a root span if we are already in a root span
     const rootSpan = cls.get().getContext();
@@ -305,7 +305,7 @@ export class StackdriverTracer implements Tracer {
       return DISABLED_CHILD_SPAN;
     }
 
-    options = options || { name: '' };
+    options = options || {name: ''};
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanType.ROOT) {
       if (!!rootSpan.span.endTime) {

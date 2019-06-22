@@ -19,18 +19,18 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-import { Config, defaultConfig, TracePolicy } from './config';
+import {Config, defaultConfig, TracePolicy} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
-import { Tracing, TopLevelConfig } from './tracing';
-import { FORCE_NEW, Forceable, lastOf } from './util';
-import { Constants } from './constants';
-import { TraceCLSMechanism } from './cls';
-import { StackdriverTracer } from './trace-api';
-import { TraceContextHeaderBehavior } from './tracing-policy';
+import {Tracing, TopLevelConfig} from './tracing';
+import {FORCE_NEW, Forceable, lastOf} from './util';
+import {Constants} from './constants';
+import {TraceCLSMechanism} from './cls';
+import {StackdriverTracer} from './trace-api';
+import {TraceContextHeaderBehavior} from './tracing-policy';
 
-export { Config, PluginTypes };
+export {Config, PluginTypes};
 
 let traceAgent: StackdriverTracer;
 
@@ -164,7 +164,7 @@ function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
     },
     pluginLoaderConfig: {
       [FORCE_NEW]: forceNew,
-      plugins: { ...mergedConfig.plugins },
+      plugins: {...mergedConfig.plugins},
       tracerConfig: {
         enhancedDatabaseReporting: mergedConfig.enhancedDatabaseReporting,
         rootSpanNameOverride: getInternalRootSpanNameOverride(
