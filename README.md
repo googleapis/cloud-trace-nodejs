@@ -28,7 +28,7 @@ require('@google-cloud/trace-agent').start();
 // ...
 ```
 
-Optionally, you can pass a [configuration object](src/config.ts) to the `start()` function as follows:
+Optionally, you can pass a [configuration object](https://github.com/googleapis/cloud-trace-nodejs/blob/master/src/config.ts) to the `start()` function as follows:
 
 <!-- TODO(kjin): Generate documentation from the public interface of the Trace Agent, and link it here. -->
 
@@ -76,7 +76,7 @@ The agent will also automatically trace RPCs from the following modules:
 
 You can use the [Custom Tracing API](#custom-tracing-api) to trace other modules in your application.
 
-To request automatic tracing support for a module not on this list, please [file an issue](https://github.com/googleapis/cloud-trace-nodejs/issues). Alternatively, you can [write a plugin yourself](doc/plugin-guide.md).
+To request automatic tracing support for a module not on this list, please [file an issue](https://github.com/googleapis/cloud-trace-nodejs/issues). Alternatively, you can [write a plugin yourself](https://github.com/googleapis/cloud-trace-nodejs/blob/master/doc/plugin-guide.md).
 
 ### Tracing Additional Modules
 
@@ -140,7 +140,7 @@ const tracer = require('@google-cloud/trace-agent').get();
 
 A `Tracer` object is guaranteed to be returned by both of these calls, even if the agent is disabled.
 
-A fully detailed overview of the `Tracer` object is available [here](doc/trace-api.md).
+A fully detailed overview of the `Tracer` object is available [here](https://github.com/googleapis/cloud-trace-nodejs/blob/master/doc/trace-api.md).
 
 ## How does automatic tracing work?
 
@@ -157,17 +157,17 @@ The Trace Agent automatically patches well-known modules to insert calls to func
 
 The Trace Agent does not support bundled server code, so bundlers like webpack or @zeit/ncc will not work.
 
-## Contributing changes
+## Contributing
 
-* See [CONTRIBUTING.md](CONTRIBUTING.md)
+Contributions welcome! See the [Contributing Guide](https://github.com/googleapis/cloud-trace-nodejs/blob/master/CONTRIBUTING.md).
 
-## Licensing
+## License
 
-* See [LICENSE](LICENSE)
+Apache Version 2.0
 
-[async-await-docs]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function
+See [LICENSE](https://github.com/googleapis/cloud-trace-nodejs/blob/master/LICENSE)
+
 [async-hooks]: https://nodejs.org/api/async_hooks.html
-[async-listener]: https://www.npmjs.com/package/async-listener
 [cloud-console]: https://console.cloud.google.com
 [codecov-image]: https://codecov.io/gh/googleapis/cloud-trace-nodejs/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/googleapis/cloud-trace-nodejs
