@@ -23,8 +23,9 @@
     "prepare": "npm run script npm-clean get-plugin-types compile-es2015 compile-es2015-strict",
     "script": "ts-node -P ./scripts/tsconfig.json ./scripts",
     "license-check": "jsgl --local .",
-    "docs-test": "linkinator docs -r --skip www.googleapis.com",
-    "predocs-test": "npm run docs"
+    "predocs-test": "npm run docs",
+    "docs-test": "linkinator docs/",
+    "docs": "compodoc src/"
   },
   "files": [
     "build/src/**/*.js",
@@ -48,6 +49,7 @@
     "node": ">=8.10.0"
   },
   "devDependencies": {
+    "@compodoc/compodoc": "1.1.8",
     "@grpc/proto-loader": "^0.5.0",
     "@types/builtin-modules": "^2.0.0",
     "@types/console-log-level": "^1.4.0",
@@ -78,7 +80,7 @@
     "gts": "^1.0.0",
     "intelli-espower-loader": "^1.0.1",
     "js-green-licenses": "^1.0.0",
-    "linkinator": "^1.1.2",
+    "linkinator": "^1.5.0",
     "mocha": "^6.0.0",
     "nock": "^10.0.0",
     "nyc": "^14.0.0",
