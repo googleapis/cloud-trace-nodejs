@@ -24,6 +24,7 @@ import * as testTraceModule from './trace';
 import { TopLevelConfig } from '../src/tracing';
 import { StackdriverTracer } from '../src/trace-api';
 import {Logger} from '../src/logger';
+import { TraceWriterConfig } from '../src/trace-writer';
 
 describe('Behavior set by config for CLS', () => {
   const useAH = semver.satisfies(process.version, '>=8');
@@ -161,6 +162,41 @@ describe('Behavior set by config for TracePolicy', () => {
       samplingRate: 100,
       tracePolicy: { shouldTrace: () => true }
     }));
+  });
+});
+
+describe('Behavior set by config for TraceWriter', () => {
+  let capturedConfig: TraceWriterConfig|null;
+
+  class CaptureConfigTestWriter extends testTraceModule.TestTraceWriter {
+    constructor(config: TraceWriterConfig, logger: Logger) {
+      super(config, logger);
+      // Capture the config object passed into this constructor.
+      capturedConfig = config;
+    }
+  }
+
+  beforeEach(() => {
+    capturedConfig = null;
+  });
+
+  before(() => {
+    testTraceModule.setTraceWriterForTest(CaptureConfigTestWriter);
+  });
+
+  after(() => {
+    testTraceModule.setTraceWriterForTest(testTraceModule.TestTraceWriter);
+  });
+
+  it('should set auth variables passed to TraceWriter as authOptions', () => {
+    const credentials = { private_key: 'abc' };
+    testTraceModule.start({
+      keyFilename: 'a',
+      credentials
+    });
+    assert.ok(capturedConfig);
+    assert.strictEqual(capturedConfig!.authOptions.keyFilename, 'a');
+    assert.deepStrictEqual(capturedConfig!.authOptions.credentials, credentials);
   });
 });
 

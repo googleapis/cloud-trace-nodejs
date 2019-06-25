@@ -154,8 +154,8 @@ export class Tracing implements Component {
       .activate();
 
     if (
-      typeof this.config.writerConfig.projectId !== 'string' &&
-      typeof this.config.writerConfig.projectId !== 'undefined'
+      typeof this.config.writerConfig.authOptions.projectId !== 'string' &&
+      typeof this.config.writerConfig.authOptions.projectId !== 'undefined'
     ) {
       this.logger.error(
         'StackdriverTracer#start: config.projectId, if provided, must be a string.',

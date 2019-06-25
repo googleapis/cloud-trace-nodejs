@@ -40,8 +40,8 @@ const SCOPES: string[] = ['https://www.googleapis.com/auth/trace.append'];
 /* The API endpoint of the Stackdriver Trace service */
 const TRACE_API_ENDPOINT = 'cloudtrace.googleapis.com';
 
-export interface TraceWriterConfig extends common.GoogleAuthOptions {
-  projectId?: string;
+export interface TraceWriterConfig {
+  authOptions: common.GoogleAuthOptions;
   onUncaughtException: string;
   bufferSize: number;
   flushDelaySeconds: number;
@@ -124,7 +124,7 @@ export class TraceWriter extends common.Service {
         baseUrl: `https://${TRACE_API_ENDPOINT}/v1`,
         scopes: SCOPES,
       },
-      config
+      config.authOptions
     );
 
     this.logger = logger;

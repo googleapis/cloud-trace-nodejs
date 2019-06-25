@@ -125,10 +125,6 @@ function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
     },
     writerConfig: {
       [FORCE_NEW]: forceNew,
-      projectId: lastOf<string | undefined>(
-        mergedConfig.projectId,
-        process.env.GCLOUD_PROJECT
-      ),
       onUncaughtException: mergedConfig.onUncaughtException,
       bufferSize: mergedConfig.bufferSize,
       flushDelaySeconds: mergedConfig.flushDelaySeconds,
@@ -153,6 +149,18 @@ function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
           process.env.GAE_MINOR_VERSION
         ),
       },
+      /**
+       * Our TypeScript interface suggests that only credentials, keyFilename,
+       * and projectId are accepted, but by passing the entire object to the
+       * Trace Writer, we can allow users to supply other fields that are
+       * publicly supported by the Google Auth Library.
+       */
+      authOptions: Object.assign({}, mergedConfig, {
+        projectId: lastOf<string | undefined>(
+          mergedConfig.projectId,
+          process.env.GCLOUD_PROJECT
+        ),
+      }),
     },
     pluginLoaderConfig: {
       [FORCE_NEW]: forceNew,

@@ -75,7 +75,7 @@ export class TestLogger extends testLogger.TestLogger {
 export class TestTraceWriter extends TraceWriter {
   constructor(config: TraceWriterConfig, logger: logger.Logger) {
     super(config, logger);
-    this.getConfig().projectId = '0';
+    this.getConfig().authOptions.projectId = '0';
   }
 
   async initialize(): Promise<void> {}
