@@ -12,3 +12,5 @@ src/plugins/types/*
 package-lock.json
 yarn.lock
 docs
+__pycache__
+docs
