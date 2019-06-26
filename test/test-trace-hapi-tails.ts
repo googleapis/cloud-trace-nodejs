@@ -19,9 +19,9 @@ import axiosModule from 'axios';
 import * as semver from 'semver';
 
 import * as testTraceModule from './trace';
-import { assertSpanDuration, wait } from './utils';
-import { Hapi17 } from './web-frameworks/hapi17';
-import { Hapi12, Hapi15, Hapi16, Hapi8 } from './web-frameworks/hapi8_16';
+import {assertSpanDuration, wait} from './utils';
+import {Hapi17} from './web-frameworks/hapi17';
+import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
 
 // The list of web frameworks to test.
 const FRAMEWORKS = [Hapi12, Hapi15, Hapi16, Hapi8, Hapi17];
@@ -68,7 +68,7 @@ describe('Web framework tracing', () => {
             fn: async () => {
               const child = testTraceModule
                 .get()
-                .createChildSpan({ name: 'my-tail-work' });
+                .createChildSpan({name: 'my-tail-work'});
               await wait(100);
               child.endSpan();
             },
@@ -90,7 +90,7 @@ describe('Web framework tracing', () => {
           // Hit the server.
           await testTraceModule
             .get()
-            .runInRootSpan({ name: 'outer' }, async span => {
+            .runInRootSpan({name: 'outer'}, async span => {
               await axios.get(`http://localhost:${port}/tail`);
               span.endSpan();
             });

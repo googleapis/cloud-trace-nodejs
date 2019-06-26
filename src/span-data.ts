@@ -17,11 +17,11 @@
 import * as crypto from 'crypto';
 import * as util from 'util';
 
-import { Constants, SpanType } from './constants';
-import { RootSpan, Span, SpanOptions, TraceContext } from './plugin-types';
-import { SpanKind, Trace, TraceSpan } from './trace';
-import { TraceLabels } from './trace-labels';
-import { traceWriter } from './trace-writer';
+import {Constants, SpanType} from './constants';
+import {RootSpan, Span, SpanOptions, TraceContext} from './plugin-types';
+import {SpanKind, Trace, TraceSpan} from './trace';
+import {TraceLabels} from './trace-labels';
+import {traceWriter} from './trace-writer';
 import * as traceUtil from './util';
 
 // Use 6 bytes of randomness only as JS numbers are doubles not 64-bit ints.
@@ -88,7 +88,7 @@ export abstract class BaseSpanData implements Span {
       this.span.labels[
         TraceLabels.STACK_TRACE_DETAILS_KEY
       ] = traceUtil.truncate(
-        JSON.stringify({ stack_frame: stackFrames }),
+        JSON.stringify({stack_frame: stackFrames}),
         Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT
       );
     }
@@ -142,7 +142,7 @@ export class RootSpanData extends BaseSpanData implements RootSpan {
   }
 
   createChildSpan(options?: SpanOptions): Span {
-    options = options || { name: '' };
+    options = options || {name: ''};
     const skipFrames = options.skipFrames ? options.skipFrames + 1 : 1;
     const child = new ChildSpanData(
       this.trace /* Trace object */,
@@ -210,7 +210,7 @@ export class ChildSpanData extends BaseSpanData {
 // Helper function to generate static virtual trace spans.
 function createPhantomSpanData<T extends SpanType>(
   spanType: T
-): Span & { readonly type: T } {
+): Span & {readonly type: T} {
   return Object.freeze(
     Object.assign(
       {
@@ -221,7 +221,7 @@ function createPhantomSpanData<T extends SpanType>(
         addLabel(key: string, value: any) {},
         endSpan() {},
       },
-      { type: spanType }
+      {type: spanType}
     )
   );
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import * as grpcModule from 'grpc'; // for types only.
 import {
   Client,
@@ -42,7 +42,7 @@ type Metadata = grpcModule.Metadata & {
 type MetadataModule = typeof grpcModule.Metadata;
 // Type of makeClientConstructor as exported from client.js
 type MakeClientConstructorFunction = (
-  methods: { [key: string]: { originalName?: string } },
+  methods: {[key: string]: {originalName?: string}},
   serviceName: string,
   classOptions: never
 ) => typeof Client;
@@ -197,7 +197,7 @@ function patchClient(client: ClientModule, api: Tracer) {
     // ReturnType<ClientMethod<S, T>>
     function clientMethodTrace(this: Client): EventEmitter {
       // The span name will be of form "grpc:/[Service]/[MethodName]".
-      const span = api.createChildSpan({ name: 'grpc:' + method.path });
+      const span = api.createChildSpan({name: 'grpc:' + method.path});
       if (!api.isRealSpan(span)) {
         // Span couldn't be created, either by policy or because a root span
         // doesn't exist.

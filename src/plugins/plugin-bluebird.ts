@@ -16,11 +16,11 @@
 
 import * as shimmer from 'shimmer';
 
-import { PluginTypes } from '..';
+import {PluginTypes} from '..';
 
-import { bluebird_3 } from './types';
+import {bluebird_3} from './types';
 
-type BluebirdModule = typeof bluebird_3 & { prototype: { _then: Function } };
+type BluebirdModule = typeof bluebird_3 & {prototype: {_then: Function}};
 
 const plugin: PluginTypes.Plugin = [
   {

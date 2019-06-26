@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
 // tslint:disable-next-line:no-any
 export type Func<T = void> = (...args: any[]) => T;

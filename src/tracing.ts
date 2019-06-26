@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { StackdriverFormat } from '@opencensus/propagation-stackdriver';
+import {StackdriverFormat} from '@opencensus/propagation-stackdriver';
 import * as path from 'path';
 
-import { cls, TraceCLSConfig } from './cls';
-import { OpenCensusPropagation, TracePolicy } from './config';
-import { LEVELS, Logger } from './logger';
-import { StackdriverTracer } from './trace-api';
-import { pluginLoader, PluginLoaderConfig } from './trace-plugin-loader';
-import { traceWriter, TraceWriterConfig } from './trace-writer';
-import { BuiltinTracePolicy, TracePolicyConfig } from './tracing-policy';
-import { Component, Forceable, packageNameFromPath, Singleton } from './util';
+import {cls, TraceCLSConfig} from './cls';
+import {OpenCensusPropagation, TracePolicy} from './config';
+import {LEVELS, Logger} from './logger';
+import {StackdriverTracer} from './trace-api';
+import {pluginLoader, PluginLoaderConfig} from './trace-plugin-loader';
+import {traceWriter, TraceWriterConfig} from './trace-writer';
+import {BuiltinTracePolicy, TracePolicyConfig} from './tracing-policy';
+import {Component, Forceable, packageNameFromPath, Singleton} from './util';
 
 export type TopLevelConfig =
   | Forceable<{
@@ -143,7 +143,7 @@ export class Tracing implements Component {
     const propagation =
       this.config.overrides.propagation || new StackdriverFormat();
 
-    const tracerComponents = { logger: this.logger, tracePolicy, propagation };
+    const tracerComponents = {logger: this.logger, tracePolicy, propagation};
 
     this.traceAgent.enable(
       this.config.pluginLoaderConfig.tracerConfig,

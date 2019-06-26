@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import * as shimmer from 'shimmer';
 
-import { Patch, Plugin, Span, Tracer } from '../plugin-types';
+import {Patch, Plugin, Span, Tracer} from '../plugin-types';
 
-import { pg_6, pg_7 } from './types';
+import {pg_6, pg_7} from './types';
 
 // TS: Client#query also accepts a callback as a last argument, but TS cannot
 // detect this as it's a dependent type. So we don't specify it here.
@@ -28,7 +28,7 @@ type ClientQueryArguments =
   | [string]
   | [string, {}];
 type PG7QueryReturnValue =
-  | (pg_7.QueryConfig & ({ submit: Function } & EventEmitter) | pg_7.Query)
+  | (pg_7.QueryConfig & ({submit: Function} & EventEmitter) | pg_7.Query)
   | Promise<pg_7.QueryResult>;
 type Callback<T> = (err: Error | null, res?: T) => void;
 
@@ -98,7 +98,7 @@ class PostgresPatchUtility {
 
   patchSubmittable(pgQuery: Submittable, span: Span): Submittable {
     let spanEnded = false;
-    const { maybePopulateLabelsFromOutputs } = this;
+    const {maybePopulateLabelsFromOutputs} = this;
     if (pgQuery.handleError) {
       shimmer.wrap(pgQuery, 'handleError', origCallback => {
         // Elements of args are not individually accessed.
@@ -199,7 +199,7 @@ const plugin: Plugin = [
           ...args: ClientQueryArguments
         ) {
           if (args.length >= 1) {
-            const span = api.createChildSpan({ name: 'pg-query' });
+            const span = api.createChildSpan({name: 'pg-query'});
             if (!api.isRealSpan(span)) {
               return query.apply(this, args);
             }
@@ -238,7 +238,7 @@ const plugin: Plugin = [
       const pgPatch = new PostgresPatchUtility(api);
       shimmer.wrap(Client.prototype, 'query', query => {
         return function query_trace(this: pg_7.Client) {
-          const span = api.createChildSpan({ name: 'pg-query' });
+          const span = api.createChildSpan({name: 'pg-query'});
           if (!api.isRealSpan(span)) {
             return query.apply(this, arguments);
           }

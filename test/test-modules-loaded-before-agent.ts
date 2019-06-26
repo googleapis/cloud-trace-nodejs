@@ -19,7 +19,7 @@ import * as shimmer from 'shimmer';
 
 import * as log from '../src/logger';
 
-import { TestLogger } from './logger';
+import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
 
 describe('modules loaded before agent', () => {

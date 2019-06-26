@@ -16,7 +16,7 @@
 
 import * as assert from 'assert';
 
-import { cls, TraceCLS, TraceCLSMechanism } from '../src/cls';
+import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
 import {
   defaultConfig,
   GetHeaderFunction as HeaderGetter,
@@ -25,19 +25,19 @@ import {
   SetHeaderFunction as HeaderSetter,
   TracePolicy,
 } from '../src/config';
-import { SpanType } from '../src/constants';
+import {SpanType} from '../src/constants';
 import {
   StackdriverTracer,
   StackdriverTracerComponents,
   StackdriverTracerConfig,
 } from '../src/trace-api';
-import { traceWriter } from '../src/trace-writer';
-import { alwaysTrace, neverTrace } from '../src/tracing-policy';
-import { FORCE_NEW, TraceContext } from '../src/util';
+import {traceWriter} from '../src/trace-writer';
+import {alwaysTrace, neverTrace} from '../src/tracing-policy';
+import {FORCE_NEW, TraceContext} from '../src/util';
 
-import { TestLogger } from './logger';
+import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
-import { getBaseConfig, NoPropagation } from './utils';
+import {getBaseConfig, NoPropagation} from './utils';
 
 describe('Trace Interface', () => {
   const logger = new TestLogger();
@@ -62,13 +62,11 @@ describe('Trace Interface', () => {
 
   before(() => {
     testTraceModule.setCLSForTest(TraceCLS);
-    cls
-      .create({ mechanism: TraceCLSMechanism.ASYNC_LISTENER }, logger)
-      .enable();
+    cls.create({mechanism: TraceCLSMechanism.ASYNC_LISTENER}, logger).enable();
     return traceWriter
       .create(
         Object.assign(
-          { [FORCE_NEW]: true, authOptions: { projectId: 'project-1' } },
+          {[FORCE_NEW]: true, authOptions: {projectId: 'project-1'}},
           defaultConfig
         ),
         logger
@@ -94,8 +92,8 @@ describe('Trace Interface', () => {
 
     it('should produce real child spans with createChildSpan', () => {
       const traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({ name: 'root' }, rootSpan => {
-        const childSpan = traceAPI.createChildSpan({ name: 'sub' });
+      traceAPI.runInRootSpan({name: 'root'}, rootSpan => {
+        const childSpan = traceAPI.createChildSpan({name: 'sub'});
         childSpan.addLabel('key', 'val');
         childSpan.endSpan();
         rootSpan.endSpan();
@@ -112,8 +110,8 @@ describe('Trace Interface', () => {
 
     it('should produce real child spans through root span API', () => {
       const traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({ name: 'root' }, rootSpan => {
-        const childSpan = rootSpan.createChildSpan({ name: 'sub' });
+      traceAPI.runInRootSpan({name: 'root'}, rootSpan => {
+        const childSpan = rootSpan.createChildSpan({name: 'sub'});
         childSpan.addLabel('key', 'val');
         childSpan.endSpan();
         rootSpan.endSpan();
@@ -131,7 +129,7 @@ describe('Trace Interface', () => {
 
     it('should produce real root spans with runInRootSpan', () => {
       const traceAPI = createTraceAgent();
-      const result = traceAPI.runInRootSpan({ name: 'root' }, rootSpan => {
+      const result = traceAPI.runInRootSpan({name: 'root'}, rootSpan => {
         rootSpan.addLabel('key', 'val');
         rootSpan.endSpan();
         return 'result';
@@ -146,10 +144,10 @@ describe('Trace Interface', () => {
 
     it('should allow sequential root spans', () => {
       const traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({ name: 'root1' }, rootSpan => {
+      traceAPI.runInRootSpan({name: 'root1'}, rootSpan => {
         rootSpan.endSpan();
       });
-      traceAPI.runInRootSpan({ name: 'root2' }, rootSpan => {
+      traceAPI.runInRootSpan({name: 'root2'}, rootSpan => {
         rootSpan.endSpan();
       });
       assert.strictEqual(testTraceModule.getTraces().length, 2);
@@ -157,8 +155,8 @@ describe('Trace Interface', () => {
 
     it('should not allow nested root spans', () => {
       const traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({ name: 'root1' }, rootSpan => {
-        traceAPI.runInRootSpan({ name: 'root2' }, notRootSpan => {
+      traceAPI.runInRootSpan({name: 'root1'}, rootSpan => {
+        traceAPI.runInRootSpan({name: 'root2'}, notRootSpan => {
           assert.strictEqual(notRootSpan.type, SpanType.UNCORRELATED);
           notRootSpan.endSpan();
         });
@@ -174,7 +172,7 @@ describe('Trace Interface', () => {
         traceAPI.getCurrentRootSpan().type,
         SpanType.UNCORRELATED
       );
-      traceAPI.runInRootSpan({ name: 'root' }, rootSpan => {
+      traceAPI.runInRootSpan({name: 'root'}, rootSpan => {
         assert.strictEqual(traceAPI.getCurrentRootSpan(), rootSpan);
         rootSpan.endSpan();
       });
@@ -185,15 +183,15 @@ describe('Trace Interface', () => {
         spansPerTraceSoftLimit: 10,
         spansPerTraceHardLimit: 20,
       });
-      tracer.runInRootSpan({ name: 'root' }, rootSpan => {
+      tracer.runInRootSpan({name: 'root'}, rootSpan => {
         for (let i = 0; i < 10; i++) {
-          tracer.createChildSpan({ name: `span-${i}` }).endSpan();
+          tracer.createChildSpan({name: `span-${i}`}).endSpan();
         }
         assert.strictEqual(logger.getNumLogsWith('error', '[span-9]'), 1);
         for (let i = 0; i < 9; i++) {
-          tracer.createChildSpan({ name: `span-${i + 10}` }).endSpan();
+          tracer.createChildSpan({name: `span-${i + 10}`}).endSpan();
         }
-        const child = tracer.createChildSpan({ name: `span-19` });
+        const child = tracer.createChildSpan({name: `span-19`});
         assert.ok(!tracer.isRealSpan(child));
         assert.strictEqual(logger.getNumLogsWith('error', '[span-19]'), 1);
         rootSpan.endSpan();
@@ -207,7 +205,7 @@ describe('Trace Interface', () => {
 
     it('should return the appropriate context ID', () => {
       const traceAPI = createTraceAgent();
-      traceAPI.runInRootSpan({ name: 'root' }, rootSpan => {
+      traceAPI.runInRootSpan({name: 'root'}, rootSpan => {
         const id = traceAPI.getCurrentContextId();
         assert.ok(rootSpan.getTraceContext());
         assert.strictEqual(id, rootSpan.getTraceContext()!.traceId);
@@ -218,8 +216,8 @@ describe('Trace Interface', () => {
     });
 
     it('should return a context ID even if in an untraced request', () => {
-      const traceAPI = createTraceAgent({}, { tracePolicy: neverTrace() });
-      traceAPI.runInRootSpan({ name: '' }, rootSpan => {
+      const traceAPI = createTraceAgent({}, {tracePolicy: neverTrace()});
+      traceAPI.runInRootSpan({name: ''}, rootSpan => {
         assert.strictEqual(rootSpan.type, SpanType.UNSAMPLED);
         assert.notStrictEqual(traceAPI.getCurrentContextId(), null);
         assert.ok(rootSpan.getTraceContext());
@@ -251,14 +249,14 @@ describe('Trace Interface', () => {
         }
       }
       const tracePolicy = new CaptureOptionsTracePolicy();
-      const traceAPI = createTraceAgent({}, { tracePolicy });
+      const traceAPI = createTraceAgent({}, {tracePolicy});
       // All params present
       {
         const rootSpanOptions = {
           name: 'root',
           url: 'foo',
           method: 'bar',
-          traceContext: { traceId: '1', spanId: '2', options: 1 },
+          traceContext: {traceId: '1', spanId: '2', options: 1},
         };
         const beforeRootSpan = Date.now();
         traceAPI.runInRootSpan(rootSpanOptions, rootSpan => {
@@ -282,7 +280,7 @@ describe('Trace Interface', () => {
       tracePolicy.capturedShouldTraceParam = null;
       // Limited params present
       {
-        const rootSpanOptions = { name: 'root' };
+        const rootSpanOptions = {name: 'root'};
         traceAPI.runInRootSpan(rootSpanOptions, rootSpan => {
           assert.strictEqual(rootSpan.type, SpanType.UNSAMPLED);
           rootSpan.endSpan();
@@ -298,15 +296,15 @@ describe('Trace Interface', () => {
 
     it('should expose methods for trace context header propagation', () => {
       class TestPropagation implements OpenCensusPropagation {
-        extract({ getHeader }: HeaderGetter) {
-          return { traceId: getHeader('a') as string, spanId: '0', options: 1 };
+        extract({getHeader}: HeaderGetter) {
+          return {traceId: getHeader('a') as string, spanId: '0', options: 1};
         }
-        inject({ setHeader }: HeaderSetter, traceContext: TraceContext) {
+        inject({setHeader}: HeaderSetter, traceContext: TraceContext) {
           setHeader(traceContext.traceId, 'y');
         }
       }
       const propagation = new TestPropagation();
-      const tracer = createTraceAgent({}, { propagation });
+      const tracer = createTraceAgent({}, {propagation});
       const result = tracer.propagation.extract(s => `${s}${s}`);
       assert.deepStrictEqual(result, {
         traceId: 'aa',
@@ -320,7 +318,7 @@ describe('Trace Interface', () => {
           assert.strictEqual(value, 'y');
           setHeaderCalled = true;
         },
-        { traceId: 'x', spanId: '0', options: 1 }
+        {traceId: 'x', spanId: '0', options: 1}
       );
       assert.ok(setHeaderCalled);
     });
@@ -343,7 +341,7 @@ describe('Trace Interface', () => {
         createTraceAgent().runInRootSpan(
           {
             name: 'root1',
-            traceContext: { traceId: '123456', spanId: '667', options: 1 },
+            traceContext: {traceId: '123456', spanId: '667', options: 1},
           },
           rootSpan => {
             rootSpan.endSpan();
@@ -358,7 +356,7 @@ describe('Trace Interface', () => {
       }
       // Generate a trace context
       {
-        createTraceAgent().runInRootSpan({ name: 'root2' }, rootSpan => {
+        createTraceAgent().runInRootSpan({name: 'root2'}, rootSpan => {
           rootSpan.endSpan();
         });
         // The trace ID will not randomly be 123456
@@ -372,8 +370,8 @@ describe('Trace Interface', () => {
     });
 
     it('should trace if no option flags are provided', () => {
-      createTraceAgent({ enhancedDatabaseReporting: false }).runInRootSpan(
-        { name: 'root', traceContext: { traceId: '123456', spanId: '667' } },
+      createTraceAgent({enhancedDatabaseReporting: false}).runInRootSpan(
+        {name: 'root', traceContext: {traceId: '123456', spanId: '667'}},
         rootSpan => {
           rootSpan.endSpan();
         }
@@ -388,13 +386,13 @@ describe('Trace Interface', () => {
       it('should behave as expected', () => {
         const fakeTraceId = 'ffeeddccbbaa99887766554433221100';
         const traceApi = createTraceAgent();
-        const tracedContext = { traceId: fakeTraceId, spanId: '0', options: 1 };
+        const tracedContext = {traceId: fakeTraceId, spanId: '0', options: 1};
         const untracedContext = {
           traceId: fakeTraceId,
           spanId: '0',
           options: 0,
         };
-        const unspecifiedContext = { traceId: fakeTraceId, spanId: '0' };
+        const unspecifiedContext = {traceId: fakeTraceId, spanId: '0'};
         assert.deepStrictEqual(
           traceApi.getResponseTraceContext(tracedContext, true),
           tracedContext

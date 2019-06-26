@@ -17,9 +17,9 @@
 // This module requires continuation-local-storage in the AsyncListenerCLS
 // constructor, rather than upon module load.
 import * as clsModule from 'continuation-local-storage';
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
-import { CLS, Func } from './base';
+import {CLS, Func} from './base';
 
 type CLSModule = typeof clsModule;
 

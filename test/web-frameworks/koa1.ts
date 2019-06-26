@@ -15,9 +15,9 @@
  */
 
 import * as http from 'http';
-import { AddressInfo } from 'net';
+import {AddressInfo} from 'net';
 
-import { koa_1 } from '../../src/plugins/types';
+import {koa_1} from '../../src/plugins/types';
 import * as testTraceModule from '../trace';
 
 import {

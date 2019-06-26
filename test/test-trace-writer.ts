@@ -14,29 +14,25 @@
  * limitations under the License.
  */
 
-import { Service } from '@google-cloud/common';
+import {Service} from '@google-cloud/common';
 import * as assert from 'assert';
-import { GoogleAuth } from 'google-auth-library';
-import { JWTInput } from 'google-auth-library/build/src/auth/credentials';
-import { RefreshOptions } from 'google-auth-library/build/src/auth/oauth2client';
-import { OutgoingHttpHeaders } from 'http';
+import {GoogleAuth} from 'google-auth-library';
+import {JWTInput} from 'google-auth-library/build/src/auth/credentials';
+import {RefreshOptions} from 'google-auth-library/build/src/auth/oauth2client';
+import {OutgoingHttpHeaders} from 'http';
 import * as nock from 'nock';
 import * as os from 'os';
 import * as path from 'path';
-import { Response } from 'request'; // Only for type declarations.
+import {Response} from 'request'; // Only for type declarations.
 import * as shimmer from 'shimmer';
 
-import { SpanKind, Trace } from '../src/trace';
-import { TraceLabels } from '../src/trace-labels';
-import {
-  TraceBuffer,
-  TraceWriter,
-  TraceWriterConfig,
-} from '../src/trace-writer';
+import {SpanKind, Trace} from '../src/trace';
+import {TraceLabels} from '../src/trace-labels';
+import {TraceBuffer, TraceWriter, TraceWriterConfig} from '../src/trace-writer';
 
-import { TestLogger } from './logger';
-import { hostname, instanceId, oauth2 } from './nocks';
-import { wait } from './utils';
+import {TestLogger} from './logger';
+import {hostname, instanceId, oauth2} from './nocks';
+import {wait} from './utils';
 
 interface TestCredentials {
   client_id?: string;
@@ -104,7 +100,7 @@ describe('Trace Writer', () => {
   // endpoint nocked...
   let oauth2Scope: nock.Scope;
   // ...and allow one query to each of the two metadata endpoints per test.
-  let metadataScopes: { done: () => void; cancel: () => void };
+  let metadataScopes: {done: () => void; cancel: () => void};
 
   before(() => {
     nock.disableNetConnect();
@@ -224,7 +220,7 @@ describe('Trace Writer', () => {
     it(`doesn't call Service#getProjectId if project ID is passed`, async () => {
       const writer = new TraceWriter(
         Object.assign({}, DEFAULT_CONFIG, {
-          authOptions: { projectId: 'my-project' },
+          authOptions: {projectId: 'my-project'},
         }),
         logger
       );
@@ -328,7 +324,7 @@ describe('Trace Writer', () => {
     // When MockedRequestTraceWriter is used, this function dictates the
     // status code returned when Service#request is called.
     // By default, a 200 status code is always returned.
-    let overrideRequestResponse: () => Promise<{ statusCode: number }>;
+    let overrideRequestResponse: () => Promise<{statusCode: number}>;
     let capturedRequestOptions: DecorateRequestOptions | null = null;
     // We use this class to mock Service#request. Testing this function is the
     // responsibility of @google-cloud/common.
@@ -353,13 +349,13 @@ describe('Trace Writer', () => {
     }
 
     beforeEach(() => {
-      overrideRequestResponse = () => Promise.resolve({ statusCode: 200 });
+      overrideRequestResponse = () => Promise.resolve({statusCode: 200});
       capturedRequestOptions = null;
     });
 
     it('appends project ID and default labels to written traces', async () => {
       const writer = new MockedRequestTraceWriter(
-        Object.assign({}, DEFAULT_CONFIG, { bufferSize: 1 }),
+        Object.assign({}, DEFAULT_CONFIG, {bufferSize: 1}),
         logger
       );
       await writer.initialize();
@@ -384,7 +380,7 @@ describe('Trace Writer', () => {
     it(`doesn't enqueue open spans`, async () => {
       const NUM_SPANS = 5;
       const writer = new MockedRequestTraceWriter(
-        Object.assign({}, DEFAULT_CONFIG, { bufferSize: NUM_SPANS }),
+        Object.assign({}, DEFAULT_CONFIG, {bufferSize: NUM_SPANS}),
         logger
       );
       await writer.initialize();
@@ -417,7 +413,7 @@ describe('Trace Writer', () => {
       it('is satisfied when the number of enqueued spans >= bufferSize', async () => {
         const NUM_SPANS = 5;
         const writer = new MockedRequestTraceWriter(
-          Object.assign({}, DEFAULT_CONFIG, { bufferSize: NUM_SPANS }),
+          Object.assign({}, DEFAULT_CONFIG, {bufferSize: NUM_SPANS}),
           logger
         );
         await writer.initialize();
@@ -447,7 +443,7 @@ describe('Trace Writer', () => {
 
       it('is satisfied periodically', async () => {
         const writer = new MockedRequestTraceWriter(
-          Object.assign({}, DEFAULT_CONFIG, { flushDelaySeconds: 1 }),
+          Object.assign({}, DEFAULT_CONFIG, {flushDelaySeconds: 1}),
           logger
         );
         await writer.initialize();
@@ -468,7 +464,7 @@ describe('Trace Writer', () => {
     it('emits an error if there was an error publishing', async () => {
       overrideRequestResponse = () => Promise.reject(new Error());
       const writer = new MockedRequestTraceWriter(
-        Object.assign({}, DEFAULT_CONFIG, { bufferSize: 1 }),
+        Object.assign({}, DEFAULT_CONFIG, {bufferSize: 1}),
         logger
       );
       await writer.initialize();

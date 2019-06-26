@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { IncomingMessage, ServerResponse } from 'http';
-import { parse as urlParse } from 'url';
+import {IncomingMessage, ServerResponse} from 'http';
+import {parse as urlParse} from 'url';
 
-import { PluginTypes } from '..';
+import {PluginTypes} from '..';
 
-import { connect_3 } from './types';
+import {connect_3} from './types';
 
 type Connect3 = typeof connect_3;
 // Connect docs note that routed requests have an originalUrl property.
 // https://github.com/senchalabs/connect/tree/3.6.5#appuseroute-fn
-type Request = IncomingMessage & { originalUrl?: string };
+type Request = IncomingMessage & {originalUrl?: string};
 
 const SUPPORTED_VERSIONS = '3.x';
 

@@ -16,15 +16,15 @@
 
 import * as assert from 'assert';
 
-import { defaultConfig } from '../src/config';
-import { StackdriverTracerComponents } from '../src/trace-api';
-import { PluginLoader, PluginLoaderConfig } from '../src/trace-plugin-loader';
+import {defaultConfig} from '../src/config';
+import {StackdriverTracerComponents} from '../src/trace-api';
+import {PluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 
 import * as testTraceModule from './trace';
 
 describe('Configuration: Plugins', () => {
   const instrumentedModules = Object.keys(defaultConfig.plugins);
-  let plugins: { [pluginName: string]: string } | null;
+  let plugins: {[pluginName: string]: string} | null;
 
   class ConfigTestPluginLoader extends PluginLoader {
     constructor(
@@ -61,7 +61,7 @@ describe('Configuration: Plugins', () => {
   });
 
   it('should handle empty object', () => {
-    testTraceModule.start({ plugins: {} });
+    testTraceModule.start({plugins: {}});
     assert.ok(plugins);
     assert.strictEqual(
       JSON.stringify(Object.keys(plugins!)),
@@ -73,12 +73,12 @@ describe('Configuration: Plugins', () => {
   });
 
   it('should handle non-object', () => {
-    testTraceModule.start({ plugins: false as {} });
+    testTraceModule.start({plugins: false as {}});
     assert.deepStrictEqual(plugins, {});
   });
 
   it('should overwrite builtin plugins correctly', () => {
-    testTraceModule.start({ plugins: { express: 'foo' } });
+    testTraceModule.start({plugins: {express: 'foo'}});
     assert.ok(plugins);
     assert.strictEqual(
       JSON.stringify(Object.keys(plugins!)),

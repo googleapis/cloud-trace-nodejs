@@ -17,12 +17,12 @@
 import * as httpMethods from 'methods';
 import * as shimmer from 'shimmer';
 
-import { PluginTypes } from '..';
+import {PluginTypes} from '..';
 
-import { express_4 } from './types';
+import {express_4} from './types';
 
 // application is an undocumented member of the express object.
-type Express4Module = typeof express_4 & { application: express_4.Application };
+type Express4Module = typeof express_4 & {application: express_4.Application};
 
 const methods: Array<keyof express_4.Application> = (httpMethods as Array<
   keyof express_4.Application

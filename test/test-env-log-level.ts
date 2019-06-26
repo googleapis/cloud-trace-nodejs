@@ -19,14 +19,14 @@ import * as shimmer from 'shimmer';
 
 import * as logger from '../src/logger';
 
-import { TestLogger } from './logger';
+import {TestLogger} from './logger';
 import * as traceTestModule from './trace';
 
 describe('should respect environment variables', () => {
   let logLevel: string | null = null;
 
   class CaptureLogLevelTestLogger extends TestLogger {
-    constructor(opts: { level: string | false }) {
+    constructor(opts: {level: string | false}) {
       super(opts);
       if (opts.level === false) {
         throw new Error('Unexpected value for opts.level');
@@ -57,7 +57,7 @@ describe('should respect environment variables', () => {
   });
 
   it('should prefer env to config', () => {
-    traceTestModule.start({ logLevel: 2 });
+    traceTestModule.start({logLevel: 2});
     assert.strictEqual(logLevel, logger.LEVELS[4]);
   });
 

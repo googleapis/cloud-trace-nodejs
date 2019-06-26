@@ -17,10 +17,10 @@
 // This file calls require('async_hooks') in the AsyncHooksCLS constructor,
 // rather than upon module load.
 import * as asyncHooksModule from 'async_hooks';
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import * as shimmer from 'shimmer';
 
-import { CLS, Func } from './base';
+import {CLS, Func} from './base';
 
 type AsyncHooksModule = typeof asyncHooksModule;
 
@@ -35,7 +35,7 @@ const EVENT_EMITTER_METHODS: Array<keyof EventEmitter> = [
 // A symbol used to check if a method has been wrapped for context.
 const WRAPPED = Symbol('@google-cloud/trace-agent:AsyncHooksCLS:WRAPPED');
 
-type ContextWrapped<T> = T & { [WRAPPED]?: boolean };
+type ContextWrapped<T> = T & {[WRAPPED]?: boolean};
 
 /**
  * An implementation of continuation-local storage on top of the async_hooks
@@ -46,7 +46,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   private ah: AsyncHooksModule;
 
   /** A map of AsyncResource IDs to Context objects. */
-  private contexts: { [id: number]: Context } = {};
+  private contexts: {[id: number]: Context} = {};
   /** The AsyncHook that proactively populates entries in this.contexts. */
   private hook: asyncHooksModule.AsyncHook;
   /** Whether this instance is enabled. */
