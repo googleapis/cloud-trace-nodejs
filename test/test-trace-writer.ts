@@ -87,6 +87,7 @@ function createDummyTrace(numSpans: number): Trace {
 describe('Trace Writer', () => {
   const pjson = require('../../package.json');
   const DEFAULT_CONFIG: TraceWriterConfig = {
+    authOptions: {},
     onUncaughtException: 'ignore',
     bufferSize: Infinity,
     flushDelaySeconds: 3600,
@@ -174,8 +175,10 @@ describe('Trace Writer', () => {
     it('should use the keyFilename field of the config object', async () => {
       const expectedCredentials: TestCredentials = require('./fixtures/gcloud-credentials.json');
       const actualCredentials = await captureCredentialsForConfig({
-        projectId: 'my-project',
-        keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
+        authOptions: {
+          projectId: 'my-project',
+          keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
+        },
       });
       assert.deepStrictEqual(actualCredentials, expectedCredentials);
     });
@@ -183,8 +186,10 @@ describe('Trace Writer', () => {
     it('should use the credentials field of the config object', async () => {
       const expectedCredentials: TestCredentials = require('./fixtures/gcloud-credentials.json');
       const actualCredentials = await captureCredentialsForConfig({
-        projectId: 'my-project',
-        credentials: expectedCredentials,
+        authOptions: {
+          projectId: 'my-project',
+          credentials: expectedCredentials,
+        },
       });
       assert.deepStrictEqual(actualCredentials, expectedCredentials);
     });
@@ -197,9 +202,11 @@ describe('Trace Writer', () => {
         type: 'authorized_user',
       };
       const actualCredentials = await captureCredentialsForConfig({
-        projectId: 'my-project',
-        keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
-        credentials: expectedCredentials,
+        authOptions: {
+          projectId: 'my-project',
+          keyFilename: path.join('test', 'fixtures', 'gcloud-credentials.json'),
+          credentials: expectedCredentials,
+        },
       });
       assert.deepStrictEqual(actualCredentials, expectedCredentials);
     });
@@ -216,7 +223,9 @@ describe('Trace Writer', () => {
 
     it(`doesn't call Service#getProjectId if project ID is passed`, async () => {
       const writer = new TraceWriter(
-        Object.assign({ projectId: 'my-project' }, DEFAULT_CONFIG),
+        Object.assign({}, DEFAULT_CONFIG, {
+          authOptions: { projectId: 'my-project' },
+        }),
         logger
       );
       getProjectIdOverride = () => Promise.resolve('my-different-project');

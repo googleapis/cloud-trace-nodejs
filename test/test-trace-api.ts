@@ -68,7 +68,7 @@ describe('Trace Interface', () => {
     return traceWriter
       .create(
         Object.assign(
-          { [FORCE_NEW]: true, projectId: 'project-1' },
+          { [FORCE_NEW]: true, authOptions: { projectId: 'project-1' } },
           defaultConfig
         ),
         logger

@@ -105,13 +105,13 @@ describe('should respect config load order', () => {
     it('should respect GCLOUD_PROJECT', () => {
       traceTestModule.start();
       const config = getCapturedConfig();
-      assert.strictEqual(config.writerConfig.projectId, '1729');
+      assert.strictEqual(config.writerConfig.authOptions.projectId, '1729');
     });
 
     it('should prefer env to config', () => {
       traceTestModule.start({ projectId: '1927' });
       const config = getCapturedConfig();
-      assert.strictEqual(config.writerConfig.projectId, '1729');
+      assert.strictEqual(config.writerConfig.authOptions.projectId, '1729');
     });
   });
 });
