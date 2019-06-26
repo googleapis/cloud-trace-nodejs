@@ -24,4 +24,9 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+docker run --name trace-test-mongo -p 127.0.0.1:27017:27017 -d mongo &&\
+docker run --name trace-test-redis -p 127.0.0.1:6379:6379 -d redis &&\
+docker run --name trace-test-mysql -p 127.0.0.1:3306:3306 -e MYSQL_ROOT_PASSWORD='Password12!' -e MYSQL_DATABASE=test -d mysql:5
+docker run --name trace-test-postgres -p 127.0.0.1:5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD='Password12!' -e POSTGRES_DB=test -d postgres
+
 python3 "${KOKORO_GFILE_DIR}/trampoline_v1.py"
