@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
-import { hapi_16 } from '../../src/plugins/types';
+import {hapi_16} from '../../src/plugins/types';
 
 import {
   WebFramework,
@@ -80,7 +80,7 @@ export class Hapi extends EventEmitter implements WebFramework {
   }
 
   async listen(port: number): Promise<number> {
-    this.server.connection({ host: 'localhost', port });
+    this.server.connection({host: 'localhost', port});
     this.queuedHandlers.forEach(fn => fn());
     this.queuedHandlers = [];
     await new Promise((resolve, reject) =>

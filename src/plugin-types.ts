@@ -17,14 +17,14 @@
 // This file only describes public-facing interfaces.
 // tslint:disable:no-any
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
-import { Constants, SpanType } from './constants';
-import { StackdriverTracerConfig } from './trace-api';
-import { TraceLabels } from './trace-labels';
-import { TraceContext } from './util';
+import {Constants, SpanType} from './constants';
+import {StackdriverTracerConfig} from './trace-api';
+import {TraceLabels} from './trace-labels';
+import {TraceContext} from './util';
 
-export { TraceContext };
+export {TraceContext};
 
 export type Func<T> = (...args: any[]) => T;
 

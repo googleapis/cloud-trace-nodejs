@@ -19,15 +19,15 @@ import * as path from 'path';
 import * as hook from 'require-in-the-middle';
 import * as semver from 'semver';
 
-import { TracePolicy } from './config';
-import { Logger } from './logger';
-import { Intercept, Monkeypatch, Plugin } from './plugin-types';
+import {TracePolicy} from './config';
+import {Logger} from './logger';
+import {Intercept, Monkeypatch, Plugin} from './plugin-types';
 import {
   StackdriverTracer,
   StackdriverTracerComponents,
   StackdriverTracerConfig,
 } from './trace-api';
-import { Singleton } from './util';
+import {Singleton} from './util';
 
 /**
  * Plugins are user-provided objects containing functions that should be run
@@ -43,7 +43,7 @@ import { Singleton } from './util';
 export interface PluginLoaderConfig {
   // An object which contains paths to files that should be loaded as plugins
   // upon loading a module with a given name.
-  plugins: { [pluginName: string]: string };
+  plugins: {[pluginName: string]: string};
   tracerConfig: StackdriverTracerConfig;
 }
 
@@ -319,7 +319,7 @@ export class PluginLoader {
     // Initialize ALL of the PluginWrapper objects here.
     // See CorePluginWrapper docs for why core modules are processed
     // differently.
-    const coreWrapperConfig: CorePluginWrapperOptions = { children: [] };
+    const coreWrapperConfig: CorePluginWrapperOptions = {children: []};
     Object.keys(config.plugins).forEach(key => {
       const value = config.plugins[key];
       // Core module plugins share a common key.
@@ -330,12 +330,12 @@ export class PluginLoader {
         // Convert the given string value to a PluginConfigEntry
         // (unless it's falsey).
         if (coreModule) {
-          coreWrapperConfig.children.push({ name: key, path: value });
+          coreWrapperConfig.children.push({name: key, path: value});
         } else {
           this.pluginMap.set(
             key,
             new ModulePluginWrapper(
-              { name: key, path: value },
+              {name: key, path: value},
               config.tracerConfig,
               components
             )
@@ -365,7 +365,7 @@ export class PluginLoader {
       const builtins = this.pluginMap.has(PluginLoader.CORE_MODULE)
         ? builtinModules
         : [];
-      hook(builtins.concat(nonCoreModules), { internals: true }, onRequire);
+      hook(builtins.concat(nonCoreModules), {internals: true}, onRequire);
     };
   }
 
@@ -483,7 +483,7 @@ export class PluginLoader {
    * @param moduleStr The module string; in the form of either `${module}` or
    *   `${module}/${relPath}`
    */
-  static parseModuleString(moduleStr: string): { name: string; file: string } {
+  static parseModuleString(moduleStr: string): {name: string; file: string} {
     // Canonicalize the name by using only '/'.
     const parts = moduleStr.replace(/\\/g, '/').split('/');
     // The separation index between name/file depends on whether the module

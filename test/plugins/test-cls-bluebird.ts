@@ -16,8 +16,8 @@
 
 import * as assert from 'assert';
 
-import { bluebird_3 as BluebirdPromise } from '../../src/plugins/types';
-import { Trace } from '../../src/trace';
+import {bluebird_3 as BluebirdPromise} from '../../src/plugins/types';
+import {Trace} from '../../src/trace';
 import * as traceTestModule from '../trace';
 
 /**
@@ -51,11 +51,11 @@ const getTracesForPromiseImplementation = <T>(
   return new Promise((resolve, reject) => {
     const tracer = traceTestModule.get();
     let p: BluebirdPromise<T>;
-    const firstSpan = tracer.runInRootSpan({ name: 'first' }, span => {
+    const firstSpan = tracer.runInRootSpan({name: 'first'}, span => {
       p = makePromise();
       return span;
     });
-    tracer.runInRootSpan({ name: 'second' }, secondSpan => {
+    tracer.runInRootSpan({name: 'second'}, secondSpan => {
       // Note to maintainers: Do NOT convert this to async/await,
       // as it changes context propagation behavior.
       thenFn(p, () => {

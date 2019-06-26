@@ -18,9 +18,9 @@ import * as assert from 'assert';
 import axiosModule from 'axios';
 import * as semver from 'semver';
 
-import { TraceSpan } from '../src/trace';
-import { TraceLabels } from '../src/trace-labels';
-import { StackFrame } from '../src/util';
+import {TraceSpan} from '../src/trace';
+import {TraceLabels} from '../src/trace-labels';
+import {StackFrame} from '../src/util';
 
 import * as testTraceModule from './trace';
 import {
@@ -29,13 +29,13 @@ import {
   isServerSpan,
   wait,
 } from './utils';
-import { WebFramework, WebFrameworkConstructor } from './web-frameworks/base';
-import { Connect3 } from './web-frameworks/connect';
-import { Express4 } from './web-frameworks/express';
-import { Hapi17 } from './web-frameworks/hapi17';
-import { Hapi12, Hapi15, Hapi16, Hapi8 } from './web-frameworks/hapi8_16';
-import { Koa1 } from './web-frameworks/koa1';
-import { Koa2 } from './web-frameworks/koa2';
+import {WebFramework, WebFrameworkConstructor} from './web-frameworks/base';
+import {Connect3} from './web-frameworks/connect';
+import {Express4} from './web-frameworks/express';
+import {Hapi17} from './web-frameworks/hapi17';
+import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
+import {Koa1} from './web-frameworks/koa1';
+import {Koa2} from './web-frameworks/koa2';
 import {
   Restify3,
   Restify4,
@@ -79,7 +79,7 @@ describe('Web framework tracing', () => {
   before(() => {
     testTraceModule.setCLSForTest();
     testTraceModule.setPluginLoaderForTest();
-    testTraceModule.start({ ignoreUrls: [/ignore-me/], ignoreMethods: [] });
+    testTraceModule.start({ignoreUrls: [/ignore-me/], ignoreMethods: []});
     axios = require('axios');
   });
 
@@ -107,7 +107,7 @@ describe('Web framework tracing', () => {
           hasResponse: true,
           fn: async () => {
             await wait(DEFAULT_SPAN_DURATION);
-            return { statusCode: 200, message: 'hello!' };
+            return {statusCode: 200, message: 'hello!'};
           },
         });
         webFramework.addHandler({
@@ -123,7 +123,7 @@ describe('Web framework tracing', () => {
           hasResponse: true,
           fn: async () => {
             await wait(DEFAULT_SPAN_DURATION / 2);
-            return { statusCode: 200, message: 'hellohello!!' };
+            return {statusCode: 200, message: 'hellohello!!'};
           },
         });
         webFramework.addHandler({
@@ -132,14 +132,14 @@ describe('Web framework tracing', () => {
           fn: async () => {
             await wait(0); // Add an additional link to the async execution chain.
             const response = await axios.get(`http://localhost:${port}/hello`);
-            return { statusCode: response.status, message: response.data };
+            return {statusCode: response.status, message: response.data};
           },
         });
         webFramework.addHandler({
           path: '/hello',
           hasResponse: true,
           fn: async () => {
-            return { statusCode: 200, message: '[incessant barking]' };
+            return {statusCode: 200, message: '[incessant barking]'};
           },
         });
         webFramework.addHandler({
@@ -153,7 +153,7 @@ describe('Web framework tracing', () => {
           path: '/ignore-me',
           hasResponse: true,
           fn: async () => {
-            return { statusCode: 200, message: '[unrestrained whimpering]' };
+            return {statusCode: 200, message: '[unrestrained whimpering]'};
           },
         });
         port = await webFramework.listen(0);
@@ -171,7 +171,7 @@ describe('Web framework tracing', () => {
         let recordedTime = 0;
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async span => {
+          .runInRootSpan({name: 'outer'}, async span => {
             assert.ok(testTraceModule.get().isRealSpan(span));
             recordedTime = Date.now();
             await axios.get(`http://localhost:${port}/one-handler`);
@@ -187,7 +187,7 @@ describe('Web framework tracing', () => {
         let recordedTime = 0;
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async span => {
+          .runInRootSpan({name: 'outer'}, async span => {
             assert.ok(testTraceModule.get().isRealSpan(span));
             recordedTime = Date.now();
             // Hit endpoint with two middlewares/handlers.
@@ -203,7 +203,7 @@ describe('Web framework tracing', () => {
       it('handles errors', async () => {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async span => {
+          .runInRootSpan({name: 'outer'}, async span => {
             assert.ok(testTraceModule.get().isRealSpan(span));
             // Hit endpoint which always throws an error.
             await axios.get(`http://localhost:${port}/error`, {
@@ -222,7 +222,7 @@ describe('Web framework tracing', () => {
       it("doesn't trace ignored urls", async () => {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async span => {
+          .runInRootSpan({name: 'outer'}, async span => {
             assert.ok(testTraceModule.get().isRealSpan(span));
             // Hit endpoint that always gets ignored.
             await axios.get(`http://localhost:${port}/ignore-me`);
@@ -235,7 +235,7 @@ describe('Web framework tracing', () => {
       it('ends span upon client abort', async () => {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async span => {
+          .runInRootSpan({name: 'outer'}, async span => {
             assert.ok(testTraceModule.get().isRealSpan(span));
             // Hit endpoint, but time out before it has a chance to respond.
             // To ensure that a trace is written, also waits
@@ -277,7 +277,7 @@ describe('Web framework tracing', () => {
         // not get warnings for child spans.
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer', url: '/ignore-me' }, async span => {
+          .runInRootSpan({name: 'outer', url: '/ignore-me'}, async span => {
             requests = [
               axios.get(`http://localhost:${port}/hello?this-is=dog`),
               axios.get(`http://localhost:${port}/hello?this-is=puppy`),
@@ -294,7 +294,7 @@ describe('Web framework tracing', () => {
       it('propagates trace context', async () => {
         await testTraceModule
           .get()
-          .runInRootSpan({ name: 'outer' }, async span => {
+          .runInRootSpan({name: 'outer'}, async span => {
             assert.ok(testTraceModule.get().isRealSpan(span));
             // Hits endpoint that will make an additional outgoing HTTP
             // request (to another endpoint on the same server).
@@ -342,7 +342,7 @@ describe('Web framework tracing', () => {
         beforeEach(async () => {
           await testTraceModule
             .get()
-            .runInRootSpan({ name: 'outer' }, async span => {
+            .runInRootSpan({name: 'outer'}, async span => {
               assert.ok(testTraceModule.get().isRealSpan(span));
               // Hit an endpoint with a query parameter.
               await axios.get(`http://localhost:${port}/hello?this-is=dog`);
@@ -394,7 +394,7 @@ describe('Web framework tracing', () => {
         try {
           await testTraceModule
             .get()
-            .runInRootSpan({ name: 'outer' }, async span => {
+            .runInRootSpan({name: 'outer'}, async span => {
               assert.ok(testTraceModule.get().isRealSpan(span));
               await axios.get(`http://localhost:${port}/hello`);
               span!.endSpan();

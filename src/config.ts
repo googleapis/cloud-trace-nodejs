@@ -47,7 +47,7 @@ export interface RequestDetails {
   /**
    * The parsed trace context, if it exists.
    */
-  traceContext: { traceId: string; spanId: string; options: number } | null;
+  traceContext: {traceId: string; spanId: string; options: number} | null;
   /**
    * The original options object used to create the root span that corresponds
    * to this request.
@@ -166,7 +166,7 @@ export interface Config {
    * value. Disabling any of the default plugins may cause unwanted behavior,
    * so use caution.
    */
-  plugins?: { [pluginName: string]: string };
+  plugins?: {[pluginName: string]: string};
 
   /**
    * The max number of frames to include on traces; pass a value of 0 to
@@ -281,7 +281,7 @@ export interface Config {
    * The contents of a key file. If this field is set, its contents will be
    * used for authentication instead of your application default credentials.
    */
-  credentials?: { client_email?: string; private_key?: string };
+  credentials?: {client_email?: string; private_key?: string};
 
   /**
    * A path to a key file relative to the current working directory. If this

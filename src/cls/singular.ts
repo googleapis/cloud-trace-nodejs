@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
-import { CLS, Func } from './base';
+import {CLS, Func} from './base';
 
 /**
  * A trivial implementation of continuation-local storage where everything is

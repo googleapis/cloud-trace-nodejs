@@ -15,6 +15,7 @@
     "get-plugin-types": "npm run script get-plugin-types",
     "coverage": "npm run script run-unit-tests-with-coverage report-coverage",
     "check": "gts check",
+    "lint": "gts check",
     "clean": "rimraf build/src",
     "compile-all": "npm run script compile-auto",
     "compile-strict": "npm run script compile-auto-strict",

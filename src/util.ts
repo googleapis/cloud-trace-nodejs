@@ -19,9 +19,9 @@ import * as sourceMapSupport from 'source-map-support';
 const {
   hexToDec,
   decToHex,
-}: { [key: string]: (input: string) => string } = require('hex2dec');
+}: {[key: string]: (input: string) => string} = require('hex2dec');
 
-export { hexToDec, decToHex };
+export {hexToDec, decToHex};
 
 // This symbol must be exported (for now).
 // See: https://github.com/Microsoft/TypeScript/issues/20080
@@ -53,7 +53,7 @@ export interface Constructor<T, ConfigType, LoggerType> {
 
 export const FORCE_NEW = Symbol('force-new');
 
-export type Forceable<T> = T & { [FORCE_NEW]?: boolean };
+export type Forceable<T> = T & {[FORCE_NEW]?: boolean};
 
 export interface Component {
   enable(): void;
@@ -251,7 +251,7 @@ export function createStackTrace(
   ): NodeJS.CallSite[] => {
     return structured.map(sourceMapSupport.wrapCallSite);
   };
-  const e: { stack?: NodeJS.CallSite[] } = {};
+  const e: {stack?: NodeJS.CallSite[]} = {};
   Error.captureStackTrace(e, constructorOpt);
 
   const stackFrames: StackFrame[] = [];
@@ -322,7 +322,7 @@ export function serializeTraceContext(traceContext: TraceContext): Buffer {
  * @param buffer The trace context to deserialize.
  */
 export function deserializeTraceContext(buffer: Buffer): TraceContext | null {
-  const result: TraceContext = { traceId: '', spanId: '' };
+  const result: TraceContext = {traceId: '', spanId: ''};
   // Length must be 29.
   if (buffer.length !== 29) {
     return null;

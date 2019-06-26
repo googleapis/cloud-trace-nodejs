@@ -1,6 +1,6 @@
-import { RequestDetails, TracePolicy } from './config';
-import { Constants } from './constants';
-import { TraceContext } from './util';
+import {RequestDetails, TracePolicy} from './config';
+import {Constants} from './constants';
+import {TraceContext} from './util';
 
 /**
  * Copyright 2015 Google Inc. All Rights Reserved.
@@ -155,24 +155,24 @@ export class BuiltinTracePolicy implements TracePolicy {
    */
   constructor(config: TracePolicyConfig) {
     if (config.samplingRate === 0) {
-      this.sampler = { shouldTrace: () => true };
+      this.sampler = {shouldTrace: () => true};
     } else if (config.samplingRate < 0) {
-      this.sampler = { shouldTrace: () => false };
+      this.sampler = {shouldTrace: () => false};
     } else {
       this.sampler = new Sampler(config.samplingRate);
     }
     if (config.ignoreUrls.length === 0) {
-      this.urlFilter = { shouldTrace: () => true };
+      this.urlFilter = {shouldTrace: () => true};
     } else {
       this.urlFilter = new URLFilter(config.ignoreUrls);
     }
     if (config.ignoreMethods.length === 0) {
-      this.methodsFilter = { shouldTrace: () => true };
+      this.methodsFilter = {shouldTrace: () => true};
     } else {
       this.methodsFilter = new MethodsFilter(config.ignoreMethods);
     }
     if (config.contextHeaderBehavior === TraceContextHeaderBehavior.IGNORE) {
-      this.contextHeaderFilter = { shouldTrace: () => true };
+      this.contextHeaderFilter = {shouldTrace: () => true};
     } else {
       this.contextHeaderFilter = new ContextHeaderFilter(
         config.contextHeaderBehavior

@@ -38,22 +38,18 @@ import * as assert from 'assert';
 import * as shimmer from 'shimmer';
 
 import * as trace from '../src';
-import { Config, PluginTypes } from '../src';
-import { cls, TraceCLS, TraceCLSMechanism } from '../src/cls';
+import {Config, PluginTypes} from '../src';
+import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
 import * as logger from '../src/logger';
-import { Trace, TraceSpan } from '../src/trace';
-import { PluginLoader, pluginLoader } from '../src/trace-plugin-loader';
-import {
-  TraceWriter,
-  traceWriter,
-  TraceWriterConfig,
-} from '../src/trace-writer';
-import { tracing, Tracing } from '../src/tracing';
-import { FORCE_NEW } from '../src/util';
+import {Trace, TraceSpan} from '../src/trace';
+import {PluginLoader, pluginLoader} from '../src/trace-plugin-loader';
+import {TraceWriter, traceWriter, TraceWriterConfig} from '../src/trace-writer';
+import {tracing, Tracing} from '../src/tracing';
+import {FORCE_NEW} from '../src/util';
 
 import * as testLogger from './logger';
 
-export { Config, PluginTypes };
+export {Config, PluginTypes};
 
 const traces: Trace[] = [];
 const spans: TraceSpan[] = [];
@@ -61,7 +57,7 @@ let capturedLogger: testLogger.TestLogger | null = null;
 
 export class TestCLS extends TraceCLS {
   constructor(config: {}, logger: logger.Logger) {
-    super({ mechanism: TraceCLSMechanism.NONE }, logger);
+    super({mechanism: TraceCLSMechanism.NONE}, logger);
   }
 }
 
@@ -113,7 +109,7 @@ export function start(projectConfig?: Config): PluginTypes.Tracer {
   capturedLogger = null;
   const agent = trace.start(
     Object.assign(
-      { samplingRate: 0, logLevel: 4, [FORCE_NEW]: true },
+      {samplingRate: 0, logLevel: 4, [FORCE_NEW]: true},
       projectConfig
     )
   );

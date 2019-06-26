@@ -15,7 +15,7 @@
  */
 
 import * as consoleLogLevel from 'console-log-level';
-import { defaultConfig } from './config';
+import {defaultConfig} from './config';
 
 export type ConsoleLogLevel = 'error' | 'warn' | 'info' | 'debug';
 export type LogLevel = 'silent' | ConsoleLogLevel;

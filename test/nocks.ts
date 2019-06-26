@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { HOST_ADDRESS } from 'gcp-metadata';
+import {HOST_ADDRESS} from 'gcp-metadata';
 import * as nock from 'nock';
 
 const accept = () => true;
@@ -44,7 +44,7 @@ export function projectId(
   return nock(HOST_ADDRESS)
     .get('/computeMetadata/v1/project/project-id')
     .once()
-    .reply(status, reply, { 'Metadata-Flavor': 'Google' });
+    .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function instanceId(
@@ -58,7 +58,7 @@ export function instanceId(
   return nock(HOST_ADDRESS)
     .get('/computeMetadata/v1/instance/id')
     .once()
-    .reply(status, reply, { 'Metadata-Flavor': 'Google' });
+    .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
 
 export function hostname(
@@ -72,5 +72,5 @@ export function hostname(
   return nock(HOST_ADDRESS)
     .get('/computeMetadata/v1/instance/hostname')
     .once()
-    .reply(status, reply, { 'Metadata-Flavor': 'Google' });
+    .reply(status, reply, {'Metadata-Flavor': 'Google'});
 }
