@@ -425,17 +425,17 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       }
     });
 
-    // it('should not break with no target', () => {
-    //   return new Promise(resolve =>
-    //     testTraceModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
-    //       assert.ok(testTraceModule.get().isRealSpan(rootSpan));
-    //       (http.get as (arg?: {}) => EventEmitter)().on('error', err => {
-    //         resolve();
-    //       });
-    //       rootSpan.endSpan();
-    //     })
-    //   );
-    // });
+    it('should not break with no target', () => {
+      return new Promise(resolve =>
+        testTraceModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
+          assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+          (http.get as (arg?: {}) => EventEmitter)().on('error', err => {
+            resolve();
+          });
+          rootSpan.endSpan();
+        })
+      );
+    });
 
     it('should handle concurrent requests', async () => {
       const server = new ServerFramework();
