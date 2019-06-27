@@ -20,7 +20,7 @@ export async function getPluginTypes() {
   const indexTs = (await readFileP(`${TYPES_DIRECTORY}/index.d.ts`, 'utf8') as string)
     .split('\n');
   for (const line of indexTs) {
-    const matches = line.match(/^import \* as .* from '\.\/(.+)';\s*\/\/\s*(.+)@(.+)$/);
+    const matches = line.match(/^import \* as .* from '\.\/(.+)';\s*\/\/\s*(.+)@(.+)/);
     if (!matches) {
       continue;
     }
