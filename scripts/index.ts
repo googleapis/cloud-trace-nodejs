@@ -90,6 +90,9 @@ async function run(steps: string[]) {
           await initTestFixtures(!TRACE_TEST_EXCLUDE_INTEGRATION);
           break;
         case 'run-unit-tests':
+          if (TRACE_TEST_EXCLUDE_INTEGRATION) {
+            console.log("> Note: Skipping integration tests.");
+          }
           await runTests({
             includeGlobs: [
               `${BUILD_DIRECTORY}/test/test-*.js`,
@@ -102,6 +105,9 @@ async function run(steps: string[]) {
           });
           break;
         case 'run-unit-tests-with-coverage':
+          if (TRACE_TEST_EXCLUDE_INTEGRATION) {
+            console.log("> Note: Skipping integration tests.");
+          }
           await runTests({
             includeGlobs: [
               `${BUILD_DIRECTORY}/test/test-*.js`,

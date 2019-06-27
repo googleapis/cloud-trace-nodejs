@@ -17,6 +17,8 @@
 cd /d %~dp0
 cd ..
 
+setx TRACE_TEST_EXCLUDE_INTEGRATION "1"
+
 @rem The image we're currently running has a broken version of Node.js enabled
 @rem by nvm (v10.15.3), which has no npm bin. This hack uses the functional
 @rem Node v8.9.1 to install npm@latest, it then uses this version of npm to

@@ -16,6 +16,7 @@
     "coverage": "npm run script run-unit-tests-with-coverage report-coverage",
     "check": "gts check",
     "lint": "gts check",
+    "samples-test": "echo success",
     "clean": "rimraf build/src",
     "compile-all": "npm run script compile-auto",
     "compile-strict": "npm run script compile-auto-strict",
@@ -26,8 +27,7 @@
     "license-check": "jsgl --local .",
     "predocs-test": "npm run docs",
     "docs-test": "linkinator docs/",
-    "docs": "compodoc src/",
-    "lint": "gts check"
+    "docs": "compodoc src/"
   },
   "files": [
     "build/src/**/*.js",
