@@ -428,20 +428,15 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
 
     it('should not break with no target', () => {
       return new Promise(resolve => {
-        // testTraceModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
-        // assert.ok(testTraceModule.get().isRealSpan(rootSpan));
-        const a = (http.get as (arg?: {}) => EventEmitter)();
-        shimmer.wrap(a, 'emit', emit => {
-          return function(this: typeof a, event) {
-            console.log('event emitted:', event);
-            return emit.apply(this, arguments);
-          };
+        testTraceModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
+          assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+          const req = (http.get as (arg?: {}) => EventEmitter)();
+          // Ensure that the request reaches some terminal state before
+          // resolving.
+          req.on('error', resolve);
+          req.on('close', resolve);
+          rootSpan.endSpan();
         });
-        a.on('error', err => {
-          resolve();
-        });
-        // rootSpan.endSpan();
-        // })
       });
     });
 
