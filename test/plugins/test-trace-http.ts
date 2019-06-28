@@ -21,7 +21,6 @@ import * as httpModule from 'http';
 import * as httpsModule from 'https';
 import {AddressInfo} from 'net';
 import * as path from 'path';
-import * as semver from 'semver';
 import * as stream from 'stream';
 import {URL} from 'url';
 
@@ -429,9 +428,11 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       return new Promise(resolve =>
         testTraceModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(testTraceModule.get().isRealSpan(rootSpan));
-          (http.get as (arg?: {}) => EventEmitter)().on('error', err => {
-            resolve();
-          });
+          const req = (http.get as (arg?: {}) => EventEmitter)();
+          // Ensure that the request reaches some terminal state before
+          // resolving.
+          req.on('error', resolve);
+          req.on('close', resolve);
           rootSpan.endSpan();
         })
       );
