@@ -31,6 +31,7 @@ import {parseContextFromHeader, TraceContext} from '../../src/util';
 import * as testTraceModule from '../trace';
 import {assertSpanDuration, DEFAULT_SPAN_DURATION} from '../utils';
 import {Express4} from '../web-frameworks/express';
+import shimmer = require('shimmer');
 
 // This type describes (http|https).(get|request).
 type HttpRequest = (
@@ -429,7 +430,14 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       return new Promise(resolve =>
         testTraceModule.get().runInRootSpan({name: 'outer'}, rootSpan => {
           assert.ok(testTraceModule.get().isRealSpan(rootSpan));
-          (http.get as (arg?: {}) => EventEmitter)().on('error', err => {
+          const a = (http.get as (arg?: {}) => EventEmitter)();
+          shimmer.wrap(a, 'emit', emit => {
+            return function(this: typeof a, event) {
+              console.log('event emitted:', event);
+              return emit.apply(this, arguments);
+            };
+          });
+          a.on('error', err => {
             resolve();
           });
           rootSpan.endSpan();
