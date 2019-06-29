@@ -14,11 +14,16 @@
   },
   "scripts": {
     "deploy": "gcloud app deploy",
-    "start": "node app.js"
+    "start": "node app.js",
+    "test": "mocha"
   },
   "dependencies": {
     "@google-cloud/trace-agent": "^4.0.0",
     "express": "^4.16.4",
     "got": "^9.3.2"
+  },
+  "devDependencies": {
+    "execa": "^2.0.1",
+    "mocha": "^6.1.4"
   }
 }
