@@ -32,9 +32,11 @@ const keyID = 'a179efbeda21';
 const unitTestExcludeGlobs: string[] = TRACE_TEST_EXCLUDE_INTEGRATION ? [
   `${BUILD_DIRECTORY}/test/plugins/test-*`,
   `${BUILD_DIRECTORY}/test/test-agent-stopped.js`,
+  `${BUILD_DIRECTORY}/test/test-grpc-async-handler.js`,
   `${BUILD_DIRECTORY}/test/test-grpc-context.js`,
   `${BUILD_DIRECTORY}/test/test-mysql-pool.js`,
   `${BUILD_DIRECTORY}/test/test-plugins-*`,
+  `${BUILD_DIRECTORY}/test/test-trace-hapi-tails.js`,
   `${BUILD_DIRECTORY}/test/test-trace-web-frameworks.js`,
   `${BUILD_DIRECTORY}/test/test-unpatch.js`
 ] : [];
