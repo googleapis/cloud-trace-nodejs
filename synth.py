@@ -45,3 +45,8 @@ docker run --name trace-test-postgres -p 127.0.0.1:5432:5432\
   -d postgres
 
 \1""")
+
+s.replace('.kokoro/test.sh', 'npm test',
+r"""npm run init-test-fixtures
+npm run script run-unit-tests-with-coverage""")
+

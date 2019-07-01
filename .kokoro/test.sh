@@ -21,7 +21,8 @@ export NPM_CONFIG_PREFIX=/home/node/.npm-global
 cd $(dirname $0)/..
 
 npm install
-npm test
+npm run init-test-fixtures
+npm run script run-unit-tests-with-coverage
 
 # codecov combines coverage across integration and unit tests. Include
 # the logic below for any environment you wish to collect coverage for:
