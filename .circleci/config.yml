@@ -15,42 +15,42 @@ unit_tests: &unit_tests
     - run:
         name: Configure npm to allow running scripts as root
         command: npm config set unsafe-perm true
-    - restore_cache:
-        key: *plugin_types_cache_key
-    - run:
-        name: Install modules and dependencies
-        command: npm install
-    - save_cache:
-        key: *plugin_types_cache_key
-        paths:
-          - src/plugins/types
-    - run:
-        name: Check code style and linting
-        command: npm run check
-    - run:
-        name: Compile code
-        command: npm run compile
-    - restore_cache:
-        key: *test_fixtures_cache_key
-    - run:
-        name: Install test fixtures
-        command: npm run init-test-fixtures
-    - save_cache:
-        key: *test_fixtures_cache_key
-        paths:
-          - build/test/plugins/fixtures
-    - run:
-        name: Run unit tests with code coverage
-        command: npm run coverage
-    - run:
-        name: Verify that the package installs OK
-        command: npm run check-install
-    - run:
-        name: Run system tests (skipped for PRs)
-        environment:
-          GCLOUD_PROJECT: long-door-651
-          GOOGLE_APPLICATION_CREDENTIALS: /root/project/long-door-651-a179efbeda21.json
-        command: npm run system-test
+    # - restore_cache:
+    #     key: *plugin_types_cache_key
+    # - run:
+    #     name: Install modules and dependencies
+    #     command: npm install
+    # - save_cache:
+    #     key: *plugin_types_cache_key
+    #     paths:
+    #       - src/plugins/types
+    # - run:
+    #     name: Check code style and linting
+    #     command: npm run check
+    # - run:
+    #     name: Compile code
+    #     command: npm run compile
+    # - restore_cache:
+    #     key: *test_fixtures_cache_key
+    # - run:
+    #     name: Install test fixtures
+    #     command: npm run init-test-fixtures
+    # - save_cache:
+    #     key: *test_fixtures_cache_key
+    #     paths:
+    #       - build/test/plugins/fixtures
+    # - run:
+    #     name: Run unit tests with code coverage
+    #     command: npm run coverage
+    # - run:
+    #     name: Verify that the package installs OK
+    #     command: npm run check-install
+    # - run:
+    #     name: Run system tests (skipped for PRs)
+    #     environment:
+    #       GCLOUD_PROJECT: long-door-651
+    #       GOOGLE_APPLICATION_CREDENTIALS: /root/project/long-door-651-a179efbeda21.json
+    #     command: npm run system-test
 
 # Services needed for unit tests.
 
