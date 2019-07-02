@@ -5,16 +5,14 @@
   ],
   "pinVersions": false,
   "rebaseStalePrs": true,
-  "lockFileMaintenance": {
-    "enabled": true,
-    "recreateClosed": true
-  },
+  "schedule": [
+    "after 9am and before 3pm"
+  ],
   "gitAuthor": null,
   "packageRules": [
     {
       "extends": "packages:linters",
       "groupName": "linters"
     }
-  ],
-  "ignoreDeps": ["@types/protobufjs"]
+  ]
 }
