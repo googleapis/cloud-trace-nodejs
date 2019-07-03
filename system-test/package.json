@@ -7,6 +7,12 @@
     "google-auto-auth": "^0.10.0",
     "got": "^8.0.0",
     "hard-rejection": "^2.0.0",
-    "querystring": "^0.2.0"
-  }
+    "querystring": "^0.2.0",
+    "snyk": "^1.189.0"
+  },
+  "scripts": {
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
+  },
+  "snyk": true
 }
