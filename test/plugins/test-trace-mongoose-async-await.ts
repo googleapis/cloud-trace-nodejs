@@ -20,17 +20,23 @@ import * as mongooseTypes from 'mongoose';
 import * as traceTestModule from '../trace';
 import {describeInterop} from '../utils';
 
+interface TestDocType {
+  f1: string;
+  f2: boolean;
+  f3: number;
+}
+
 describeInterop<typeof mongooseTypes>('mongoose', fixture => {
   let mongoose: typeof mongooseTypes;
   // Simple will be treated as a class constructor.
   // tslint:disable-next-line:variable-name
-  let Simple: mongooseTypes.Model<mongooseTypes.Document>;
+  let Simple: mongooseTypes.Model<mongooseTypes.Document & TestDocType>;
 
   /**
    * Common logic used in multiple tests -- inserts an object into the database.
    * @param doc
    */
-  async function insertTestData(doc: {f1: string; f2: boolean; f3: number}) {
+  async function insertTestData(doc: TestDocType) {
     const data = new Simple(doc);
     const tracer = traceTestModule.get();
     await tracer.runInRootSpan({name: 'insert-test-data'}, async span => {
