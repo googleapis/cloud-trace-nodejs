@@ -77,9 +77,9 @@ export class Tracing implements Component {
   }
 
   /**
-   * Logs an error message detailing the list of modules that were loaded before
-   * the Trace Agent. Loading these modules before the Trace Agent may prevent
-   * us from monkeypatching those modules for automatic tracing.
+   * Logs an warning message detailing the list of modules that were loaded
+   * before the Trace Agent. Loading these modules before the Trace Agent may
+   * prevent us from monkeypatching those modules for automatic tracing.
    * @param filesLoadedBeforeTrace The list of files that were loaded using
    * require() before the Stackdriver Trace Agent was required.
    */
@@ -97,7 +97,7 @@ export class Tracing implements Component {
       }
     }
     if (modulesLoadedBeforeTrace.length > 0) {
-      this.logger.error(
+      this.logger.warn(
         'StackdriverTracer#start: Tracing might not work as the following modules',
         'were loaded before the trace agent was initialized:',
         `[${modulesLoadedBeforeTrace.sort().join(', ')}]`

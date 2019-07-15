@@ -44,8 +44,8 @@ describe('modules loaded before agent', () => {
     testTraceModule.start();
     assert.strictEqual(
       logger.getNumLogsWith(
-        'error',
-        /modules.*loaded.*before.*trace agent.*: .*shimmer/
+        'warn',
+        /StackdriverTracer#start.*modules.*loaded.*before.*trace agent.*: \[.*shimmer.*\]/
       ),
       1
     );
