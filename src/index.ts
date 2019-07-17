@@ -114,6 +114,7 @@ function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
 
   return {
     [FORCE_NEW]: forceNew,
+    disableUntracedModulesWarning: mergedConfig.disableUntracedModulesWarning,
     enabled: mergedConfig.enabled,
     logLevel: lastOf(
       mergedConfig.logLevel,
@@ -230,7 +231,12 @@ export function start(config?: Config): PluginTypes.Tracer {
       throw new Error('Cannot call start on an already created agent.');
     }
     tracing.enable();
-    tracing.logModulesLoadedBeforeTrace(filesLoadedBeforeTrace);
+    if (
+      normalizedConfig.enabled &&
+      !normalizedConfig.disableUntracedModulesWarning
+    ) {
+      tracing.logModulesLoadedBeforeTrace(filesLoadedBeforeTrace);
+    }
     return traceAgent;
   } finally {
     // Stop storing these entries in memory
