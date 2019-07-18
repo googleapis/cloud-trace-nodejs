@@ -30,6 +30,7 @@ export type TopLevelConfig =
   | Forceable<{
       enabled: boolean;
       logLevel: number;
+      disableUntracedModulesWarning: boolean;
       clsConfig: Forceable<TraceCLSConfig>;
       writerConfig: Forceable<TraceWriterConfig>;
       pluginLoaderConfig: Forceable<PluginLoaderConfig>;

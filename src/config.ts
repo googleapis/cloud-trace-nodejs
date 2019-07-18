@@ -95,6 +95,12 @@ export interface Config {
   logLevel?: number;
 
   /**
+   * If set to true, prevents a warning from being emitted if modules are
+   * required before the Trace Agent.
+   */
+  disableUntracedModulesWarning?: boolean;
+
+  /**
    * Whether to enable to Trace Agent or not.
    * Once enabled, the Trace Agent may not be disabled.
    */
@@ -312,6 +318,7 @@ export interface Config {
  */
 export const defaultConfig = {
   logLevel: 1,
+  disableUntracedModulesWarning: false,
   enabled: true,
   enhancedDatabaseReporting: false,
   rootSpanNameOverride: (name: string) => name,
