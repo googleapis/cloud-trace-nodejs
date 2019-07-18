@@ -29,9 +29,9 @@
       "google-gax": "^0.16.0"
     }
   },
-  "grpc1.20": {
+  "grpc1.22": {
     "dependencies": {
-      "grpc": "^1.20.2"
+      "grpc": "^1.22.2"
     }
   },
   "hapi-plugin-mysql3": {

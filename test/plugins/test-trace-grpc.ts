@@ -379,7 +379,7 @@ describeInterop('grpc', fixture => {
         };
         var clientTrace = assertTraceProperties(grpcClientPredicate);
         assert.strictEqual(clientTrace.labels.status,
-            '{"code":0,"details":"OK","metadata":{"_internal_repr":{}}}');
+            '{"code":0,"details":"OK","metadata":{"_internal_repr":{},"flags":0}}');
         assertTraceProperties(grpcServerOuterPredicate);
         // Check that a child span was created in gRPC root span 
         assert(common.getMatchingSpan(grpcServerInnerPredicate));
@@ -402,7 +402,7 @@ describeInterop('grpc', fixture => {
         };
         var clientTrace = assertTraceProperties(grpcClientPredicate);
         assert.strictEqual(clientTrace.labels.status,
-            '{"code":0,"details":"OK","metadata":{"_internal_repr":{}}}');
+            '{"code":0,"details":"OK","metadata":{"_internal_repr":{},"flags":0}}');
         assertTraceProperties(grpcServerOuterPredicate);
         // Check that a child span was created in gRPC root span 
         assert(common.getMatchingSpan(grpcServerInnerPredicate));
