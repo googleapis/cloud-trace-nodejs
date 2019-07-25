@@ -61,7 +61,7 @@ The trace agent can do automatic tracing of the following web frameworks:
 * [express](https://www.npmjs.com/package/express) (version 4)
 * [gRPC](https://www.npmjs.com/package/grpc) server (version ^1.1)
 * [hapi](https://www.npmjs.com/package/hapi) (versions 8 - 16)
-* [koa](https://www.npmjs.com/package/koa) (version 1)
+* [koa](https://www.npmjs.com/package/koa) (version 1 - 2)
 * [restify](https://www.npmjs.com/package/restify) (versions 3 - 7)
 
 The agent will also automatically trace RPCs from the following modules:
