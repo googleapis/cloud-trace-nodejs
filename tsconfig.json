@@ -26,6 +26,7 @@
     "test/plugins/test-trace-http2.ts",
     "test/plugins/test-trace-knex.ts",
     "test/plugins/test-trace-mongoose-async-await.ts",
+    "test/plugins/test-trace-node-fetch.ts",
     "test/logger.ts",
     "test/nocks.ts",
     "test/test-cls.ts",
