@@ -154,6 +154,11 @@ export class Tracing implements Component {
       .create(this.config.pluginLoaderConfig, tracerComponents)
       .activate();
 
+    // Require http and https again, now that the plugin loader is activated.
+    // This forces them to be patched.
+    require('http');
+    require('https');
+
     if (
       typeof this.config.writerConfig.authOptions.projectId !== 'string' &&
       typeof this.config.writerConfig.authOptions.projectId !== 'undefined'
