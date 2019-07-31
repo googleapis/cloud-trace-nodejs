@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fetchModule from 'node-fetch'; // For types only.
+import * as fetchTypes from 'node-fetch'; // For types only.
 import * as testTraceModule from '../trace';
 import * as assert from 'assert';
 import {describeInterop} from '../utils';
@@ -38,7 +38,7 @@ const servers = {
  * `node-fetch`, because then the plugin loader will never get the chance to
  * hook into a `http` or `https` module require.
  */
-describeInterop<typeof fetchModule & typeof fetchModule.default>(
+describeInterop<typeof fetchTypes & typeof fetchTypes.default>(
   'node-fetch',
   fixture => {
     before(() => {
