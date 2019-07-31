@@ -147,18 +147,30 @@ describe('Trace Writer', () => {
         logger
       );
       let capturedJson;
-      shimmer.wrap(writer.authClient, 'fromJSON', fromJSON => {
-        return function(
-          this: GoogleAuth,
-          json: JWTInput,
-          options?: RefreshOptions
-        ) {
-          capturedJson = json;
-          return fromJSON.call(this, json, options);
-        };
-      });
+      // Before google-auth-library@5.1.1, this function was called fromJSON.
+      shimmer.wrap(
+        writer.authClient as typeof writer.authClient & {
+          _cacheClientFromJSON: typeof writer.authClient.fromJSON;
+        },
+        '_cacheClientFromJSON',
+        cacheClientFromJSON => {
+          return function(
+            this: GoogleAuth,
+            json: JWTInput,
+            options?: RefreshOptions
+          ) {
+            capturedJson = json;
+            return cacheClientFromJSON.call(this, json, options);
+          };
+        }
+      );
       await writer.authClient.getClient();
-      shimmer.unwrap(writer.authClient, 'fromJSON');
+      shimmer.unwrap(
+        writer.authClient as typeof writer.authClient & {
+          _cacheClientFromJSON: typeof writer.authClient.fromJSON;
+        },
+        '_cacheClientFromJSON'
+      );
       return capturedJson;
     };
 
