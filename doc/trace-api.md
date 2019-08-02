@@ -66,7 +66,7 @@ Some functions above accept a `TraceOptions` object, which has the following fie
 
 * `Tracer#enhancedDatabaseReportingEnabled()`
   * Returns `boolean`
-  * Returns whether the trace agent was started with an enhanced level of reporting. See the [configuration][config-js] object definition for more details.
+  * Returns whether the trace agent was started with an enhanced level of reporting. See the [configuration][config-ts] object definition for more details.
 
 ## Cross-Service Trace Contexts
 
@@ -111,7 +111,7 @@ These functions help provide context propagation for root spans. Context should 
   * `emitter`: `EventEmitter`
   * Binds any event handlers subsequently attached to the given event emitter to the current context.
 
-[config-js]: https://github.com/googleapis/cloud-trace-nodejs/blob/master/config.js
+[config-ts]: https://github.com/googleapis/cloud-trace-nodejs/blob/master/src/config.ts
 [stackdriver-trace-faq]: https://cloud.google.com/trace/docs/faq
 [stackdriver-trace-span]: https://cloud.google.com/trace/api/reference/rest/v1/projects.traces#TraceSpan
 [dapper-paper]: https://research.google.com/pubs/pub36356.html
