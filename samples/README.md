@@ -1,37 +1,62 @@
-# Stackdriver Trace for Node.js Sample Application
+[//]: # "This README.md file is auto-generated, all changes to this file will be lost."
+[//]: # "To regenerate it, use `python -m synthtool`."
+<img src="https://avatars2.githubusercontent.com/u/2810941?v=3&s=96" alt="Google Cloud Platform logo" title="Google Cloud Platform" align="right" height="96" width="96"/>
 
-This sample demonstrates using [Stackdriver Trace][trace] with Node.js.
+# [Stackdriver Trace: Node.js Samples](https://github.com/googleapis/cloud-trace-nodejs)
 
-> Node 8+ is required for this sample.
+[![Open in Cloud Shell][shell_img]][shell_link]
 
-* [Setup](#setup)
-* [Running locally](#running-locally)
-* [Deploying to App Engine](#deploying-to-app-engine)
-* [Viewing Traces](#viewing-traces)
 
-## Setup
 
-Before you can run or deploy the sample, you need to do the following:
+## Table of Contents
 
-1.  Refer to the [this README file][readme] for instructions on
-    running and deploying.
-1.  Install dependencies:
+* [Before you begin](#before-you-begin)
+* [Samples](#samples)
+  * [App](#app)
+  * [Snippets](#snippets)
 
-        npm install
+## Before you begin
 
-## Running locally
+Before running the samples, make sure you've followed the steps outlined in
+[Using the client library](https://github.com/googleapis/cloud-trace-nodejs#using-the-client-library).
 
-    npm start
+## Samples
 
-## Deploying to App Engine
 
-Ensure that you have an up-to-date `gcloud` (run `gcloud components update`), and then:
 
-    npm run deploy
+### App
 
-## Viewing Traces
+View the [source code](https://github.com/googleapis/cloud-trace-nodejs/blob/master/samples/app.js).
 
-Use the [Stackdriver Trace dashboard](https://console.cloud.google.com/traces/traces) to inspect recorded traces.
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/cloud-trace-nodejs&page=editor&open_in_editor=samples/app.js,samples/README.md)
 
-[trace]: https://cloud.google.com/trace/
-[readme]: https://github.com/GoogleCloudPlatform/nodejs-docs-samples/blob/master/appengine/README.md
+__Usage:__
+
+
+`node app.js`
+
+
+-----
+
+
+
+
+### Snippets
+
+View the [source code](https://github.com/googleapis/cloud-trace-nodejs/blob/master/samples/snippets.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/cloud-trace-nodejs&page=editor&open_in_editor=samples/snippets.js,samples/README.md)
+
+__Usage:__
+
+
+`node snippets.js`
+
+
+
+
+
+
+[shell_img]: https://gstatic.com/cloudssh/images/open-btn.png
+[shell_link]: https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/cloud-trace-nodejs&page=editor&open_in_editor=samples/README.md
+[product-docs]: https://cloud.google.com/trace
