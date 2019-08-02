@@ -91,7 +91,7 @@
     "retry-axios": "^1.0.0",
     "rimraf": "^2.6.2",
     "standard-version": "^7.0.0",
-    "teeny-request": "^4.0.0",
+    "teeny-request": "^5.0.0",
     "timekeeper": "^2.0.0",
     "tmp": "0.1.0",
     "ts-node": "^8.0.0",
