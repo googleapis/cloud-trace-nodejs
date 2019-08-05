@@ -151,6 +151,11 @@
       "mysql2": "^1.5.1"
     }
   },
+  "node-fetch2": {
+    "dependencies": {
+      "node-fetch": "^2.6.0"
+    }
+  },
   "pg6": {
     "dependencies": {
       "pg": "^6.1.2"
