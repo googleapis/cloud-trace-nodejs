@@ -126,11 +126,11 @@ To load an additional plugin, specify it in the agent's configuration:
 
 ```js
 require('@google-cloud/trace-agent').start({
-    plugins: {
-      // You may use a package name or absolute path to the file.
-      'my-module': '@google-cloud/trace-agent-plugin-my-module',
-      'another-module': path.join(__dirname, 'path/to/my-custom-plugins/plugin-another-module.js')
-    }
+  plugins: {
+    // You may use a package name or absolute path to the file.
+    'my-module': '@google-cloud/trace-agent-plugin-my-module',
+    'another-module': path.join(__dirname, 'path/to/my-custom-plugins/plugin-another-module.js')
+  }
 });
 ```
 
