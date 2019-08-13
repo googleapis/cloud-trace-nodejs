@@ -1,5 +1,12 @@
 # Changelog
 
+### [4.1.2](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.1.1...v4.1.2) (2019-08-13)
+
+
+### Bug Fixes
+
+* **deps:** use the latest extend ([#1096](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1096)) ([abc4b4e](https://www.github.com/googleapis/cloud-trace-nodejs/commit/abc4b4e))
+
 ### [4.1.1](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.1.0...v4.1.1) (2019-08-05)
 
 
