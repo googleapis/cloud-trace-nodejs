@@ -18,7 +18,7 @@
     "test": "mocha"
   },
   "dependencies": {
-    "@google-cloud/trace-agent": "^4.1.1",
+    "@google-cloud/trace-agent": "^4.1.2",
     "express": "^4.16.4",
     "got": "^9.3.2"
   },
