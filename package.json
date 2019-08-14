@@ -108,7 +108,7 @@
     "hex2dec": "^1.0.1",
     "is": "^3.2.0",
     "methods": "^1.1.1",
-    "require-in-the-middle": "^4.0.0",
+    "require-in-the-middle": "^5.0.0",
     "semver": "^6.0.0",
     "source-map-support": "^0.5.12",
     "shimmer": "^1.2.0",
