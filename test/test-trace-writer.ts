@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import {Service} from '@google-cloud/common';
+import {Service, DecorateRequestOptions} from '@google-cloud/common';
 import * as assert from 'assert';
 import {GoogleAuth} from 'google-auth-library';
 import {JWTInput} from 'google-auth-library/build/src/auth/credentials';
 import {RefreshOptions} from 'google-auth-library/build/src/auth/oauth2client';
-import {OutgoingHttpHeaders} from 'http';
 import * as nock from 'nock';
 import * as os from 'os';
 import * as path from 'path';
-import {Response} from 'request'; // Only for type declarations.
+import {Response} from 'teeny-request'; // Only for type declarations.
 import * as shimmer from 'shimmer';
 
 import {SpanKind, Trace} from '../src/trace';
@@ -40,13 +39,6 @@ interface TestCredentials {
   refresh_token?: string;
   private_key?: string;
   type?: string;
-}
-
-interface DecorateRequestOptions {
-  method: string;
-  uri: string;
-  body: string;
-  headers: OutgoingHttpHeaders;
 }
 
 /**
@@ -375,8 +367,11 @@ describe('Trace Writer', () => {
       // TraceWriter#publish should be called soon
       // (Promise task queue drain + immediate).
       await wait(200);
-      const publishedTraces: Trace[] = JSON.parse(capturedRequestOptions!.body)
-        .traces;
+      assert.ok(capturedRequestOptions);
+      assert.ok(typeof capturedRequestOptions!.body === 'string');
+      const capturedRequestBody: string = capturedRequestOptions!
+        .body as string;
+      const publishedTraces: Trace[] = JSON.parse(capturedRequestBody).traces;
       assert.strictEqual(publishedTraces.length, 1);
       assert.strictEqual(publishedTraces[0].projectId, '0');
       assert.ok(publishedTraces[0].spans[0].endTime);
@@ -411,8 +406,11 @@ describe('Trace Writer', () => {
       writer.writeTrace(trace);
       await wait(200);
       // Published, so look at capturedRequestOptions
-      const publishedTraces: Trace[] = JSON.parse(capturedRequestOptions!.body)
-        .traces;
+      assert.ok(capturedRequestOptions);
+      assert.ok(typeof capturedRequestOptions!.body === 'string');
+      const capturedRequestBody: string = capturedRequestOptions!
+        .body as string;
+      const publishedTraces: Trace[] = JSON.parse(capturedRequestBody).traces;
       // We should observe that two traces were published. One has no spans,
       // the other one has NUM_SPANS spans.
       assert.strictEqual(publishedTraces.length, 2);
@@ -439,9 +437,11 @@ describe('Trace Writer', () => {
         writer.writeTrace(createDummyTrace(1));
         await wait(200);
         // Published, so look at capturedRequestOptions
-        const publishedTraces: Trace[] = JSON.parse(
-          capturedRequestOptions!.body
-        ).traces;
+        assert.ok(capturedRequestOptions);
+        assert.ok(typeof capturedRequestOptions!.body === 'string');
+        const capturedRequestBody: string = capturedRequestOptions!
+          .body as string;
+        const publishedTraces: Trace[] = JSON.parse(capturedRequestBody).traces;
         assert.strictEqual(publishedTraces.length, 2);
         // Count number of spans. It should be NUM_SPANS.
         assert.strictEqual(
