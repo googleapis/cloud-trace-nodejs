@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as common from '@google-cloud/common';
 import * as gcpMetadata from 'gcp-metadata';
 import {OutgoingHttpHeaders} from 'http';
 import * as os from 'os';
@@ -24,6 +23,11 @@ import {Logger} from './logger';
 import {SpanKind, Trace} from './trace';
 import {TraceLabels} from './trace-labels';
 import {Singleton} from './util';
+import {
+  DecorateRequestOptions,
+  GoogleAuthOptions,
+  Service,
+} from '@google-cloud/common';
 
 const pjson = require('../../package.json');
 
@@ -41,7 +45,7 @@ const SCOPES: string[] = ['https://www.googleapis.com/auth/trace.append'];
 const TRACE_API_ENDPOINT = 'cloudtrace.googleapis.com';
 
 export interface TraceWriterConfig {
-  authOptions: common.GoogleAuthOptions;
+  authOptions: GoogleAuthOptions;
   onUncaughtException: string;
   bufferSize: number;
   flushDelaySeconds: number;
@@ -95,7 +99,7 @@ export class TraceBuffer {
 /**
  * A class representing a service that publishes traces in the background.
  */
-export class TraceWriter extends common.Service {
+export class TraceWriter extends Service {
   /** Traces to be published */
   protected buffer: TraceBuffer;
   /** Default labels to be attached to written spans */
@@ -358,7 +362,12 @@ export class TraceWriter extends common.Service {
   protected publish(json: string) {
     const hostname = 'cloudtrace.googleapis.com';
     const uri = `https://${hostname}/v1/projects/${this.projectId}/traces`;
-    const options = {method: 'PATCH', uri, body: json, headers};
+    const options: DecorateRequestOptions = {
+      method: 'PATCH',
+      uri,
+      body: json,
+      headers,
+    };
     this.logger.info('TraceWriter#publish: Publishing to ' + uri);
     this.request(options, (err, body?, response?) => {
       const statusCode = response && response.statusCode;
