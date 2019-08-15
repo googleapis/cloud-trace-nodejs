@@ -1,5 +1,13 @@
 # Changelog
 
+### [4.1.2](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.1.1...v4.1.2) (2019-08-15)
+
+
+### Bug Fixes
+
+* **deps:** update dependency require-in-the-middle to v5 ([#1099](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1099)) ([1d49cb6](https://www.github.com/googleapis/cloud-trace-nodejs/commit/1d49cb6))
+* **deps:** use the latest extend ([#1096](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1096)) ([abc4b4e](https://www.github.com/googleapis/cloud-trace-nodejs/commit/abc4b4e))
+
 ### [4.1.1](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.1.0...v4.1.1) (2019-08-05)
 
 
