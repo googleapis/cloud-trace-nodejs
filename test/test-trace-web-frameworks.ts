@@ -51,7 +51,7 @@ interface TraceSpanStackFrames {
 }
 
 // The number of times to retry counting spans in the aborted request test
-const ABORTED_SPAN_RETRIES = 3;
+const ABORTED_SPAN_RETRIES = 5;
 // The list of web frameworks to test.
 const FRAMEWORKS: WebFrameworkConstructor[] = [
   Connect3,
