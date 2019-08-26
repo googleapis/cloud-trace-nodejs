@@ -22,6 +22,18 @@ import {PluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';
 
 import * as testTraceModule from './trace';
 
+function assertPluginPath(
+  plugins: {[pluginName: string]: string},
+  pluginName: string
+) {
+  // hapi was renamed to @hapi/hapi in v18. We still use the same plugin
+  // filename.
+  if (pluginName === '@hapi/hapi') {
+    pluginName = 'hapi';
+  }
+  assert.ok(plugins[pluginName].includes(`plugin-${pluginName}.js`));
+}
+
 describe('Configuration: Plugins', () => {
   const instrumentedModules = Object.keys(defaultConfig.plugins);
   let plugins: {[pluginName: string]: string} | null;
@@ -55,9 +67,7 @@ describe('Configuration: Plugins', () => {
       JSON.stringify(Object.keys(plugins!)),
       JSON.stringify(instrumentedModules)
     );
-    instrumentedModules.forEach(e =>
-      assert.ok(plugins![e].includes(`plugin-${e}.js`))
-    );
+    instrumentedModules.forEach(e => assertPluginPath(plugins!, e));
   });
 
   it('should handle empty object', () => {
@@ -67,9 +77,7 @@ describe('Configuration: Plugins', () => {
       JSON.stringify(Object.keys(plugins!)),
       JSON.stringify(instrumentedModules)
     );
-    instrumentedModules.forEach(e =>
-      assert.ok(plugins![e].includes(`plugin-${e}.js`))
-    );
+    instrumentedModules.forEach(e => assertPluginPath(plugins!, e));
   });
 
   it('should handle non-object', () => {
@@ -86,7 +94,7 @@ describe('Configuration: Plugins', () => {
     );
     instrumentedModules
       .filter(e => e !== 'express')
-      .forEach(e => assert.ok(plugins![e].includes(`plugin-${e}.js`)));
+      .forEach(e => assertPluginPath(plugins!, e));
     assert.strictEqual(plugins!.express, 'foo');
   });
 });

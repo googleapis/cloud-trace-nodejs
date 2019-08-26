@@ -32,7 +32,7 @@ import {
 import {WebFramework, WebFrameworkConstructor} from './web-frameworks/base';
 import {Connect3} from './web-frameworks/connect';
 import {Express4} from './web-frameworks/express';
-import {Hapi17} from './web-frameworks/hapi17';
+import {Hapi17, Hapi18} from './web-frameworks/hapi17';
 import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
 import {Koa1} from './web-frameworks/koa1';
 import {Koa2} from './web-frameworks/koa2';
@@ -61,6 +61,7 @@ const FRAMEWORKS: WebFrameworkConstructor[] = [
   Hapi15,
   Hapi16,
   Hapi17,
+  Hapi18,
   Koa1,
   Koa2,
   Restify3,

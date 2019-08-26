@@ -18,12 +18,7 @@ import {EventEmitter} from 'events';
 
 import {hapi_17} from '../../src/plugins/types';
 
-import {
-  WebFramework,
-  WebFrameworkAddHandlerOptions,
-  WebFrameworkHandlerFunction,
-  WebFrameworkResponse,
-} from './base';
+import {WebFramework, WebFrameworkAddHandlerOptions} from './base';
 
 const TAIL_WORK = Symbol('tail work for hapi');
 
@@ -31,22 +26,18 @@ interface AppState {
   [TAIL_WORK]?: Array<Promise<void>>;
 }
 
-export class Hapi17 extends EventEmitter implements WebFramework {
-  static commonName = `hapi@17`;
-  static expectedTopStackFrame = '_executeWrap';
-  static versionRange = '>=7.5';
-
-  private server: hapi_17.Server;
+class Hapi extends EventEmitter implements WebFramework {
+  server: hapi_17.Server;
   // We can't add two routes on the same path.
   // So instead of registering a new Hapi plugin per path,
   // register only the first time -- passing a function that will iterate
   // through a list of routes keyed under the path.
-  private routes = new Map<string, WebFrameworkAddHandlerOptions[]>();
-  private registering = Promise.resolve();
+  routes = new Map<string, WebFrameworkAddHandlerOptions[]>();
+  registering = Promise.resolve();
 
-  constructor() {
+  constructor(path: string) {
     super();
-    const hapi = require('../plugins/fixtures/hapi17') as typeof hapi_17;
+    const hapi = require(path) as typeof hapi_17;
     this.server = new hapi.Server();
     this.server.events.on('response', (request: hapi_17.Request) => {
       Promise.all((request.app as AppState)[TAIL_WORK] || []).then(
@@ -116,3 +107,19 @@ export class Hapi17 extends EventEmitter implements WebFramework {
     this.server.stop();
   }
 }
+
+const makeHapiClass = (version: number) =>
+  class extends Hapi {
+    static commonName = `hapi@${version}`;
+    static expectedTopStackFrame = '_executeWrap';
+    static versionRange = '>=7.5';
+
+    constructor() {
+      super(`../plugins/fixtures/hapi${version}`);
+    }
+  };
+
+// tslint:disable:variable-name (Hapi* are class names)
+export const Hapi17 = makeHapiClass(17);
+export const Hapi18 = makeHapiClass(18);
+// tslint:enable:variable-name
