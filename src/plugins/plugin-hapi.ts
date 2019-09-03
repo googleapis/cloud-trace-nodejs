@@ -133,7 +133,7 @@ const plugin: PluginTypes.Plugin = [
    * available in every handler.
    */
   {
-    versions: '17',
+    versions: '>=17',
     file: 'lib/request.js',
     // Request is a class name.
     // tslint:disable-next-line:variable-name

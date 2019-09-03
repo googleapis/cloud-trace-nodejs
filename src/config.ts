@@ -334,6 +334,7 @@ export const defaultConfig = {
     'generic-pool': path.join(pluginDirectory, 'plugin-generic-pool.js'),
     grpc: path.join(pluginDirectory, 'plugin-grpc.js'),
     hapi: path.join(pluginDirectory, 'plugin-hapi.js'),
+    '@hapi/hapi': path.join(pluginDirectory, 'plugin-hapi.js'),
     http: path.join(pluginDirectory, 'plugin-http.js'),
     http2: path.join(pluginDirectory, 'plugin-http2.js'),
     koa: path.join(pluginDirectory, 'plugin-koa.js'),

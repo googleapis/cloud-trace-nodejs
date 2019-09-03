@@ -59,6 +59,11 @@
       "hapi": "^17.0.0"
     }
   },
+  "hapi18": {
+    "dependencies": {
+      "@hapi/hapi": "^18.0.0"
+    }
+  },
   "hapi8": {
     "dependencies": {
       "hapi": "^8.8.1"
