@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.2.0](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.1.1...v4.2.0) (2019-09-09)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @opencensus/propagation-stackdriver to v0.0.17 ([#1112](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1112)) ([5636738](https://www.github.com/googleapis/cloud-trace-nodejs/commit/5636738))
+* **deps:** update dependency require-in-the-middle to v5 ([#1099](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1099)) ([1d49cb6](https://www.github.com/googleapis/cloud-trace-nodejs/commit/1d49cb6))
+* **deps:** use the latest extend ([#1096](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1096)) ([abc4b4e](https://www.github.com/googleapis/cloud-trace-nodejs/commit/abc4b4e))
+* **docs:** remove reference doc anchor ([#1109](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1109)) ([801e495](https://www.github.com/googleapis/cloud-trace-nodejs/commit/801e495))
+
+
+### Features
+
+* support @hapi/hapi ([#1108](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1108)) ([d545e93](https://www.github.com/googleapis/cloud-trace-nodejs/commit/d545e93))
+
 ### [4.1.1](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.1.0...v4.1.1) (2019-08-05)
 
 
