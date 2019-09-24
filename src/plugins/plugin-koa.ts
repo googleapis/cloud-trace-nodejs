@@ -121,7 +121,10 @@ function createMiddleware(api: PluginTypes.Tracer): koa_1.Middleware {
   return function* middleware(this: koa_1.Context, next: IterableIterator<{}>) {
     next = startSpanForRequest(api, this, (propagateContext: boolean) => {
       if (propagateContext) {
-        next.next = api.wrap(next.next);
+        // TS Iterator definition clashes with @types/node.
+        // For some reason, this causes the next line to not pass type check.
+        // tslint:disable-next-line:no-any
+        next.next = api.wrap(next.next as any);
       }
       return next;
     });

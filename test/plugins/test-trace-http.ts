@@ -20,6 +20,7 @@ import * as httpModule from 'http';
 import * as httpsModule from 'https';
 import * as stream from 'stream';
 import {URL} from 'url';
+import * as semver from 'semver';
 
 import {Constants} from '../../src/constants';
 import {SpanKind, TraceSpan} from '../../src/trace';
@@ -31,11 +32,11 @@ import {Express4Secure} from '../web-frameworks/express-secure';
 
 // This type describes (http|https).(get|request).
 type HttpRequest = (
-  options:
-    | string
+  url: string | httpModule.RequestOptions | httpsModule.RequestOptions | URL,
+  options?:
     | httpModule.RequestOptions
     | httpsModule.RequestOptions
-    | URL,
+    | ((res: httpModule.IncomingMessage) => void),
   callback?: (res: httpModule.IncomingMessage) => void
 ) => httpModule.ClientRequest;
 
@@ -121,6 +122,25 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
             );
             await waitForResponse.done;
           },
+        },
+        {
+          description: 'calling http.get with both url and options',
+          fn: async () => {
+            const waitForResponse = new WaitForResponse();
+            http.get(
+              'http://foo', // Fake hostname
+              {
+                protocol: `${nodule}:`,
+                hostname: 'localhost',
+                port,
+                rejectUnauthorized: false,
+              },
+              waitForResponse.handleResponse
+            );
+            await waitForResponse.done;
+          },
+          // http(url, options, cb) is not a recognized signature in Node 8.
+          versions: '>=10.x',
         },
         {
           description: 'calling http.get and using return value',
@@ -213,22 +233,30 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       });
 
       for (const testCase of testCases) {
-        it(`creates spans with accurate timespans when ${testCase.description}`, async () => {
-          let recordedTime = 0;
-          await testTraceModule
-            .get()
-            .runInRootSpan({name: 'outer'}, async rootSpan => {
-              assert.ok(testTraceModule.get().isRealSpan(rootSpan));
-              recordedTime = Date.now();
-              await testCase.fn();
-              recordedTime = Date.now() - recordedTime;
-              rootSpan.endSpan();
-            });
-          const clientSpan = testTraceModule.getOneSpan(
-            span => span.kind === 'RPC_CLIENT'
-          );
-          assertSpanDuration(clientSpan, [recordedTime]);
-        });
+        const maybeIt =
+          !testCase.versions ||
+          semver.satisfies(process.version, testCase.versions)
+            ? it
+            : it.skip;
+        maybeIt(
+          `creates spans with accurate timespans when ${testCase.description}`,
+          async () => {
+            let recordedTime = 0;
+            await testTraceModule
+              .get()
+              .runInRootSpan({name: 'outer'}, async rootSpan => {
+                assert.ok(testTraceModule.get().isRealSpan(rootSpan));
+                recordedTime = Date.now();
+                await testCase.fn();
+                recordedTime = Date.now() - recordedTime;
+                rootSpan.endSpan();
+              });
+            const clientSpan = testTraceModule.getOneSpan(
+              span => span.kind === 'RPC_CLIENT'
+            );
+            assertSpanDuration(clientSpan, [recordedTime]);
+          }
+        );
       }
     });
 

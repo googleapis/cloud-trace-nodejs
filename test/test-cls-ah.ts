@@ -35,29 +35,31 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
   before(() => {
     asyncHooks = require('async_hooks') as AsyncHooksModule;
     AsyncResource = class extends asyncHooks.AsyncResource {
+      // Polyfill for versions in which runInAsyncScope isn't defined.
+      // This can be removed when it's guaranteed that runInAsyncScope is
+      // present on AsyncResource.
       // tslint:disable:no-any
       runInAsyncScope<This, Result>(
         fn: (this: This, ...args: any[]) => Result,
         thisArg?: This
       ): Result {
-        // tslint:enable:no-any
-        // Polyfill for versions in which runInAsyncScope isn't defined
         if (super.runInAsyncScope) {
           return super.runInAsyncScope.apply(this, arguments);
         } else {
           // tslint:disable:deprecation
-          this.emitBefore();
+          (this as any).emitBefore();
           try {
             return fn.apply(
               thisArg,
               Array.prototype.slice.apply(arguments).slice(2)
             );
           } finally {
-            this.emitAfter();
+            (this as any).emitAfter();
           }
           // tslint:enable:deprecation
         }
       }
+      // tslint:enable:no-any
     };
   });
 
