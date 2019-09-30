@@ -1,5 +1,13 @@
 # Changelog
 
+### [4.2.1](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.0...v4.2.1) (2019-09-30)
+
+
+### Bug Fixes
+
+* **deps:** update dependency gcp-metadata to v3 ([#1115](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1115)) ([94c6dae](https://www.github.com/googleapis/cloud-trace-nodejs/commit/94c6dae))
+* unpin @types/node and account for new http.request signatures ([#1120](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1120)) ([bd9863b](https://www.github.com/googleapis/cloud-trace-nodejs/commit/bd9863b))
+
 ## [4.2.0](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.1.1...v4.2.0) (2019-09-09)
 
 
