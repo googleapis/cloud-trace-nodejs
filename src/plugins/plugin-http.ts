@@ -15,12 +15,11 @@
  */
 
 import * as httpModule from 'http';
-import {Agent, ClientRequest, ClientRequestArgs, get, request} from 'http';
+import {Agent, ClientRequest, ClientRequestArgs, request} from 'http';
 import * as httpsModule from 'https';
-import * as is from 'is';
 import * as semver from 'semver';
 import * as shimmer from 'shimmer';
-import * as url from 'url';
+import {URL, parse as urlParse} from 'url';
 
 import {Plugin, Tracer} from '../plugin-types';
 
@@ -31,16 +30,15 @@ type RequestFunction = typeof request;
 const ERR_HTTP_HEADERS_SENT = 'ERR_HTTP_HEADERS_SENT';
 const ERR_HTTP_HEADERS_SENT_MSG = "Can't set headers after they are sent.";
 
-// tslint:disable:no-any
-const isString = is.string as (value: any) => value is string;
-// url.URL is used for type checking, but doesn't exist in Node <7.
+// URL is used for type checking, but doesn't exist in Node <7.
 // This function works around that.
+// tslint:disable:no-any
 const isURL = semver.satisfies(process.version, '>=7')
-  ? (value: any): value is url.URL => value instanceof url.URL
-  : (value: any): value is url.URL => false;
+  ? (value: any): value is URL => value instanceof URL
+  : (value: any): value is URL => false;
 // tslint:enable:no-any
 
-function getSpanName(options: ClientRequestArgs | url.URL) {
+function getSpanName(options: ClientRequestArgs | URL) {
   // c.f. _http_client.js ClientRequest constructor
   return options.hostname || options.host || 'localhost';
 }
@@ -51,7 +49,7 @@ function getSpanName(options: ClientRequestArgs | url.URL) {
  * all-caps for simplicity purposes.
  * @param options Options for http.request.
  */
-function hasExpectHeader(options: ClientRequestArgs | url.URL): boolean {
+function hasExpectHeader(options: ClientRequestArgs | URL): boolean {
   return !!(
     (options as ClientRequestArgs).headers &&
     ((options as ClientRequestArgs).headers!.Expect ||
@@ -61,7 +59,7 @@ function hasExpectHeader(options: ClientRequestArgs | url.URL): boolean {
 }
 
 function extractUrl(
-  options: ClientRequestArgs | url.URL,
+  options: ClientRequestArgs | URL,
   fallbackProtocol: string
 ) {
   let path;
@@ -88,7 +86,7 @@ function extractUrl(
 }
 
 // tslint:disable-next-line:no-any
-function isTraceAgentRequest(options: any, api: Tracer) {
+function isTraceAgentRequest(options: httpModule.RequestOptions, api: Tracer) {
   return (
     options &&
     options.headers &&
@@ -103,9 +101,30 @@ function makeRequestTrace(
 ): RequestFunction {
   // On Node 8+ we use the following function to patch both request and get.
   // Here `request` may also happen to be `get`.
-  return function requestTrace(options, callback): ClientRequest {
-    if (!options) {
-      return request(options, callback);
+  return function requestTrace(
+    this: never,
+    url: httpModule.RequestOptions | string | URL,
+    options?:
+      | httpModule.RequestOptions
+      | ((res: httpModule.IncomingMessage) => void),
+    callback?: (res: httpModule.IncomingMessage) => void
+  ): ClientRequest {
+    // These are error conditions; defer to http.request and don't trace.
+    if (!url || (typeof url === 'object' && typeof options === 'object')) {
+      return request.apply(this, arguments);
+    }
+
+    let urlString;
+    if (typeof url === 'string') {
+      // save the value of uri so we don't have to reconstruct it later
+      urlString = url;
+      url = urlParse(url);
+    }
+    if (typeof options === 'function') {
+      callback = options;
+      options = url;
+    } else {
+      options = Object.assign({}, url, options);
     }
 
     // Don't trace ourselves lest we get into infinite loops
@@ -113,28 +132,21 @@ function makeRequestTrace(
     // of trace api calls. If there is no buffering then each trace is
     // an http call which will get a trace which will be an http call
     if (isTraceAgentRequest(options, api)) {
-      return request(options, callback);
-    }
-
-    let uri;
-    if (isString(options)) {
-      // save the value of uri so we don't have to reconstruct it later
-      uri = options;
-      options = url.parse(options);
+      return request.apply(this, arguments);
     }
 
     const span = api.createChildSpan({name: getSpanName(options)});
     if (!api.isRealSpan(span)) {
-      return request(options, callback);
+      return request.apply(this, arguments);
     }
 
-    if (!uri) {
-      uri = extractUrl(options, protocol);
+    if (!urlString) {
+      urlString = extractUrl(options, protocol);
     }
 
     const method = (options as ClientRequestArgs).method || 'GET';
     span.addLabel(api.labels.HTTP_METHOD_LABEL_KEY, method);
-    span.addLabel(api.labels.HTTP_URL_LABEL_KEY, uri);
+    span.addLabel(api.labels.HTTP_URL_LABEL_KEY, urlString);
 
     // If outgoing request headers contain the "Expect" header, the returned
     // ClientRequest will throw an error if any new headers are added. For this
@@ -239,8 +251,8 @@ function patchHttp(http: HttpModule, api: Tracer) {
       // v9), so we simply follow the latter.
       // Ref:
       // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
-      return function getTrace(options, callback) {
-        const req = http.request(options, callback);
+      return function getTrace(this: never) {
+        const req = http.request.apply(this, arguments);
         req.end();
         return req;
       };
@@ -255,8 +267,8 @@ function patchHttps(https: HttpsModule, api: Tracer) {
     return makeRequestTrace('https:', request, api);
   });
   shimmer.wrap(https, 'get', function getWrap(): typeof httpsModule.get {
-    return function getTrace(options, callback) {
-      const req = https.request(options, callback);
+    return function getTrace(this: never) {
+      const req = https.request.apply(this, arguments);
       req.end();
       return req;
     };

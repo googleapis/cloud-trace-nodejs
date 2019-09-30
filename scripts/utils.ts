@@ -44,7 +44,7 @@ function promisifyChildProcess(childProcess: ChildProcess): Promise<void> {
   });
 }
 
-export function spawnP(command: string, args?: string[], options?: SpawnOptions): Promise<void> {
+export function spawnP(command: string, args: string[] = [], options: SpawnOptions = {}): Promise<void> {
   const stringifiedCommand = `\`${command}${args ? (' ' + args.join(' ')) : ''}\``;
   console.log(`> Running: ${stringifiedCommand}`);
   return promisifyChildProcess(spawn(command, args, Object.assign({
@@ -53,7 +53,7 @@ export function spawnP(command: string, args?: string[], options?: SpawnOptions)
   }, options)));
 }
 
-export function forkP(moduleName: string, args?: string[], options?: ForkOptions): Promise<void> {
+export function forkP(moduleName: string, args: string[] = [], options: ForkOptions = {}): Promise<void> {
   const stringifiedCommand = `\`${moduleName}${args ? (' ' + args.join(' ')) : ''}\``;
   console.log(`> Running: ${stringifiedCommand}`);
   return promisifyChildProcess(fork(moduleName, args, Object.assign({
