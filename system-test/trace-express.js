@@ -144,9 +144,9 @@ describe('express + datastore', () => {
       assert.ok(trace.spans.length >= 2, 'should be at least 2 spans: parent, child');
       const parent = trace.spans[0];
       const child = trace.spans.find(span => {
-        const datastoreUrl = `https://datastore.googleapis.com/${EXPECTED_ENDPOINT}`;
+        const urlLabelValue = span.labels[tracer.labels.HTTP_URL_LABEL_KEY];
         return span.name === `grpc:/${EXPECTED_ENDPOINT}` ||
-          span.labels[tracer.labels.HTTP_URL_LABEL_KEY] === datastoreUrl;
+          (urlLabelValue && urlLabelValue.endsWith(EXPECTED_ENDPOINT));
       });
 
       assert.strictEqual(parent.name, testPath, 'should match unique path');
