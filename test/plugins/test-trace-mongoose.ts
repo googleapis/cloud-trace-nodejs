@@ -36,7 +36,6 @@ describe('mongoose integration tests', function() {
     });
   });
   
-  // TODO(kjin): In plugin-fixtures.json, unpin mongoose 5
   const versions = [4, 5];
   for (const version of versions) {
     describe(`mongoose@${version}`, () => {
