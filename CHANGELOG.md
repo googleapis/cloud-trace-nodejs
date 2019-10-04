@@ -1,5 +1,12 @@
 # Changelog
 
+### [4.2.2](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.1...v4.2.2) (2019-10-04)
+
+
+### Bug Fixes
+
+* fix tracing not working in mongoose 3.3+ ([#1134](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1134)) ([fe7e925](https://www.github.com/googleapis/cloud-trace-nodejs/commit/fe7e925))
+
 ### [4.2.1](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.0...v4.2.1) (2019-10-02)
 
 
