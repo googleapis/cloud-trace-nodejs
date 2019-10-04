@@ -338,6 +338,7 @@ export const defaultConfig = {
     http: path.join(pluginDirectory, 'plugin-http.js'),
     http2: path.join(pluginDirectory, 'plugin-http2.js'),
     koa: path.join(pluginDirectory, 'plugin-koa.js'),
+    mongodb: path.join(pluginDirectory, 'plugin-mongodb.js'),
     'mongodb-core': path.join(pluginDirectory, 'plugin-mongodb-core.js'),
     mongoose: path.join(pluginDirectory, 'plugin-mongoose.js'),
     mysql: path.join(pluginDirectory, 'plugin-mysql.js'),
