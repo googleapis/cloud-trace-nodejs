@@ -83,7 +83,7 @@ describe('Web framework tracing', () => {
           });
           // A Promise that resolves when the tail call is finished.
           const tailCallMade = new Promise(resolve =>
-            framework.once('tail', resolve)
+            framework.events.once('tail', resolve)
           );
           // Start listening.
           const port = await framework.listen(0);

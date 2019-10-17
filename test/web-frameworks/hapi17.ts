@@ -26,7 +26,9 @@ interface AppState {
   [TAIL_WORK]?: Array<Promise<void>>;
 }
 
-class Hapi extends EventEmitter implements WebFramework {
+class Hapi implements WebFramework {
+  // Only used in Hapi tails test.
+  events: EventEmitter = new EventEmitter();
   server: hapi_17.Server;
   // We can't add two routes on the same path.
   // So instead of registering a new Hapi plugin per path,
@@ -36,13 +38,12 @@ class Hapi extends EventEmitter implements WebFramework {
   registering = Promise.resolve();
 
   constructor(path: string) {
-    super();
     const hapi = require(path) as typeof hapi_17;
     this.server = new hapi.Server();
     this.server.events.on('response', (request: hapi_17.Request) => {
       Promise.all((request.app as AppState)[TAIL_WORK] || []).then(
-        () => this.emit('tail'),
-        (err: Error) => this.emit('tail', err)
+        () => this.events.emit('tail'),
+        (err: Error) => this.events.emit('tail', err)
       );
     });
   }

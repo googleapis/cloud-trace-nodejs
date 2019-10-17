@@ -24,7 +24,9 @@ import {
   WebFrameworkResponse,
 } from './base';
 
-export class Hapi extends EventEmitter implements WebFramework {
+export class Hapi implements WebFramework {
+  // Only used in Hapi tails test.
+  events: EventEmitter = new EventEmitter();
   server: hapi_16.Server;
   // In Hapi, handlers are added after a connection is specified.
   // Since a port number is required to initialize a connection,
@@ -33,10 +35,9 @@ export class Hapi extends EventEmitter implements WebFramework {
   queuedHandlers: Array<() => void> = [];
 
   constructor(path: string) {
-    super();
     const hapi = require(path) as typeof hapi_16;
     this.server = new hapi.Server();
-    this.server.on('tail', () => this.emit('tail'));
+    this.server.on('tail', () => this.events.emit('tail'));
   }
 
   addHandler(options: WebFrameworkAddHandlerOptions): void {
