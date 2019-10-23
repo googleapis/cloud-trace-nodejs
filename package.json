@@ -79,7 +79,7 @@
     "cpy": "^7.2.0",
     "express": "^4.15.2",
     "glob": "^7.0.3",
-    "grpc": "1.24.0",
+    "grpc": "1.24.1",
     "gts": "^1.0.0",
     "intelli-espower-loader": "^1.0.1",
     "js-green-licenses": "^1.0.0",
