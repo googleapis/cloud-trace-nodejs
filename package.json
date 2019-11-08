@@ -110,7 +110,7 @@
     "methods": "^1.1.1",
     "require-in-the-middle": "^5.0.0",
     "semver": "^6.0.0",
-    "source-map-support": "^0.5.12",
+    "source-map-support": "^0.5.16",
     "shimmer": "^1.2.0",
     "uuid": "^3.0.1"
   }
