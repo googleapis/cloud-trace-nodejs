@@ -274,7 +274,10 @@ describe('Continuation-Local Storage', () => {
           c.disable();
           assert.ok(!c.isEnabled());
           assert.ok(c.getContext().type, SpanType.UNSAMPLED);
-          assert.ok(c.runWithContext(() => 'hi', TraceCLS.UNCORRELATED), 'hi');
+          assert.ok(
+            c.runWithContext(() => 'hi', TraceCLS.UNCORRELATED),
+            'hi'
+          );
           const fn = () => {};
           assert.strictEqual(c.bindWithCurrentContext(fn), fn);
           c.patchEmitterToPropagateContext(new EventEmitter());

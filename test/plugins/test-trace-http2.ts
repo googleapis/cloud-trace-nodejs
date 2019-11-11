@@ -260,7 +260,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
       server.on(
         'stream',
         (
-          s: http2Types.ServerHttp2Stream & ({rstWithInternalError: () => void})
+          s: http2Types.ServerHttp2Stream & {rstWithInternalError: () => void}
         ) => {
           // In Node 9.9+, the error handler is not added by default.
           s.on('error', () => {});
@@ -383,7 +383,10 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
                   assert.strictEqual(statusCodes.indexOf(code), -1);
                   statusCodes.push(code);
                 }
-                assert.strictEqual(statusCodes.reduce((a, b) => a + b), 1010);
+                assert.strictEqual(
+                  statusCodes.reduce((a, b) => a + b),
+                  1010
+                );
                 slowServer.close();
                 done();
               }

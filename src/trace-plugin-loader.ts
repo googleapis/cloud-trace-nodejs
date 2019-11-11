@@ -158,9 +158,9 @@ export class ModulePluginWrapper implements PluginWrapper {
     const plugin = this.getPluginExportedValue();
     // Get a list of supported patches. This is the subset of objects in the
     // plugin exported value with matching file/version fields.
-    const supportedPatches: Array<
-      Partial<Monkeypatch<T> & Intercept<T>>
-    > = plugin.filter(
+    const supportedPatches: Array<Partial<
+      Monkeypatch<T> & Intercept<T>
+    >> = plugin.filter(
       patch =>
         semver.satisfies(version, patch.versions || '*') &&
         (file === patch.file || (!file && !patch.file))
@@ -172,43 +172,40 @@ export class ModulePluginWrapper implements PluginWrapper {
     }
 
     // Apply each patch object.
-    return supportedPatches.reduce<T>(
-      (exportedValue, patch) => {
-        // TODO(kjin): The only benefit of creating a new StackdriverTracer object
-        // per patched file is to give us granularity in log messages. See if we
-        // can refactor the StackdriverTracer class to avoid this.
+    return supportedPatches.reduce<T>((exportedValue, patch) => {
+      // TODO(kjin): The only benefit of creating a new StackdriverTracer object
+      // per patched file is to give us granularity in log messages. See if we
+      // can refactor the StackdriverTracer class to avoid this.
 
-        this.logger.info(
-          `PluginWrapper#applyPlugin: [${logString}] Applying plugin.`
-        );
-        if (patch.patch) {
-          patch.patch(exportedValue, this.createTraceAgentInstance(logString));
-          // Queue a function to run if the plugin gets disabled.
-          if (patch.unpatch) {
-            const unpatch = patch.unpatch;
-            this.unpatchFns.push(() => {
-              this.logger.info(
-                `PluginWrapper#unapplyAll: [${logString}] Unpatching file.`
-              );
-              unpatch(exportedValue);
-            });
-          }
-          // The patch object should only have either patch() or intercept().
-          if (patch.intercept) {
-            this.logger.warn(
-              `PluginWrapper#applyPlugin: [${logString}] Patch object has both patch() and intercept() for this file. Only applying patch().`
+      this.logger.info(
+        `PluginWrapper#applyPlugin: [${logString}] Applying plugin.`
+      );
+      if (patch.patch) {
+        patch.patch(exportedValue, this.createTraceAgentInstance(logString));
+        // Queue a function to run if the plugin gets disabled.
+        if (patch.unpatch) {
+          const unpatch = patch.unpatch;
+          this.unpatchFns.push(() => {
+            this.logger.info(
+              `PluginWrapper#unapplyAll: [${logString}] Unpatching file.`
             );
-          }
-        } else if (patch.intercept) {
-          exportedValue = patch.intercept(
-            exportedValue,
-            this.createTraceAgentInstance(file)
+            unpatch(exportedValue);
+          });
+        }
+        // The patch object should only have either patch() or intercept().
+        if (patch.intercept) {
+          this.logger.warn(
+            `PluginWrapper#applyPlugin: [${logString}] Patch object has both patch() and intercept() for this file. Only applying patch().`
           );
         }
-        return exportedValue;
-      },
-      moduleExports as T
-    );
+      } else if (patch.intercept) {
+        exportedValue = patch.intercept(
+          exportedValue,
+          this.createTraceAgentInstance(file)
+        );
+      }
+      return exportedValue;
+    }, moduleExports as T);
   }
 
   // Helper function to get the cached plugin value if it wasn't loaded yet.

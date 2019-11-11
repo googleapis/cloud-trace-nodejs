@@ -48,10 +48,11 @@ type MakeClientConstructorFunction = (
 ) => typeof Client;
 // Meta-type of client-side handlers
 type ClientMethod<S, T> = (
-  | (typeof Client.prototype.makeUnaryRequest)
-  | (typeof Client.prototype.makeClientStreamRequest)
-  | (typeof Client.prototype.makeServerStreamRequest)
-  | (typeof Client.prototype.makeBidiStreamRequest)) &
+  | typeof Client.prototype.makeUnaryRequest
+  | typeof Client.prototype.makeClientStreamRequest
+  | typeof Client.prototype.makeServerStreamRequest
+  | typeof Client.prototype.makeBidiStreamRequest
+) &
   (() => EventEmitter) &
   MethodDefinition<S, T>;
 // Partial module exports of client.js

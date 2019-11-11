@@ -47,7 +47,8 @@ export type WebFrameworkAddHandlerOptions = {
       fn: (
         incomingHeaders: IncomingHttpHeaders
       ) => Promise<WebFrameworkResponse>;
-    });
+    }
+);
 
 /**
  * A type that describes a ramework-agnostic request handler function.

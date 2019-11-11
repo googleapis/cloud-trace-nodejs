@@ -28,7 +28,7 @@ type ClientQueryArguments =
   | [string]
   | [string, {}];
 type PG7QueryReturnValue =
-  | (pg_7.QueryConfig & ({submit: Function} & EventEmitter) | pg_7.Query)
+  | ((pg_7.QueryConfig & ({submit: Function} & EventEmitter)) | pg_7.Query)
   | Promise<pg_7.QueryResult>;
 type Callback<T> = (err: Error | null, res?: T) => void;
 
