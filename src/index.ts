@@ -53,7 +53,7 @@ function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
   // 2. Project Config
   // 3. Environment Variable Set Configuration File (from GCLOUD_TRACE_CONFIG)
   // 4. Default Config (as specified in './config')
-  const mergedConfig: (typeof defaultConfig) & Forceable<Config> = extend(
+  const mergedConfig: typeof defaultConfig & Forceable<Config> = extend(
     true,
     {},
     defaultConfig,
@@ -214,7 +214,7 @@ export function start(config?: Config): PluginTypes.Tracer {
   }
 
   if (!traceAgent) {
-    traceAgent = new (require('./trace-api')).StackdriverTracer();
+    traceAgent = new (require('./trace-api').StackdriverTracer)();
   }
 
   try {
@@ -250,7 +250,7 @@ export function start(config?: Config): PluginTypes.Tracer {
  */
 export function get(): PluginTypes.Tracer {
   if (!traceAgent) {
-    traceAgent = new (require('./trace-api')).StackdriverTracer();
+    traceAgent = new (require('./trace-api').StackdriverTracer)();
   }
   return traceAgent;
 }
