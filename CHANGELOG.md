@@ -1,5 +1,12 @@
 # Changelog
 
+### [4.2.4](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.3...v4.2.4) (2019-11-12)
+
+
+### Bug Fixes
+
+* **docs:** add jsdoc-region-tag plugin ([#1151](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1151)) ([ee19cb9](https://www.github.com/googleapis/cloud-trace-nodejs/commit/ee19cb9d973e50ef770a23c49e13e80d947dfa6e))
+
 ### [4.2.2](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.1...v4.2.2) (2019-10-10)
 
 
