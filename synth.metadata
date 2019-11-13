@@ -1,11 +1,11 @@
 {
-  "updateTime": "2019-10-01T11:06:25.135372Z",
+  "updateTime": "2019-11-13T12:06:54.755531Z",
   "sources": [
     {
       "template": {
         "name": "node_library",
         "origin": "synthtool.gcp",
-        "version": "2019.5.2"
+        "version": "2019.10.17"
       }
     }
   ]
