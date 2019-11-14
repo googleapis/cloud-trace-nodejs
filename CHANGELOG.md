@@ -1,5 +1,12 @@
 # Changelog
 
+### [4.2.3](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.2...v4.2.3) (2019-11-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency source-map-support to v0.5.16 ([#1148](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1148)) ([3947e5b](https://www.github.com/googleapis/cloud-trace-nodejs/commit/3947e5b))
+
 ### [4.2.2](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.1...v4.2.2) (2019-10-10)
 
 
