@@ -228,7 +228,7 @@ describe('SpanData', () => {
           const stackFrame = getSourceMapTestStackFrame(spanData);
           // Source maps should give us this exact information.
           assert.ok(stackFrame.file_name.endsWith(`${sourceMapType}.ts`));
-          assert.strictEqual(stackFrame.line_number, 19);
+          assert.strictEqual(stackFrame.line_number, 17);
           assert.strictEqual(stackFrame.column_number, 52);
         });
       }
@@ -244,7 +244,7 @@ describe('SpanData', () => {
         );
         const stackFrame = getSourceMapTestStackFrame(spanData);
         assert.ok(stackFrame.file_name.endsWith('no-source-map.js'));
-        assert.strictEqual(stackFrame.line_number, 20);
+        assert.strictEqual(stackFrame.line_number, 18);
         assert.strictEqual(stackFrame.column_number, 47);
       });
     });
