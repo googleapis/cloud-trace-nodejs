@@ -1,5 +1,15 @@
 # Changelog
 
+### [4.2.4](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.3...v4.2.4) (2019-12-06)
+
+
+### Bug Fixes
+
+* **deps:** TypeScript 3.7.0 causes breaking change in typings ([#1163](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1163)) ([6448c94](https://www.github.com/googleapis/cloud-trace-nodejs/commit/6448c941389a054c8615c442c66e072976719f35))
+* **deps:** update dependency @opencensus/propagation-stackdriver to v0.0.19 ([#1158](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1158)) ([76b2162](https://www.github.com/googleapis/cloud-trace-nodejs/commit/76b21628e0d8e22e669112de632bf60d32cee4b4))
+* **deps:** update dependency got to v10 ([#1162](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1162)) ([432404d](https://www.github.com/googleapis/cloud-trace-nodejs/commit/432404df86b9b4dbf570a8d6b870725978445654))
+* **docs:** add jsdoc-region-tag plugin ([#1151](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1151)) ([ee19cb9](https://www.github.com/googleapis/cloud-trace-nodejs/commit/ee19cb9d973e50ef770a23c49e13e80d947dfa6e))
+
 ### [4.2.3](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.2...v4.2.3) (2019-11-11)
 
 
