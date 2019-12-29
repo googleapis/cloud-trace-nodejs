@@ -14,6 +14,7 @@
 
 import {Service, DecorateRequestOptions} from '@google-cloud/common';
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 import {GoogleAuth} from 'google-auth-library';
 import {JWTInput} from 'google-auth-library/build/src/auth/credentials';
 import {RefreshOptions} from 'google-auth-library/build/src/auth/oauth2client';

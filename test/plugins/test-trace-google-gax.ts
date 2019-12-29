@@ -34,6 +34,7 @@
  */
 
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 
 import * as testTraceModule from '../trace';
 import {describeInterop} from '../utils';
