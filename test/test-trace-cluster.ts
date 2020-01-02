@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 import axiosModule from 'axios';
 import * as cluster from 'cluster';
 import {Server} from 'http';

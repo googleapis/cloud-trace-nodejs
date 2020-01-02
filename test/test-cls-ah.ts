@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 import * as asyncHooksModule from 'async_hooks';
 import * as semver from 'semver';
 

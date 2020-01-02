@@ -44,6 +44,7 @@ const tracer = require('../').start({
 require('hard-rejection')();
 
 const assert = require('assert');
+const {describe, it} = require('mocha');
 const googleAuth = require('google-auto-auth');
 const got = require('got');
 const queryString = require('querystring');

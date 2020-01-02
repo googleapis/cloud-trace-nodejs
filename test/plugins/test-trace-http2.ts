@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 // This is imported only for types. Generated .js file should NOT load 'http2'
 // in this place. It is dynamically loaded later from each test suite below.
 import * as http2Types from 'http2';
