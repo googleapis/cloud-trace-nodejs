@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 
 import {SpanType} from '../src/constants';
 import {Tracer} from '../src/plugin-types';

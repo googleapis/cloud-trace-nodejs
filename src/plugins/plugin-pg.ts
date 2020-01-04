@@ -61,7 +61,8 @@ function populateLabelsFromOutputs(
     span.addLabel('row_count', res.rowCount);
     span.addLabel('oid', res.oid);
     span.addLabel('rows', res.rows);
-    span.addLabel('fields', res.fields);
+    // Starting in pg@7.16.0, res.fields could be undefined.
+    span.addLabel('fields', res.fields || []);
   }
 }
 

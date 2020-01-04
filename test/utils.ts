@@ -15,6 +15,7 @@
 // TODO(kjin): This file should supercede plugins/common.ts.
 
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 import * as fs from 'fs';
 import * as semver from 'semver';
 
