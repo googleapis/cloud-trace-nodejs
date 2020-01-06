@@ -1,6 +1,6 @@
 {
   "name": "@google-cloud/trace-agent",
-  "version": "4.2.4",
+  "version": "4.2.5",
   "description": "Node.js Support for StackDriver Trace",
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
