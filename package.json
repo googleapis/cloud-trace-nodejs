@@ -62,7 +62,7 @@
     "@types/is": "0.0.21",
     "@types/knex": "^0.15.1",
     "@types/methods": "^1.1.0",
-    "@types/mocha": "^5.2.5",
+    "@types/mocha": "^7.0.0",
     "@types/mongoose": "^5.3.26",
     "@types/nock": "^10.0.0",
     "@types/node": "^12.7.2",
