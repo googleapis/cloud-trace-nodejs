@@ -83,7 +83,7 @@
     "gts": "^1.0.0",
     "intelli-espower-loader": "^1.0.1",
     "js-green-licenses": "^1.0.0",
-    "linkinator": "^1.5.0",
+    "linkinator": "^2.0.0",
     "mocha": "^7.0.0",
     "nock": "^11.0.0",
     "nyc": "^14.0.0",
