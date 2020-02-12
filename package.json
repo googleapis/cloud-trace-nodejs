@@ -29,7 +29,7 @@
     "docs": "compodoc src/",
     "presamples-test": "npm run compile",
     "samples-test": "cd samples/ && npm link ../ && npm install && npm test && cd ../",
-    "prelint": "cd samples; npm link ../"
+    "prelint": "cd samples; npm link ../; npm i"
   },
   "files": [
     "build/src/**/*.js",
