@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 import * as http from 'http';
 import * as traceTestModule from './trace';
 import { pluginLoader, PluginLoaderState } from '../src/trace-plugin-loader';

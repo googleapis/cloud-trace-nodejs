@@ -15,6 +15,7 @@
 import * as semver from 'semver';
 import { execSync } from 'child_process';
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 
 describe('preloaded agent', () => {
   it('should start automatically when preloaded using --require', () => {

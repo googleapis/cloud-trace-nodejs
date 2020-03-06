@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 
 import {bluebird_3 as BluebirdPromise} from '../../src/plugins/types';
 import {Trace} from '../../src/trace';

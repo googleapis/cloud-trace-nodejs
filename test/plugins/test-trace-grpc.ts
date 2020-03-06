@@ -19,6 +19,7 @@ import { TraceLabels } from '../../src/trace-labels';
 import * as TracingPolicy from '../../src/tracing-policy';
 import * as util from '../../src/util';
 import * as assert from 'assert';
+import {describe, it} from 'mocha';
 import { asRootSpanData, describeInterop, DEFAULT_SPAN_DURATION, assertSpanDuration } from '../utils';
 import { Span } from '../../src/plugin-types';
 import { FORCE_NEW } from '../../src/util';
