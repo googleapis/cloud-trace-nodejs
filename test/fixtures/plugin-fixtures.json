@@ -235,5 +235,10 @@
     "dependencies": {
       "restify": "^7.2.2"
     }
+  },
+  "restify8": {
+    "dependencies": {
+      "restify": "^8.5.1"
+    }
   }
 }
