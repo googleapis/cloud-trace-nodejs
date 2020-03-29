@@ -4,5 +4,7 @@
     "https://codecov.io/gh/googleapis/",
     "https://circleci.com/gh/googleapis/cloud-trace-nodejs",
     "img.shields.io"
-  ]
+  ],
+  "silent": true,
+  "concurrency": 10
 }
