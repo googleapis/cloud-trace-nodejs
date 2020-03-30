@@ -19,7 +19,7 @@
     "compile-strict": "npm run script compile-auto-strict",
     "compile": "npm run script get-plugin-types compile-auto compile-auto-strict",
     "fix": "gts fix",
-    "prepare": "npm run script npm-clean get-plugin-types compile-es2015 compile-es2015-strict",
+    "prepare": "npm run script get-plugin-types compile-es2015 compile-es2015-strict",
     "script": "ts-node -P ./scripts/tsconfig.json ./scripts",
     "predocs-test": "npm run docs",
     "docs-test": "linkinator docs/",
