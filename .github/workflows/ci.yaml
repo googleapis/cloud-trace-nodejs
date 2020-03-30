@@ -3,13 +3,13 @@ on:
     branches:
       - master
   pull_request:
-name: ci
+name: ci2
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [8, 10, 12, 13]
+        node: [10, 12, 13]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -17,6 +17,26 @@ jobs:
           node-version: ${{ matrix.node }}
       - run: node --version
       - run: npm install
+      - name: MongoDB
+        uses: supercharge/mongodb-github-action@1.1.0
+        with:
+          mongodb-version: 4.2
+      - name: Redis
+        uses: superchargejs/redis-github-action@v1
+        with:
+          redis-version: 5
+      - name: PostgreSQL
+        uses: harmon758/postgresql-action@v1
+        with:
+          postgresql version: '11'
+          postgresql user: postgres
+          postgresql password: Password12!
+          postgresql db: test
+      - name: MySQL
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          mysql database: test
+          mysql root password: Password12!
       - run: npm test
   windows:
     runs-on: windows-latest
