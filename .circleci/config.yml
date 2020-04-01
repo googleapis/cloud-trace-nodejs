@@ -1,0 +1,153 @@
+---
+# Constant values.
+
+node_modules_cache_key: &node_modules_cache_key node-modules-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "package.json" }}-{{ checksum "date" }}
+test_fixtures_cache_key: &test_fixtures_cache_key test-fixtures-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "test/fixtures/plugin-fixtures.json" }}-{{ checksum "date" }}
+plugin_types_cache_key: &plugin_types_cache_key plugin-types-cache-{{ .Environment.CIRCLE_JOB }}-{{ arch }}-{{ checksum "src/plugins/types/index.d.ts" }}-{{ checksum "date" }}
+release_tags: &release_tags
+  tags:
+    only: /^v\d+(\.\d+){2}(-.*)?$/
+
+# Unit test workflow.
+
+unit_tests: &unit_tests
+  steps:
+    - checkout
+    - run:
+        name: Get the current data for cache keys
+        command: date +%F > date
+    - run:
+        name: Configure npm to allow running scripts as root
+        command: npm config set unsafe-perm true
+    - restore_cache:
+        key: *node_modules_cache_key
+    - restore_cache:
+        key: *plugin_types_cache_key
+    - run:
+        name: Install modules and dependencies
+        command: npm install
+    - save_cache:
+        key: *node_modules_cache_key
+        paths:
+          - node_modules
+    - save_cache:
+        key: *plugin_types_cache_key
+        paths:
+          - src/plugins/types
+    - run:
+        name: Check code style and linting
+        command: npm run check
+    - run:
+        name: Compile code
+        command: npm run compile
+    - restore_cache:
+        key: *test_fixtures_cache_key
+    - run:
+        name: Install test fixtures
+        command: npm run init-test-fixtures
+    - save_cache:
+        key: *test_fixtures_cache_key
+        paths:
+          - build/test/plugins/fixtures
+    - run:
+        name: Run unit tests with code coverage
+        command: npm run coverage
+    - run:
+        name: Verify that the package installs OK
+        command: npm run check-install
+    - run:
+        name: Run system tests (skipped for PRs)
+        environment:
+          GCLOUD_PROJECT: long-door-651
+          GOOGLE_APPLICATION_CREDENTIALS: /root/project/long-door-651-a179efbeda21.json
+        command: npm run system-test
+
+# Services needed for unit tests.
+
+mongo_service: &mongo_service
+  image: mongo
+
+redis_service: &redis_service
+  image: redis
+
+postgres_service: &postgres_service
+  image: postgres
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: Password12!
+    POSTGRES_DB: test
+
+mysql_service: &mysql_service
+  image: mysql:5
+  environment:
+    MYSQL_ROOT_PASSWORD: Password12!
+    MYSQL_DATABASE: test
+
+# Main configuration.
+
+version: 2.0
+workflows:
+  version: 2
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 6 * * *" # Daily at 6:00AM
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - node8
+      - node10
+      - node11
+      - node12
+  tests:
+    jobs:
+      - node8:
+          filters: *release_tags
+      - node10:
+          filters: *release_tags
+      - node11:
+          filters: *release_tags
+      - node12:
+          filters: *release_tags
+
+jobs:
+  node8:
+    environment:
+      CODECOV_ENV: node8
+    docker:
+      - image: node:8
+      - *mongo_service
+      - *redis_service
+      - *postgres_service
+      - *mysql_service
+    <<: *unit_tests
+  node10:
+    environment:
+      CODECOV_ENV: node10
+    docker:
+      - image: node:10
+      - *mongo_service
+      - *redis_service
+      - *postgres_service
+      - *mysql_service
+    <<: *unit_tests
+  node11:
+    environment:
+      CODECOV_ENV: node11
+    docker:
+      - image: node:11
+      - *mongo_service
+      - *redis_service
+      - *postgres_service
+      - *mysql_service
+    <<: *unit_tests
+  node12:
+    docker:
+      - image: node:12
+      - *mongo_service
+      - *redis_service
+      - *postgres_service
+      - *mysql_service
+    <<: *unit_tests
