@@ -17,10 +17,13 @@ import synthtool.gcp as gcp
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
+
+AUTOSYNTH_MULTIPLE_COMMITS = True
+
 common_templates = gcp.CommonTemplates()
 templates = common_templates.node_library()
 # Don't use .nycrc for code coverage (see "Fix Code Coverage")
-s.copy(templates, excludes=['.nycrc'])
+s.copy(templates, excludes=['.nycrc', '.github/workflows/ci.yaml'])
 
 ### SUPPORT DATABASE PLUGINS ###
 # Database plugins require that an instance of that database is running at a

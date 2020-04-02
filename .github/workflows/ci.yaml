@@ -10,8 +10,33 @@ jobs:
     strategy:
       matrix:
         node: [8, 10, 12, 13]
+    # Docker containers to run for database RPC tracing integration tests.
+    services:
+      mongo:
+        image: mongo
+        ports:
+          - 27017:27017
+      mysql:
+        image: mysql:5
+        env:
+          MYSQL_ROOT_PASSWORD: Password12!
+          MYSQL_DATABASE: test
+        ports:
+          - 3306:3306
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: Password12!
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
@@ -20,6 +45,10 @@ jobs:
       - run: npm test
   windows:
     runs-on: windows-latest
+    env:
+      # GitHub Actions does not support running services alongside Windows.
+      # This flag disables integration tests.
+      TRACE_TEST_EXCLUDE_INTEGRATION: 1
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -30,7 +59,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: 12
@@ -39,7 +68,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: 12
@@ -47,8 +76,35 @@ jobs:
       - run: npm run docs-test
   coverage:
     runs-on: ubuntu-latest
+    # GitHub Actions currently doesn't support YAML Anchor syntax, so this is
+    # duplicated from the `test` job.
+    # TODO: Once they are supported, use anchors to dedupilcate.
+    services:
+      mongo:
+        image: mongo
+        ports:
+          - 27017:27017
+      mysql:
+        image: mysql:5
+        env:
+          MYSQL_ROOT_PASSWORD: Password12!
+          MYSQL_DATABASE: test
+        ports:
+          - 3306:3306
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: Password12!
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: 13
