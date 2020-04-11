@@ -98,7 +98,7 @@
     "typescript": "3.6.4"
   },
   "dependencies": {
-    "@google-cloud/common": "^2.0.0",
+    "@google-cloud/common": "^3.0.0",
     "@opencensus/propagation-stackdriver": "0.0.21",
     "builtin-modules": "^3.0.0",
     "console-log-level": "^1.4.0",
