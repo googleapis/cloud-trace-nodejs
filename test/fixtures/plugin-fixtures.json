@@ -54,14 +54,17 @@
       "hapi": "^16.0.0"
     }
   },
-  "hapi17": {
-    "dependencies": {
-      "hapi": "^17.0.0"
-    }
-  },
   "hapi18": {
     "dependencies": {
       "@hapi/hapi": "^18.0.0"
+    }
+  },
+  "hapi19": {
+    "dependencies": {
+      "@hapi/hapi": "^19.0.0"
+    },
+    "engines": {
+      "node": ">=12"
     }
   },
   "hapi8": {
