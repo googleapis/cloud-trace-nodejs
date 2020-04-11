@@ -19,11 +19,11 @@ import * as semver from 'semver';
 
 import * as testTraceModule from './trace';
 import {assertSpanDuration, wait} from './utils';
-import {Hapi17} from './web-frameworks/hapi17';
+import {Hapi19} from './web-frameworks/hapi17';
 import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
 
 // The list of web frameworks to test.
-const FRAMEWORKS = [Hapi12, Hapi15, Hapi16, Hapi8, Hapi17];
+const FRAMEWORKS = [Hapi12, Hapi15, Hapi16, Hapi8, Hapi19];
 
 describe('Web framework tracing', () => {
   let axios: typeof axiosModule;
