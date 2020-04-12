@@ -98,12 +98,13 @@ class PostgresPatchUtility {
   patchSubmittable(pgQuery: Submittable, span: Span): Submittable {
     let spanEnded = false;
     const {maybePopulateLabelsFromOutputs} = this;
-    if (pgQuery.handleError) {
+    if (pgQuery.handleError!) {
       shimmer.wrap(pgQuery, 'handleError', origCallback => {
         // Elements of args are not individually accessed.
-        // tslint:disable:no-any
-        return this.tracer.wrap(function(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return this.tracer.wrap(function (
           this: Submittable,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ...args: any[]
         ): void {
           // tslint:enable:no-any
@@ -119,12 +120,13 @@ class PostgresPatchUtility {
         });
       });
     }
-    if (pgQuery.handleReadyForQuery) {
+    if (pgQuery.handleReadyForQuery!) {
       shimmer.wrap(pgQuery, 'handleReadyForQuery', origCallback => {
         // Elements of args are not individually accessed.
-        // tslint:disable:no-any
-        return this.tracer.wrap(function(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return this.tracer.wrap(function (
           this: Submittable,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ...args: any[]
         ): void {
           // tslint:enable:no-any
@@ -239,6 +241,7 @@ const plugin: Plugin = [
         return function query_trace(this: pg_7.Client) {
           const span = api.createChildSpan({name: 'pg-query'});
           if (!api.isRealSpan(span)) {
+            // eslint-disable-next-line prefer-rest-params
             return query.apply(this, arguments);
           }
 
@@ -256,6 +259,7 @@ const plugin: Plugin = [
           const argLength = arguments.length;
           if (argLength >= 1) {
             const args: ClientQueryArguments = Array.prototype.slice.call(
+              // eslint-disable-next-line prefer-rest-params
               arguments,
               0
             );
@@ -276,6 +280,7 @@ const plugin: Plugin = [
             }
             pgQuery = query.apply(this, args);
           } else {
+            // eslint-disable-next-line prefer-rest-params
             pgQuery = query.apply(this, arguments);
           }
 

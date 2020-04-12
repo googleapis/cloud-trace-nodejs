@@ -16,8 +16,6 @@ import * as builtinModules from 'builtin-modules';
 import * as path from 'path';
 import * as hook from 'require-in-the-middle';
 import * as semver from 'semver';
-
-import {TracePolicy} from './config';
 import {Logger} from './logger';
 import {Intercept, Monkeypatch, Plugin} from './plugin-types';
 import {
@@ -373,7 +371,7 @@ export class PluginLoader {
    */
   activate(): PluginLoader {
     if (this.internalState === PluginLoaderState.NO_HOOK) {
-      this.logger.info(`PluginLoader#activate: Adding require hook.`);
+      this.logger.info('PluginLoader#activate: Adding require hook.');
       // Enable the require hook.
       this.enableRequireHook((exportedValue, moduleStr, baseDir) => {
         if (this.internalState === PluginLoaderState.ACTIVATED) {
@@ -403,7 +401,7 @@ export class PluginLoader {
               let version = this.getVersion(baseDir);
               if (version) {
                 // Warn for pre-releases.
-                if (!!semver.prerelease(version)) {
+                if (semver.prerelease(version)) {
                   if (isMainModule) {
                     this.logger.warn(
                       `PluginLoader#onRequire: [${name}@${version}] This module is in pre-release. Applying plugin anyways.`
@@ -438,7 +436,7 @@ export class PluginLoader {
         return exportedValue;
       });
       this.internalState = PluginLoaderState.ACTIVATED;
-      this.logger.info(`PluginLoader#activate: Activated.`);
+      this.logger.info('PluginLoader#activate: Activated.');
     } else if (this.internalState === PluginLoaderState.DEACTIVATED) {
       throw new Error('Currently cannot re-activate plugin loader.');
     } else {
@@ -459,7 +457,7 @@ export class PluginLoader {
         pluginWrapper.unapplyAll();
       }
       this.internalState = PluginLoaderState.DEACTIVATED;
-      this.logger.info(`PluginLoader#deactivate: Deactivated.`);
+      this.logger.info('PluginLoader#deactivate: Deactivated.');
     }
     return this;
   }

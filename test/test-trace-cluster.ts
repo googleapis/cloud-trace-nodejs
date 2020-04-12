@@ -13,13 +13,11 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after} from 'mocha';
 import axiosModule from 'axios';
 import * as cluster from 'cluster';
 import {Server} from 'http';
 import {AddressInfo} from 'net';
-
-import * as cls from '../src/cls';
 import {express_4 as expressModule} from '../src/plugins/types';
 
 import * as testTraceModule from './trace';

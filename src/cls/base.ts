@@ -14,7 +14,7 @@
 
 import {EventEmitter} from 'events';
 
-// tslint:disable-next-line:no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Func<T = void> = (...args: any[]) => T;
 
 /**

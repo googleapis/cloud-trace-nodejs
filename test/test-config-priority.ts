@@ -13,10 +13,8 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after, afterEach} from 'mocha';
 import * as path from 'path';
-
-import {Trace} from '../src/trace';
 import {StackdriverTracer} from '../src/trace-api';
 import {TraceWriter} from '../src/trace-writer';
 import {TopLevelConfig, Tracing} from '../src/tracing';
@@ -34,7 +32,7 @@ describe('should respect config load order', () => {
 
   class NoopTraceWriter extends TraceWriter {
     async initialize(): Promise<void> {}
-    writeTrace(trace: Trace): void {}
+    writeTrace(): void {}
   }
 
   function getCapturedConfig() {

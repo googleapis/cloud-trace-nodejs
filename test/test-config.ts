@@ -13,23 +13,24 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, beforeEach, before, after} from 'mocha';
 import * as semver from 'semver';
 import * as util from 'util';
 
 import {TraceCLSConfig, TraceCLSMechanism} from '../src/cls';
 
 import * as testTraceModule from './trace';
-import { TopLevelConfig } from '../src/tracing';
-import { StackdriverTracer } from '../src/trace-api';
+import {TopLevelConfig} from '../src/tracing';
+import {StackdriverTracer} from '../src/trace-api';
 import {Logger} from '../src/logger';
-import { TraceWriterConfig } from '../src/trace-writer';
+import {TraceWriterConfig} from '../src/trace-writer';
 
 describe('Behavior set by config for CLS', () => {
   const useAH = semver.satisfies(process.version, '>=8');
-  const autoMechanism =
-      useAH ? TraceCLSMechanism.ASYNC_HOOKS : TraceCLSMechanism.ASYNC_LISTENER;
-  let capturedConfig: TraceCLSConfig|null;
+  const autoMechanism = useAH
+    ? TraceCLSMechanism.ASYNC_HOOKS
+    : TraceCLSMechanism.ASYNC_LISTENER;
+  let capturedConfig: TraceCLSConfig | null;
 
   class CaptureConfigTestCLS extends testTraceModule.TestCLS {
     constructor(config: TraceCLSConfig, logger: Logger) {
@@ -52,49 +53,49 @@ describe('Behavior set by config for CLS', () => {
   });
 
   const testCases: Array<{
-    tracingConfig: testTraceModule.Config,
-    contextPropagationConfig: TraceCLSConfig
-  }> =
-      [
-        {
-          tracingConfig: {clsMechanism: 'none'},
-          contextPropagationConfig: {mechanism: 'none'}
-        },
-        {
-          tracingConfig: {clsMechanism: 'auto'},
-          contextPropagationConfig: {mechanism: autoMechanism}
-        },
-        {
-          tracingConfig: {},
-          contextPropagationConfig: {mechanism: autoMechanism}
-        },
-        {
-          tracingConfig: {clsMechanism: 'singular'},
-          contextPropagationConfig: {mechanism: 'singular'}
-        },
-        {
-          // tslint:disable:no-any
-          tracingConfig: {clsMechanism: 'unknown' as any},
-          contextPropagationConfig: {mechanism: 'unknown' as any}
-          // tslint:enable:no-any
-        }
-      ];
+    tracingConfig: testTraceModule.Config;
+    contextPropagationConfig: TraceCLSConfig;
+  }> = [
+    {
+      tracingConfig: {clsMechanism: 'none'},
+      contextPropagationConfig: {mechanism: 'none'},
+    },
+    {
+      tracingConfig: {clsMechanism: 'auto'},
+      contextPropagationConfig: {mechanism: autoMechanism},
+    },
+    {
+      tracingConfig: {},
+      contextPropagationConfig: {mechanism: autoMechanism},
+    },
+    {
+      tracingConfig: {clsMechanism: 'singular'},
+      contextPropagationConfig: {mechanism: 'singular'},
+    },
+    {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tracingConfig: {clsMechanism: 'unknown' as any},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      contextPropagationConfig: {mechanism: 'unknown' as any},
+    },
+  ];
 
   for (const testCase of testCases) {
-    it(`should be as expected for config: ${
-           util.inspect(testCase.tracingConfig)}`,
-       () => {
-         testTraceModule.start(testCase.tracingConfig);
-         assert.ok(capturedConfig);
-         assert.strictEqual(
-             capturedConfig!.mechanism,
-             testCase.contextPropagationConfig.mechanism);
-       });
+    it(`should be as expected for config: ${util.inspect(
+      testCase.tracingConfig
+    )}`, () => {
+      testTraceModule.start(testCase.tracingConfig);
+      assert.ok(capturedConfig);
+      assert.strictEqual(
+        capturedConfig!.mechanism,
+        testCase.contextPropagationConfig.mechanism
+      );
+    });
   }
 });
 
 describe('Behavior set by config for Tracer', () => {
-  let capturedConfig: TopLevelConfig|null;
+  let capturedConfig: TopLevelConfig | null;
 
   // Convenience function to assert properties of capturedConfig that we want
   // to be true on every test, and return just the tracer config.
@@ -134,7 +135,7 @@ describe('Behavior set by config for Tracer', () => {
   describe('Overriding root span name', () => {
     it('should convert a string to a function', () => {
       testTraceModule.start({
-        rootSpanNameOverride: 'hello'
+        rootSpanNameOverride: 'hello',
       });
       const config = getCapturedTracerConfig();
       assert.strictEqual(typeof config.rootSpanNameOverride, 'function');
@@ -145,8 +146,8 @@ describe('Behavior set by config for Tracer', () => {
       testTraceModule.start({
         // We should make sure passing in unsupported values at least doesn't
         // result in a crash.
-        // tslint:disable-next-line:no-any
-        rootSpanNameOverride: 2 as any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        rootSpanNameOverride: 2 as any,
       });
       const config = getCapturedTracerConfig();
       assert.strictEqual(typeof config.rootSpanNameOverride, 'function');
@@ -157,15 +158,17 @@ describe('Behavior set by config for Tracer', () => {
 
 describe('Behavior set by config for TracePolicy', () => {
   it('should throw when conflicting policy options are specified', () => {
-    assert.throws(() => testTraceModule.start({
-      samplingRate: 100,
-      tracePolicy: { shouldTrace: () => true }
-    }));
+    assert.throws(() =>
+      testTraceModule.start({
+        samplingRate: 100,
+        tracePolicy: {shouldTrace: () => true},
+      })
+    );
   });
 });
 
 describe('Behavior set by config for TraceWriter', () => {
-  let capturedConfig: TraceWriterConfig|null;
+  let capturedConfig: TraceWriterConfig | null;
 
   class CaptureConfigTestWriter extends testTraceModule.TestTraceWriter {
     constructor(config: TraceWriterConfig, logger: Logger) {
@@ -188,14 +191,16 @@ describe('Behavior set by config for TraceWriter', () => {
   });
 
   it('should set auth variables passed to TraceWriter as authOptions', () => {
-    const credentials = { private_key: 'abc' };
+    const credentials = {private_key: 'abc'};
     testTraceModule.start({
       keyFilename: 'a',
-      credentials
+      credentials,
     });
     assert.ok(capturedConfig);
     assert.strictEqual(capturedConfig!.authOptions.keyFilename, 'a');
-    assert.deepStrictEqual(capturedConfig!.authOptions.credentials, credentials);
+    assert.deepStrictEqual(
+      capturedConfig!.authOptions.credentials,
+      credentials
+    );
   });
 });
-

@@ -61,6 +61,7 @@ class Hapi implements WebFramework {
         this.server.register({
           plugin: {
             name: options.path,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             register: async (server, registerOpts) => {
               server.route({
                 method: 'GET',

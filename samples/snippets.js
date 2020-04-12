@@ -17,6 +17,6 @@
 // [START trace_setup_nodejs_explicit]
 require('@google-cloud/trace-agent').start({
   projectId: 'your-project-id',
-  keyFilename: '/path/to/key.json'
+  keyFilename: '/path/to/key.json',
 });
 // [END trace_setup_nodejs_explicit]

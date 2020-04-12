@@ -9,8 +9,11 @@
     "type": "git",
     "url": "https://github.com/googleapis/cloud-trace-nodejs.git"
   },
+  "files": [
+    "*.js"
+  ],
   "engines": {
-    "node": ">=8"
+    "node": ">=10"
   },
   "scripts": {
     "deploy": "gcloud app deploy",

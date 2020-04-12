@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {it, before, after, afterEach} from 'mocha';
 import * as mongooseTypes from 'mongoose';
 
 import * as traceTestModule from '../trace';

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after} from 'mocha';
 
 import {Logger} from '../src/logger';
 import {Trace} from '../src/trace';
@@ -78,7 +78,7 @@ describe('Trace Writer', () => {
     trace.setLoggerForTest(TestLogger);
   });
 
-  it(`should publish on unhandled exception for 'flush' config option`, done => {
+  it("should publish on unhandled exception for 'flush' config option", done => {
     const restoreOriginalUncaughtExceptionListeners = removeAllUncaughtExceptionListeners();
     trace.start({onUncaughtException: 'flush', projectId: '0'});
     setImmediate(() => {
@@ -95,7 +95,7 @@ describe('Trace Writer', () => {
     });
   });
 
-  it(`should not assign an oUE listener for 'ignore' config option`, () => {
+  it("should not assign an oUE listener for 'ignore' config option", () => {
     const restoreOriginalUncaughtExceptionListeners = removeAllUncaughtExceptionListeners();
     trace.start({onUncaughtException: 'ignore'});
     assert.strictEqual(process.listenerCount('onHandledException'), 0);

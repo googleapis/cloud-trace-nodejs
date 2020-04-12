@@ -14,7 +14,6 @@
 
 import {ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
-import {parse as urlParse} from 'url';
 
 import {PluginTypes} from '..';
 
@@ -37,6 +36,7 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
 
   function createServerWrap(createServer: CreateServerFn): CreateServerFn {
     return function createServerTrace(this: {}) {
+      // eslint-disable-next-line prefer-rest-params
       const server = createServer.apply(this, arguments) as restify_5.Server;
       server.use(middleware);
       return server;
@@ -86,8 +86,9 @@ function patchRestify(restify: Restify5, api: PluginTypes.Tracer) {
       );
 
       const originalEnd = res.end;
-      res.end = function(this: ServerResponse) {
+      res.end = function (this: ServerResponse) {
         res.end = originalEnd;
+        // eslint-disable-next-line prefer-rest-params
         const returned = res.end.apply(this, arguments);
 
         if (req.route && req.route.path) {

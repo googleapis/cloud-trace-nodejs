@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after, afterEach, beforeEach} from 'mocha';
 import axiosModule from 'axios';
 import * as semver from 'semver';
 
@@ -261,8 +261,9 @@ describe('Web framework tracing', () => {
           }
           if (i === ABORTED_SPAN_RETRIES - 1) {
             assert.fail(
-              `Aborted span was not written after ${DEFAULT_SPAN_DURATION *
-                ABORTED_SPAN_RETRIES} milliseconds.`
+              `Aborted span was not written after ${
+                DEFAULT_SPAN_DURATION * ABORTED_SPAN_RETRIES
+              } milliseconds.`
             );
           } else {
             await wait(DEFAULT_SPAN_DURATION);
@@ -271,13 +272,13 @@ describe('Web framework tracing', () => {
       });
 
       it('assigns different trace IDs to distinct requests', async () => {
-        // tslint:disable-next-line:no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let requests: Array<Promise<any>>;
         // Setting the URL allows us not to record this root span, but also
         // not get warnings for child spans.
         await testTraceModule
           .get()
-          .runInRootSpan({name: 'outer', url: '/ignore-me'}, async span => {
+          .runInRootSpan({name: 'outer', url: '/ignore-me'}, async () => {
             requests = [
               axios.get(`http://localhost:${port}/hello?this-is=dog`),
               axios.get(`http://localhost:${port}/hello?this-is=puppy`),

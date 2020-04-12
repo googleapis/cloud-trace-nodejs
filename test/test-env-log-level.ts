@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after, afterEach} from 'mocha';
 import * as shimmer from 'shimmer';
 
 import * as logger from '../src/logger';

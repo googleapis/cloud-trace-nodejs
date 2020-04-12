@@ -17,6 +17,7 @@ import {Agent, ClientRequest, ClientRequestArgs, request} from 'http';
 import * as httpsModule from 'https';
 import * as semver from 'semver';
 import * as shimmer from 'shimmer';
+// eslint-disable-next-line node/no-deprecated-api
 import {URL, parse as urlParse} from 'url';
 
 import {Plugin, Tracer} from '../plugin-types';
@@ -30,10 +31,12 @@ const ERR_HTTP_HEADERS_SENT_MSG = "Can't set headers after they are sent.";
 
 // URL is used for type checking, but doesn't exist in Node <7.
 // This function works around that.
-// tslint:disable:no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isURL = semver.satisfies(process.version, '>=7')
-  ? (value: any): value is URL => value instanceof URL
-  : (value: any): value is URL => false;
+  ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (value: any): value is URL => value instanceof URL
+  : // eslint-disable-next-line
+    (value: any): value is URL => false;
 // tslint:enable:no-any
 
 function getSpanName(options: ClientRequestArgs | URL) {
@@ -83,7 +86,7 @@ function extractUrl(
   return `${protocol}//${host}${portString}${path}`;
 }
 
-// tslint:disable-next-line:no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isTraceAgentRequest(options: httpModule.RequestOptions, api: Tracer) {
   return (
     options &&
@@ -109,6 +112,7 @@ function makeRequestTrace(
   ): ClientRequest {
     // These are error conditions; defer to http.request and don't trace.
     if (!url || (typeof url === 'object' && typeof options === 'object')) {
+      // eslint-disable-next-line prefer-rest-params
       return request.apply(this, arguments);
     }
 
@@ -130,11 +134,13 @@ function makeRequestTrace(
     // of trace api calls. If there is no buffering then each trace is
     // an http call which will get a trace which will be an http call
     if (isTraceAgentRequest(options, api)) {
+      // eslint-disable-next-line prefer-rest-params
       return request.apply(this, arguments);
     }
 
     const span = api.createChildSpan({name: getSpanName(options)});
     if (!api.isRealSpan(span)) {
+      // eslint-disable-next-line prefer-rest-params
       return request.apply(this, arguments);
     }
 
@@ -188,6 +194,7 @@ function makeRequestTrace(
               numBytes += chunk.length;
             });
           }
+          // eslint-disable-next-line prefer-rest-params
           return on.apply(this, arguments);
         };
       });
@@ -250,6 +257,7 @@ function patchHttp(http: HttpModule, api: Tracer) {
       // Ref:
       // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
       return function getTrace(this: never) {
+        // eslint-disable-next-line prefer-rest-params
         const req = http.request.apply(this, arguments);
         req.end();
         return req;
@@ -264,8 +272,9 @@ function patchHttps(https: HttpsModule, api: Tracer) {
   shimmer.wrap(https, 'request', request => {
     return makeRequestTrace('https:', request, api);
   });
-  shimmer.wrap(https, 'get', function getWrap(): typeof httpsModule.get {
+  shimmer.wrap(https, 'get', () => {
     return function getTrace(this: never) {
+      // eslint-disable-next-line prefer-rest-params
       const req = https.request.apply(this, arguments);
       req.end();
       return req;

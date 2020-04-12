@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as assert from 'assert';
-import {describe, it} from 'mocha';
-import * as path from 'path';
+/* eslint-disable @typescript-eslint/no-var-requires */
 
-import {OpenCensusPropagation} from '../src/config';
+import * as assert from 'assert';
+import {describe, it, before, afterEach} from 'mocha';
 import {
   PluginLoader,
   PluginLoaderState,
@@ -110,13 +109,13 @@ describe('Trace Plugin Loader', () => {
     describe('deactivate', () => {
       class TestPluginWrapper implements PluginWrapper {
         unapplyCalled = false;
-        isSupported(version: string): boolean {
+        isSupported(): boolean {
           return false;
         }
         unapplyAll(): void {
           this.unapplyCalled = true;
         }
-        applyPlugin<T>(moduleExports: T, file: string, version: string): T {
+        applyPlugin<T>(moduleExports: T): T {
           return moduleExports;
         }
       }
@@ -139,12 +138,11 @@ describe('Trace Plugin Loader', () => {
     describe('parseModuleString', () => {
       it('parses module strings', () => {
         const p = PluginLoader.parseModuleString;
-        const sep = path.sep;
         assert.deepStrictEqual(p('m'), {name: 'm', file: ''});
         assert.deepStrictEqual(p('m/f'), {name: 'm', file: 'f'});
         assert.deepStrictEqual(p('m/d/f'), {name: 'm', file: 'd/f'});
-        assert.deepStrictEqual(p(`m\\d\\f`), {name: 'm', file: 'd/f'});
-        assert.deepStrictEqual(p(`@o\\m\\d\\f`), {name: '@o/m', file: 'd/f'});
+        assert.deepStrictEqual(p('m\\d\\f'), {name: 'm', file: 'd/f'});
+        assert.deepStrictEqual(p('@o\\m\\d\\f'), {name: '@o/m', file: 'd/f'});
         assert.deepStrictEqual(p('@o/m/d/f'), {name: '@o/m', file: 'd/f'});
         assert.deepStrictEqual(p('@o/m/d/f'), {name: '@o/m', file: 'd/f'});
       });
@@ -162,7 +160,7 @@ describe('Trace Plugin Loader', () => {
       assert.strictEqual(require('my-version-2.0'), '2.0.0');
     });
 
-    it(`doesn't patch before activation`, () => {
+    it("doesn't patch before activation", () => {
       const loader = makePluginLoader({
         plugins: {'small-number': 'plugin-small-number'},
       });
@@ -170,7 +168,7 @@ describe('Trace Plugin Loader', () => {
       loader.deactivate();
     });
 
-    it(`doesn't patch modules for which plugins aren't specified`, () => {
+    it("doesn't patch modules for which plugins aren't specified", () => {
       const loader = makePluginLoader({plugins: {}}).activate();
       assert.strictEqual(require('small-number').value, 0);
       loader.deactivate();
@@ -241,7 +239,7 @@ describe('Trace Plugin Loader', () => {
       });
     });
 
-    it(`doesn't load plugins with falsey paths`, () => {
+    it("doesn't load plugins with falsey paths", () => {
       const loader = makePluginLoader({
         plugins: {'small-number': ''},
       }).activate();

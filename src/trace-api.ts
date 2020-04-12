@@ -233,10 +233,7 @@ export class StackdriverTracer implements Tracer {
 
     const traceId = traceContext
       ? traceContext.traceId
-      : uuid
-          .v4()
-          .split('-')
-          .join('');
+      : uuid.v4().split('-').join('');
     let rootContext: RootSpan & RootContext;
 
     // Create an "untraced" root span (one that won't be published) if the
@@ -306,7 +303,7 @@ export class StackdriverTracer implements Tracer {
     options = options || {name: ''};
     const rootSpan = cls.get().getContext();
     if (rootSpan.type === SpanType.ROOT) {
-      if (!!rootSpan.span.endTime) {
+      if (rootSpan.span.endTime) {
         // A closed root span suggests that we either have context confusion or
         // some work is being done after the root request has been completed.
         // The first case could lead to a memory leak, if somehow all spans end

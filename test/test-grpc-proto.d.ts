@@ -12,10 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { handleUnaryCall, handleClientStreamingCall, handleServerStreamingCall, handleBidiStreamingCall, Client, requestCallback, ClientUnaryCall, ClientWritableStream, ClientReadableStream, ClientDuplexStream } from 'grpc';
+import {
+  handleUnaryCall,
+  handleClientStreamingCall,
+  handleServerStreamingCall,
+  handleBidiStreamingCall,
+  Client,
+  requestCallback,
+  ClientUnaryCall,
+  ClientWritableStream,
+  ClientReadableStream,
+  ClientDuplexStream,
+} from 'grpc';
 
-export type TestRequest = { n: number };
-export type TestResponse = { n: number };
+export type TestRequest = {n: number};
+export type TestResponse = {n: number};
 export type Tester = {
   TestUnary?: handleUnaryCall<TestRequest, TestResponse>;
   TestClientStream?: handleClientStreamingCall<TestRequest, TestResponse>;
@@ -30,8 +41,13 @@ export type Tester = {
 // Incomplete definition for Tester client. Overloads and lowercase aliases are
 // not included for now, as they're not used anywhere.
 export type TesterClient = Client & {
-  TestUnary: (arg: TestRequest, cb: requestCallback<TestResponse>) => ClientUnaryCall;
-  TestClientStream: (cb: requestCallback<TestResponse>) => ClientWritableStream<TestRequest>;
+  TestUnary: (
+    arg: TestRequest,
+    cb: requestCallback<TestResponse>
+  ) => ClientUnaryCall;
+  TestClientStream: (
+    cb: requestCallback<TestResponse>
+  ) => ClientWritableStream<TestRequest>;
   TestServerStream: (arg: TestRequest) => ClientReadableStream<TestResponse>;
   TestBidiStream: () => ClientDuplexStream<TestRequest, TestResponse>;
 };

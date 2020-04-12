@@ -36,9 +36,9 @@ import * as restify_5 from './restify_5'; // restify@5
 
 //---other imports---//
 
-import { EventEmitter } from 'events';
-import { Server } from 'http';
-import { Readable } from 'stream';
+import {EventEmitter} from 'events';
+import {Server} from 'http';
+import {Readable} from 'stream';
 
 //---koa@1---//
 
@@ -58,7 +58,7 @@ declare namespace koa_1 {
   // References:
   // https://github.com/koajs/koa/issues/533
   // https://github.com/koajs/koa/blob/master/History.md#200-alpha1--2015-10-22
-  interface Context extends koa_2.Context {}
+  type Context = koa_2.Context;
 }
 
 //---pg@6---//
@@ -72,10 +72,10 @@ declare namespace pg_6 {
   // References:
   // https://node-postgres.com/guides/upgrading#client-query-on
   // https://github.com/brianc/node-postgres/blob/v6.4.2/lib/client.js#L355
-  type QueryReturnValue = (
-    pg_7.QueryConfig &
-    { callback?: (err: Error|null, res?: pg_7.QueryResult) => void }
-  ) & (({ submit: Function } & Readable) | (pg_7.Query & PromiseLike<any>));
+  type QueryReturnValue = (pg_7.QueryConfig & {
+    callback?: (err: Error | null, res?: pg_7.QueryResult) => void;
+  }) &
+    (({submit: Function} & Readable) | (pg_7.Query & PromiseLike<any>));
 
   class Client {
     query(...args: any[]): QueryReturnValue;
@@ -94,5 +94,5 @@ export {
   koa_2,
   pg_6,
   pg_7,
-  restify_5
+  restify_5,
 };

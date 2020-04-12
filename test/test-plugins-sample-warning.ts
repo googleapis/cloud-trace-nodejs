@@ -11,61 +11,65 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
 // Prereqs:
 // Start docker daemon
 //   ex) docker -d
 // Run a mongo image binding the mongo port
 //   ex) docker run -p 27017:27017 -d mongo
-var common = require('./plugins/common'/*.js*/);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const common = require('./plugins/common' /*.js*/);
 
-var assert = require('assert');
-var http = require('http');
+import * as assert from 'assert';
+import * as http from 'http';
+import {describe, it, before, beforeEach, afterEach} from 'mocha';
 
-describe('express + dbs', function() {
-  var untracedHttpSpanCount = 0;
-  var oldWarn;
-  var agent;
+describe('express + dbs', () => {
+  let untracedHttpSpanCount = 0;
+  let oldWarn;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let agent;
 
-  before(function() {
+  before(() => {
     agent = require('../..').start({
       projectId: '0',
       samplingRate: 0,
-      ignoreUrls: ['/ignore-me']
+      ignoreUrls: ['/ignore-me'],
     });
   });
 
-  beforeEach(function() {
-    oldWarn = common.replaceWarnLogger(function(msg) {
+  beforeEach(() => {
+    oldWarn = common.replaceWarnLogger(msg => {
       if (msg.indexOf('http') !== -1) {
         untracedHttpSpanCount++;
       }
     });
   });
 
-  afterEach(function() {
+  afterEach(() => {
     common.replaceWarnLogger(oldWarn);
     untracedHttpSpanCount = 0;
   });
 
-  it('mongo should not warn', function(done) {
-    var mongoose = require('./plugins/fixtures/mongoose4');
-    var express = require('./plugins/fixtures/express4');
+  it('mongo should not warn', done => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mongoose = require('./plugins/fixtures/mongoose4');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const express = require('./plugins/fixtures/express4');
 
-    var app = express();
-    app.get('/', function (req, res) {
-      mongoose.connect('mongodb://localhost:27017/testdb', function(err) {
+    const app = express();
+    app.get('/', (req, res) => {
+      mongoose.connect('mongodb://localhost:27017/testdb', err => {
         assert(!err, 'Skipping: no mongo server found at localhost:27017.');
-        mongoose.connection.close(function(err) {
+        mongoose.connection.close(err => {
           assert(!err);
           res.sendStatus(200);
         });
       });
     });
-    var server = app.listen(common.serverPort, function() {
-      http.get({port: common.serverPort}, function(res) {
-        http.get({port: common.serverPort}, function(res) {
+    const server = app.listen(common.serverPort, () => {
+      http.get({port: common.serverPort}, () => {
+        http.get({port: common.serverPort}, () => {
           server.close();
           common.cleanTraces();
           assert.strictEqual(untracedHttpSpanCount, 2);
@@ -75,20 +79,22 @@ describe('express + dbs', function() {
     });
   });
 
-  it('redis should not warn', function(done) {
-    var redis = require('./plugins/fixtures/redis2.3');
-    var express = require('./plugins/fixtures/express4');
+  it('redis should not warn', done => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const redis = require('./plugins/fixtures/redis2.3');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const express = require('./plugins/fixtures/express4');
 
-    var app = express();
-    app.get('/', function (req, res) {
-      var client = redis.createClient();
-      client.quit(function() {
+    const app = express();
+    app.get('/', (req, res) => {
+      const client = redis.createClient();
+      client.quit(() => {
         res.sendStatus(200);
       });
     });
-    var server = app.listen(common.serverPort + 1, function() {
-      http.get({port: common.serverPort + 1}, function(res) {
-        http.get({port: common.serverPort + 1}, function(res) {
+    const server = app.listen(common.serverPort + 1, () => {
+      http.get({port: common.serverPort + 1}, () => {
+        http.get({port: common.serverPort + 1}, () => {
           server.close();
           common.cleanTraces();
           assert.strictEqual(untracedHttpSpanCount, 2);
@@ -98,21 +104,22 @@ describe('express + dbs', function() {
     });
   });
 
-  it('http should not warn', function(done) {
-    var express = require('./plugins/fixtures/express4');
+  it('http should not warn', done => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const express = require('./plugins/fixtures/express4');
 
-    var app = express();
+    const app = express();
     app.get('/ignore-me', (req, res) => {
       res.sendStatus(200);
     });
-    app.get('/', function (req, res) {
-      http.get(`http://localhost:${common.serverPort + 2}/ignore-me`, function() {
+    app.get('/', (req, res) => {
+      http.get(`http://localhost:${common.serverPort + 2}/ignore-me`, () => {
         res.sendStatus(200);
       });
     });
-    var server = app.listen(common.serverPort + 2, function() {
-      http.get({port: common.serverPort + 2}, function(res) {
-        http.get({port: common.serverPort + 2}, function(res) {
+    const server = app.listen(common.serverPort + 2, () => {
+      http.get({port: common.serverPort + 2}, () => {
+        http.get({port: common.serverPort + 2}, () => {
           server.close();
           common.cleanTraces();
           assert.strictEqual(untracedHttpSpanCount, 2);
@@ -122,29 +129,32 @@ describe('express + dbs', function() {
     });
   });
 
-  var mysql_implementations = ['mysql-2', 'mysql2-1'];
-  mysql_implementations.forEach(function(impl) {
-    it(impl + ' should not warn', function(done) {
-      var mysql = require('./plugins/fixtures/' + impl);
-      var express = require('./plugins/fixtures/express4');
-      var pool = mysql.createPool(require('./mysql-config'/*.js*/));
+  const mysql_implementations = ['mysql-2', 'mysql2-1'];
+  mysql_implementations.forEach(impl => {
+    it(impl + ' should not warn', done => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const mysql = require('./plugins/fixtures/' + impl);
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const express = require('./plugins/fixtures/express4');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const pool = mysql.createPool(require('./mysql-config' /*.js*/));
 
-      var app = express();
+      const app = express();
       app.get('/ignore-me', (req, res) => {
         res.sendStatus(200);
       });
-      app.get('/', function (req, res) {
-        http.get(`http://localhost:${common.serverPort + 3}/ignore-me`, function() {
-          pool.getConnection(function(err, conn) {
-            conn.query('SHOW COLUMNS FROM t', function(err) {
+      app.get('/', (req, res) => {
+        http.get(`http://localhost:${common.serverPort + 3}/ignore-me`, () => {
+          pool.getConnection((err, conn) => {
+            conn.query('SHOW COLUMNS FROM t', () => {
               res.sendStatus(200);
             });
           });
         });
       });
-      var server = app.listen(common.serverPort + 3, function() {
-        http.get({port: common.serverPort + 3}, function(res) {
-          http.get({port: common.serverPort + 3}, function(res) {
+      const server = app.listen(common.serverPort + 3, () => {
+        http.get({port: common.serverPort + 3}, () => {
+          http.get({port: common.serverPort + 3}, () => {
             pool.end();
             server.close();
             common.cleanTraces();

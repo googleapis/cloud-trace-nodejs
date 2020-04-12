@@ -15,7 +15,7 @@
 // TODO(kjin): This file should supercede plugins/common.ts.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe} from 'mocha';
 import * as fs from 'fs';
 import * as semver from 'semver';
 
@@ -166,6 +166,7 @@ interface FixtureHelper<T> {
  * @param moduleName The module name to look up.
  */
 function getFixturesForModule<T>(moduleName: string): Array<FixtureHelper<T>> {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const pluginFixtures: PluginFixtures = require('./fixtures/plugin-fixtures');
   const keys = Object.keys(pluginFixtures);
   return keys
