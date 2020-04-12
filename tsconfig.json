@@ -51,6 +51,7 @@
     "test/test-util.ts",
     "test/trace.ts",
     "test/utils.ts",
-    "test/web-frameworks/*.ts"
+    "test/web-frameworks/*.ts",
+    "system-test/*.ts"
   ]
 }
