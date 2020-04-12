@@ -8,7 +8,6 @@
 
 const [, , ...steps] = process.argv;
 const {
-  CIRCLE_PR_NUMBER,
   TRACE_TEST_EXCLUDE_INTEGRATION,
   TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY,
   TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV
@@ -22,7 +21,7 @@ import { initTestFixtures } from './init-test-fixtures';
 import { reportCoverage } from './report-coverage';
 import { runTests } from './run-tests';
 import { testNonInterference } from './test-non-interference';
-import { BUILD_DIRECTORY, existsP, spawnP } from './utils';
+import { BUILD_DIRECTORY, spawnP } from './utils';
 
 // The identifying components in the service account credentials file path.
 const projectID = 'long-door-651';
@@ -114,22 +113,6 @@ async function run(steps: string[]) {
             coverage: true,
             timeout: 4000
           });
-          break;
-        case 'run-system-tests':
-          if (CIRCLE_PR_NUMBER) {
-            console.log('> Not running system tests in PRs');
-          } else {
-            await spawnP(
-              'npm', ['install'], { cwd: 'system-test' }
-            );
-            await runTests({
-              includeGlobs: [
-                `system-test/*.js`,
-              ],
-              rootDir: '.',
-              coverage: false
-            });
-          }
           break;
         case 'report-coverage':
           await reportCoverage();
