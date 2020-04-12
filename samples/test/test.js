@@ -15,16 +15,16 @@
 'use strict';
 
 const execa = require('execa');
+const {describe, it} = require('mocha');
 
 describe('trace samples', () => {
-
   it('should run the quickstart', done => {
     // select a random port between 49152 and 65535
-    const PORT = Math.floor((Math.random() * (65535-49152))) + 49152;
+    const PORT = Math.floor(Math.random() * (65535 - 49152)) + 49152;
     const proc = execa('node', ['app.js'], {
       env: {
-        PORT
-      }
+        PORT,
+      },
     });
     proc.stdout.on('data', message => {
       // Listen to stdout and look for messages.  If we get a `Press CTRL+...`
@@ -37,11 +37,10 @@ describe('trace samples', () => {
           done();
         }, 1000);
       }
-    })
+    });
     proc.stderr.on('data', message => {
       // if anything comes through stderr, assume a bug
       done(new Error(message.toString('utf8')));
     });
   });
-
 });

@@ -11,13 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
-var shimmer = require('shimmer');
+import * as shimmer from 'shimmer';
 
 function wrapModuleRoot2(Pool, api) {
-  shimmer.wrap(Pool.Pool.prototype, 'acquire', function(original) {
-    return function(callback, priority) {
+  shimmer.wrap(Pool.Pool.prototype, 'acquire', original => {
+    return function (callback, priority) {
       return original.call(this, api.wrap(callback), priority);
     };
   });
@@ -27,8 +26,8 @@ module.exports = [
   {
     file: '',
     versions: '2',
-    patch: wrapModuleRoot2
-  }
+    patch: wrapModuleRoot2,
+  },
 ];
 
 export default {};

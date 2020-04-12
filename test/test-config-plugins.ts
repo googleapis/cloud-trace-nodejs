@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
-
+import {describe, it, before, after, afterEach} from 'mocha';
 import {defaultConfig} from '../src/config';
 import {StackdriverTracerComponents} from '../src/trace-api';
 import {PluginLoader, PluginLoaderConfig} from '../src/trace-plugin-loader';

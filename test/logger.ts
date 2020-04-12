@@ -20,7 +20,7 @@ const PASS_THROUGH_LOG_LEVEL = Number(process.env.GCLOUD_TEST_LOG_LEVEL || 0);
 // tslint:disable-next-line:variable-name
 const OriginalLogger = Logger;
 
-// tslint:disable-next-line:no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LoggerFunction<R> = (message: any, ...args: any[]) => R;
 
 export class TestLogger extends Logger {
@@ -40,8 +40,10 @@ export class TestLogger extends Logger {
 
   private makeLoggerFn(logLevel: keyof Logger): LoggerFunction<this> {
     // TODO(kjin): When we drop support for Node 4, use spread args.
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
-    return function(this: null) {
+    return function (this: null) {
+      // eslint-disable-next-line prefer-rest-params
       const args = Array.prototype.slice.call(arguments, 0);
       that.logs[logLevel].push(args.join(' '));
       that.innerLogger[logLevel].apply(this, args);

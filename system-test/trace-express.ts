@@ -68,11 +68,12 @@ describe('express + datastore', () => {
   it('should be able to trace datastore (grpc) calls', async () => {
     // Build a unique path so that we get unique trace span names.
     const testPath = `/test-${uuid.v4()}`;
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const express = require('express');
     const datastore = new Datastore();
 
     const app = express();
-    // tslint:disable-next-line no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     app.get(testPath, async (_: {}, res: any) => {
       // Make a query to a non-existent datastore entity. This will get traced
       // regardless.
@@ -82,7 +83,7 @@ describe('express + datastore', () => {
       res.status(200).send('hello\n');
     });
 
-    // tslint:disable-next-line no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let server: any;
     await new Promise((resolve, reject) => {
       server = app.listen(8080, async () => {
@@ -104,7 +105,7 @@ describe('express + datastore', () => {
       });
     });
 
-    // tslint:disable-next-line no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function verifyTraces(traces: any[]) {
       assert.strictEqual(traces.length, 1, 'there should be exactly one trace');
       const trace = traces[0];
@@ -113,7 +114,7 @@ describe('express + datastore', () => {
         'should be at least 2 spans: parent, child'
       );
       const parent = trace.spans[0];
-      // tslint:disable-next-line no-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const child = trace.spans.find((span: any) => {
         const urlLabelValue = span.labels[tracer.labels.HTTP_URL_LABEL_KEY];
         return (

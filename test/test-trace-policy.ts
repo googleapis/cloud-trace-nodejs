@@ -186,7 +186,7 @@ describe('TracePolicy', () => {
     const NUM_SECONDS = 10;
     const testCases = [0.1, 0.5, 1, 10, 50, 150, 200, 500, 1000];
     for (const testCase of testCases) {
-      it(`should throttle traces when samplingRate = ` + testCase, () => {
+      it('should throttle traces when samplingRate = ' + testCase, () => {
         const policy = new TracePolicyForTest({samplingRate: testCase});
         const expected = NUM_SECONDS * testCase;
         let actual = 0;

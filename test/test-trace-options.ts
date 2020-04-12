@@ -11,36 +11,36 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
-var common = require('./plugins/common'/*.js*/);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const common = require('./plugins/common' /*.js*/);
+import * as assert from 'assert';
+import * as http from 'http';
+import {describe, it, before} from 'mocha';
 
-var assert = require('assert');
-var http = require('http');
-
-describe('express + http with trace options header', function() {
-  var agent;
-  var express;
-  before(function() {
+describe('express + http with trace options header', () => {
+  let agent;
+  let express;
+  before(() => {
     agent = require('../..').start({
       projectId: '0',
-      samplingRate: 0
+      samplingRate: 0,
     });
     express = require('express');
   });
 
-  it('should trace when enabled', function(done) {
-    var app = express();
-    app.get('/', function (req, res) {
-      setTimeout(function() {
+  it('should trace when enabled', done => {
+    const app = express();
+    app.get('/', (req, res) => {
+      setTimeout(() => {
         res.send('Hello World');
       }, 50);
     });
-    var server = app.listen(common.serverPort, function() {
-      var shouldTraceOptions = [1,3,5,7];
-      var shouldNotTraceOptions = [0,2,4,6];
-      sendRequests(agent, shouldTraceOptions, shouldTraceOptions.length, function() {
-        sendRequests(agent, shouldNotTraceOptions, 0, function() {
+    const server = app.listen(common.serverPort, () => {
+      const shouldTraceOptions = [1, 3, 5, 7];
+      const shouldNotTraceOptions = [0, 2, 4, 6];
+      sendRequests(agent, shouldTraceOptions, shouldTraceOptions.length, () => {
+        sendRequests(agent, shouldNotTraceOptions, 0, () => {
           server.close();
           done();
         });
@@ -50,13 +50,13 @@ describe('express + http with trace options header', function() {
 });
 
 function sendRequests(agent, options, expectedTraceCount, done) {
-  var doneCount = 0;
-  options.forEach(function(option) {
-    var headers = {};
+  let doneCount = 0;
+  options.forEach(option => {
+    const headers = {};
     headers['x-cloud-trace-context'] = '42/1729;o=' + option;
-    http.get({port: common.serverPort, headers: headers}, function(res) {
-      res.on('data', function() {});
-      res.on('end', function() {
+    http.get({port: common.serverPort, headers: headers}, res => {
+      res.on('data', () => {});
+      res.on('end', () => {
         if (++doneCount === options.length) {
           assert.strictEqual(common.getTraces().length, expectedTraceCount);
           common.cleanTraces();

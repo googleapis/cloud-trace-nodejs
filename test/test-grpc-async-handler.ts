@@ -14,7 +14,7 @@
 
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpcModule from 'grpc';
-
+import {describe, it, before, afterEach, after} from 'mocha';
 import {Tester, TesterClient} from './test-grpc-proto';
 import * as traceTestModule from './trace';
 import {describeInterop} from './utils';
@@ -93,9 +93,7 @@ describeInterop<Grpc>('grpc', fixture => {
       const tracer = traceTestModule.get();
       await tracer.runInRootSpan({name: 'client-outer'}, async span => {
         await new Promise((resolve, reject) =>
-          client.TestUnary({n: 0}, (err, res) =>
-            err ? reject(err) : resolve()
-          )
+          client.TestUnary({n: 0}, err => (err ? reject(err) : resolve()))
         );
         span.endSpan();
       });
@@ -112,9 +110,7 @@ describeInterop<Grpc>('grpc', fixture => {
       const tracer = traceTestModule.get();
       await tracer.runInRootSpan({name: 'client-outer'}, async span => {
         await new Promise((resolve, reject) =>
-          client
-            .TestClientStream((err, res) => (err ? reject(err) : resolve()))
-            .end()
+          client.TestClientStream(err => (err ? reject(err) : resolve())).end()
         );
         span.endSpan();
       });

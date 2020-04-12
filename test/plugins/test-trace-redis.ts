@@ -11,74 +11,78 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
-import { TraceLabels } from '../../src/trace-labels';
-import { describeInterop } from '../utils';
+import {TraceLabels} from '../../src/trace-labels';
+import {describeInterop} from '../utils';
 
 // Prereqs:
 // Start docker daemon
 //   ex) docker -d
 // Run a redis image binding the redis port
 //   ex) docker run -p 6379:6379 -d redis
-var common = require('./common'/*.js*/);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const common = require('./common' /*.js*/);
 
-var RESULT_SIZE = 5;
+const RESULT_SIZE = 5;
 
-var assert = require('assert');
+import * as assert from 'assert';
+import {describe, it, before, beforeEach, afterEach} from 'mocha';
 
-describe('redis', function() {
-  var agent;
+describe('redis', () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let agent;
 
-  before(function() {
+  before(() => {
     agent = require('../../..').start({
       projectId: '0',
       samplingRate: 0,
       enhancedDatabaseReporting: true,
-      databaseResultReportingSize: RESULT_SIZE
+      databaseResultReportingSize: RESULT_SIZE,
     });
   });
 
-  var client;
-  describeInterop('redis', function(fixture) {
-    var redis;
-    before(function() {
+  let client;
+  describeInterop('redis', fixture => {
+    let redis;
+    before(() => {
       redis = fixture.require();
     });
 
-    beforeEach(function(done) {
+    beforeEach(done => {
       client = redis.createClient();
-      client.on('error', function(err) {
+      client.on('error', err => {
         assert(false, 'redis error ' + err);
       });
-      client.set('beforeEach', 42, function() {
+      client.set('beforeEach', 42, () => {
         common.cleanTraces();
         done();
       });
     });
 
-    afterEach(function(done) {
-      client.quit(function() {
+    afterEach(done => {
+      client.quit(() => {
         common.cleanTraces();
         done();
       });
     });
 
-    it('should accurately measure get time', function(done) {
-      common.runInTransaction(function(endTransaction) {
-        client.get('beforeEach', function(err, n) {
+    it('should accurately measure get time', done => {
+      common.runInTransaction(endTransaction => {
+        client.get('beforeEach', (err, n) => {
           endTransaction();
           assert.strictEqual(Number(n), 42);
-          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-get'));
+          const trace = common.getMatchingSpan(
+            redisPredicate.bind(null, 'redis-get')
+          );
           assert(trace);
           done();
         });
       });
     });
 
-    it('should propagate context', function(done) {
-      common.runInTransaction(function(endTransaction) {
-        client.get('beforeEach', function(err, n) {
+    it('should propagate context', done => {
+      common.runInTransaction(endTransaction => {
+        client.get('beforeEach', () => {
           assert.ok(common.hasContext());
           endTransaction();
           done();
@@ -86,40 +90,51 @@ describe('redis', function() {
       });
     });
 
-    it('should accurately measure set time', function(done) {
-      common.runInTransaction(function(endTransaction) {
-        client.set('key', 'redis_value', function(err) {
+    it('should accurately measure set time', done => {
+      common.runInTransaction(endTransaction => {
+        client.set('key', 'redis_value', () => {
           endTransaction();
-          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-set'));
+          const trace = common.getMatchingSpan(
+            redisPredicate.bind(null, 'redis-set')
+          );
           assert(trace);
           done();
         });
       });
     });
 
-    it('should accurately measure hset time', function(done) {
-      common.runInTransaction(function(endTransaction) {
+    it('should accurately measure hset time', done => {
+      common.runInTransaction(endTransaction => {
         // Test error case as hset requires 3 parameters
-        client.hset('key', 'redis_value', function(err) {
+        client.hset('key', 'redis_value', () => {
           endTransaction();
-          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
+          const trace = common.getMatchingSpan(
+            redisPredicate.bind(null, 'redis-hset')
+          );
           assert(trace);
           done();
         });
       });
     });
 
-    it('should remove trace frames from stack', function(done) {
-      common.runInTransaction(function(endTransaction) {
+    it('should remove trace frames from stack', done => {
+      common.runInTransaction(endTransaction => {
         // Test error case as hset requires 3 parameters
-        client.hset('key', 'redis_value', function(err) {
+        client.hset('key', 'redis_value', () => {
           endTransaction();
-          var trace = common.getMatchingSpan(redisPredicate.bind(null, 'redis-hset'));
-          var labels = trace.labels;
-          var stackTrace = JSON.parse(labels[TraceLabels.STACK_TRACE_DETAILS_KEY]);
+          const trace = common.getMatchingSpan(
+            redisPredicate.bind(null, 'redis-hset')
+          );
+          const labels = trace.labels;
+          const stackTrace = JSON.parse(
+            labels[TraceLabels.STACK_TRACE_DETAILS_KEY]
+          );
           // Ensure that our patch is on top of the stack
           assert(
-            stackTrace.stack_frame[0].method_name.indexOf('send_command_trace') !== -1);
+            stackTrace.stack_frame[0].method_name.indexOf(
+              'send_command_trace'
+            ) !== -1
+          );
           done();
         });
       });
@@ -128,8 +143,7 @@ describe('redis', function() {
 });
 
 function redisPredicate(id, span) {
-  return span.name.length >= id.length &&
-      span.name.substr(0, id.length) === id;
+  return span.name.length >= id.length && span.name.substr(0, id.length) === id;
 }
 
 export default {};

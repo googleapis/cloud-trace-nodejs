@@ -11,51 +11,55 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
 // Prereqs:
 // Start docker daemon
 //   ex) docker -d
 // Run a redis image binding the redis port
 //   ex) docker run -p 6379:6379 -d redis
-var assert = require('assert');
-var common = require('./common'/*.js*/);
+import * as assert from 'assert';
+import {describe, it, before, after} from 'mocha';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const common = require('./common' /*.js*/);
 
-describe('multiple instrumentations of the same module', function() {
-  var agent;
-  var clientv0;
-  var clientv2;
+describe('multiple instrumentations of the same module', () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let agent;
+  let clientv0;
+  let clientv2;
 
-  before(function() {
+  before(() => {
     agent = require('../../..').start({
       projectId: '0',
       enhancedDatabaseReporting: true,
-      samplingRate: 0
+      samplingRate: 0,
     });
     clientv0 = require('./fixtures/redis0.12').createClient();
-    clientv0.on('error', function(err) {
+    clientv0.on('error', err => {
       assert(false, 'redisv0 error ' + err);
     });
     clientv2 = require('./fixtures/redis2.x').createClient();
-    clientv2.on('error', function(err) {
+    clientv2.on('error', err => {
       assert(false, 'redisv2 error ' + err);
     });
   });
 
-  after(function(done) {
-    clientv0.quit(function() {
-      clientv2.quit(function() {
+  after(done => {
+    clientv0.quit(() => {
+      clientv2.quit(() => {
         done();
       });
     });
   });
 
-  it('should record spans', function(done) {
-    common.runInTransaction(function(endTransaction) {
-      clientv0.get('v0', function(err, n) {
-        clientv2.get('v2', function(err, n) {
+  it('should record spans', done => {
+    common.runInTransaction(endTransaction => {
+      clientv0.get('v0', () => {
+        clientv2.get('v2', () => {
           endTransaction();
-          var spans = common.getMatchingSpans(redisPredicate.bind(null, 'redis-get'));
+          const spans = common.getMatchingSpans(
+            redisPredicate.bind(null, 'redis-get')
+          );
           assert.strictEqual(spans.length, 2);
           assert.strictEqual(spans[0].labels.arguments, '["v0"]');
           assert.strictEqual(spans[0].labels.command, 'get');
@@ -69,8 +73,7 @@ describe('multiple instrumentations of the same module', function() {
 });
 
 function redisPredicate(id, span) {
-  return span.name.length >= id.length &&
-      span.name.substr(0, id.length) === id;
+  return span.name.length >= id.length && span.name.substr(0, id.length) === id;
 }
 
 export default {};

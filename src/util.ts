@@ -17,7 +17,8 @@ import * as sourceMapSupport from 'source-map-support';
 const {
   hexToDec,
   decToHex,
-}: {[key: string]: (input: string) => string} = require('hex2dec');
+}: // eslint-disable-next-line @typescript-eslint/no-var-requires
+{[key: string]: (input: string) => string} = require('hex2dec');
 
 export {hexToDec, decToHex};
 
@@ -105,10 +106,11 @@ export function lastOf<T>(
   ...otherValues: Array<T | null | undefined>
 ): T {
   for (let i = otherValues.length - 1; i >= 0; i--) {
-    // tslint:disable:no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (
       otherValues[i] !== null &&
       otherValues[i] !== undefined &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (typeof otherValues[i] !== 'number' || !isNaN(otherValues[i] as any))
     ) {
       return otherValues[i] as T;

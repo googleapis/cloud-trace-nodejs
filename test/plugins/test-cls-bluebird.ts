@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after} from 'mocha';
 
 import {bluebird_3 as BluebirdPromise} from '../../src/plugins/types';
 import {Trace} from '../../src/trace';
@@ -160,7 +160,7 @@ describe('Patch plugin for bluebird', () => {
     } as TestCase,
   ];
 
-  // tslint:disable-next-line:no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   testCases.forEach((testCase: TestCase<any>) => {
     it(`enables context propagation in the same way as native promises for test case: ${testCase.description}`, async () => {
       const actual = (

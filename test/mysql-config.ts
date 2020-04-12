@@ -16,5 +16,5 @@ export = {
   host: 'localhost',
   user: 'root',
   password: 'Password12!',
-  database: 'test'
+  database: 'test',
 };

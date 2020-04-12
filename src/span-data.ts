@@ -100,7 +100,7 @@ export abstract class BaseSpanData implements Span {
     };
   }
 
-  // tslint:disable-next-line:no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addLabel(key: string, value: any) {
     const k = traceUtil.truncate(key, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT);
     const stringValue = typeof value === 'string' ? value : util.inspect(value);
@@ -112,7 +112,7 @@ export abstract class BaseSpanData implements Span {
   }
 
   endSpan(timestamp?: Date) {
-    if (!!this.span.endTime) {
+    if (this.span.endTime) {
       return;
     }
     timestamp = timestamp || new Date();
@@ -153,7 +153,7 @@ export class RootSpanData extends BaseSpanData implements RootSpan {
   }
 
   endSpan(timestamp?: Date) {
-    if (!!this.span.endTime) {
+    if (this.span.endTime) {
       return;
     }
     super.endSpan(timestamp);
@@ -190,7 +190,7 @@ export class ChildSpanData extends BaseSpanData {
   }
 
   endSpan(timestamp?: Date) {
-    if (!!this.span.endTime) {
+    if (this.span.endTime) {
       return;
     }
     super.endSpan(timestamp);
@@ -215,7 +215,7 @@ function createPhantomSpanData<T extends SpanType>(
         getTraceContext() {
           return null;
         },
-        // tslint:disable-next-line:no-any
+        // eslint-disable-next-line
         addLabel(key: string, value: any) {},
         endSpan() {},
       },

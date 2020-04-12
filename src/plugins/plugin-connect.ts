@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import {IncomingMessage, ServerResponse} from 'http';
+// eslint-disable-next-line node/no-deprecated-api
 import {parse as urlParse} from 'url';
 
 import {PluginTypes} from '..';
@@ -69,8 +70,9 @@ function createMiddleware(
 
       // wrap end
       const originalEnd = res.end;
-      res.end = function(this: ServerResponse) {
+      res.end = function (this: ServerResponse) {
         res.end = originalEnd;
+        // eslint-disable-next-line prefer-rest-params
         const returned = res.end.apply(this, arguments);
 
         root.addLabel('connect/request.route.path', req.originalUrl);
@@ -90,7 +92,7 @@ const plugin: PluginTypes.Plugin = [
     file: '',
     versions: SUPPORTED_VERSIONS,
     intercept: (connect, api) => {
-      return function(this: {}) {
+      return function (this: {}) {
         const app = connect();
         app.use(createMiddleware(api));
         return app;
