@@ -1,5 +1,17 @@
 # Changelog
 
+### [4.2.6](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.5...v4.2.6) (2020-04-12)
+
+
+### Bug Fixes
+
+* apache license URL ([#468](https://www.github.com/googleapis/cloud-trace-nodejs/issues/468)) ([#1232](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1232)) ([ac7e886](https://www.github.com/googleapis/cloud-trace-nodejs/commit/ac7e886c178ca9c34502e9baa9eb190d23104347))
+* **deps:** update dependency @google-cloud/common to v3 ([#1225](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1225)) ([3609201](https://www.github.com/googleapis/cloud-trace-nodejs/commit/3609201994e3dd1d718cbcd236a9588c839ef2cb))
+* **deps:** update dependency @opencensus/propagation-stackdriver to v0.0.20 ([#1199](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1199)) ([4752aec](https://www.github.com/googleapis/cloud-trace-nodejs/commit/4752aec57bd988286176d5898f45d206b9885a41))
+* **deps:** update dependency @opencensus/propagation-stackdriver to v0.0.21 ([#1227](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1227)) ([4cd9088](https://www.github.com/googleapis/cloud-trace-nodejs/commit/4cd9088a48bfc94f514331a99cb14e90c01b3b4d))
+* **deps:** update dependency gcp-metadata to v4 ([#1219](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1219)) ([caf67be](https://www.github.com/googleapis/cloud-trace-nodejs/commit/caf67be26a5b02ebf6d7d3884cef75a2101a2052))
+* **deps:** update dependency uuid to v7 ([#1200](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1200)) ([129aead](https://www.github.com/googleapis/cloud-trace-nodejs/commit/129aead7cbbd301ae446a05a77d9a34266897742))
+
 ### [4.2.5](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.4...v4.2.5) (2020-01-06)
 
 
