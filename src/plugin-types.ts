@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // This file only describes public-facing interfaces.
-// tslint:disable:no-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 import {EventEmitter} from 'events';
 
@@ -24,6 +24,7 @@ import {TraceContext} from './util';
 
 export {TraceContext};
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Func<T> = (...args: any[]) => T;
 
 // Defines an interface for storing Trace-Agent related data on patched modules.
@@ -48,6 +49,7 @@ export interface Span {
    * @param key The label's key.
    * @param value The label's value.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   addLabel(key: string, value: any): void;
 
   /**
@@ -267,4 +269,5 @@ export interface Intercept<T> {
 
 export type Patch<T> = Monkeypatch<T> | Intercept<T>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Plugin = Array<Patch<any>>;

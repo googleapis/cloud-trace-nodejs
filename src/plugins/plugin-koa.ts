@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {IncomingMessage, ServerResponse} from 'http';
+import {ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
+// eslint-disable-next-line node/no-deprecated-api
 import {parse as urlParse} from 'url';
 
 import {PluginTypes} from '..';
@@ -29,7 +30,7 @@ type KoaContext = (koa_1.Context | koa_2.Context) & {
 
 interface KoaModule<T> {
   // TypeScript isn't expressive enough, but KoaModule#use should return `this`.
-  // tslint:disable-next-line:no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly prototype: {use: (m: T) => any};
 }
 
@@ -88,8 +89,9 @@ function startSpanForRequest<T>(
     root.addLabel(api.labels.HTTP_SOURCE_IP, ctx.request.ip);
 
     // wrap end
-    res.end = function(this: ServerResponse) {
+    res.end = function (this: ServerResponse) {
       res.end = originalEnd;
+      // eslint-disable-next-line prefer-rest-params
       const returned = res.end.apply(this, arguments);
 
       if (ctx.routePath) {
@@ -121,7 +123,7 @@ function createMiddleware(api: PluginTypes.Tracer): koa_1.Middleware {
       if (propagateContext) {
         // TS Iterator definition clashes with @types/node.
         // For some reason, this causes the next line to not pass type check.
-        // tslint:disable-next-line:no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         next.next = api.wrap(next.next as any);
       }
       return next;
@@ -152,6 +154,7 @@ function patchUse<T>(
         this._google_trace_patched = true;
         this.use(createMiddlewareFunction(api));
       }
+      // eslint-disable-next-line prefer-rest-params
       return use.apply(this, arguments);
     };
   });

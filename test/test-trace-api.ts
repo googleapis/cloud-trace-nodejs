@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after, afterEach} from 'mocha';
 
 import {cls, TraceCLS, TraceCLSMechanism} from '../src/cls';
 import {
@@ -22,7 +22,6 @@ import {
   OpenCensusPropagation,
   RequestDetails,
   SetHeaderFunction as HeaderSetter,
-  TracePolicy,
 } from '../src/config';
 import {SpanType} from '../src/constants';
 import {
@@ -190,7 +189,7 @@ describe('Trace Interface', () => {
         for (let i = 0; i < 9; i++) {
           tracer.createChildSpan({name: `span-${i + 10}`}).endSpan();
         }
-        const child = tracer.createChildSpan({name: `span-19`});
+        const child = tracer.createChildSpan({name: 'span-19'});
         assert.ok(!tracer.isRealSpan(child));
         assert.strictEqual(logger.getNumLogsWith('error', '[span-19]'), 1);
         rootSpan.endSpan();

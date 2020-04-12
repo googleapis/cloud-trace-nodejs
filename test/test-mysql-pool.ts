@@ -11,60 +11,68 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
-var common = require('./plugins/common'/*.js*/);
-var assert = require('assert');
-var http = require('http');
-var semver = require('semver');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const common = require('./plugins/common' /*.js*/);
+import * as assert from 'assert';
+import * as http from 'http';
+import * as semver from 'semver';
+import {describe, it, before} from 'mocha';
 
 // hapi 13 and hapi-plugin-mysql uses const
 if (semver.satisfies(process.version, '>=4')) {
-  describe('test-trace-mysql', function() {
-    var agent;
-    var Hapi;
-    before(function() {
+  describe('test-trace-mysql', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let agent;
+    let Hapi;
+    before(() => {
       agent = require('../..').start({
         projectId: '0',
         samplingRate: 0,
-        enhancedDatabaseReporting: true
+        enhancedDatabaseReporting: true,
       });
       Hapi = require('./plugins/fixtures/hapi16');
     });
 
-    it('should work with connection pool access', function(done) {
-      var server = new Hapi.Server();
-      server.connection({ port: common.serverPort });
-      server.register({
-        register: require('./plugins/fixtures/hapi-plugin-mysql3'),
-        options: require('./mysql-config'/*.js*/)
-      }, function (err) {
-        assert(!err);
-        server.route({
-          method: 'GET',
-          path: '/',
-          handler: function (request, reply) {
-            request.app.db.query('SELECT * FROM t', function(err, res) {
-              return reply('hello');
-            });
-          }
-        });
-        server.start(function(err) {
+    it('should work with connection pool access', done => {
+      const server = new Hapi.Server();
+      server.connection({port: common.serverPort});
+      server.register(
+        {
+          register: require('./plugins/fixtures/hapi-plugin-mysql3'),
+          options: require('./mysql-config' /*.js*/),
+        },
+        err => {
           assert(!err);
-          http.get({port: common.serverPort}, function(res) {
-            var result = '';
-            res.on('data', function(data) { result += data; });
-            res.on('end', function() {
-              var spans = common.getMatchingSpans(function (span) {
-                return span.name === 'mysql-query';
+          server.route({
+            method: 'GET',
+            path: '/',
+            handler: function (request, reply) {
+              request.app.db.query('SELECT * FROM t', () => {
+                return reply('hello');
               });
-              assert.strictEqual(spans.length, 1);
-              assert.strictEqual(spans[0].labels.sql, 'SELECT * FROM t');
-              server.stop(done);
+            },
+          });
+          server.start(err => {
+            assert(!err);
+            http.get({port: common.serverPort}, res => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              let result = '';
+              res.on('data', data => {
+                result += data;
+              });
+              res.on('end', () => {
+                const spans = common.getMatchingSpans(span => {
+                  return span.name === 'mysql-query';
+                });
+                assert.strictEqual(spans.length, 1);
+                assert.strictEqual(spans[0].labels.sql, 'SELECT * FROM t');
+                server.stop(done);
+              });
             });
           });
-        });
-      });
+        }
+      );
     });
   });
 }

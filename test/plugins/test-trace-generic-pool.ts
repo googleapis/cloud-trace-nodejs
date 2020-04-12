@@ -11,59 +11,59 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
 import {FORCE_NEW} from '../../src/util';
+import * as assert from 'assert';
+import * as common from './common';
+import * as semver from 'semver';
+import {describe, it, before, after} from 'mocha';
 
-var assert = require('assert');
-var common = require('./common');
-var semver = require('semver');
+describe('generic-pool2', () => {
+  const ROOT_SPAN = 'root-span';
+  const CHILD_SPAN_1 = 'child-span-1';
+  const CHILD_SPAN_2 = 'child-span-2';
 
-describe('generic-pool2', function() {
-  var ROOT_SPAN = 'root-span';
-  var CHILD_SPAN_1 = 'child-span-1';
-  var CHILD_SPAN_2 = 'child-span-2';
-
-  var api;
-  var genericPool;
-  before(function() {
+  let api;
+  let genericPool;
+  before(() => {
     api = require('../../..').start({
       projectId: '0',
       samplingRate: 0,
-      [FORCE_NEW]: true
+      [FORCE_NEW]: true,
     });
     genericPool = require('./fixtures/generic-pool2');
   });
 
-  after(function() {
-    common.cleanTraces();
+  after(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (common as any).cleanTraces();
   });
 
-  it('preserves context', function(done) {
-    var config = {
+  it('preserves context', done => {
+    const config = {
       name: 'generic-pool2 test',
-      create: function(callback) {
-        callback(function() {
-          var childSpan = api.createChildSpan({ name: CHILD_SPAN_2 });
+      create: function (callback) {
+        callback(() => {
+          const childSpan = api.createChildSpan({name: CHILD_SPAN_2});
           assert.ok(childSpan);
           childSpan.endSpan();
         });
       },
-      destroy: function(fn) {
-      }
+      destroy: function () {},
     };
 
-    var pool = new genericPool.Pool(config);
-    api.runInRootSpan({ name: ROOT_SPAN }, function(span) {
-      pool.acquire(function(err, fn) {
+    const pool = new genericPool.Pool(config);
+    api.runInRootSpan({name: ROOT_SPAN}, span => {
+      pool.acquire((err, fn) => {
         assert.ifError(err);
-        var childSpan = api.createChildSpan({ name: CHILD_SPAN_1 });
+        const childSpan = api.createChildSpan({name: CHILD_SPAN_1});
         assert.ok(childSpan);
         fn();
         childSpan.endSpan();
         span.endSpan();
 
-        var spans = common.getTraces(api)[0].spans;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const spans = (common as any).getTraces(api)[0].spans;
         assert.ok(spans);
         assert.strictEqual(spans.length, 3);
         assert.strictEqual(spans[0].name, ROOT_SPAN);
@@ -76,81 +76,89 @@ describe('generic-pool2', function() {
   });
 });
 
-describe('generic-pool3', function() {
-  var agent;
-  var genericPool;
+describe('generic-pool3', () => {
+  let agent;
+  let genericPool;
   if (semver.satisfies(process.version, '<4')) {
-    console.log('Skipping testing generic-pool@3 on Node.js version ' +
-                process.version + ' that predates version 4.');
+    console.log(
+      'Skipping testing generic-pool@3 on Node.js version ' +
+        process.version +
+        ' that predates version 4.'
+    );
     return;
   }
 
-  before(function() {
+  before(() => {
     agent = require('../../..').start({
       projectId: '0',
       samplingRate: 0,
-      [FORCE_NEW]: true
+      [FORCE_NEW]: true,
     });
     genericPool = require('./fixtures/generic-pool3');
   });
 
-  after(function() {
-    common.cleanTraces();
+  after(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (common as any).cleanTraces();
   });
 
-  it ('preserves context', function() {
-    var ROOT_SPAN = 'root-span';
-    var CHILD_SPAN_1 = 'child-span-1';
-    var CHILD_SPAN_2 = 'child-span-2';
-    var CHILD_SPAN_3 = 'child-span-3';
+  it('preserves context', () => {
+    const ROOT_SPAN = 'root-span';
+    const CHILD_SPAN_1 = 'child-span-1';
+    const CHILD_SPAN_2 = 'child-span-2';
+    const CHILD_SPAN_3 = 'child-span-3';
 
-    var factory = {
-      create: function() {
-        return new Promise(function(resolve, reject) {
-          resolve(function(input) {
+    const factory = {
+      create: function () {
+        return new Promise(resolve => {
+          resolve(input => {
             assert.strictEqual(input, 'SomeInput');
-            var childSpan = agent.createChildSpan({ name: CHILD_SPAN_2 });
+            const childSpan = agent.createChildSpan({name: CHILD_SPAN_2});
             assert.ok(childSpan);
             childSpan.endSpan();
           });
         });
       },
 
-      destroy: function(fn) {
-        return new Promise(function(resolve) {
+      destroy: function () {
+        return new Promise(resolve => {
           resolve();
         });
-      }
+      },
     };
 
-    var opts = {
+    const opts = {
       max: 1,
-      min: 1
+      min: 1,
     };
 
-    var pool = genericPool.createPool(factory, opts);
+    const pool = genericPool.createPool(factory, opts);
 
-    var promise;
-    agent.runInRootSpan({ name: ROOT_SPAN }, function(rootSpan) {
-      promise = pool.acquire().then(function(fn) {
-        var childSpan = agent.createChildSpan({ name: CHILD_SPAN_1 });
-        assert.ok(childSpan);
-        fn('SomeInput');
-        childSpan.endSpan();
-      }).then(function() {
-        var childSpan = agent.createChildSpan({ name: CHILD_SPAN_3 });
-        assert.ok(childSpan);
-        childSpan.endSpan();
-        rootSpan.endSpan();
+    let promise;
+    agent.runInRootSpan({name: ROOT_SPAN}, rootSpan => {
+      promise = pool
+        .acquire()
+        .then(fn => {
+          const childSpan = agent.createChildSpan({name: CHILD_SPAN_1});
+          assert.ok(childSpan);
+          fn('SomeInput');
+          childSpan.endSpan();
+        })
+        .then(() => {
+          const childSpan = agent.createChildSpan({name: CHILD_SPAN_3});
+          assert.ok(childSpan);
+          childSpan.endSpan();
+          rootSpan.endSpan();
 
-        var spans = common.getTraces()[0].spans;
-        assert.ok(spans);
-        assert.strictEqual(spans.length, 4);
-        assert.strictEqual(spans[0].name, ROOT_SPAN);
-        assert.strictEqual(spans[1].name, CHILD_SPAN_1);
-        assert.strictEqual(spans[2].name, CHILD_SPAN_2);
-        assert.strictEqual(spans[3].name, CHILD_SPAN_3);
-      });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const spans = (common as any).getTraces()[0].spans;
+          assert.ok(spans);
+          assert.strictEqual(spans.length, 4);
+          assert.strictEqual(spans[0].name, ROOT_SPAN);
+          assert.strictEqual(spans[1].name, CHILD_SPAN_1);
+          assert.strictEqual(spans[2].name, CHILD_SPAN_2);
+          assert.strictEqual(spans[3].name, CHILD_SPAN_3);
+        });
     });
 
     return promise;

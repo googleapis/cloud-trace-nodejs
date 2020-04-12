@@ -27,6 +27,7 @@ import {
   Service,
 } from '@google-cloud/common';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pjson = require('../../package.json');
 
 // TODO(kjin): This value should be exported from @g-c/c.
@@ -150,6 +151,7 @@ export class TraceWriter extends Service {
         this.flushBuffer();
         if (onUncaughtException === 'flushAndExit') {
           setTimeout(() => {
+            // eslint-disable-next-line no-process-exit
             process.exit(1);
           }, 2000);
         }
@@ -198,12 +200,12 @@ export class TraceWriter extends Service {
       TraceLabels.AGENT_DATA,
       `node ${pjson.name} v${pjson.version}`
     );
-    addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname);
+    addDefaultLabel(TraceLabels.GCE_HOSTNAME, hostname!);
     if (instanceId) {
       addDefaultLabel(TraceLabels.GCE_INSTANCE_ID, instanceId);
     }
     const moduleName = this.config.serviceContext.service || hostname;
-    addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName);
+    addDefaultLabel(TraceLabels.GAE_MODULE_NAME, moduleName!);
 
     const moduleVersion = this.config.serviceContext.version;
     if (moduleVersion) {
@@ -341,7 +343,7 @@ export class TraceWriter extends Service {
     if (this.projectId !== NO_PROJECT_ID_TOKEN) {
       afterProjectId(this.projectId);
     } else {
-      this.getProjectId().then(afterProjectId, (err: Error) => {
+      this.getProjectId().then(afterProjectId, () => {
         // Because failing to get a project ID means that the trace agent will
         // get disabled, there is a very small window for this code path to be
         // taken. For this reason we don't do anything more complex than just

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {it, before, beforeEach, after, afterEach} from 'mocha';
 import * as knexTypes from 'knex';
 
 import {Tracer} from '../../src/plugin-types';
@@ -107,7 +107,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
       return knex
         .select()
         .from(TABLE_NAME)
-        .then(res => {
+        .then(() => {
           assert.ok(hasContext());
           rootSpan.endSpan();
         });
@@ -119,7 +119,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
       return knex
         .select()
         .from(TABLE_NAME)
-        .then(res => {
+        .then(() => {
           rootSpan.endSpan();
           const spans = traceTestModule.getSpans(span => {
             return span.name === 'mysql-query';
@@ -140,55 +140,61 @@ describeInterop<typeof knexTypes>('knex', fixture => {
 
   it('should work with events using ' + version, () => {
     return tracer.runInRootSpan({name: 'outer'}, rootSpan => {
-      return knex
-        .select()
-        .from(TABLE_NAME)
-        .on('query-response', (response, obj, builder) => {
-          const row = response[0];
-          assert.ok(row);
-          assert.strictEqual(row.k, 1);
-          assert.strictEqual(row.v, 'obj');
-        })
-        .on('query-error', (err, obj) => {
-          assert.ifError(err);
-        })
-        .then(res => {
-          rootSpan.endSpan();
-          const spans = traceTestModule.getSpans(span => {
-            return span.name === 'mysql-query';
-          });
-          if (parsedVersion.minor === 11) {
-            assert.strictEqual(spans.length, 2);
-            assert.strictEqual(spans[0].labels.sql, 'SELECT 1');
-            assert.strictEqual(spans[1].labels.sql, 'select * from `t`');
-          } else {
-            assert.strictEqual(spans.length, 1);
-            assert.strictEqual(spans[0].labels.sql, 'select * from `t`');
-          }
-        });
+      return (
+        knex
+          .select()
+          .from(TABLE_NAME)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          .on('query-response', (response, obj, builder) => {
+            const row = response[0];
+            assert.ok(row);
+            assert.strictEqual(row.k, 1);
+            assert.strictEqual(row.v, 'obj');
+          })
+          .on('query-error', err => {
+            assert.ifError(err);
+          })
+          .then(() => {
+            rootSpan.endSpan();
+            const spans = traceTestModule.getSpans(span => {
+              return span.name === 'mysql-query';
+            });
+            if (parsedVersion.minor === 11) {
+              assert.strictEqual(spans.length, 2);
+              assert.strictEqual(spans[0].labels.sql, 'SELECT 1');
+              assert.strictEqual(spans[1].labels.sql, 'select * from `t`');
+            } else {
+              assert.strictEqual(spans.length, 1);
+              assert.strictEqual(spans[0].labels.sql, 'select * from `t`');
+            }
+          })
+      );
     });
   });
 
   it('should work without events or callback using ' + version, () => {
     return tracer.runInRootSpan({name: 'outer'}, rootSpan => {
-      return knex
-        .select()
-        .from(TABLE_NAME)
-        .then(async result => {
-          await wait(50);
-          rootSpan.endSpan();
-          const spans = traceTestModule.getSpans(span => {
-            return span.name === 'mysql-query';
-          });
-          if (parsedVersion.minor === 11) {
-            assert.strictEqual(spans.length, 2);
-            assert.strictEqual(spans[0].labels.sql, 'SELECT 1');
-            assert.strictEqual(spans[1].labels.sql, 'select * from `t`');
-          } else {
-            assert.strictEqual(spans.length, 1);
-            assert.strictEqual(spans[0].labels.sql, 'select * from `t`');
-          }
-        });
+      return (
+        knex
+          .select()
+          .from(TABLE_NAME)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          .then(async result => {
+            await wait(50);
+            rootSpan.endSpan();
+            const spans = traceTestModule.getSpans(span => {
+              return span.name === 'mysql-query';
+            });
+            if (parsedVersion.minor === 11) {
+              assert.strictEqual(spans.length, 2);
+              assert.strictEqual(spans[0].labels.sql, 'SELECT 1');
+              assert.strictEqual(spans[1].labels.sql, 'select * from `t`');
+            } else {
+              assert.strictEqual(spans.length, 1);
+              assert.strictEqual(spans[0].labels.sql, 'select * from `t`');
+            }
+          })
+      );
     });
   });
 
@@ -201,7 +207,7 @@ describeInterop<typeof knexTypes>('knex', fixture => {
             .insert(obj2)
             .into(TABLE_NAME)
             .transacting(trx)
-            .then(res => {
+            .then(() => {
               return trx
                 .select()
                 .from(TABLE_NAME)

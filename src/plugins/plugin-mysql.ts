@@ -11,19 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
-var shimmer = require('shimmer');
+import * as shimmer from 'shimmer';
 
-var SUPPORTED_VERSIONS = '^2.9.x';
+const SUPPORTED_VERSIONS = '^2.9.x';
 
 function createCreateQueryWrap(api) {
   return function createQueryWrap(createQuery) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return function createQuery_trace(sql, values, cb) {
-      var span = api.createChildSpan({
-        name: 'mysql-query'
+      const span = api.createChildSpan({
+        name: 'mysql-query',
       });
-      var query = createQuery.apply(this, arguments);
+      // eslint-disable-next-line prefer-rest-params
+      const query = createQuery.apply(this, arguments);
       if (!api.isRealSpan(span)) {
         return query;
       }
@@ -37,7 +38,7 @@ function createCreateQueryWrap(api) {
       if (query._callback) {
         query._callback = wrapCallback(api, span, query._callback);
       } else {
-        query.on('end', function() {
+        query.on('end', () => {
           span.endSpan();
         });
       }
@@ -47,7 +48,7 @@ function createCreateQueryWrap(api) {
 }
 
 function wrapCallback(api, span, done) {
-  var fn = function(err, res) {
+  const fn = function (err, res) {
     if (api.enhancedDatabaseReportingEnabled()) {
       if (err) {
         span.addLabel('error', err);
@@ -76,24 +77,27 @@ module.exports = [
   {
     file: 'lib/Connection.js',
     versions: SUPPORTED_VERSIONS,
-    patch: function(Connection, api) {
+    patch: function (Connection, api) {
       shimmer.wrap(Connection, 'createQuery', createCreateQueryWrap(api));
     },
-    unpatch: function(Connection) {
+    unpatch: function (Connection) {
       shimmer.unwrap(Connection, 'createQuery');
-    }
+    },
   },
   {
     file: 'lib/Pool.js',
     versions: SUPPORTED_VERSIONS,
-    patch: function(Pool, api) {
-      shimmer.wrap(Pool.prototype, 'getConnection',
-                   createWrapGetConnection(api));
+    patch: function (Pool, api) {
+      shimmer.wrap(
+        Pool.prototype,
+        'getConnection',
+        createWrapGetConnection(api)
+      );
     },
-    unpatch: function(Pool) {
+    unpatch: function (Pool) {
       shimmer.unwrap(Pool.prototype, 'getConnection');
-    }
-  }
+    },
+  },
 ];
 
 export default {};

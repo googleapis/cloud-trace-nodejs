@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as mongooseTypes from 'mongoose';
-import { PluginTypes } from '..';
+import {PluginTypes} from '..';
 
 const plugin: PluginTypes.Plugin = [
   {
@@ -30,10 +30,10 @@ const plugin: PluginTypes.Plugin = [
           const result = target.apply(thisArg, args);
           thisArg.exec = api.wrap(thisArg.exec);
           return result;
-        }
+        },
       });
-    }
-  }
+    },
+  },
 ];
 
 export = plugin;

@@ -43,7 +43,7 @@ export class Koa1 implements WebFramework {
         `${this.constructor.name} wrapper for testing doesn't support non-blocking handlers.`
       );
     }
-    this.app.use(function*(next) {
+    this.app.use(function* (next) {
       if (this.request.path === options.path) {
         // Context doesn't automatically get propagated to yielded functions.
         yield testTraceModule.get().wrap(async (cb: Function) => {

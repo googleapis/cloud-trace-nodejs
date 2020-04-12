@@ -49,5 +49,6 @@ export class NullCLS<Context> implements CLS<Context> {
     return fn;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   patchEmitterToPropagateContext(ee: EventEmitter): void {}
 }

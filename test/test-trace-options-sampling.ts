@@ -11,37 +11,39 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
-var common = require('./plugins/common'/*.js*/);
-var assert = require('assert');
-var http = require('http');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const common = require('./plugins/common' /*.js*/);
+import * as assert from 'assert';
+import * as http from 'http';
+import {describe, it, before} from 'mocha';
 
-describe('express + http with trace options header + sampling', function() {
-  var agent;
-  var express;
-  before(function() {
+describe('express + http with trace options header + sampling', () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let agent;
+  let express;
+  before(() => {
     agent = require('../..').start({
       projectId: '0',
-      samplingRate: 1
+      samplingRate: 1,
     });
     express = require('express');
   });
 
-  it('should trace when enabled', function(done) {
-    var app = express();
-    app.get('/', function (req, res) {
-      setTimeout(function() {
+  it('should trace when enabled', done => {
+    const app = express();
+    app.get('/', (req, res) => {
+      setTimeout(() => {
         res.send('Hello World');
       }, 50);
     });
-    var server = app.listen(common.serverPort, function() {
-      var headers = {};
+    const server = app.listen(common.serverPort, () => {
+      const headers = {};
       headers['x-cloud-trace-context'] = '42/1729;o=1';
-      var doneCount = 0;
-      var cb = function(res) {
-        res.on('data', function() {});
-        res.on('end', function() {
+      let doneCount = 0;
+      const cb = function (res) {
+        res.on('data', () => {});
+        res.on('end', () => {
           if (++doneCount === 5) {
             // Only one trace should be sampled even though all have enabled header.
             assert.strictEqual(common.getTraces().length, 1);
@@ -51,7 +53,7 @@ describe('express + http with trace options header + sampling', function() {
           }
         });
       };
-      for (var i = 0; i < 5; i++) {
+      for (let i = 0; i < 5; i++) {
         http.get({port: common.serverPort, headers: headers}, cb);
       }
     });

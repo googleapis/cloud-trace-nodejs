@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {IncomingMessage, ServerResponse} from 'http';
+import {ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
+// eslint-disable-next-line node/no-deprecated-api
 import {parse as urlParse} from 'url';
 
 import {PluginTypes} from '..';
@@ -80,8 +81,9 @@ function instrument<T>(
     root.addLabel(api.labels.HTTP_SOURCE_IP, req.connection.remoteAddress);
 
     // wrap end
-    res.end = function(this: ServerResponse) {
+    res.end = function (this: ServerResponse) {
       res.end = originalEnd;
+      // eslint-disable-next-line prefer-rest-params
       const returned = res.end.apply(this, arguments);
 
       if (request.route && request.route.path) {
@@ -113,6 +115,7 @@ const plugin: PluginTypes.Plugin = [
     patch: (hapi, api) => {
       shimmer.wrap(hapi.Server.prototype, 'connection', connection => {
         return function connectionTrace(this: hapi_16.Server) {
+          // eslint-disable-next-line prefer-rest-params
           const server = connection.apply(this, arguments);
           server.ext('onRequest', function handler(request, reply) {
             return instrument(api, request, () => reply.continue());
@@ -142,6 +145,7 @@ const plugin: PluginTypes.Plugin = [
       Request.prototype._execute = Object.assign(
         function _executeWrap(this: hapi_17.Request) {
           return instrument(api, this, () => {
+            // eslint-disable-next-line prefer-rest-params
             return origExecute.apply(this, arguments);
           });
         },

@@ -11,17 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
-var shimmer = require('shimmer');
+import * as shimmer from 'shimmer';
 
-var SUPPORTED_VERSIONS = '1 - 3';
+const SUPPORTED_VERSIONS = '1 - 3';
 
 function createNextWrap(api) {
   return function nextWrap(next) {
     return function next_trace(cb) {
-      var span = api.createChildSpan({ name: 'mongo-cursor' });
+      const span = api.createChildSpan({name: 'mongo-cursor'});
       if (!api.isRealSpan(span)) {
+        // eslint-disable-next-line prefer-rest-params
         return next.apply(this, arguments);
       }
       span.addLabel('db', this.ns);
@@ -34,10 +34,11 @@ function createNextWrap(api) {
 }
 
 function wrapWithLabel(api, label) {
-  return function(original) {
+  return function (original) {
     return function mongo_operation_trace(ns, ops, options, callback) {
-      var span = api.createChildSpan({ name: label });
+      const span = api.createChildSpan({name: label});
       if (!api.isRealSpan(span)) {
+        // eslint-disable-next-line prefer-rest-params
         return original.apply(this, arguments);
       }
       span.addLabel('db', ns);
@@ -45,11 +46,15 @@ function wrapWithLabel(api, label) {
         span.addLabel('operations', JSON.stringify(ops));
       }
       if (typeof options === 'function') {
-        return original.call(this, ns, ops,
-          wrapCallback(api, span, options));
+        return original.call(this, ns, ops, wrapCallback(api, span, options));
       } else {
-        return original.call(this, ns, ops, options,
-          wrapCallback(api, span, callback));
+        return original.call(
+          this,
+          ns,
+          ops,
+          options,
+          wrapCallback(api, span, callback)
+        );
       }
     };
   };
@@ -64,14 +69,14 @@ function wrapWithLabel(api, label) {
  * @return {Function} The wrapped function.
  */
 function wrapCallback(api, span, done) {
-  var fn = function(err, res) {
+  const fn = function (err, res) {
     if (api.enhancedDatabaseReportingEnabled()) {
       if (err) {
         // Errors may contain sensitive query parameters.
         span.addLabel('mongoError', err);
       }
       if (res) {
-        var result = res.result ? res.result : res;
+        const result = res.result ? res.result : res;
         span.addLabel('result', result);
       }
     }
@@ -95,31 +100,47 @@ module.exports = [
   {
     file: 'lib/connection/pool.js',
     versions: SUPPORTED_VERSIONS,
-    patch: function(pool, api) {
+    patch: function (pool, api) {
       shimmer.wrap(pool.prototype, 'once', createOnceWrap(api));
     },
-    unpatch: function(pool) {
+    unpatch: function (pool) {
       shimmer.unwrap(pool.prototype, 'once');
-    }
+    },
   },
   {
     file: '',
     versions: SUPPORTED_VERSIONS,
-    patch: function(mongo, api) {
-      shimmer.wrap(mongo.Server.prototype, 'command', wrapWithLabel(api, 'mongo-command'));
-      shimmer.wrap(mongo.Server.prototype, 'insert', wrapWithLabel(api, 'mongo-insert'));
-      shimmer.wrap(mongo.Server.prototype, 'update', wrapWithLabel(api, 'mongo-update'));
-      shimmer.wrap(mongo.Server.prototype, 'remove', wrapWithLabel(api, 'mongo-remove'));
+    patch: function (mongo, api) {
+      shimmer.wrap(
+        mongo.Server.prototype,
+        'command',
+        wrapWithLabel(api, 'mongo-command')
+      );
+      shimmer.wrap(
+        mongo.Server.prototype,
+        'insert',
+        wrapWithLabel(api, 'mongo-insert')
+      );
+      shimmer.wrap(
+        mongo.Server.prototype,
+        'update',
+        wrapWithLabel(api, 'mongo-update')
+      );
+      shimmer.wrap(
+        mongo.Server.prototype,
+        'remove',
+        wrapWithLabel(api, 'mongo-remove')
+      );
       shimmer.wrap(mongo.Cursor.prototype, 'next', createNextWrap(api));
     },
-    unpatch: function(mongo) {
+    unpatch: function (mongo) {
       shimmer.unwrap(mongo.Server.prototype, 'command');
       shimmer.unwrap(mongo.Server.prototype, 'insert');
       shimmer.unwrap(mongo.Server.prototype, 'update');
       shimmer.unwrap(mongo.Server.prototype, 'remove');
       shimmer.unwrap(mongo.Cursor.prototype, 'next');
-    }
-  }
+    },
+  },
 ];
 
 export default {};

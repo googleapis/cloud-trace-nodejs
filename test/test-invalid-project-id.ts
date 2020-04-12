@@ -12,21 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-'use strict';
-
 import {FORCE_NEW} from '../src/util';
 
 delete process.env.GCLOUD_PROJECT;
 
-var assert = require('assert');
+import * as assert from 'assert';
+import {describe, it} from 'mocha';
 
-describe('index.js', function() {
-  it('should complain when config.projectId is not a string or number', function() {
-    var agent = require('../..').start({
+describe('index.js', () => {
+  it('should complain when config.projectId is not a string or number', () => {
+    const agent = require('../..').start({
       projectId: {test: false},
       enabled: true,
       logLevel: 0,
-      [FORCE_NEW]: true
+      [FORCE_NEW]: true,
     });
     assert(!agent.isActive());
   });

@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// eslint-disable-next-line node/no-extraneous-import
 import * as fetchTypes from 'node-fetch'; // For types only.
 import * as testTraceModule from '../trace';
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {it, before, after, beforeEach} from 'mocha';
 import {describeInterop} from '../utils';
 import {Express4} from '../web-frameworks/express';
 import {Express4Secure} from '../web-frameworks/express-secure';
