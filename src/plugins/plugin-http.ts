@@ -97,7 +97,7 @@ function isTraceAgentRequest(options: httpModule.RequestOptions, api: Tracer) {
 /**
  * Transform a url to a request options.
  *
- * https://github.com/nodejs/node/blob/dccdc51788bd5337f9fd80441ef52932383a2441/lib/internal/url.js#L1271-L1290
+ * From: https://github.com/nodejs/node/blob/v12.16.2/lib/internal/url.js#L1271-L1290
  */
 function urlToOptions(url: URL): httpModule.RequestOptions {
   const options: httpModule.RequestOptions | UrlWithStringQuery = {
