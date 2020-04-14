@@ -136,9 +136,12 @@ function makeRequestTrace(
       | ((res: httpModule.IncomingMessage) => void),
     callback?: (res: httpModule.IncomingMessage) => void
   ): ClientRequest {
-    // These are error conditions; defer to http.request and don't trace.
     let urlString: string | undefined;
-    if (typeof url === 'string') {
+    if (!url) {
+      // These are error conditions; defer to http.request and don't trace.
+      // eslint-disable-next-line prefer-rest-params
+      return request.apply(this, arguments);
+    } else if (typeof url === 'string') {
       // save the value of uri so we don't have to reconstruct it later
       urlString = url;
       url = urlToOptions(new URL(url));
