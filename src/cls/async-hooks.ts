@@ -57,7 +57,7 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
 
     // Create the hook.
     this.hook = this.ah.createHook({
-      init: (id: number, type: string, triggerId: number, resource: {}) => {
+      init: (id: number, type: string, triggerId: number) => {
         // init is called when a new AsyncResource is created. We want code
         // that runs within the scope of this new AsyncResource to see the same
         // context as its "parent" AsyncResource. The criteria for the parent
@@ -161,11 +161,13 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
     if (!boundContext) {
       return fn;
     }
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
     // Wrap fn so that any AsyncResource objects that are created in fn will
     // share context with that of the AsyncResource with the given ID.
-    const contextWrapper: ContextWrapped<Func<T>> = function(this: {}) {
+    const contextWrapper: ContextWrapped<Func<T>> = function (this: {}) {
       return that.runWithContext(
+        // eslint-disable-next-line prefer-rest-params
         () => fn.apply(this, arguments) as T,
         boundContext
       );
@@ -184,11 +186,12 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
   }
 
   patchEmitterToPropagateContext(ee: EventEmitter): void {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const that = this;
     EVENT_EMITTER_METHODS.forEach(method => {
       if (ee[method]) {
         shimmer.wrap(ee, method, oldMethod => {
-          return function(this: {}, event: string, cb: Func<void>) {
+          return function (this: {}, event: string, cb: Func<void>) {
             return oldMethod.call(this, event, that.bindWithCurrentContext(cb));
           };
         });

@@ -128,7 +128,7 @@ const SKIP_FRAMES = 1;
 // tslint:disable-next-line:variable-name
 let MetadataModuleValue: MetadataModule;
 
-function patchMetadata(metadata: MetadataModule, api: Tracer) {
+function patchMetadata(metadata: MetadataModule) {
   // metadata is the value of module.exports of src/node/src/metadata.js
   MetadataModuleValue = metadata;
 }
@@ -200,10 +200,12 @@ function patchClient(client: ClientModule, api: Tracer) {
       if (!api.isRealSpan(span)) {
         // Span couldn't be created, either by policy or because a root span
         // doesn't exist.
+        // eslint-disable-next-line prefer-rest-params
         return method.apply(this, arguments);
       }
       const args: Array<
         Metadata | Callback<T> | undefined | never
+        // eslint-disable-next-line prefer-rest-params
       > = Array.prototype.slice.call(arguments);
       // Check if the response is through a stream or a callback.
       if (!method.responseStream) {
@@ -290,7 +292,7 @@ function patchClient(client: ClientModule, api: Tracer) {
     }
     // TODO(kjin): Investigate whether we need to copy properties of
     // method onto clientMethodTrace.
-    // tslint:disable-next-line:no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (clientMethodTrace as any) as ClientMethod<S, T>;
   }
 
@@ -304,6 +306,7 @@ function patchClient(client: ClientModule, api: Tracer) {
     return function makeClientConstructorTrace(this: never, methods) {
       // Client is a class.
       // tslint:disable-next-line:variable-name
+      // eslint-disable-next-line prefer-rest-params
       const Client = makeClientConstructor.apply(this, arguments);
       const methodsToWrap = [
         ...Object.keys(methods),
@@ -311,6 +314,7 @@ function patchClient(client: ClientModule, api: Tracer) {
           .map(methodName => methods[methodName].originalName)
           .filter(
             originalName =>
+              // eslint-disable-next-line no-prototype-builtins
               !!originalName && Client.prototype.hasOwnProperty(originalName)
           ) as string[]),
       ];
@@ -365,6 +369,7 @@ function patchServer(server: ServerModule, api: Tracer) {
           'metadata',
           JSON.stringify(responseMetadata.getMap())
         );
+        // eslint-disable-next-line prefer-rest-params
         return sendMetadata.apply(this, arguments);
       };
     };
@@ -658,6 +663,7 @@ function patchServer(server: ServerModule, api: Tracer) {
       // method. Its role is to assign the serialize, deserialize, and user
       // logic handlers for each exposed service method. Here, we wrap these
       // functions depending on the method type.
+      // eslint-disable-next-line prefer-rest-params
       const result = register.apply(this, arguments);
       const handlerSet = this.handlers[name] as ServerHandlerFunctions<
         ServerHandler<S, T>

@@ -61,6 +61,7 @@ class Hapi implements WebFramework {
         this.server.register({
           plugin: {
             name: options.path,
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             register: async (server, registerOpts) => {
               server.route({
                 method: 'GET',
@@ -107,11 +108,11 @@ class Hapi implements WebFramework {
   }
 }
 
-const makeHapiClass = (version: number) =>
+const makeHapiClass = (version: number, nodeVersionRange: string) =>
   class extends Hapi {
     static commonName = `hapi@${version}`;
     static expectedTopStackFrame = '_executeWrap';
-    static versionRange = '>=7.5';
+    static versionRange = nodeVersionRange;
 
     constructor() {
       super(`../plugins/fixtures/hapi${version}`);
@@ -119,6 +120,6 @@ const makeHapiClass = (version: number) =>
   };
 
 // tslint:disable:variable-name (Hapi* are class names)
-export const Hapi17 = makeHapiClass(17);
-export const Hapi18 = makeHapiClass(18);
+export const Hapi18 = makeHapiClass(18, '>=7.5');
+export const Hapi19 = makeHapiClass(19, '>=12');
 // tslint:enable:variable-name

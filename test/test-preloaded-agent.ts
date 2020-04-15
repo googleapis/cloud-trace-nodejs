@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as semver from 'semver';
-import { execSync } from 'child_process';
+import {execSync} from 'child_process';
 import * as assert from 'assert';
 import {describe, it} from 'mocha';
 
 describe('preloaded agent', () => {
   it('should start automatically when preloaded using --require', () => {
     console.log(process.cwd());
-    const output = execSync('node --require "./src" test/fixtures/preloaded-agent.js');
+    const output = execSync(
+      'node --require "./src" test/fixtures/preloaded-agent.js'
+    );
     assert.ok(output.toString().match(/passed/));
   });
 });

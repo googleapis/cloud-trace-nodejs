@@ -11,24 +11,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
 import '../override-gcp-metadata';
 import {v1 as stackdriverPropagation} from '@opencensus/propagation-stackdriver';
-import { cls, TraceCLS } from '../../src/cls';
-import { StackdriverTracer } from '../../src/trace-api';
-import { traceWriter } from '../../src/trace-writer';
-import { SpanType } from '../../src/constants';
-import { TestLogger } from '../logger';
-import { getBaseConfig } from '../utils';
-import { alwaysTrace } from '../../src/tracing-policy';
+import {cls, TraceCLS} from '../../src/cls';
+import {StackdriverTracer} from '../../src/trace-api';
+import {traceWriter} from '../../src/trace-writer';
+import {SpanType} from '../../src/constants';
+import {TestLogger} from '../logger';
+import {getBaseConfig} from '../utils';
+import {alwaysTrace} from '../../src/tracing-policy';
 
-var semver = require('semver');
+import * as semver from 'semver';
+import * as trace from '../../src';
 
-var trace = require('../../..');
 if (semver.satisfies(process.version, '>=8')) {
   // Monkeypatch Mocha's it() to create a fresh context with each test case.
-  var oldIt = global.it;
+  const oldIt = global.it;
   global.it = Object.assign(function it(title, fn) {
     // it.skip calls it without a function argument
     if (!fn) {
@@ -36,54 +35,59 @@ if (semver.satisfies(process.version, '>=8')) {
     }
     function wrappedFn() {
       if (cls.exists()) {
-        return cls.get().runWithContext(() => fn.apply(this, arguments), TraceCLS.UNCORRELATED);
+        return cls.get().runWithContext(
+          // eslint-disable-next-line prefer-rest-params
+          () => fn.apply(this, arguments),
+          TraceCLS.UNCORRELATED
+        );
       } else {
+        // eslint-disable-next-line prefer-rest-params
         return fn.apply(this, arguments);
       }
-    };
+    }
     // Mocha uses a function's length property to determine whether the
     // test case is async or not.
     Object.defineProperty(wrappedFn, 'length', {
       enumerable: false,
       configurable: true,
       writable: false,
-      value: fn.length
+      value: fn.length,
     });
     return oldIt.call(this, title, wrappedFn);
   }, oldIt);
 }
 
-var assert = require('assert');
-var fs = require('fs');
-var path = require('path');
-var { teenyRequest: request } = require('teeny-request');
-var shimmer = require('shimmer');
+import * as assert from 'assert';
+import * as shimmer from 'shimmer';
+import {teenyRequest} from 'teeny-request';
 
-var testTraceAgent: StackdriverTracer;
-shimmer.wrap(trace, 'start', function(original) {
-  return function() {
-    var result = original.apply(this, arguments);
+let testTraceAgent: StackdriverTracer;
+shimmer.wrap(trace, 'start', original => {
+  return function () {
+    // eslint-disable-next-line prefer-rest-params
+    const result = original.apply(this, arguments);
     testTraceAgent = new StackdriverTracer('test');
     testTraceAgent.enable(getBaseConfig(), {
       tracePolicy: alwaysTrace(),
       logger: new TestLogger(),
-      propagation: stackdriverPropagation
+      propagation: stackdriverPropagation,
     });
     return result;
   };
 });
 
-var SERVER_PORT = 9042;
+const SERVER_PORT = 9042;
 
 function replaceFunction(target, prop, fn) {
-  var old = target[prop];
+  const old = target[prop];
   target[prop] = fn;
   return old;
 }
 
 function replaceWarnLogger(fn) {
-  var agent = trace.get();
-  return replaceFunction(agent.logger, 'warn', fn);
+  const agent = trace.get();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return replaceFunction((agent as any).logger, 'warn', fn);
 }
 
 /**
@@ -98,16 +102,20 @@ function getTraces() {
 }
 
 function getMatchingSpan(predicate) {
-  var spans = getMatchingSpans(predicate);
-  assert.strictEqual(spans.length, 1,
-    'predicate did not isolate a single span');
+  const spans = getMatchingSpans(predicate);
+  assert.strictEqual(
+    spans.length,
+    1,
+    'predicate did not isolate a single span'
+  );
   return spans[0];
 }
 
 function getMatchingSpans(predicate) {
-  var list: any[] = [];
-  getTraces().forEach(function(trace) {
-    trace.spans.forEach(function(span) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const list: any[] = [];
+  getTraces().forEach(trace => {
+    trace.spans.forEach(span => {
       if (predicate(span)) {
         list.push(span);
       }
@@ -117,8 +125,8 @@ function getMatchingSpans(predicate) {
 }
 
 function runInTransaction(fn) {
-  testTraceAgent.runInRootSpan({ name: 'outer' }, function(span) {
-    return fn(function() {
+  testTraceAgent.runInRootSpan({name: 'outer'}, span => {
+    return fn(() => {
       assert.strictEqual(span.type, SpanType.ROOT);
       span.endSpan();
     });
@@ -130,16 +138,16 @@ function runInTransaction(fn) {
 // Returns a method which, when called, closes the child span
 // right away and cancels callback from being called after the duration.
 function createChildSpan(cb, duration) {
-  var span = testTraceAgent.createChildSpan({ name: 'inner' });
+  const span = testTraceAgent.createChildSpan({name: 'inner'});
   assert.ok(span);
-  var t = setTimeout(function() {
+  const t = setTimeout(() => {
     assert.strictEqual(span.type, SpanType.CHILD);
     span.endSpan();
     if (cb) {
       cb();
     }
   }, duration);
-  return function() {
+  return function () {
     assert.strictEqual(span.type, SpanType.CHILD);
     span.endSpan();
     clearTimeout(t);
@@ -147,11 +155,11 @@ function createChildSpan(cb, duration) {
 }
 
 function installNoopTraceWriter() {
-  traceWriter.get().writeTrace = function() {};
+  traceWriter.get().writeTrace = function () {};
 }
 
 function avoidTraceWriterAuth() {
-  traceWriter.get().request = request;
+  traceWriter.get().request = teenyRequest;
 }
 
 function hasContext() {

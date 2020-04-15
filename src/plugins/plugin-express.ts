@@ -14,7 +14,6 @@
 
 import * as httpMethods from 'methods';
 import * as shimmer from 'shimmer';
-
 import {PluginTypes} from '..';
 
 import {express_4} from './types';
@@ -70,8 +69,9 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
 
       // wrap end
       const originalEnd = res.end;
-      res.end = function(this: express_4.Response) {
+      res.end = function (this: express_4.Response) {
         res.end = originalEnd;
+        // eslint-disable-next-line prefer-rest-params
         const returned = res.end.apply(this, arguments);
 
         if (req.route && req.route.path) {
@@ -94,6 +94,7 @@ function patchModuleRoot(express: Express4Module, api: PluginTypes.Tracer) {
         this._google_trace_patched = true;
         this.use(middleware);
       }
+      // eslint-disable-next-line prefer-rest-params
       return method.apply(this, arguments);
     };
   }

@@ -17,7 +17,7 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
 import * as semver from 'semver';
-import {Config, defaultConfig, TracePolicy} from './config';
+import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
 import * as PluginTypes from './plugin-types';
@@ -41,7 +41,7 @@ let traceAgent: StackdriverTracer;
  */
 function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
   let envSetConfig = {};
-  if (!!process.env.GCLOUD_TRACE_CONFIG) {
+  if (process.env.GCLOUD_TRACE_CONFIG) {
     envSetConfig = require(path.resolve(
       process.env.GCLOUD_TRACE_CONFIG!
     )) as Config;

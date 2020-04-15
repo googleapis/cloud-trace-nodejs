@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Copyright 2017 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {EventEmitter} from 'events';
 // This is imported only for types. Generated .js file should NOT load 'http2'.
 // `http2` must be used only in type annotations, not in expressions.
+// eslint-disable-next-line node/no-unsupported-features/node-builtins
 import * as http2 from 'http2';
 import * as shimmer from 'shimmer';
 import {URL} from 'url';
@@ -73,7 +74,7 @@ function makeRequestTrace(
   authority: string | URL,
   api: Tracer
 ): Http2SessionRequestFunction {
-  return function(
+  return function (
     this: http2.Http2Session,
     headers?: http2.OutgoingHttpHeaders
   ): http2.ClientHttp2Stream {
@@ -93,6 +94,7 @@ function makeRequestTrace(
     // add the check anyway for the potential migration to http2 in the
     // future.
     if (isTraceAgentRequest(newHeaders, api)) {
+      // eslint-disable-next-line prefer-rest-params
       return request.apply(this, arguments);
     }
 
@@ -100,6 +102,7 @@ function makeRequestTrace(
       name: getSpanName(authority),
     });
     if (!api.isRealSpan(requestLifecycleSpan)) {
+      // eslint-disable-next-line prefer-rest-params
       return request.apply(this, arguments);
     }
     // Node sets the :method pseudo-header to GET if not set by client.
@@ -118,6 +121,7 @@ function makeRequestTrace(
     const stream: http2.ClientHttp2Stream = request.call(
       this,
       newHeaders,
+      // eslint-disable-next-line prefer-rest-params
       ...Array.prototype.slice.call(arguments, 1)
     );
     api.wrapEmitter(stream);
@@ -160,7 +164,7 @@ function makeRequestTrace(
     // request. We expect this to be very uncommon as it is not mentioned in
     // any of the official documentation.
     shimmer.wrap(stream, 'on', on => {
-      return function(
+      return function (
         this: http2.ClientHttp2Stream,
         eventName: {},
         cb: Function
@@ -171,6 +175,7 @@ function makeRequestTrace(
             numBytes += chunk.length;
           });
         }
+        // eslint-disable-next-line prefer-rest-params
         return on.apply(this, arguments);
       };
     });
@@ -194,9 +199,10 @@ function patchHttp2(h2: Http2Module, api: Tracer): void {
     h2,
     'connect',
     connect =>
-      function(this: Http2Module, authority: string | URL) {
+      function (this: Http2Module, authority: string | URL) {
         const session: http2.ClientHttp2Session = connect.apply(
           this,
+          // eslint-disable-next-line prefer-rest-params
           arguments
         );
         patchHttp2Session(session, authority, api);

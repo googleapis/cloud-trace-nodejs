@@ -11,36 +11,37 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-'use strict';
 
-import { describeInterop } from './utils';
+import {describeInterop} from './utils';
 
 // Trace agent must be started out of the loop over gRPC versions,
 // because express can't be re-patched.
-var agent = require('../..').start({
+require('../..').start({
   projectId: '0',
   samplingRate: 0,
-  ignoreUrls: ['/no-trace']
+  ignoreUrls: ['/no-trace'],
 });
 
-var common = require('./plugins/common'/*.js*/);
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const common = require('./plugins/common' /*.js*/);
+import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
+import * as assert from 'assert';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const express = require('./plugins/fixtures/express4');
+import * as http from 'http';
 
-var assert = require('assert');
-var express = require('./plugins/fixtures/express4');
-var http = require('http');
-
-var grpcPort = 50051;
-var protoFile = __dirname + '/fixtures/test-grpc.proto';
-var client, grpcServer, server;
+const grpcPort = 50051;
+const protoFile = __dirname + '/fixtures/test-grpc.proto';
+let client, grpcServer, server;
 
 function makeHttpRequester(callback, expectedReqs) {
-  var pendingHttpReqs = expectedReqs;
-  return function() {
+  let pendingHttpReqs = expectedReqs;
+  return function () {
     // Make a request to an endpoint that won't create an additional server
     // trace.
-    http.get(`http://localhost:${common.serverPort}/no-trace`, function(httpRes) {
-      httpRes.on('data', function() {});
-      httpRes.on('end', function() {
+    http.get(`http://localhost:${common.serverPort}/no-trace`, httpRes => {
+      httpRes.on('data', () => {});
+      httpRes.on('end', () => {
         if (--pendingHttpReqs === 0) {
           callback();
         }
@@ -50,128 +51,132 @@ function makeHttpRequester(callback, expectedReqs) {
 }
 
 function requestAndSendHTTPStatus(res, expectedReqs) {
-  return makeHttpRequester(function () {
+  return makeHttpRequester(() => {
     res.sendStatus(200);
   }, expectedReqs);
 }
 
 describeInterop('grpc', fixture => {
   describe('Context Propagation', () => {
-    var grpc;
-    var httpLogCount;
+    let grpc;
+    let httpLogCount;
 
-    before(function(done) {
+    before(done => {
       grpc = fixture.require();
 
-      common.replaceWarnLogger(function(msg) {
+      common.replaceWarnLogger(msg => {
         if (msg.indexOf('http') !== -1) {
           httpLogCount++;
         }
       });
 
-      var proto = grpc.load(protoFile).nodetest;
-      var app = express();
+      const proto = grpc.load(protoFile).nodetest;
+      const app = express();
 
-      app.get('/no-trace', function(req, res) {
+      app.get('/no-trace', (req, res) => {
         res.sendStatus(200);
       });
 
-      app.get('/unary', function(req, res) {
-        var httpRequester = requestAndSendHTTPStatus(res, 1);
+      app.get('/unary', (req, res) => {
+        const httpRequester = requestAndSendHTTPStatus(res, 1);
         client.testUnary({n: 42}, httpRequester);
       });
 
-      app.get('/client', function(req, res) {
-        var httpRequester = requestAndSendHTTPStatus(res, 1);
-        var stream = client.testClientStream(httpRequester);
-        for (var i = 0; i < 10; ++i) {
+      app.get('/client', (req, res) => {
+        const httpRequester = requestAndSendHTTPStatus(res, 1);
+        const stream = client.testClientStream(httpRequester);
+        for (let i = 0; i < 10; ++i) {
           stream.write({n: i});
         }
         stream.end();
       });
 
-      app.get('/server', function(req, res) {
-        var httpRequester = requestAndSendHTTPStatus(res, 11);
-        var stream = client.testServerStream({n: 3});
+      app.get('/server', (req, res) => {
+        const httpRequester = requestAndSendHTTPStatus(res, 11);
+        const stream = client.testServerStream({n: 3});
         stream.on('data', httpRequester);
         stream.on('status', httpRequester);
       });
 
-      app.get('/bidi', function(req, res) {
-        var httpRequester = requestAndSendHTTPStatus(res, 11);
-        var stream = client.testBidiStream();
+      app.get('/bidi', (req, res) => {
+        const httpRequester = requestAndSendHTTPStatus(res, 11);
+        const stream = client.testBidiStream();
         stream.on('data', httpRequester);
         stream.on('status', httpRequester);
-        for (var i = 0; i < 10; ++i) {
+        for (let i = 0; i < 10; ++i) {
           stream.write({n: i});
         }
         stream.end();
       });
 
-      client = new proto.Tester('localhost:' + grpcPort,
-          grpc.credentials.createInsecure());
+      client = new proto.Tester(
+        'localhost:' + grpcPort,
+        grpc.credentials.createInsecure()
+      );
 
-      server = app.listen(common.serverPort, function() {
+      server = app.listen(common.serverPort, () => {
         grpcServer = new grpc.Server();
         grpcServer.addProtoService(proto.Tester.service, {
-          testUnary: function(call, cb) {
-            var httpRequester = makeHttpRequester(function () {
+          testUnary: function (call, cb) {
+            const httpRequester = makeHttpRequester(() => {
               cb(null, {n: call.request.n});
             }, 1);
             httpRequester();
           },
-          testClientStream: function(call, cb) {
-            var httpRequester = makeHttpRequester(function () {
+          testClientStream: function (call, cb) {
+            const httpRequester = makeHttpRequester(() => {
               cb(null, {n: 43});
             }, 11);
             call.on('data', httpRequester);
             call.on('end', httpRequester);
           },
-          testServerStream: function(stream) {
-            var httpRequester = makeHttpRequester(function () {
+          testServerStream: function (stream) {
+            const httpRequester = makeHttpRequester(() => {
               stream.end();
             }, 1);
-            for (var i = 0; i < 10; ++i) {
+            for (let i = 0; i < 10; ++i) {
               stream.write({n: i});
             }
             httpRequester();
           },
-          testBidiStream: function(stream) {
-            var httpRequester = makeHttpRequester(function () {
+          testBidiStream: function (stream) {
+            const httpRequester = makeHttpRequester(() => {
               stream.end();
             }, 11);
-            stream.on('data', function(data) {
+            stream.on('data', data => {
               stream.write({n: data.n});
               httpRequester();
             });
             stream.on('end', httpRequester);
-          }
+          },
         });
-        grpcServer.bind('localhost:' + grpcPort,
-            grpc.ServerCredentials.createInsecure());
+        grpcServer.bind(
+          'localhost:' + grpcPort,
+          grpc.ServerCredentials.createInsecure()
+        );
         grpcServer.start();
         done();
       });
     });
 
-    beforeEach(function() {
+    beforeEach(() => {
       httpLogCount = 0;
     });
 
-    after(function() {
+    after(() => {
       grpcServer.forceShutdown();
       server.close();
     });
 
-    afterEach(function() {
+    afterEach(() => {
       // We expect a single untraced http request for each test cooresponding to the
       // top level request used to start the desired test.
       assert.strictEqual(httpLogCount, 1);
       common.cleanTraces();
     });
 
-    it('grpc should preserve context for unary requests', function(done) {
-      http.get({port: common.serverPort, path: '/unary'}, function(res) {
+    it('grpc should preserve context for unary requests', done => {
+      http.get({port: common.serverPort, path: '/unary'}, () => {
         assert.strictEqual(common.getTraces().length, 2);
         // gRPC Server: 1 root span, 1 http span.
         assert.strictEqual(common.getTraces()[0].spans.length, 2);
@@ -182,8 +187,8 @@ describeInterop('grpc', fixture => {
       });
     });
 
-    it('grpc should preserve context for client requests', function(done) {
-      http.get({port: common.serverPort, path: '/client'}, function(res) {
+    it('grpc should preserve context for client requests', done => {
+      http.get({port: common.serverPort, path: '/client'}, () => {
         assert.strictEqual(common.getTraces().length, 2);
         // gRPC Server: 1 root span, 11 http spans (10 from 'data' listeners,
         // 1 from 'end' listener).
@@ -195,8 +200,8 @@ describeInterop('grpc', fixture => {
       });
     });
 
-    it('grpc should preserve context for server requests', function(done) {
-      http.get({port: common.serverPort, path: '/server'}, function(res) {
+    it('grpc should preserve context for server requests', done => {
+      http.get({port: common.serverPort, path: '/server'}, () => {
         assert.strictEqual(common.getTraces().length, 2);
         // gRPC Server: 1 root span, 1 http span.
         assert.strictEqual(common.getTraces()[0].spans.length, 2);
@@ -208,8 +213,8 @@ describeInterop('grpc', fixture => {
       });
     });
 
-    it('grpc should preserve context for bidi requests', function(done) {
-      http.get({port: common.serverPort, path: '/bidi'}, function(res) {
+    it('grpc should preserve context for bidi requests', done => {
+      http.get({port: common.serverPort, path: '/bidi'}, () => {
         assert.strictEqual(common.getTraces().length, 2);
         // gRPC Server: 1 root span, 11 http spans (10 from 'data' listeners,
         // 1 from 'end' listener).

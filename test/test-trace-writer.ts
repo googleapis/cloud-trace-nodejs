@@ -14,10 +14,8 @@
 
 import {Service, DecorateRequestOptions} from '@google-cloud/common';
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
-import {GoogleAuth} from 'google-auth-library';
-import {JWTInput} from 'google-auth-library/build/src/auth/credentials';
-import {RefreshOptions} from 'google-auth-library/build/src/auth/oauth2client';
+import {GoogleAuth, JWTInput, RefreshOptions} from 'google-auth-library';
+import {describe, it, before, after, beforeEach, afterEach} from 'mocha';
 import * as nock from 'nock';
 import * as os from 'os';
 import * as path from 'path';
@@ -26,7 +24,7 @@ import * as shimmer from 'shimmer';
 
 import {SpanKind, Trace} from '../src/trace';
 import {TraceLabels} from '../src/trace-labels';
-import {TraceBuffer, TraceWriter, TraceWriterConfig} from '../src/trace-writer';
+import {TraceWriter, TraceWriterConfig} from '../src/trace-writer';
 
 import {TestLogger} from './logger';
 import {hostname, instanceId, oauth2} from './nocks';
@@ -60,7 +58,7 @@ function createDummyTrace(numSpans: number): Trace {
   return {
     projectId: '',
     traceId: `${traceIdHighWatermark++}`,
-    spans: new Array(numSpans).fill(null).map(_ => ({
+    spans: new Array(numSpans).fill(null).map(() => ({
       labels: {},
       startTime: time,
       endTime: time,
@@ -72,6 +70,7 @@ function createDummyTrace(numSpans: number): Trace {
 }
 
 describe('Trace Writer', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const pjson = require('../../package.json');
   const DEFAULT_CONFIG: TraceWriterConfig = {
     authOptions: {},
@@ -100,7 +99,7 @@ describe('Trace Writer', () => {
       Service.prototype,
       'getProjectId',
       () =>
-        function(this: Service) {
+        function (this: Service) {
           return getProjectIdOverride().then(projectId => {
             this.projectId = projectId;
             return projectId;
@@ -145,7 +144,7 @@ describe('Trace Writer', () => {
         },
         '_cacheClientFromJSON',
         cacheClientFromJSON => {
-          return function(
+          return function (
             this: GoogleAuth,
             json: JWTInput,
             options?: RefreshOptions
@@ -172,6 +171,7 @@ describe('Trace Writer', () => {
     });
 
     it('should use the keyFilename field of the config object', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const expectedCredentials: TestCredentials = require('./fixtures/gcloud-credentials.json');
       const actualCredentials = await captureCredentialsForConfig({
         authOptions: {
@@ -183,6 +183,7 @@ describe('Trace Writer', () => {
     });
 
     it('should use the credentials field of the config object', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const expectedCredentials: TestCredentials = require('./fixtures/gcloud-credentials.json');
       const actualCredentials = await captureCredentialsForConfig({
         authOptions: {
@@ -220,7 +221,7 @@ describe('Trace Writer', () => {
       writer.stop();
     });
 
-    it(`doesn't call Service#getProjectId if project ID is passed`, async () => {
+    it("doesn't call Service#getProjectId if project ID is passed", async () => {
       const writer = new TraceWriter(
         Object.assign({}, DEFAULT_CONFIG, {
           authOptions: {projectId: 'my-project'},
@@ -233,7 +234,7 @@ describe('Trace Writer', () => {
       writer.stop();
     });
 
-    it(`errors when a project ID can't be determined`, async () => {
+    it("errors when a project ID can't be determined", async () => {
       const writer = new TraceWriter(DEFAULT_CONFIG, logger);
       getProjectIdOverride = () => Promise.reject(new Error());
       try {
@@ -383,7 +384,7 @@ describe('Trace Writer', () => {
       writer.stop();
     });
 
-    it(`doesn't enqueue open spans`, async () => {
+    it("doesn't enqueue open spans", async () => {
       const NUM_SPANS = 5;
       const writer = new MockedRequestTraceWriter(
         Object.assign({}, DEFAULT_CONFIG, {bufferSize: NUM_SPANS}),

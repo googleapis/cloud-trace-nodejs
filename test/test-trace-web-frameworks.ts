@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after, afterEach, beforeEach} from 'mocha';
 import axiosModule from 'axios';
 import * as semver from 'semver';
 
@@ -31,7 +31,7 @@ import {
 import {WebFramework, WebFrameworkConstructor} from './web-frameworks/base';
 import {Connect3} from './web-frameworks/connect';
 import {Express4} from './web-frameworks/express';
-import {Hapi17, Hapi18} from './web-frameworks/hapi17';
+import {Hapi18, Hapi19} from './web-frameworks/hapi17';
 import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
 import {Koa1} from './web-frameworks/koa1';
 import {Koa2} from './web-frameworks/koa2';
@@ -60,8 +60,8 @@ const FRAMEWORKS: WebFrameworkConstructor[] = [
   Hapi12,
   Hapi15,
   Hapi16,
-  Hapi17,
   Hapi18,
+  Hapi19,
   Koa1,
   Koa2,
   Restify3,
@@ -263,8 +263,9 @@ describe('Web framework tracing', () => {
           }
           if (i === ABORTED_SPAN_RETRIES - 1) {
             assert.fail(
-              `Aborted span was not written after ${DEFAULT_SPAN_DURATION *
-                ABORTED_SPAN_RETRIES} milliseconds.`
+              `Aborted span was not written after ${
+                DEFAULT_SPAN_DURATION * ABORTED_SPAN_RETRIES
+              } milliseconds.`
             );
           } else {
             await wait(DEFAULT_SPAN_DURATION);
@@ -273,13 +274,13 @@ describe('Web framework tracing', () => {
       });
 
       it('assigns different trace IDs to distinct requests', async () => {
-        // tslint:disable-next-line:no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let requests: Array<Promise<any>>;
         // Setting the URL allows us not to record this root span, but also
         // not get warnings for child spans.
         await testTraceModule
           .get()
-          .runInRootSpan({name: 'outer', url: '/ignore-me'}, async span => {
+          .runInRootSpan({name: 'outer', url: '/ignore-me'}, async () => {
             requests = [
               axios.get(`http://localhost:${port}/hello?this-is=dog`),
               axios.get(`http://localhost:${port}/hello?this-is=puppy`),

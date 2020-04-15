@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, beforeEach, before, after} from 'mocha';
 import * as asyncHooksModule from 'async_hooks';
 import * as semver from 'semver';
 
@@ -37,22 +37,25 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
       // Polyfill for versions in which runInAsyncScope isn't defined.
       // This can be removed when it's guaranteed that runInAsyncScope is
       // present on AsyncResource.
-      // tslint:disable:no-any
       runInAsyncScope<This, Result>(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         fn: (this: This, ...args: any[]) => Result,
         thisArg?: This
       ): Result {
         if (super.runInAsyncScope) {
+          // eslint-disable-next-line prefer-rest-params
           return super.runInAsyncScope.apply(this, arguments);
         } else {
-          // tslint:disable:deprecation
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (this as any).emitBefore();
           try {
             return fn.apply(
               thisArg,
+              // eslint-disable-next-line prefer-rest-params
               Array.prototype.slice.apply(arguments).slice(2)
             );
           } finally {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (this as any).emitAfter();
           }
           // tslint:enable:deprecation
@@ -75,7 +78,9 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
         init: (
           uid: number,
           type: string,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           tid: number,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           resource: {promise: Promise<void>}
         ) => {
           if (type === 'PROMISE') {
@@ -199,7 +204,7 @@ maybeSkip(describe)('AsyncHooks-based CLS', () => {
     ];
 
     for (const testCase of testCases) {
-      const skipIfTestSpecifies = !!testCase.skip ? it.skip : it;
+      const skipIfTestSpecifies = testCase.skip ? it.skip : it;
       skipIfTestSpecifies(
         `Doesn't retain stale references when running ${testCase.description} in a context`,
         async () => {

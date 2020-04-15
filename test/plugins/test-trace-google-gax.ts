@@ -34,7 +34,7 @@
  */
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {it, before, after} from 'mocha';
 
 import * as testTraceModule from '../trace';
 import {describeInterop} from '../utils';
@@ -78,13 +78,10 @@ describeInterop<GaxModule>('google-gax', fixture => {
     testTraceModule.setPluginLoaderForTest(testTraceModule.TestPluginLoader);
   });
 
-  it(`doesn't break context`, done => {
+  it("doesn't break context", done => {
     const authPromise = Promise.resolve(((args, metadata, opts, cb) => {
       // Simulate an RPC.
-      testTraceModule
-        .get()
-        .createChildSpan({name: 'in-request'})
-        .endSpan();
+      testTraceModule.get().createChildSpan({name: 'in-request'}).endSpan();
       setImmediate(() => cb(null, {}));
     }) as InnerApiCall<{}, {}>);
     const apiCall = googleGax.createApiCall(authPromise, {
@@ -94,10 +91,7 @@ describeInterop<GaxModule>('google-gax', fixture => {
     testTraceModule.get().runInRootSpan({name: 'root'}, root => {
       apiCall({}, {timeout: 20}, err => {
         assert.ifError(err);
-        testTraceModule
-          .get()
-          .createChildSpan({name: 'in-callback'})
-          .endSpan();
+        testTraceModule.get().createChildSpan({name: 'in-callback'}).endSpan();
         root.endSpan();
 
         // Both children should be nested under the root span where the API call

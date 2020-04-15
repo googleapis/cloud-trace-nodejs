@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, beforeEach, afterEach} from 'mocha';
 import {EventEmitter} from 'events';
 import * as semver from 'semver';
 import {inspect} from 'util';
@@ -25,7 +25,7 @@ import {CLS} from '../src/cls/base';
 import {NullCLS} from '../src/cls/null';
 import {SingularCLS} from '../src/cls/singular';
 import {SpanType} from '../src/constants';
-import {createStackTrace, FORCE_NEW} from '../src/util';
+import {createStackTrace} from '../src/util';
 
 import {TestLogger} from './logger';
 import {plan} from './utils';
@@ -269,7 +269,7 @@ describe('Continuation-Local Storage', () => {
           logger.clearLogs();
         });
 
-        it(`when disabled, doesn't throw and has reasonable default values`, () => {
+        it("when disabled, doesn't throw and has reasonable default values", () => {
           c.disable();
           assert.ok(!c.isEnabled());
           assert.ok(c.getContext().type, SpanType.UNSAMPLED);
@@ -307,13 +307,10 @@ describe('Continuation-Local Storage', () => {
     }
 
     const invalidTestCases: TraceCLSConfig[] = asyncAwaitSupported
-      ? [
-          {mechanism: 'unknown'} as any, // tslint:disable-line:no-any
-        ]
-      : [
-          {mechanism: 'unknown'} as any, // tslint:disable-line:no-any
-          {mechanism: 'async-hooks'},
-        ];
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        [{mechanism: 'unknown'} as any]
+      : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        [{mechanism: 'unknown'} as any, {mechanism: 'async-hooks'}];
 
     for (const testCase of invalidTestCases) {
       describe(`with configuration ${inspect(testCase)}`, () => {

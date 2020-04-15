@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after, beforeEach} from 'mocha';
 
-import {Constants, SpanType} from '../src/constants';
-import {BaseSpanData, ChildSpanData, RootSpanData} from '../src/span-data';
+import {Constants} from '../src/constants';
+import {ChildSpanData, RootSpanData} from '../src/span-data';
 import {Trace} from '../src/trace';
 import {TraceLabels} from '../src/trace-labels';
 import {traceWriter, TraceWriter, TraceWriterConfig} from '../src/trace-writer';
@@ -234,10 +234,10 @@ describe('SpanData', () => {
         });
       }
 
-      it(`doesn't break when there are no source maps`, () => {
+      it("doesn't break when there are no source maps", () => {
         const {
           applyGeneric,
-        } = require(`./fixtures/source-maps-test/no-source-map`) as {
+        } = require('./fixtures/source-maps-test/no-source-map') as {
           applyGeneric: <T>(fn: () => T) => T;
         };
         const spanData = applyGeneric(
@@ -250,7 +250,7 @@ describe('SpanData', () => {
       });
     });
 
-    it(`doesn't call TraceWriter#writeTrace when ended`, () => {
+    it("doesn't call TraceWriter#writeTrace when ended", () => {
       const spanData = new CommonSpanData(trace, 'name', '0', 0);
       spanData.endSpan();
       // writeTrace writes to capturedTrace.
@@ -276,7 +276,7 @@ describe('SpanData', () => {
       assert.strictEqual(capturedTrace, rootSpanData.trace);
     });
 
-    it(`doesn't write to a Trace Writer more than once`, () => {
+    it("doesn't write to a Trace Writer more than once", () => {
       const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
       rootSpanData.endSpan();
       assert.strictEqual(capturedTrace, rootSpanData.trace);

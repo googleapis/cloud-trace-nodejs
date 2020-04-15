@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
+import {describe, it, before, after} from 'mocha';
 import * as http from 'http';
 import * as traceTestModule from './trace';
-import { pluginLoader, PluginLoaderState } from '../src/trace-plugin-loader';
-import { TraceWriter } from '../src/trace-writer';
-import { StackdriverTracer } from '../src/trace-api';
+import {pluginLoader, PluginLoaderState} from '../src/trace-plugin-loader';
+import {TraceWriter} from '../src/trace-writer';
+import {StackdriverTracer} from '../src/trace-api';
 
 describe('test-agent-stopped', () => {
   class InitErrorTraceWriter extends TraceWriter {
@@ -27,7 +27,7 @@ describe('test-agent-stopped', () => {
     }
   }
 
-  before((done) => {
+  before(done => {
     traceTestModule.setPluginLoaderForTest();
     traceTestModule.setTraceWriterForTest(InitErrorTraceWriter);
     traceTestModule.start();
@@ -44,20 +44,26 @@ describe('test-agent-stopped', () => {
   });
 
   it('deactivates the plugin loader', () => {
-    assert.notStrictEqual(pluginLoader.get()!.state, PluginLoaderState.ACTIVATED);
+    assert.notStrictEqual(
+      pluginLoader.get()!.state,
+      PluginLoaderState.ACTIVATED
+    );
   });
 
-  describe('express', function() {
-    it('should not break if no project number is found', function(done) {
-      var app = require('./plugins/fixtures/express4')();
-      app.get('/', function (req, res) {
+  describe('express', () => {
+    it('should not break if no project number is found', done => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const app = require('./plugins/fixtures/express4')();
+      app.get('/', (req, res) => {
         res.send('hi');
       });
-      var server = app.listen(8080, function() {
-        http.get('http://localhost:8080', function(res) {
-          var result = '';
-          res.on('data', function(data) { result += data; });
-          res.on('end', function() {
+      const server = app.listen(8080, () => {
+        http.get('http://localhost:8080', res => {
+          let result = '';
+          res.on('data', data => {
+            result += data;
+          });
+          res.on('end', () => {
             assert.strictEqual('hi', result);
             server.close();
             done();
@@ -67,23 +73,26 @@ describe('test-agent-stopped', () => {
     });
   });
 
-  describe('hapi', function() {
-    it('should not break if no project number is found', function(done) {
-      var hapi = require('./plugins/fixtures/hapi8');
-      var server = new hapi.Server();
-      server.connection({ port: 8081 });
+  describe('hapi', () => {
+    it('should not break if no project number is found', done => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const hapi = require('./plugins/fixtures/hapi8');
+      const server = new hapi.Server();
+      server.connection({port: 8081});
       server.route({
         method: 'GET',
         path: '/',
-        handler: function(req, reply) {
+        handler: function (req, reply) {
           reply('hi');
-        }
+        },
       });
-      server.start(function() {
-        http.get('http://localhost:8081', function(res) {
-          var result = '';
-          res.on('data', function(data) { result += data; });
-          res.on('end', function() {
+      server.start(() => {
+        http.get('http://localhost:8081', res => {
+          let result = '';
+          res.on('data', data => {
+            result += data;
+          });
+          res.on('end', () => {
             assert.strictEqual('hi', result);
             server.stop();
             done();
@@ -93,23 +102,26 @@ describe('test-agent-stopped', () => {
     });
   });
 
-  describe('restify', function() {
-    it('should not break if no project number is found', function(done) {
-      var restify = require('./plugins/fixtures/restify4');
-      var server = restify.createServer();
-      server.get('/', function (req, res, next) {
+  describe('restify', () => {
+    it('should not break if no project number is found', done => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const restify = require('./plugins/fixtures/restify4');
+      const server = restify.createServer();
+      server.get('/', (req, res, next) => {
         res.writeHead(200, {
-          'Content-Type': 'text/plain'
+          'Content-Type': 'text/plain',
         });
         res.write('hi');
         res.end();
         return next();
       });
-      server.listen(8082, function() {
-        http.get('http://localhost:8082', function(res) {
-          var result = '';
-          res.on('data', function(data) { result += data; });
-          res.on('end', function() {
+      server.listen(8082, () => {
+        http.get('http://localhost:8082', res => {
+          let result = '';
+          res.on('data', data => {
+            result += data;
+          });
+          res.on('end', () => {
             assert.strictEqual('hi', result);
             server.close();
             done();

@@ -165,7 +165,7 @@ describe('util.parseContextFromHeader', () => {
     inputs.forEach(s => {
       it(`should reject ${s}`, () => {
         // TS: Cast s as any rather than coerce it to a value
-        // tslint:disable-next-line:no-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = util.parseContextFromHeader(s as any);
         assert.ok(!result);
       });
@@ -188,7 +188,7 @@ describe('util.generateTraceContext', () => {
   });
 
   it('returns an empty string if passed a falsy value', () => {
-    // tslint:disable-next-line:no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const context = util.generateTraceContext(null as any);
     assert.strictEqual(context, '');
   });

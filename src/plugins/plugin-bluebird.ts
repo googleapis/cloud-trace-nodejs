@@ -27,12 +27,13 @@ const plugin: PluginTypes.Plugin = [
     patch: (Bluebird, tracer) => {
       // any is a type arg; args are type checked when read directly, otherwise
       // passed through to a function with the same type signature.
-      // tslint:disable:no-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const wrapIfFunction = (fn: any) =>
         typeof fn === 'function' ? tracer.wrap(fn) : fn;
       shimmer.wrap(Bluebird.prototype, '_then', (thenFn: Function) => {
         // Inherit context from the call site of .then().
-        return function<T>(this: bluebird_3<T>, ...args: any[]) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return function <T>(this: bluebird_3<T>, ...args: any[]) {
           return thenFn.apply(this, [
             wrapIfFunction(args[0]),
             wrapIfFunction(args[1]),

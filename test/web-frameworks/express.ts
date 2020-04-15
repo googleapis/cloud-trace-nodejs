@@ -59,7 +59,7 @@ export class Express4 implements WebFramework {
   }
 
   listen(port: number): number {
-    this.app.use((err: Error, req: {}, res: express_4.Response, next: {}) => {
+    this.app.use((err: Error, req: {}, res: express_4.Response) => {
       // silence error
       if (err) {
         res.sendStatus(500);

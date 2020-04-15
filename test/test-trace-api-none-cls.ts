@@ -13,11 +13,9 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it} from 'mocha';
-
+import {describe, it, before, after, beforeEach, afterEach} from 'mocha';
 import {SpanType} from '../src/constants';
 import {Tracer} from '../src/plugin-types';
-
 import * as testTraceModule from './trace';
 import {asChildSpanData, asRootSpanData} from './utils';
 

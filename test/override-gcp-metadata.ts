@@ -16,18 +16,18 @@
 
 import * as rax from 'retry-axios';
 import * as shimmer from 'shimmer';
-import { AxiosRequestConfig } from 'axios';
+import {AxiosRequestConfig} from 'axios';
 
 shimmer.wrap(rax, 'attach', attach => {
-  return (arg) => {
+  return arg => {
     if (arg) {
       shimmer.wrap(arg, 'request', request => {
         return (config: AxiosRequestConfig) => {
           delete config['raxConfig'];
           return request(config);
-        }
+        };
       });
     }
     return attach(arg);
-  }
+  };
 });

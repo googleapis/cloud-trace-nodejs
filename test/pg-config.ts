@@ -15,5 +15,5 @@
 export = {
   user: 'postgres',
   password: 'Password12!',
-  database: 'test'
+  database: 'test',
 };
