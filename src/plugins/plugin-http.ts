@@ -17,8 +17,7 @@ import {Agent, ClientRequest, ClientRequestArgs, request} from 'http';
 import * as httpsModule from 'https';
 import * as semver from 'semver';
 import * as shimmer from 'shimmer';
-// eslint-disable-next-line node/no-deprecated-api
-import {URL, parse as urlParse} from 'url';
+import {URL, UrlWithStringQuery} from 'url';
 
 import {Plugin, Tracer} from '../plugin-types';
 
@@ -95,6 +94,33 @@ function isTraceAgentRequest(options: httpModule.RequestOptions, api: Tracer) {
   );
 }
 
+/**
+ * Transform a url to a request options.
+ *
+ * From: https://github.com/nodejs/node/blob/v12.16.2/lib/internal/url.js#L1271-L1290
+ */
+function urlToOptions(url: URL): httpModule.RequestOptions {
+  const options: httpModule.RequestOptions | UrlWithStringQuery = {
+    protocol: url.protocol,
+    hostname:
+      typeof url.hostname === 'string' && url.hostname.startsWith('[')
+        ? url.hostname.slice(1, -1)
+        : url.hostname,
+    hash: url.hash,
+    search: url.search,
+    pathname: url.pathname,
+    path: `${url.pathname || ''}${url.search || ''}`,
+    href: url.href,
+  };
+  if (url.port !== '') {
+    options.port = Number(url.port);
+  }
+  if (url.username || url.password) {
+    options.auth = `${url.username}:${url.password}`;
+  }
+  return options;
+}
+
 function makeRequestTrace(
   protocol: string,
   request: RequestFunction,
@@ -110,17 +136,17 @@ function makeRequestTrace(
       | ((res: httpModule.IncomingMessage) => void),
     callback?: (res: httpModule.IncomingMessage) => void
   ): ClientRequest {
-    // These are error conditions; defer to http.request and don't trace.
-    if (!url || (typeof url === 'object' && typeof options === 'object')) {
+    let urlString: string | undefined;
+    if (!url) {
+      // These are error conditions; defer to http.request and don't trace.
       // eslint-disable-next-line prefer-rest-params
       return request.apply(this, arguments);
-    }
-
-    let urlString;
-    if (typeof url === 'string') {
+    } else if (typeof url === 'string') {
       // save the value of uri so we don't have to reconstruct it later
       urlString = url;
-      url = urlParse(url);
+      url = urlToOptions(new URL(url));
+    } else if (url instanceof URL) {
+      url = urlToOptions(url);
     }
     if (typeof options === 'function') {
       callback = options;

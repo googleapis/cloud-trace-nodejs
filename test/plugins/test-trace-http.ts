@@ -142,6 +142,54 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           versions: '>=10.x',
         },
         {
+          description: 'calling http.get with a string url and options',
+          fn: async () => {
+            const waitForResponse = new WaitForResponse();
+            http.get(
+              `${nodule}://localhost:${port}`,
+              {
+                rejectUnauthorized: false,
+              },
+              waitForResponse.handleResponse
+            );
+            await waitForResponse.done;
+          },
+          // http(url, options, cb) is not a recognized signature in Node 8.
+          versions: '>=10.x',
+        },
+        {
+          description: 'calling http.get with a URL object and options',
+          fn: async () => {
+            const waitForResponse = new WaitForResponse();
+            http.get(
+              new URL(`${nodule}://localhost:${port}`),
+              {
+                rejectUnauthorized: false,
+              },
+              waitForResponse.handleResponse
+            );
+            await waitForResponse.done;
+          },
+          // http(url, options, cb) is not a recognized signature in Node 8.
+          versions: '>=10.x',
+        },
+        {
+          description: 'calling http.get with a parsed URL and options',
+          fn: async () => {
+            const waitForResponse = new WaitForResponse();
+            http.get(
+              {hostname: 'localhost', port: port, protocol: `${nodule}:`},
+              {
+                rejectUnauthorized: false,
+              },
+              waitForResponse.handleResponse
+            );
+            await waitForResponse.done;
+          },
+          // http(url, options, cb) is not a recognized signature in Node 8.
+          versions: '>=10.x',
+        },
+        {
           description: 'calling http.get and using return value',
           fn: async () => {
             const waitForResponse = new WaitForResponse();
