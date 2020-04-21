@@ -1,6 +1,7 @@
 **/node_modules
+**/coverage
+test/fixtures
 build/
 docs/
 protos/
-test/fixtures
-src/plugins/types
+src/plugins/types/
