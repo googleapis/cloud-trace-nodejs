@@ -3,14 +3,10 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "build",
-    "target": "es2015",
-    "allowUnreachableCode": true,
-    "noUnusedParameters": false,
     "noImplicitAny": false,
     "noImplicitThis": false,
-    "noEmitOnError": false,
     "strictBindCallApply": false,
-    "lib": ["dom", "es2015"]
+    "lib": ["dom", "es2018"]
   },
   "include": [
     "src/*.ts",
