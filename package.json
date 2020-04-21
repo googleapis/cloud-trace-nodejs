@@ -11,7 +11,7 @@
     "unit-test": "npm run script run-unit-tests",
     "non-interference": "c8 mocha test/non-interference",
     "presystem-test": "npm run compile",
-    "system-test": "c8 mocha build/system-test --timeout 60000",
+    "system-test": "c8 mocha build/system-test --timeout 120000",
     "get-plugin-types": "npm run script get-plugin-types",
     "lint": "gts check",
     "clean": "gts clean",
