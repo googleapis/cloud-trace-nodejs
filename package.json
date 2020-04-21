@@ -7,8 +7,7 @@
   "repository": "googleapis/cloud-trace-nodejs",
   "scripts": {
     "pretest": "npm run compile",
-    "test": "c8 npm run script npm-init-test-fixtures npm-unit-test",
-    "unit-test": "npm run script run-unit-tests",
+    "test": "c8 npm run script init-test-fixtures run-unit-tests",
     "non-interference": "c8 mocha test/non-interference",
     "presystem-test": "npm run compile",
     "system-test": "c8 mocha build/system-test --timeout 120000",

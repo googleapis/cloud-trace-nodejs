@@ -77,18 +77,6 @@ async function run(steps: string[]) {
             timeout: 4000,
           });
           break;
-        case 'run-unit-tests-with-coverage':
-          await runTests({
-            includeGlobs: [
-              `${BUILD_DIRECTORY}/test/test-*.js`,
-              `${BUILD_DIRECTORY}/test/plugins/test-*.js`,
-            ],
-            excludeGlobs: unitTestExcludeGlobs,
-            rootDir: BUILD_DIRECTORY,
-            coverage: true,
-            timeout: 4000,
-          });
-          break;
         default:
           console.log(`> ${step}: not found`);
           break;
