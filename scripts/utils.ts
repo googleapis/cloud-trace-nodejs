@@ -39,17 +39,6 @@ export function nodule(nodule: string) {
   return path.relative(BUILD_DIRECTORY, `node_modules/${nodule}`);
 }
 
-export function flatten<T>(arr: Array<Array<T>>): Array<T> {
-  return arr.reduce((acc, e) => acc.concat(e), []);
-}
-
-export function existsP(path: string): Promise<boolean> {
-  return statP(path).then(
-    () => Promise.resolve(true),
-    () => Promise.resolve(false)
-  );
-}
-
 function promisifyChildProcess(childProcess: ChildProcess): Promise<void> {
   return new Promise((resolve, reject) => {
     const exit = (err?: Error) => once(() => (err ? reject(err) : resolve()))();
