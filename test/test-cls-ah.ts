@@ -15,17 +15,14 @@
 import * as assert from 'assert';
 import {describe, it, beforeEach, before, after} from 'mocha';
 import * as asyncHooksModule from 'async_hooks';
-import * as semver from 'semver';
 
 import {AsyncHooksCLS} from '../src/cls/async-hooks';
 
 type AsyncHooksModule = typeof asyncHooksModule;
 
 const TEST_ASYNC_RESOURCE = '@google-cloud/trace-agent:test';
-const maybeSkip = (describe: Mocha.SuiteFunction) =>
-  semver.satisfies(process.version, '>=8.1') ? describe : describe.skip;
 
-maybeSkip(describe)('AsyncHooks-based CLS', () => {
+describe('AsyncHooks-based CLS', () => {
   let asyncHooks: AsyncHooksModule;
   // tslint:disable-next-line:variable-name
   let AsyncResource: typeof asyncHooksModule.AsyncResource;

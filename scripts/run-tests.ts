@@ -26,7 +26,9 @@ export interface Options {
 export async function runTests(options: Options) {
   const {includeGlobs, excludeGlobs, rootDir, coverage, timeout} = options;
   function nodule(nodule: string) {
-    return path.relative(rootDir, `node_modules/${nodule}`);
+    return (
+      '.' + path.sep + path.relative(rootDir, path.join('node_modules', nodule))
+    );
   }
   let testNum = 0;
   const excludedFiles = ([] as string[]).concat(
@@ -41,20 +43,16 @@ export async function runTests(options: Options) {
     const moduleAndArgs = [
       ...(coverage
         ? [
-            nodule('.bin/nyc'),
-            '--reporter',
-            'lcov',
+            nodule(path.join('.bin', 'c8')),
             '--report-dir',
-            `./.coverage/${testNum++}`,
+            path.join('.', '.coverage', (testNum++).toString()),
             '--exclude',
-            'build/test/fixtures/**',
+            path.join('build', 'test', 'fixtures', '**'),
             '--exclude',
-            'build/test/plugins/fixtures/**',
-            '--exclude-after-remap',
-            'false',
+            path.join('build', 'test', 'plugins', 'fixtures', '**'),
           ]
         : []),
-      nodule('mocha/bin/_mocha'),
+      nodule(path.join('mocha', 'bin', '_mocha')),
       '--require',
       'source-map-support/register',
       path.relative(rootDir, file),
