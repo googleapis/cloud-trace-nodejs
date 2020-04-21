@@ -33,12 +33,7 @@ if [[ $KOKORO_BUILD_ARTIFACTS_SUBDIR = *"continuous"* ]]; then
   trap cleanup EXIT HUP
 fi
 
-# Initialize test fixtures for plugin tests.
-npm run init-test-fixtures
-# Run unit tests, reporting coverage individually for each test file.
-# Despite this, the codecov script _should_ be able to report coverage for the
-# whole project all at once.
-npm run script run-unit-tests-with-coverage
+npm test
 
 # codecov combines coverage across integration and unit tests. Include
 # the logic below for any environment you wish to collect coverage for:

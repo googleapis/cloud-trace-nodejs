@@ -22,7 +22,6 @@
 
 const [, , ...steps] = process.argv;
 const {TRACE_TEST_EXCLUDE_INTEGRATION} = process.env;
-import {compile} from './compile';
 import {getPluginTypes} from './get-plugin-types';
 import {initTestFixtures} from './init-test-fixtures';
 import {runTests} from './run-tests';
@@ -58,10 +57,6 @@ async function run(steps: string[]) {
       const moduleAndArgs = step.split('-');
       await spawnP('npm', ['run', moduleAndArgs.slice(1).join('-')]);
       continue;
-    } else if (step.startsWith('compile-')) {
-      const [, languageLevel, strict] = step.split('-');
-      await compile({strict: !!strict, languageLevel});
-      continue;
     } else {
       switch (step) {
         case 'get-plugin-types':
@@ -79,18 +74,6 @@ async function run(steps: string[]) {
             excludeGlobs: unitTestExcludeGlobs,
             rootDir: BUILD_DIRECTORY,
             coverage: !isWin,
-            timeout: 4000,
-          });
-          break;
-        case 'run-unit-tests-with-coverage':
-          await runTests({
-            includeGlobs: [
-              `${BUILD_DIRECTORY}/test/test-*.js`,
-              `${BUILD_DIRECTORY}/test/plugins/test-*.js`,
-            ],
-            excludeGlobs: unitTestExcludeGlobs,
-            rootDir: BUILD_DIRECTORY,
-            coverage: true,
             timeout: 4000,
           });
           break;

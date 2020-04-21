@@ -69,12 +69,3 @@ docker run --name trace-test-postgres -p 127.0.0.1:5432:5432\
 # (It's possible that in the future, we adopt .nycrc, but only as a base
 # configuration, as we need to specify a different reporting directory for each
 # test.)
-
-s.replace('.kokoro/test.sh', 'npm test',
-r"""
-# Initialize test fixtures for plugin tests.
-npm run init-test-fixtures
-# Run unit tests, reporting coverage individually for each test file.
-# Despite this, the codecov script _should_ be able to report coverage for the
-# whole project all at once.
-npm run script run-unit-tests-with-coverage""")
