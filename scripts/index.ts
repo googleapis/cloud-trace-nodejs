@@ -22,7 +22,6 @@
 
 const [, , ...steps] = process.argv;
 const {TRACE_TEST_EXCLUDE_INTEGRATION} = process.env;
-import {compile} from './compile';
 import {getPluginTypes} from './get-plugin-types';
 import {initTestFixtures} from './init-test-fixtures';
 import {runTests} from './run-tests';
@@ -57,10 +56,6 @@ async function run(steps: string[]) {
     if (step.indexOf('npm-') === 0) {
       const moduleAndArgs = step.split('-');
       await spawnP('npm', ['run', moduleAndArgs.slice(1).join('-')]);
-      continue;
-    } else if (step.startsWith('compile-')) {
-      const [, languageLevel, strict] = step.split('-');
-      await compile({strict: !!strict, languageLevel});
       continue;
     } else {
       switch (step) {
