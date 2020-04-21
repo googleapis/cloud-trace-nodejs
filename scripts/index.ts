@@ -21,25 +21,16 @@
  */
 
 const [, , ...steps] = process.argv;
-const {
-  TRACE_TEST_EXCLUDE_INTEGRATION,
-  TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY,
-  TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV,
-} = process.env;
-
+const {TRACE_TEST_EXCLUDE_INTEGRATION} = process.env;
 import {checkInstall} from './check-install';
 import {compile} from './compile';
-import {encryptCredentials, decryptCredentials} from './credentials';
 import {getPluginTypes} from './get-plugin-types';
 import {initTestFixtures} from './init-test-fixtures';
-import {reportCoverage} from './report-coverage';
 import {runTests} from './run-tests';
-import {testNonInterference} from './test-non-interference';
 import {BUILD_DIRECTORY, spawnP} from './utils';
+import * as os from 'os';
 
-// The identifying components in the service account credentials file path.
-const projectID = 'long-door-651';
-const keyID = 'a179efbeda21';
+const isWin = os.platform().startsWith('win');
 
 // Globs to exclude when running unit tests only.
 const unitTestExcludeGlobs: string[] = TRACE_TEST_EXCLUDE_INTEGRATION
@@ -77,28 +68,6 @@ async function run(steps: string[]) {
         case 'check-install':
           await checkInstall();
           break;
-        case 'encrypt-service-account-credentials': {
-          const keyAndIV = await encryptCredentials(
-            `${projectID}-${keyID}.json`
-          );
-          console.log(
-            [`key: ${keyAndIV.key}`, `iv: ${keyAndIV.iv}`].join('\n')
-          );
-          break;
-        }
-        case 'decrypt-service-account-credentials': {
-          const key = TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_KEY;
-          const iv = TRACE_SYSTEM_TEST_ENCRYPTED_CREDENTIALS_IV;
-          if (!key || !iv) {
-            console.log(
-              '> Environment insufficient to decrypt service account credentials'
-            );
-            break;
-          }
-
-          await decryptCredentials({key, iv}, `${projectID}-${keyID}.json`);
-          break;
-        }
         case 'get-plugin-types':
           await getPluginTypes();
           break;
@@ -113,7 +82,7 @@ async function run(steps: string[]) {
             ],
             excludeGlobs: unitTestExcludeGlobs,
             rootDir: BUILD_DIRECTORY,
-            coverage: false,
+            coverage: !isWin,
             timeout: 4000,
           });
           break;
@@ -128,12 +97,6 @@ async function run(steps: string[]) {
             coverage: true,
             timeout: 4000,
           });
-          break;
-        case 'report-coverage':
-          await reportCoverage();
-          break;
-        case 'test-non-interference':
-          await testNonInterference();
           break;
         default:
           console.log(`> ${step}: not found`);
