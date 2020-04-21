@@ -22,7 +22,6 @@
 
 const [, , ...steps] = process.argv;
 const {TRACE_TEST_EXCLUDE_INTEGRATION} = process.env;
-import {checkInstall} from './check-install';
 import {compile} from './compile';
 import {getPluginTypes} from './get-plugin-types';
 import {initTestFixtures} from './init-test-fixtures';
@@ -65,9 +64,6 @@ async function run(steps: string[]) {
       continue;
     } else {
       switch (step) {
-        case 'check-install':
-          await checkInstall();
-          break;
         case 'get-plugin-types':
           await getPluginTypes();
           break;
