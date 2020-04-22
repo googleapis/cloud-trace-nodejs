@@ -32,7 +32,6 @@ if [[ $KOKORO_BUILD_ARTIFACTS_SUBDIR = *"continuous"* ]]; then
   }
   trap cleanup EXIT HUP
 fi
-
 npm test
 
 # codecov combines coverage across integration and unit tests. Include
