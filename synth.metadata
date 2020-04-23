@@ -3,8 +3,8 @@
     {
       "git": {
         "name": ".",
-        "remote": "git@github.com:googleapis/cloud-trace-nodejs.git",
-        "sha": "3918c150743111d362d9bccb206c8bc88762fe30"
+        "remote": "https://github.com/googleapis/cloud-trace-nodejs.git",
+        "sha": "f52fa4daac833cd9e1242789cb6837641b798cb9"
       }
     },
     {
