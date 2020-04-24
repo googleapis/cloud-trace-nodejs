@@ -13,7 +13,7 @@
     "system-test": "c8 mocha build/system-test --timeout 120000",
     "lint": "gts check",
     "clean": "gts clean",
-    "precompile": "npm run script get-plugin-types",
+    "precompile": "gts clean",
     "compile": "tsc -p ./tsconfig.full.json && tsc -p ./tsconfig.json",
     "fix": "gts fix",
     "prepare": "gts clean && npm run compile",
@@ -24,7 +24,7 @@
     "docs": "compodoc src/",
     "presamples-test": "npm run compile",
     "samples-test": "cd samples/ && npm link ../ && npm install && npm test && cd ../",
-    "prelint": "cd samples; npm link ../; npm i"
+    "prelint": "cd samples; npm link ../; npm install"
   },
   "files": [
     "build/src/**/*.js",

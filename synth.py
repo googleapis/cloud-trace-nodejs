@@ -14,8 +14,8 @@
 
 import synthtool as s
 import synthtool.gcp as gcp
+import synthtool.languages.node as node
 import logging
-import subprocess
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -69,3 +69,5 @@ docker run --name trace-test-postgres -p 127.0.0.1:5432:5432\
 # (It's possible that in the future, we adopt .nycrc, but only as a base
 # configuration, as we need to specify a different reporting directory for each
 # test.)
+node.install()
+node.fix()
