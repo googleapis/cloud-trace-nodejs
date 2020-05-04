@@ -31,7 +31,7 @@ const DISCOVERY_URL = 'https://www.googleapis.com/discovery/v1/apis';
 app.get('/', async (req, res) => {
   // This outgoing HTTP request should be captured by Trace
   try {
-    const {body} = await got(DISCOVERY_URL, {json: true});
+    const {body} = await got(DISCOVERY_URL, {responseType: 'json'});
     const names = body.items.map(item => item.name);
     res.status(200).send(names.join('\n')).end();
   } catch (err) {
