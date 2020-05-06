@@ -108,6 +108,6 @@
     "semver": "^7.0.0",
     "shimmer": "^1.2.0",
     "source-map-support": "^0.5.16",
-    "uuid": "^7.0.0"
+    "uuid": "^8.0.0"
   }
 }
