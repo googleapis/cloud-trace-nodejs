@@ -71,7 +71,7 @@ describe('SpanData', () => {
       const spanData = new CommonSpanData(trace, 'name', '400', 0);
       assert.strictEqual(spanData.span.name, 'name');
       assert.strictEqual(spanData.span.parentSpanId, '400');
-      assert.ok(spanData.span.spanId.match(/[0-9A-F]{12}/));
+      assert.ok(spanData.span.spanId.match(/^[0-9]+$/));
     });
 
     it('creates spans with unique span IDs', () => {
