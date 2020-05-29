@@ -320,7 +320,7 @@ export class StackdriverTracer implements Tracer {
         // As in the previous case, a root span with a large number of child
         // spans suggests a memory leak stemming from context confusion. This
         // is likely due to userspace task queues or Promise implementations.
-        this.logger!.error(
+        this.logger!.warn(
           `TraceApi#createChildSpan: [${
             this.pluginNameToLog
           }] Creating phantom child span [${
@@ -331,7 +331,7 @@ export class StackdriverTracer implements Tracer {
             this.config!.spansPerTraceHardLimit
           } spans. This is likely a memory leak.`
         );
-        this.logger!.error(
+        this.logger!.warn(
           [
             'TraceApi#createChildSpan: Please see',
             'https://github.com/googleapis/cloud-trace-nodejs/wiki',
@@ -349,7 +349,7 @@ export class StackdriverTracer implements Tracer {
         // RootSpanData instance, this block might be skipped because it only
         // checks equality -- this is OK because no automatic tracing plugin
         // uses the RootSpanData API directly.
-        this.logger!.error(
+        this.logger!.warn(
           `TraceApi#createChildSpan: [${
             this.pluginNameToLog
           }] Adding child span [${
@@ -360,7 +360,7 @@ export class StackdriverTracer implements Tracer {
             this.config!.spansPerTraceSoftLimit
           } spans. This is likely a memory leak.`
         );
-        this.logger!.error(
+        this.logger!.warn(
           [
             'TraceApi#createChildSpan: Please see',
             'https://github.com/googleapis/cloud-trace-nodejs/wiki',
