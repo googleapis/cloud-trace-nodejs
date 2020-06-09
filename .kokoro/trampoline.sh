@@ -24,6 +24,7 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+$(dirname $0)/populate-secrets.sh # Secret Manager secrets.
 # From bin/docker-trace.sh
 # Start up database docker containers for plugin integration tests.
 docker run --name trace-test-mongo -p 127.0.0.1:27017:27017 -d mongo
