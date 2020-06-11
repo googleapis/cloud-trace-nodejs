@@ -81,7 +81,7 @@
     "gts": "^2.0.0",
     "js-green-licenses": "^2.0.0",
     "linkinator": "^2.0.0",
-    "mocha": "^7.0.0",
+    "mocha": "^8.0.0",
     "nock": "^12.0.0",
     "once": "^1.4.0",
     "retry-axios": "^2.0.0",
