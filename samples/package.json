@@ -27,6 +27,6 @@
   },
   "devDependencies": {
     "execa": "^4.0.0",
-    "mocha": "^7.0.0"
+    "mocha": "^8.0.0"
   }
 }
