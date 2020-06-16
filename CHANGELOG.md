@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.1.0](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.0.0...v5.1.0) (2020-06-11)
+
+
+### Features
+
+* move ts target to es2018 from es2016 ([#1280](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1280)) ([b33df71](https://www.github.com/googleapis/cloud-trace-nodejs/commit/b33df71fe686ca9c859010e7c5a5589dd67e9631))
+
+
+### Bug Fixes
+
+* **deps:** update dependency @opencensus/propagation-stackdriver to v0.0.22 ([#1277](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1277)) ([82725a2](https://www.github.com/googleapis/cloud-trace-nodejs/commit/82725a2ec161dda5d571e0fb615980f7bde63adf))
+
 ## [5.0.0](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v4.2.5...v5.0.0) (2020-06-04)
 
 
