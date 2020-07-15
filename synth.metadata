@@ -4,7 +4,7 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/cloud-trace-nodejs.git",
-        "sha": "40f7951a8c4cbab1db27a6376b2995c7d5e4803a"
+        "sha": "80f24acbbb8193a22c1167d0f7e6493eeb992f13"
       }
     },
     {
