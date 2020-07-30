@@ -24,7 +24,9 @@
     "docs": "compodoc src/",
     "presamples-test": "npm run compile",
     "samples-test": "cd samples/ && npm link ../ && npm install && npm test && cd ../",
-    "prelint": "cd samples; npm link ../; npm i"
+    "prelint": "cd samples; npm link ../; npm i",
+    "api-extractor": "api-extractor run --local",
+    "api-documenter": "api-documenter yaml --input-folder=temp"
   },
   "files": [
     "build/src/**/*.js",
@@ -89,7 +91,9 @@
     "timekeeper": "^2.0.0",
     "tmp": "0.2.1",
     "ts-node": "^8.0.0",
-    "typescript": "3.6.4"
+    "typescript": "3.6.4",
+    "@microsoft/api-documenter": "^7.8.10",
+    "@microsoft/api-extractor": "^7.8.10"
   },
   "dependencies": {
     "@google-cloud/common": "^3.0.0",
