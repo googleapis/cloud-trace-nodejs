@@ -143,7 +143,7 @@ describe('Trace Writer', () => {
           _cacheClientFromJSON: typeof writer.authClient.fromJSON;
         },
         '_cacheClientFromJSON',
-        cacheClientFromJSON => {
+        ((cacheClientFromJSON: Function) => {
           return function (
             this: GoogleAuth,
             json: JWTInput,
@@ -152,7 +152,7 @@ describe('Trace Writer', () => {
             capturedJson = json;
             return cacheClientFromJSON.call(this, json, options);
           };
-        }
+        }) as never
       );
       await writer.authClient.getClient();
       shimmer.unwrap(
