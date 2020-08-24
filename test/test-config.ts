@@ -108,7 +108,6 @@ describe('Behavior set by config for Tracer', () => {
       return config.pluginLoaderConfig.tracerConfig;
     } else {
       assert.fail('Configuration was not enabled.');
-      throw new Error(); // unreachable.
     }
   };
 
