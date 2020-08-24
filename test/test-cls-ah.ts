@@ -39,7 +39,7 @@ describe('AsyncHooks-based CLS', () => {
         fn: (this: This, ...args: any[]) => Result,
         thisArg?: This
       ): Result {
-        if (super.runInAsyncScope) {
+        if (typeof super.runInAsyncScope === 'function') {
           // eslint-disable-next-line prefer-rest-params
           return super.runInAsyncScope.apply(this, arguments);
         } else {
