@@ -4,7 +4,7 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/cloud-trace-nodejs.git",
-        "sha": "40f7951a8c4cbab1db27a6376b2995c7d5e4803a"
+        "sha": "6b3c6bf0d7f0ccb0dd4ab33a7196a4b7fb297758"
       }
     },
     {
@@ -14,5 +14,59 @@
         "sha": "d82deccf657a66e31bd5da9efdb96c6fa322fc7e"
       }
     }
+  ],
+  "generatedFiles": [
+    ".eslintrc.json",
+    ".gitattributes",
+    ".github/ISSUE_TEMPLATE/bug_report.md",
+    ".github/ISSUE_TEMPLATE/feature_request.md",
+    ".github/ISSUE_TEMPLATE/support_request.md",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/publish.yml",
+    ".github/release-please.yml",
+    ".kokoro/.gitattributes",
+    ".kokoro/common.cfg",
+    ".kokoro/continuous/node10/common.cfg",
+    ".kokoro/continuous/node10/docs.cfg",
+    ".kokoro/continuous/node10/lint.cfg",
+    ".kokoro/continuous/node10/samples-test.cfg",
+    ".kokoro/continuous/node10/system-test.cfg",
+    ".kokoro/continuous/node10/test.cfg",
+    ".kokoro/continuous/node12/common.cfg",
+    ".kokoro/continuous/node12/test.cfg",
+    ".kokoro/continuous/node8/common.cfg",
+    ".kokoro/continuous/node8/test.cfg",
+    ".kokoro/docs.sh",
+    ".kokoro/lint.sh",
+    ".kokoro/populate-secrets.sh",
+    ".kokoro/presubmit/node10/common.cfg",
+    ".kokoro/presubmit/node10/docs.cfg",
+    ".kokoro/presubmit/node10/lint.cfg",
+    ".kokoro/presubmit/node10/samples-test.cfg",
+    ".kokoro/presubmit/node10/system-test.cfg",
+    ".kokoro/presubmit/node10/test.cfg",
+    ".kokoro/presubmit/node12/common.cfg",
+    ".kokoro/presubmit/node12/test.cfg",
+    ".kokoro/presubmit/node8/common.cfg",
+    ".kokoro/presubmit/node8/test.cfg",
+    ".kokoro/presubmit/windows/common.cfg",
+    ".kokoro/presubmit/windows/test.cfg",
+    ".kokoro/publish.sh",
+    ".kokoro/release/docs.cfg",
+    ".kokoro/release/docs.sh",
+    ".kokoro/release/publish.cfg",
+    ".kokoro/samples-test.sh",
+    ".kokoro/system-test.sh",
+    ".kokoro/test.bat",
+    ".kokoro/test.sh",
+    ".kokoro/trampoline.sh",
+    ".mocharc.js",
+    ".prettierrc.js",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "README.md",
+    "renovate.json",
+    "samples/README.md"
   ]
 }
