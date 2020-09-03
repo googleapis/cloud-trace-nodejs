@@ -14,6 +14,9 @@
 Node.js Support for StackDriver Trace
 
 
+A comprehensive list of changes in each version may be found in
+[the CHANGELOG](https://github.com/googleapis/cloud-trace-nodejs/blob/master/CHANGELOG.md).
+
 * [Stackdriver Trace Node.js Client API Reference][client-docs]
 * [Stackdriver Trace Documentation][product-docs]
 * [github.com/googleapis/cloud-trace-nodejs](https://github.com/googleapis/cloud-trace-nodejs)
