@@ -11,7 +11,7 @@
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "388e10f5ae302d3e8de1fac99f3a95d1ab8f824a"
+        "sha": "21f1470ecd01424dc91c70f1a7c798e4e87d1eec"
       }
     }
   ],
@@ -39,17 +39,13 @@
     ".kokoro/docs.sh",
     ".kokoro/lint.sh",
     ".kokoro/populate-secrets.sh",
-    ".kokoro/presubmit/node10/common.cfg",
-    ".kokoro/presubmit/node10/docs.cfg",
-    ".kokoro/presubmit/node10/lint.cfg",
     ".kokoro/presubmit/node10/samples-test.cfg",
     ".kokoro/presubmit/node10/system-test.cfg",
-    ".kokoro/presubmit/node10/test.cfg",
     ".kokoro/presubmit/node12/common.cfg",
     ".kokoro/presubmit/node12/test.cfg",
-    ".kokoro/presubmit/windows/common.cfg",
-    ".kokoro/presubmit/windows/test.cfg",
     ".kokoro/publish.sh",
+    ".kokoro/release/docs-devsite.cfg",
+    ".kokoro/release/docs-devsite.sh",
     ".kokoro/release/docs.cfg",
     ".kokoro/release/docs.sh",
     ".kokoro/release/publish.cfg",
@@ -64,6 +60,7 @@
     "CONTRIBUTING.md",
     "LICENSE",
     "README.md",
+    "api-extractor.json",
     "renovate.json",
     "samples/README.md"
   ]
