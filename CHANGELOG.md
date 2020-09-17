@@ -1,5 +1,12 @@
 # Changelog
 
+### [5.1.1](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.0...v5.1.1) (2020-09-12)
+
+
+### Bug Fixes
+
+* typeo in nodejs .gitattribute ([#1290](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1290)) ([24deca8](https://www.github.com/googleapis/cloud-trace-nodejs/commit/24deca8e39df2507db3e2283ff540aceb54a6c89))
+
 ## [5.1.0](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.0.0...v5.1.0) (2020-06-11)
 
 
