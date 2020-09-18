@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import {EventEmitter} from 'events';
-import * as semver from 'semver';
 
 import {AsyncHooksCLS} from './cls/async-hooks';
 import {AsyncListenerCLS} from './cls/async-listener';
@@ -26,8 +25,6 @@ import {RootSpan} from './plugin-types';
 import {UNCORRELATED_ROOT_SPAN, DISABLED_ROOT_SPAN} from './span-data';
 import {Trace, TraceSpan} from './trace';
 import {Singleton} from './util';
-
-const asyncHooksAvailable = semver.satisfies(process.version, '>=8');
 
 export interface RealRootContext {
   readonly span: TraceSpan;
@@ -115,11 +112,6 @@ export class TraceCLS implements CLS<RootContext> {
   constructor(config: TraceCLSConfig, private readonly logger: Logger) {
     switch (config.mechanism) {
       case TraceCLSMechanism.ASYNC_HOOKS:
-        if (!asyncHooksAvailable) {
-          throw new Error(
-            `CLS mechanism [${config.mechanism}] is not compatible with Node <8.`
-          );
-        }
         this.CLSClass = AsyncHooksCLS;
         this.rootSpanStackOffset = 4;
         break;
