@@ -86,7 +86,7 @@ describe('Continuation-Local Storage', () => {
           c.disable();
         });
 
-        it('[sanity check]', () => {
+        it('test case is default', () => {
           assert.ok(c.isEnabled());
           // has a default value
           assert.strictEqual(c.getContext(), 'default');
@@ -282,7 +282,7 @@ describe('Continuation-Local Storage', () => {
           c.patchEmitterToPropagateContext(new EventEmitter());
         });
 
-        it('[sanity check]', () => {
+        it('confirm test case is enabled and has expected default type', () => {
           assert.ok(c.isEnabled());
           assert.strictEqual(c.getContext().type, testCase.expectedDefaultType);
         });
