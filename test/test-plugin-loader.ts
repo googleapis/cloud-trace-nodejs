@@ -150,7 +150,7 @@ describe('Trace Plugin Loader', () => {
   });
 
   describe('patching behavior', () => {
-    it('[sanity check]', () => {
+    it('ensures that module fixtures contain the right values', () => {
       // Ensure that module fixtures contain values that we expect.
       assert.strictEqual(require('small-number').value, 0);
       assert.strictEqual(require('large-number'), 1e100);
