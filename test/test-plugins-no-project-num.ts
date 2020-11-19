@@ -114,7 +114,7 @@ describe('test-plugins-no-project-num', () => {
       });
     });
 
-    it.skip('hapi', done => {
+    it('hapi', done => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const http = require('http');
       // eslint-disable-next-line @typescript-eslint/no-var-requires

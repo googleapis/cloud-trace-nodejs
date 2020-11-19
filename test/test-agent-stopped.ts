@@ -74,7 +74,7 @@ describe('test-agent-stopped', () => {
   });
 
   describe('hapi', () => {
-    it.skip('should not break if no project number is found', done => {
+    it('should not break if no project number is found', done => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const hapi = require('./plugins/fixtures/hapi18');
       const server = new hapi.Server();

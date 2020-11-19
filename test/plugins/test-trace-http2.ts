@@ -35,11 +35,7 @@ import {
 const serverRes = '1729';
 const serverPort = 9042;
 
-const maybeSkipHttp2 = semver.satisfies(process.version, '<8')
-  ? describe.skip
-  : describe;
-
-maybeSkipHttp2('Trace Agent integration with http2', () => {
+describe('Trace Agent integration with http2', () => {
   let http2: typeof http2Types;
 
   before(() => {
