@@ -13,18 +13,13 @@
 // limitations under the License.
 
 import {ServerResponse} from 'http';
-import * as shimmer from 'shimmer';
-// eslint-disable-next-line node/no-deprecated-api
-import {parse as urlParse} from 'url';
-
+import {URL} from 'url';
 import {PluginTypes} from '..';
-
-import {hapi_16, hapi_17} from './types';
+import {hapi_17} from './types';
 
 // Used when patching Hapi 17.
 const ORIGINAL = Symbol();
 
-type Hapi16Module = typeof hapi_16;
 interface Hapi17RequestExecutePrivate {
   (this: hapi_17.Request): Promise<void>;
   [ORIGINAL]?: Hapi17RequestExecutePrivate;
@@ -35,14 +30,14 @@ type Hapi17Request = hapi_17.Request & {
 
 function instrument<T>(
   api: PluginTypes.Tracer,
-  request: hapi_16.Request | hapi_17.Request,
+  request: hapi_17.Request,
   continueCb: () => T
 ): T {
   const req = request.raw.req;
   const res = request.raw.res;
   const originalEnd = res.end;
   const options = {
-    name: req.url ? urlParse(req.url).pathname || '' : '',
+    name: req.url ? new URL(req.url).pathname || '' : '',
     url: req.url,
     method: req.method,
     traceContext: api.propagation.extract(key => req.headers[key]),
@@ -110,24 +105,6 @@ function instrument<T>(
 }
 
 const plugin: PluginTypes.Plugin = [
-  {
-    versions: '8 - 16',
-    patch: (hapi, api) => {
-      shimmer.wrap(hapi.Server.prototype, 'connection', connection => {
-        return function connectionTrace(this: hapi_16.Server) {
-          // eslint-disable-next-line prefer-rest-params
-          const server = connection.apply(this, arguments);
-          server.ext('onRequest', function handler(request, reply) {
-            return instrument(api, request, () => reply.continue());
-          } as hapi_16.ServerExtRequestHandler);
-          return server;
-        };
-      });
-    },
-    unpatch: hapi => {
-      shimmer.unwrap(hapi.Server.prototype, 'connection');
-    },
-  } as PluginTypes.Monkeypatch<Hapi16Module>,
   /**
    * In Hapi 17, the work that is done on behalf of a request stems from
    * Request#_execute. We patch that function to ensure that context is

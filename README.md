@@ -105,7 +105,7 @@ app.get('/', async () => {
 The trace agent can do automatic tracing of the following web frameworks:
 * [express](https://www.npmjs.com/package/express) (version 4)
 * [gRPC](https://www.npmjs.com/package/grpc) server (version ^1.1)
-* [hapi](https://www.npmjs.com/package/hapi) (versions 8 - 19)
+* [hapi](https://www.npmjs.com/package/hapi) (versions 17 - 19)
 * [koa](https://www.npmjs.com/package/koa) (version 1 - 2)
 * [restify](https://www.npmjs.com/package/restify) (versions 3 - 8)
 

@@ -32,7 +32,6 @@ import {WebFramework, WebFrameworkConstructor} from './web-frameworks/base';
 import {Connect3} from './web-frameworks/connect';
 import {Express4} from './web-frameworks/express';
 import {Hapi18, Hapi19} from './web-frameworks/hapi17';
-import {Hapi12, Hapi15, Hapi16, Hapi8} from './web-frameworks/hapi8_16';
 import {Koa1} from './web-frameworks/koa1';
 import {Koa2} from './web-frameworks/koa2';
 import {
@@ -56,10 +55,6 @@ const ABORTED_SPAN_RETRIES = 5;
 const FRAMEWORKS: WebFrameworkConstructor[] = [
   Connect3,
   Express4,
-  Hapi8,
-  Hapi12,
-  Hapi15,
-  Hapi16,
   Hapi18,
   Hapi19,
   Koa1,
