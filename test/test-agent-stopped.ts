@@ -77,16 +77,16 @@ describe('test-agent-stopped', () => {
     it('should not break if no project number is found', done => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const hapi = require('./plugins/fixtures/hapi18');
-      const server = new hapi.Server();
-      server.connection({port: 8081});
+      const server = new hapi.Server({
+        port: 8081,
+        host: 'localhost',
+      });
       server.route({
         method: 'GET',
         path: '/',
-        handler: function (req, reply) {
-          reply('hi');
-        },
+        handler: () => 'hi',
       });
-      server.start(() => {
+      server.start().then(() => {
         http.get('http://localhost:8081', res => {
           let result = '';
           res.on('data', data => {

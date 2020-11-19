@@ -36,7 +36,7 @@
   },
   "hapi-plugin-mysql3": {
     "dependencies": {
-      "hapi-plugin-mysql": "^3.1.3"
+      "hapi-plugin-mysql": "^7.2.3"
     }
   },
   "hapi18": {

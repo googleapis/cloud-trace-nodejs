@@ -16,45 +16,44 @@
 const common = require('./plugins/common' /*.js*/);
 import * as assert from 'assert';
 import * as http from 'http';
-import * as semver from 'semver';
 import {describe, it, before} from 'mocha';
 
-// hapi 13 and hapi-plugin-mysql uses const
-if (semver.satisfies(process.version, '>=4')) {
-  describe('test-trace-mysql', () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let agent;
-    let Hapi;
-    before(() => {
-      agent = require('../..').start({
-        projectId: '0',
-        samplingRate: 0,
-        enhancedDatabaseReporting: true,
-      });
-      Hapi = require('./plugins/fixtures/hapi18');
+describe('test-trace-mysql', () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let agent;
+  let Hapi;
+  before(() => {
+    agent = require('../..').start({
+      projectId: '0',
+      samplingRate: 0,
+      enhancedDatabaseReporting: true,
     });
+    Hapi = require('./plugins/fixtures/hapi18');
+  });
 
-    it('should work with connection pool access', done => {
-      const server = new Hapi.Server();
-      server.connection({port: common.serverPort});
-      server.register(
-        {
-          register: require('./plugins/fixtures/hapi-plugin-mysql3'),
-          options: require('./mysql-config' /*.js*/),
-        },
-        err => {
-          assert(!err);
-          server.route({
-            method: 'GET',
-            path: '/',
-            handler: function (request, reply) {
-              request.app.db.query('SELECT * FROM t', () => {
-                return reply('hello');
-              });
-            },
-          });
-          server.start(err => {
-            assert(!err);
+  it('should work with connection pool access', done => {
+    const server = new Hapi.Server({
+      port: common.serverPort,
+      host: 'localhost',
+    });
+    server
+      .register({
+        plugin: require('./plugins/fixtures/hapi-plugin-mysql3'),
+        options: require('./mysql-config' /*.js*/),
+      })
+      .then(() => {
+        server.route({
+          method: 'GET',
+          path: '/',
+          handler: request => {
+            request.app.db.query('SELECT * FROM t', () => {
+              return 'hello';
+            });
+          },
+        });
+        server
+          .start()
+          .then(() => {
             http.get({port: common.serverPort}, res => {
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
               let result = '';
@@ -70,11 +69,12 @@ if (semver.satisfies(process.version, '>=4')) {
                 server.stop(done);
               });
             });
+          })
+          .catch(e => {
+            assert.fail(e);
           });
-        }
-      );
-    });
+      });
   });
-}
+});
 
 export default {};
