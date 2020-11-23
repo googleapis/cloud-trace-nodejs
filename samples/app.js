@@ -17,6 +17,7 @@
 // [START trace_setup_nodejs_app]
 if (process.env.NODE_ENV === 'production') {
   // [START trace_setup_nodejs_implicit]
+  // eslint-disable-next-line node/no-missing-require
   require('@google-cloud/trace-agent').start();
   // [END trace_setup_nodejs_implicit]
 }
