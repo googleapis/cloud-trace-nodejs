@@ -27,6 +27,16 @@ import {TraceCLSMechanism} from './cls';
 import {StackdriverTracer} from './trace-api';
 import {TraceContextHeaderBehavior} from './tracing-policy';
 
+if (process && process.version) {
+  const minNodeVersion = 10;
+  const major = Number(process.version.match(/v(\d+)/)![1]);
+  if (major < minNodeVersion) {
+    throw Error(
+      `trace-agent supports a minimum Node.js version of ${minNodeVersion}. Read our version support policy: https://github.com/googleapis/cloud-trace-nodejs#supported-nodejs-versions`
+    );
+  }
+}
+
 export {Config, PluginTypes};
 
 let traceAgent: StackdriverTracer;
