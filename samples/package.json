@@ -26,7 +26,7 @@
     "got": "^11.0.0"
   },
   "devDependencies": {
-    "execa": "^4.0.0",
+    "execa": "^5.0.0",
     "mocha": "^8.0.0"
   }
 }
