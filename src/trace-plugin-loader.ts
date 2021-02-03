@@ -154,9 +154,9 @@ export class ModulePluginWrapper implements PluginWrapper {
     const plugin = this.getPluginExportedValue();
     // Get a list of supported patches. This is the subset of objects in the
     // plugin exported value with matching file/version fields.
-    const supportedPatches: Array<Partial<
-      Monkeypatch<T> & Intercept<T>
-    >> = plugin.filter(
+    const supportedPatches: Array<
+      Partial<Monkeypatch<T> & Intercept<T>>
+    > = plugin.filter(
       patch =>
         semver.satisfies(version, patch.versions || '*') &&
         (file === patch.file || (!file && !patch.file))
