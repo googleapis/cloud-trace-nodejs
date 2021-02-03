@@ -80,7 +80,7 @@
     "gaxios": "^3.0.2",
     "glob": "^7.0.3",
     "grpc": "1.24.3",
-    "gts": "^2.0.0",
+    "gts": "^3.0.0",
     "js-green-licenses": "^3.0.0",
     "linkinator": "^2.0.0",
     "mocha": "^8.0.0",
