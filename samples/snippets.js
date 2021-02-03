@@ -15,7 +15,6 @@
 'use strict';
 
 // [START trace_setup_nodejs_explicit]
-// eslint-disable-next-line node/no-missing-require
 require('@google-cloud/trace-agent').start({
   projectId: 'your-project-id',
   keyFilename: '/path/to/key.json',
