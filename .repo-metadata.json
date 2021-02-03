@@ -8,5 +8,6 @@
   "language": "nodejs",
   "repo": "googleapis/cloud-trace-nodejs",
   "distribution_name": "@google-cloud/trace-agent",
-  "api_id": "cloudtrace.googleapis.com"
+  "api_id": "cloudtrace.googleapis.com",
+  "codeowner_team": "@googleapis/api-trace"
 }
