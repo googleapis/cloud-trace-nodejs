@@ -143,9 +143,7 @@ export class BuiltinTracePolicy implements TracePolicy {
   private readonly sampler: TracePolicyPredicate<number>;
   private readonly urlFilter: TracePolicyPredicate<string>;
   private readonly methodsFilter: TracePolicyPredicate<string>;
-  private readonly contextHeaderFilter: TracePolicyPredicate<Required<
-    TraceContext
-  > | null>;
+  private readonly contextHeaderFilter: TracePolicyPredicate<Required<TraceContext> | null>;
 
   /**
    * Constructs a new TracePolicy instance.
