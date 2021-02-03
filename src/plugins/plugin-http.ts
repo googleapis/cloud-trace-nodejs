@@ -15,7 +15,6 @@
 import * as httpModule from 'http';
 import {Agent, ClientRequest, ClientRequestArgs, request} from 'http';
 import * as httpsModule from 'https';
-import * as semver from 'semver';
 import * as shimmer from 'shimmer';
 import {URL, UrlWithStringQuery} from 'url';
 
@@ -31,12 +30,7 @@ const ERR_HTTP_HEADERS_SENT_MSG = "Can't set headers after they are sent.";
 // URL is used for type checking, but doesn't exist in Node <7.
 // This function works around that.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isURL = semver.satisfies(process.version, '>=7')
-  ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (value: any): value is URL => value instanceof URL
-  : // eslint-disable-next-line
-    (value: any): value is URL => false;
-// tslint:enable:no-any
+const isURL = (value: any): value is URL => value instanceof URL;
 
 function getSpanName(options: ClientRequestArgs | URL) {
   // c.f. _http_client.js ClientRequest constructor
@@ -268,28 +262,26 @@ function patchHttp(http: HttpModule, api: Tracer) {
     return makeRequestTrace('http:', request, api);
   });
 
-  if (semver.satisfies(process.version, '>=8.0.0')) {
-    // http.get in Node 8 calls the private copy of request rather than the one
-    // we have patched on module.export, so patch get as well.
-    shimmer.wrap(http, 'get', (): typeof http.get => {
-      // Re-implement http.get. This needs to be done (instead of using
-      // makeRequestTrace to patch it) because we need to set the trace
-      // context header before the returned ClientRequest is ended.
-      // The Node.js docs state that the only differences between request and
-      // get are that (1) get defaults to the HTTP GET method and (2) the
-      // returned request object is ended immediately.
-      // The former is already true (at least in supported Node versions up to
-      // v9), so we simply follow the latter.
-      // Ref:
-      // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
-      return function getTrace(this: never) {
-        // eslint-disable-next-line prefer-rest-params
-        const req = http.request.apply(this, arguments);
-        req.end();
-        return req;
-      };
-    });
-  }
+  // http.get in Node 8 calls the private copy of request rather than the one
+  // we have patched on module.export, so patch get as well.
+  shimmer.wrap(http, 'get', (): typeof http.get => {
+    // Re-implement http.get. This needs to be done (instead of using
+    // makeRequestTrace to patch it) because we need to set the trace
+    // context header before the returned ClientRequest is ended.
+    // The Node.js docs state that the only differences between request and
+    // get are that (1) get defaults to the HTTP GET method and (2) the
+    // returned request object is ended immediately.
+    // The former is already true (at least in supported Node versions up to
+    // v9), so we simply follow the latter.
+    // Ref:
+    // https://nodejs.org/dist/latest/docs/api/http.html#http_http_get_options_callback
+    return function getTrace(this: never) {
+      // eslint-disable-next-line prefer-rest-params
+      const req = http.request.apply(this, arguments);
+      req.end();
+      return req;
+    };
+  });
 }
 
 // https.get depends on Node http internals in 8.9.0 and 9+ instead of the
@@ -310,9 +302,7 @@ function patchHttps(https: HttpsModule, api: Tracer) {
 
 function unpatchHttp(http: HttpModule) {
   shimmer.unwrap(http, 'request');
-  if (semver.satisfies(process.version, '>=8.0.0')) {
-    shimmer.unwrap(http, 'get');
-  }
+  shimmer.unwrap(http, 'get');
 }
 
 function unpatchHttps(https: HttpsModule) {
