@@ -16,7 +16,6 @@ const filesLoadedBeforeTrace = Object.keys(require.cache);
 
 // This file's top-level imports must not transitively depend on modules that
 // do I/O, or continuation-local-storage will not work.
-import * as semver from 'semver';
 import {Config, defaultConfig} from './config';
 import * as extend from 'extend';
 import * as path from 'path';
@@ -27,6 +26,16 @@ import {Constants} from './constants';
 import {TraceCLSMechanism} from './cls';
 import {StackdriverTracer} from './trace-api';
 import {TraceContextHeaderBehavior} from './tracing-policy';
+
+if (process && process.version) {
+  const minNodeVersion = 10;
+  const major = Number(process.version.match(/v(\d+)/)![1]);
+  if (major < minNodeVersion) {
+    throw Error(
+      `trace-agent supports a minimum Node.js version of ${minNodeVersion}. Read our version support policy: https://github.com/googleapis/cloud-trace-nodejs#supported-nodejs-versions`
+    );
+  }
+}
 
 export {Config, PluginTypes};
 
@@ -88,11 +97,8 @@ function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
   const getInternalClsMechanism = (clsMechanism: string): TraceCLSMechanism => {
     // If the CLS mechanism is set to auto-determined, decide now
     // what it should be.
-    const ahAvailable = semver.satisfies(process.version, '>=8');
     if (clsMechanism === 'auto') {
-      return ahAvailable
-        ? TraceCLSMechanism.ASYNC_HOOKS
-        : TraceCLSMechanism.ASYNC_LISTENER;
+      return TraceCLSMechanism.ASYNC_HOOKS;
     }
     return clsMechanism as TraceCLSMechanism;
   };
