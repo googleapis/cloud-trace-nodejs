@@ -103,7 +103,7 @@ describe('test-agent-stopped', () => {
   });
 
   describe('restify', () => {
-    it('should not break if no project number is found', done => {
+    it.skip('should not break if no project number is found', done => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const restify = require('./plugins/fixtures/restify4');
       const server = restify.createServer();
