@@ -4,7 +4,7 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/cloud-trace-nodejs.git",
-        "sha": "dd67d0585b2d6a3cb900d7996a3d1043f9be7fee"
+        "sha": "cbdbb6c4e75881a497393733563d7e42a4c3805f"
       }
     },
     {
@@ -14,54 +14,5 @@
         "sha": "901ddd44e9ef7887ee681b9183bbdea99437fdcc"
       }
     }
-  ],
-  "generatedFiles": [
-    ".eslintrc.json",
-    ".gitattributes",
-    ".github/ISSUE_TEMPLATE/bug_report.md",
-    ".github/ISSUE_TEMPLATE/feature_request.md",
-    ".github/ISSUE_TEMPLATE/support_request.md",
-    ".github/PULL_REQUEST_TEMPLATE.md",
-    ".github/release-please.yml",
-    ".kokoro/.gitattributes",
-    ".kokoro/common.cfg",
-    ".kokoro/continuous/node10/common.cfg",
-    ".kokoro/continuous/node10/docs.cfg",
-    ".kokoro/continuous/node10/test.cfg",
-    ".kokoro/continuous/node12/common.cfg",
-    ".kokoro/continuous/node12/lint.cfg",
-    ".kokoro/continuous/node12/samples-test.cfg",
-    ".kokoro/continuous/node12/system-test.cfg",
-    ".kokoro/continuous/node12/test.cfg",
-    ".kokoro/docs.sh",
-    ".kokoro/lint.sh",
-    ".kokoro/populate-secrets.sh",
-    ".kokoro/presubmit/node10/common.cfg",
-    ".kokoro/presubmit/node12/common.cfg",
-    ".kokoro/presubmit/node12/samples-test.cfg",
-    ".kokoro/presubmit/node12/system-test.cfg",
-    ".kokoro/presubmit/node12/test.cfg",
-    ".kokoro/publish.sh",
-    ".kokoro/release/docs-devsite.cfg",
-    ".kokoro/release/docs-devsite.sh",
-    ".kokoro/release/docs.cfg",
-    ".kokoro/release/docs.sh",
-    ".kokoro/release/publish.cfg",
-    ".kokoro/samples-test.sh",
-    ".kokoro/system-test.sh",
-    ".kokoro/test.bat",
-    ".kokoro/test.sh",
-    ".kokoro/trampoline.sh",
-    ".kokoro/trampoline_v2.sh",
-    ".mocharc.js",
-    ".prettierrc.js",
-    ".trampolinerc",
-    "CODE_OF_CONDUCT.md",
-    "CONTRIBUTING.md",
-    "LICENSE",
-    "README.md",
-    "api-extractor.json",
-    "renovate.json",
-    "samples/README.md"
   ]
 }
