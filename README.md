@@ -212,8 +212,7 @@ The Trace Agent does not support bundled server code, so bundlers like webpack o
 
 ## Samples
 
-Samples are in the [`samples/`](https://github.com/googleapis/cloud-trace-nodejs/tree/master/samples) directory. The samples' `README.md`
-has instructions for running the samples.
+Samples are in the [`samples/`](https://github.com/googleapis/cloud-trace-nodejs/tree/master/samples) directory. Each sample's `README.md` has instructions for running its sample.
 
 | Sample                      | Source Code                       | Try it |
 | --------------------------- | --------------------------------- | ------ |
@@ -231,7 +230,7 @@ Our client libraries follow the [Node.js release schedule](https://nodejs.org/en
 Libraries are compatible with all current _active_ and _maintenance_ versions of
 Node.js.
 
-Client libraries targetting some end-of-life versions of Node.js are available, and
+Client libraries targeting some end-of-life versions of Node.js are available, and
 can be installed via npm [dist-tags](https://docs.npmjs.com/cli/dist-tag).
 The dist-tags follow the naming convention `legacy-(version)`.
 
