@@ -1,5 +1,12 @@
 # Changelog
 
+### [5.1.2](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.1...v5.1.2) (2021-02-04)
+
+
+### Performance Improvements
+
+* **deps:** avoid semver where possible ([#1309](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1309)) ([4c05cae](https://www.github.com/googleapis/cloud-trace-nodejs/commit/4c05caeb3910657b3eb413da61aac03cb321bd7b))
+
 ### [5.1.1](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.0...v5.1.1) (2020-09-12)
 
 
