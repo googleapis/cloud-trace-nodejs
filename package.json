@@ -103,7 +103,7 @@
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.2",
     "gcp-metadata": "^4.0.0",
-    "google-auth-library": "^6.0.0",
+    "google-auth-library": "^7.0.0",
     "hex2dec": "^1.0.1",
     "is": "^3.2.0",
     "methods": "^1.1.1",
