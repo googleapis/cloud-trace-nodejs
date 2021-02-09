@@ -1,5 +1,12 @@
 # Changelog
 
+### [5.1.3](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.2...v5.1.3) (2021-02-09)
+
+
+### Bug Fixes
+
+* **deps:** update dependency google-auth-library to v7 ([#1335](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1335)) ([4fc7c7c](https://www.github.com/googleapis/cloud-trace-nodejs/commit/4fc7c7c54b78f09d961b33e02e449567325bf475))
+
 ### [5.1.2](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.1...v5.1.2) (2021-02-04)
 
 
