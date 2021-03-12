@@ -51,31 +51,34 @@ export class AsyncListenerCLS<Context extends {}> implements CLS<Context> {
     this.cls.destroyNamespace(AsyncListenerCLS.TRACE_NAMESPACE);
   }
 
-  private getNamespace(): clsModule.Namespace {
+  private getNamespace(): clsModule.Namespace | undefined {
     return this.cls.getNamespace(AsyncListenerCLS.TRACE_NAMESPACE);
   }
 
   getContext(): Context {
-    const result = this.getNamespace().get(AsyncListenerCLS.ROOT_CONTEXT_KEY);
-    if (result) {
-      return result;
+    const namespace = this.getNamespace();
+    if (namespace) {
+      const result = namespace.get(AsyncListenerCLS.ROOT_CONTEXT_KEY);
+      if (result) {
+        return result as Context;
+      }
     }
     return this.defaultContext;
   }
 
   runWithContext<T>(fn: Func<T>, value: Context): T {
     const namespace = this.getNamespace();
-    return namespace.runAndReturn(() => {
-      namespace.set(AsyncListenerCLS.ROOT_CONTEXT_KEY, value);
+    return namespace!.runAndReturn(() => {
+      namespace!.set(AsyncListenerCLS.ROOT_CONTEXT_KEY, value);
       return fn();
     });
   }
 
   bindWithCurrentContext<T>(fn: Func<T>): Func<T> {
-    return this.getNamespace().bind(fn) as Func<T>;
+    return this.getNamespace()!.bind(fn) as Func<T>;
   }
 
   patchEmitterToPropagateContext(ee: EventEmitter): void {
-    return this.getNamespace().bindEmitter(ee);
+    return this.getNamespace()!.bindEmitter(ee);
   }
 }

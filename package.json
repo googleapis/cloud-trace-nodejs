@@ -79,7 +79,7 @@
     "express": "^4.15.2",
     "gaxios": "^4.0.0",
     "glob": "^7.0.3",
-    "grpc": "1.24.5",
+    "grpc": "1.24.6",
     "gts": "^3.0.0",
     "js-green-licenses": "^3.0.0",
     "linkinator": "^2.0.0",
