@@ -4,14 +4,14 @@
       "git": {
         "name": ".",
         "remote": "https://github.com/googleapis/cloud-trace-nodejs.git",
-        "sha": "3e529c8813e44d036364b432c9dbece00fccf26a"
+        "sha": "e54c6235732c25a1ac35542505a3f311f709c6b1"
       }
     },
     {
       "git": {
         "name": "synthtool",
         "remote": "https://github.com/googleapis/synthtool.git",
-        "sha": "b33b0e2056a85fc2264b294f2cf47dcd45e95186"
+        "sha": "04573fd73f56791c659832aa84d35a4ec860d6f7"
       }
     }
   ]
