@@ -151,10 +151,8 @@ describe('SpanData', () => {
       spanData.addLabel(longKey, 'val');
       delete spanData.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY];
       assert.deepStrictEqual(spanData.span.labels, {
-        [`${longKey.slice(
-          0,
-          Constants.TRACE_SERVICE_LABEL_KEY_LIMIT - 3
-        )}...`]: 'val',
+        [`${longKey.slice(0, Constants.TRACE_SERVICE_LABEL_KEY_LIMIT - 3)}...`]:
+          'val',
       });
     });
 
@@ -218,11 +216,10 @@ describe('SpanData', () => {
 
       for (const sourceMapType of sourceMapTypes) {
         it(`uses source maps when available in stack traces: ${sourceMapType}`, () => {
-          const {
-            applyGeneric,
-          } = require(`./fixtures/source-maps-test/${sourceMapType}`) as {
-            applyGeneric: <T>(fn: () => T) => T;
-          };
+          const {applyGeneric} =
+            require(`./fixtures/source-maps-test/${sourceMapType}`) as {
+              applyGeneric: <T>(fn: () => T) => T;
+            };
           const spanData = applyGeneric(
             () => new CommonSpanData(trace, 'name', '0', 0)
           );
@@ -235,11 +232,10 @@ describe('SpanData', () => {
       }
 
       it("doesn't break when there are no source maps", () => {
-        const {
-          applyGeneric,
-        } = require('./fixtures/source-maps-test/no-source-map') as {
-          applyGeneric: <T>(fn: () => T) => T;
-        };
+        const {applyGeneric} =
+          require('./fixtures/source-maps-test/no-source-map') as {
+            applyGeneric: <T>(fn: () => T) => T;
+          };
         const spanData = applyGeneric(
           () => new CommonSpanData(trace, 'name', '0', 0)
         );

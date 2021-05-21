@@ -87,12 +87,14 @@ class PostgresPatchUtility {
   readonly maybePopulateLabelsFromOutputs: typeof populateLabelsFromOutputs;
 
   constructor(private readonly tracer: Tracer) {
-    this.maybePopulateLabelsFromInputs = tracer.enhancedDatabaseReportingEnabled()
-      ? populateLabelsFromInputs
-      : noOp;
-    this.maybePopulateLabelsFromOutputs = tracer.enhancedDatabaseReportingEnabled()
-      ? populateLabelsFromOutputs
-      : noOp;
+    this.maybePopulateLabelsFromInputs =
+      tracer.enhancedDatabaseReportingEnabled()
+        ? populateLabelsFromInputs
+        : noOp;
+    this.maybePopulateLabelsFromOutputs =
+      tracer.enhancedDatabaseReportingEnabled()
+        ? populateLabelsFromOutputs
+        : noOp;
   }
 
   patchSubmittable(pgQuery: Submittable, span: Span): Submittable {

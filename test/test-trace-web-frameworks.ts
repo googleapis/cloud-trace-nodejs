@@ -389,8 +389,9 @@ describe('Web framework tracing', () => {
       });
 
       it('uses the span name override option', async () => {
-        const oldSpanNameOverride = testTraceModule.get().getConfig()
-          .rootSpanNameOverride;
+        const oldSpanNameOverride = testTraceModule
+          .get()
+          .getConfig().rootSpanNameOverride;
         testTraceModule.get().getConfig().rootSpanNameOverride = (
           path: string
         ) => `${path}-goodbye`;
@@ -406,9 +407,8 @@ describe('Web framework tracing', () => {
           const serverSpan = testTraceModule.getOneSpan(isServerSpan);
           assert.strictEqual(serverSpan.name, '/hello-goodbye');
         } finally {
-          testTraceModule
-            .get()
-            .getConfig().rootSpanNameOverride = oldSpanNameOverride;
+          testTraceModule.get().getConfig().rootSpanNameOverride =
+            oldSpanNameOverride;
         }
       });
     });

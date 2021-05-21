@@ -31,10 +31,9 @@ async function mkdirSafeP(dir: string) {
 export async function getPluginTypes() {
   await mkdirSafeP(TYPES_DIRECTORY);
 
-  const indexTs = ((await readFileP(
-    `${TYPES_DIRECTORY}/index.d.ts`,
-    'utf8'
-  )) as string).split('\n');
+  const indexTs = (
+    (await readFileP(`${TYPES_DIRECTORY}/index.d.ts`, 'utf8')) as string
+  ).split('\n');
   for (const line of indexTs) {
     const matches = line.match(
       /^import \* as .* from '\.\/(.+)';\s*\/\/\s*(.+)@(.+)/
