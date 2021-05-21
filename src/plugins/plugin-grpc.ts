@@ -151,9 +151,8 @@ function patchClient(client: ClientModule, api: Tracer) {
     traceContext: TraceContext | null
   ): void {
     if (traceContext) {
-      const metadataValue = api.traceContextUtils.encodeAsByteArray(
-        traceContext
-      );
+      const metadataValue =
+        api.traceContextUtils.encodeAsByteArray(traceContext);
       metadata.set(
         api.constants.TRACE_CONTEXT_GRPC_METADATA_NAME,
         metadataValue
@@ -293,7 +292,7 @@ function patchClient(client: ClientModule, api: Tracer) {
     // TODO(kjin): Investigate whether we need to copy properties of
     // method onto clientMethodTrace.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (clientMethodTrace as any) as ClientMethod<S, T>;
+    return clientMethodTrace as any as ClientMethod<S, T>;
   }
 
   /**

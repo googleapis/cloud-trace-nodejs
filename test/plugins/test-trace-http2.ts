@@ -407,9 +407,8 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
         key: SERVER_KEY,
         cert: SERVER_CERT,
       };
-      const secureServer: http2Types.Http2SecureServer = http2.createSecureServer(
-        options
-      );
+      const secureServer: http2Types.Http2SecureServer =
+        http2.createSecureServer(options);
       secureServer.on('stream', s => {
         setTimeout(() => {
           s.respond({':status': 200});

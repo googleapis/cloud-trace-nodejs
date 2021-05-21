@@ -83,12 +83,11 @@ export abstract class BaseSpanData implements Span {
     if (stackFrames.length > 0) {
       // Developer note: This is not equivalent to using addLabel, because the
       // stack trace label has its own size constraints.
-      this.span.labels[
-        TraceLabels.STACK_TRACE_DETAILS_KEY
-      ] = traceUtil.truncate(
-        JSON.stringify({stack_frame: stackFrames}),
-        Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT
-      );
+      this.span.labels[TraceLabels.STACK_TRACE_DETAILS_KEY] =
+        traceUtil.truncate(
+          JSON.stringify({stack_frame: stackFrames}),
+          Constants.TRACE_SERVICE_LABEL_VALUE_LIMIT
+        );
     }
   }
 

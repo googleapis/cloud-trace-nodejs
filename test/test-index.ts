@@ -20,7 +20,7 @@ import * as assert from 'assert';
 import * as trace from '../src';
 import {describe, it, before} from 'mocha';
 
-const disabledAgent = (trace.get() as {}) as StackdriverTracer;
+const disabledAgent = trace.get() as {} as StackdriverTracer;
 
 describe('index.js', () => {
   it('should get a disabled agent with `Trace.get`', async () => {

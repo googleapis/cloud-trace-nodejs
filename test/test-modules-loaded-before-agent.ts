@@ -21,7 +21,8 @@ import * as log from '../src/logger';
 import {TestLogger} from './logger';
 import * as testTraceModule from './trace';
 
-const UNTRACED_LOGS_WARNING = /StackdriverTracer#start.*modules.*loaded.*before.*trace agent.*: \[.*shimmer.*\]/;
+const UNTRACED_LOGS_WARNING =
+  /StackdriverTracer#start.*modules.*loaded.*before.*trace agent.*: \[.*shimmer.*\]/;
 
 describe('modules loaded before agent', () => {
   let logger: CaptureTestLogger | null = null;

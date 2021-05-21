@@ -40,10 +40,10 @@ export class Express4Secure extends Express4 {
   listen(port: number): number {
     // The types of (http|https).Server are not compatible, but we don't
     // access any properties that aren't present on both in the test.
-    this.server = (this.https.createServer(
+    this.server = this.https.createServer(
       {key: Express4Secure.key, cert: Express4Secure.cert},
       this.app
-    ) as {}) as httpModule.Server;
+    ) as {} as httpModule.Server;
     this.server.listen(port);
     return (this.server.address() as AddressInfo).port;
   }
