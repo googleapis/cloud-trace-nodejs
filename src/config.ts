@@ -64,9 +64,7 @@ export interface SetHeaderFunction {
   setHeader: (key: string, value: string) => void;
 }
 export interface OpenCensusPropagation {
-  extract: (
-    getHeader: GetHeaderFunction
-  ) => {
+  extract: (getHeader: GetHeaderFunction) => {
     traceId: string;
     spanId: string;
     options?: number;

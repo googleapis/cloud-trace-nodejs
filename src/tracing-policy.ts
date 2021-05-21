@@ -86,7 +86,8 @@ class MethodsFilter implements TracePolicyPredicate<string> {
 }
 
 class ContextHeaderFilter
-  implements TracePolicyPredicate<Required<TraceContext> | null> {
+  implements TracePolicyPredicate<Required<TraceContext> | null>
+{
   constructor(
     private readonly contextHeaderBehavior: TraceContextHeaderBehavior
   ) {}

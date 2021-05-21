@@ -183,7 +183,8 @@ function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
       samplingRate: mergedConfig.samplingRate,
       ignoreMethods: mergedConfig.ignoreMethods,
       ignoreUrls: mergedConfig.ignoreUrls,
-      contextHeaderBehavior: mergedConfig.contextHeaderBehavior as TraceContextHeaderBehavior,
+      contextHeaderBehavior:
+        mergedConfig.contextHeaderBehavior as TraceContextHeaderBehavior,
     },
     overrides: {
       tracePolicy: mergedConfig.tracePolicy,

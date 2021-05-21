@@ -154,13 +154,12 @@ export class ModulePluginWrapper implements PluginWrapper {
     const plugin = this.getPluginExportedValue();
     // Get a list of supported patches. This is the subset of objects in the
     // plugin exported value with matching file/version fields.
-    const supportedPatches: Array<
-      Partial<Monkeypatch<T> & Intercept<T>>
-    > = plugin.filter(
-      patch =>
-        semver.satisfies(version, patch.versions || '*') &&
-        (file === patch.file || (!file && !patch.file))
-    );
+    const supportedPatches: Array<Partial<Monkeypatch<T> & Intercept<T>>> =
+      plugin.filter(
+        patch =>
+          semver.satisfies(version, patch.versions || '*') &&
+          (file === patch.file || (!file && !patch.file))
+      );
     if (supportedPatches.length > 1) {
       this.logger.warn(
         `PluginWrapper#applyPlugin: [${logString}] Plugin has more than one patch/intercept object for this file. Applying all.`

@@ -527,10 +527,10 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
     });
 
     describe('trace spans', () => {
-      const ERROR_DETAILS_NAME = testTraceModule.get().labels
-        .ERROR_DETAILS_NAME;
-      const ERROR_DETAILS_MESSAGE = testTraceModule.get().labels
-        .ERROR_DETAILS_MESSAGE;
+      const ERROR_DETAILS_NAME =
+        testTraceModule.get().labels.ERROR_DETAILS_NAME;
+      const ERROR_DETAILS_MESSAGE =
+        testTraceModule.get().labels.ERROR_DETAILS_MESSAGE;
       let port: number;
       let successSpan: TraceSpan;
       let errorSpan: TraceSpan;

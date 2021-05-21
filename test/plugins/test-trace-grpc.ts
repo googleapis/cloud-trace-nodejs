@@ -54,9 +54,8 @@ const COMMON_TRACE_ID = 'ffeeddccbbaa99887766554433221100';
 
 function checkServerMetadata(metadata) {
   if (checkMetadata) {
-    const traceContext = metadata.getMap()[
-      Constants.TRACE_CONTEXT_GRPC_METADATA_NAME
-    ];
+    const traceContext =
+      metadata.getMap()[Constants.TRACE_CONTEXT_GRPC_METADATA_NAME];
     const parsedContext = util.deserializeTraceContext(traceContext);
     assert.ok(parsedContext);
     const root = asRootSpanData(cls.get().getContext() as Span);

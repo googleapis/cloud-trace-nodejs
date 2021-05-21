@@ -13,18 +13,9 @@
 # limitations under the License.
 
 import synthtool as s
-import synthtool.gcp as gcp
-import logging
-import subprocess
+import synthtool.languages.node as node
 
-logging.basicConfig(level=logging.DEBUG)
-
-AUTOSYNTH_MULTIPLE_COMMITS = True
-
-common_templates = gcp.CommonTemplates()
-templates = common_templates.node_library()
-# Don't use .nycrc for code coverage (see "Fix Code Coverage")
-s.copy(templates, excludes=[
+node.owlbot_main(templates_excludes=[
   '.eslintignore',
   '.github/workflows/ci.yaml',
   '.nycrc',

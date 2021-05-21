@@ -79,7 +79,8 @@ describe('Trace Writer', () => {
   });
 
   it("should publish on unhandled exception for 'flush' config option", done => {
-    const restoreOriginalUncaughtExceptionListeners = removeAllUncaughtExceptionListeners();
+    const restoreOriginalUncaughtExceptionListeners =
+      removeAllUncaughtExceptionListeners();
     trace.start({onUncaughtException: 'flush', projectId: '0'});
     setImmediate(() => {
       setImmediate(() => {
@@ -96,7 +97,8 @@ describe('Trace Writer', () => {
   });
 
   it("should not assign an oUE listener for 'ignore' config option", () => {
-    const restoreOriginalUncaughtExceptionListeners = removeAllUncaughtExceptionListeners();
+    const restoreOriginalUncaughtExceptionListeners =
+      removeAllUncaughtExceptionListeners();
     trace.start({onUncaughtException: 'ignore'});
     assert.strictEqual(process.listenerCount('onHandledException'), 0);
     restoreOriginalUncaughtExceptionListeners();

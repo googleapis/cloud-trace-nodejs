@@ -21,9 +21,9 @@ import {express_4} from './types';
 // application is an undocumented member of the express object.
 type Express4Module = typeof express_4 & {application: express_4.Application};
 
-const methods: Array<keyof express_4.Application> = (httpMethods as Array<
-  keyof express_4.Application
->).concat('use', 'route', 'param', 'all');
+const methods: Array<keyof express_4.Application> = (
+  httpMethods as Array<keyof express_4.Application>
+).concat('use', 'route', 'param', 'all');
 
 const SUPPORTED_VERSIONS = '4.x';
 

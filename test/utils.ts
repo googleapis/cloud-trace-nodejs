@@ -191,8 +191,9 @@ function getFixturesForModule<T>(moduleName: string): Array<FixtureHelper<T>> {
       return moduleNameMatches && versionCompatible;
     })
     .map(key => {
-      const version = require(`./plugins/fixtures/${key}/node_modules/${moduleName}/package.json`)
-        .version as string;
+      const version =
+        require(`./plugins/fixtures/${key}/node_modules/${moduleName}/package.json`)
+          .version as string;
       const parsedVersion = semver.parse(version)!;
       const getModule: () => T = () => require(`./plugins/fixtures/${key}`);
       // Convenience function -- returns if.skip if the selected module's
