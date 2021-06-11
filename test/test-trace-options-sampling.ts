@@ -19,11 +19,9 @@ import * as http from 'http';
 import {describe, it, before} from 'mocha';
 
 describe('express + http with trace options header + sampling', () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let agent;
   let express;
   before(() => {
-    agent = require('../..').start({
+    require('../..').start({
       projectId: '0',
       samplingRate: 1,
     });
