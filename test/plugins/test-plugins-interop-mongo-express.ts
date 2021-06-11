@@ -27,13 +27,11 @@ import {describe, it, before} from 'mocha';
 let server;
 
 describe('mongodb + express', () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let agent;
   let oldWarn;
   let mongoose;
   let express;
   before(() => {
-    agent = require('../../..').start({projectId: '0'});
+    require('../../..').start({projectId: '0'});
     express = require('./fixtures/express4');
     mongoose = require('./fixtures/mongoose4');
     oldWarn = common.replaceWarnLogger(error => {

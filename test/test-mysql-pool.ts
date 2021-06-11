@@ -22,11 +22,9 @@ import {describe, it, before} from 'mocha';
 // hapi 13 and hapi-plugin-mysql uses const
 if (semver.satisfies(process.version, '>=4')) {
   describe('test-trace-mysql', () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let agent;
     let Hapi;
     before(() => {
-      agent = require('../..').start({
+      require('../..').start({
         projectId: '0',
         samplingRate: 0,
         enhancedDatabaseReporting: true,
@@ -56,9 +54,9 @@ if (semver.satisfies(process.version, '>=4')) {
           server.start(err => {
             assert(!err);
             http.get({port: common.serverPort}, res => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               let result = '';
               res.on('data', data => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 result += data;
               });
               res.on('end', () => {

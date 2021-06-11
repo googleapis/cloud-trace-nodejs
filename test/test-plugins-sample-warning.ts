@@ -27,11 +27,9 @@ import {describe, it, before, beforeEach, afterEach} from 'mocha';
 describe('express + dbs', () => {
   let untracedHttpSpanCount = 0;
   let oldWarn;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let agent;
 
   before(() => {
-    agent = require('../..').start({
+    require('../..').start({
       projectId: '0',
       samplingRate: 0,
       ignoreUrls: ['/ignore-me'],
