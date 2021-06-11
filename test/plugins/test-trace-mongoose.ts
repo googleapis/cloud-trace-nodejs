@@ -26,11 +26,9 @@ import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import * as assert from 'assert';
 
 describe('mongoose integration tests', () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let agent;
   let Simple;
   before(() => {
-    agent = require('../../..').start({
+    require('../../..').start({
       projectId: '0',
       samplingRate: 0,
     });
