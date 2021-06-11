@@ -14,6 +14,7 @@
 
 import * as assert from 'assert';
 import {it, before, after, afterEach} from 'mocha';
+// eslint-disable-next-line node/no-extraneous-import
 import * as mongooseTypes from 'mongoose';
 
 import * as traceTestModule from '../trace';
