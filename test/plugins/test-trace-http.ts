@@ -203,10 +203,10 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
           fn: async () => {
             const waitForResponse = new WaitForResponse();
             http.get({port, rejectUnauthorized: false}, res => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               let result = '';
               const writable = new stream.Writable();
               writable._write = (chunk, encoding, next) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 result += chunk;
                 next();
               };

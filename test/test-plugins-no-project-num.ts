@@ -18,14 +18,12 @@ import {describe, before, after, it} from 'mocha';
 let write;
 
 describe('test-plugins-no-project-num', () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let agent;
   let savedProject;
 
   before(() => {
     savedProject = process.env.GCLOUD_PROJECT;
     delete process.env.GCLOUD_PROJECT;
-    agent = require('../..').start();
+    require('../..').start();
   });
 
   after(() => {
