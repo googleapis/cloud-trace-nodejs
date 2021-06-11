@@ -23,13 +23,11 @@ import {describe, it, before, after} from 'mocha';
 const common = require('./common' /*.js*/);
 
 describe('multiple instrumentations of the same module', () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let agent;
   let clientv0;
   let clientv2;
 
   before(() => {
-    agent = require('../../..').start({
+    require('../../..').start({
       projectId: '0',
       enhancedDatabaseReporting: true,
       samplingRate: 0,

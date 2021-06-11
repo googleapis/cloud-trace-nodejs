@@ -26,13 +26,11 @@ const pgVersions = []; // ['6', '7'];
 pgVersions.forEach(pgVersion => {
   describe(`test-trace-pg (v${pgVersion})`, () => {
     let pg;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let traceApi;
     let pool;
     let client;
     let releaseClient;
     before(() => {
-      traceApi = require('../../..').start({
+      require('../../..').start({
         projectId: '0',
         samplingRate: 0,
         enhancedDatabaseReporting: true,
