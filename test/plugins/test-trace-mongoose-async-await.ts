@@ -30,7 +30,7 @@ describeInterop<typeof mongooseTypes>('mongoose', fixture => {
   let mongoose: typeof mongooseTypes;
   // Simple will be treated as a class constructor.
   // tslint:disable-next-line:variable-name
-  let Simple: mongooseTypes.Model<mongooseTypes.Document & TestDocType>;
+  let Simple: mongooseTypes.Model<mongooseTypes.Document>;
 
   /**
    * Common logic used in multiple tests -- inserts an object into the database.
