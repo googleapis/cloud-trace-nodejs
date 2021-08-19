@@ -29,7 +29,6 @@ interface TestDocType {
 describeInterop<typeof mongooseTypes>('mongoose', fixture => {
   let mongoose: typeof mongooseTypes;
   // Simple will be treated as a class constructor.
-  // tslint:disable-next-line:variable-name
   let Simple: mongooseTypes.Model<mongooseTypes.Document & TestDocType>;
 
   /**
@@ -55,7 +54,10 @@ describeInterop<typeof mongooseTypes>('mongoose', fixture => {
 
     const {Schema} = mongoose;
     const simpleSchema = new Schema({f1: String, f2: Boolean, f3: Number});
-    Simple = mongoose.model('Simple', simpleSchema);
+    Simple = mongoose.model<mongooseTypes.Document & TestDocType>(
+      'Simple',
+      simpleSchema
+    );
   });
 
   after(async () => {

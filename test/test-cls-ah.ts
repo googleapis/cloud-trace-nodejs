@@ -24,7 +24,6 @@ const TEST_ASYNC_RESOURCE = '@google-cloud/trace-agent:test';
 
 describe('AsyncHooks-based CLS', () => {
   let asyncHooks: AsyncHooksModule;
-  // tslint:disable-next-line:variable-name
   let AsyncResource: typeof asyncHooksModule.AsyncResource;
   let cls: AsyncHooksCLS<string>;
 
@@ -55,10 +54,8 @@ describe('AsyncHooks-based CLS', () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (this as any).emitAfter();
           }
-          // tslint:enable:deprecation
         }
       }
-      // tslint:enable:no-any
     };
   });
 

@@ -119,7 +119,5 @@ const makeHapiClass = (version: number, nodeVersionRange: string) =>
     }
   };
 
-// tslint:disable:variable-name (Hapi* are class names)
 export const Hapi18 = makeHapiClass(18, '>=7.5');
 export const Hapi19 = makeHapiClass(19, '>=12');
-// tslint:enable:variable-name
