@@ -110,9 +110,7 @@ const makeHapiClass = (version: number) =>
     }
   };
 
-// tslint:disable:variable-name (Hapi* are class names)
 export const Hapi8 = makeHapiClass(8);
 export const Hapi12 = makeHapiClass(12);
 export const Hapi15 = makeHapiClass(15);
 export const Hapi16 = makeHapiClass(16);
-// tslint:enable:variable-name

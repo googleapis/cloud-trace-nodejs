@@ -109,7 +109,6 @@ class PostgresPatchUtility {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ...args: any[]
         ): void {
-          // tslint:enable:no-any
           if (!spanEnded) {
             const err: Error = args[0];
             maybePopulateLabelsFromOutputs(span, err);
@@ -131,7 +130,6 @@ class PostgresPatchUtility {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ...args: any[]
         ): void {
-          // tslint:enable:no-any
           if (!spanEnded) {
             maybePopulateLabelsFromOutputs(span, null, this._result);
             span.endSpan();
@@ -181,7 +179,6 @@ const plugin: Plugin = [
     file: 'lib/client.js',
     versions: '^6.x',
     // TS: Client is a class name.
-    // tslint:disable-next-line:variable-name
     patch: (Client, api) => {
       const pgPatch = new PostgresPatchUtility(api);
 
@@ -227,7 +224,6 @@ const plugin: Plugin = [
       });
     },
     // TS: Client is a class name.
-    // tslint:disable-next-line:variable-name
     unpatch(Client) {
       shimmer.unwrap(Client.prototype, 'query');
     },
@@ -236,7 +232,6 @@ const plugin: Plugin = [
     file: 'lib/client.js',
     versions: '^7.x',
     // TS: Client is a class name.
-    // tslint:disable-next-line:variable-name
     patch: (Client, api) => {
       const pgPatch = new PostgresPatchUtility(api);
       shimmer.wrap(Client.prototype, 'query', query => {
@@ -301,7 +296,6 @@ const plugin: Plugin = [
       });
     },
     // TS: Client is a class name.
-    // tslint:disable-next-line:variable-name
     unpatch(Client) {
       shimmer.unwrap(Client.prototype, 'query');
     },

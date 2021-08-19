@@ -94,7 +94,6 @@ interface CLSConstructor {
  */
 export class TraceCLS implements CLS<RootContext> {
   private currentCLS: CLS<RootContext>;
-  // tslint:disable-next-line:variable-name CLSClass is a constructor.
   private CLSClass: CLSConstructor;
   private enabled = false;
 
