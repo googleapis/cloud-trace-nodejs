@@ -17,7 +17,6 @@ import {LEVELS, Logger, LoggerConfig} from '../src/logger';
 const PASS_THROUGH_LOG_LEVEL = Number(process.env.GCLOUD_TEST_LOG_LEVEL || 0);
 // Capture the value of common.Logger so that we don't enter an infinite loop
 // if common.Logger is wrapped elsewhere.
-// tslint:disable-next-line:variable-name
 const OriginalLogger = Logger;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

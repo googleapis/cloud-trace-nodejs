@@ -87,7 +87,6 @@ const servers = {
 
 for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
   // ServerFramework is a class constructor.
-  // tslint:disable-next-line:variable-name
   const ServerFramework = servers[nodule];
   describe(`${nodule} client tracing`, () => {
     let http: {get: HttpRequest; request: HttpRequest};

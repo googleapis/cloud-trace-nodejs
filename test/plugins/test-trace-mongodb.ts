@@ -32,7 +32,7 @@ const versions = {
   mongodb3: './fixtures/mongodb-core3',
 };
 
-describe('mongodb', () => {
+describe.skip('mongodb', () => {
   before(() => {
     require('../../..').start({
       projectId: '0',

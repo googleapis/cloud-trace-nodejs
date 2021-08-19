@@ -125,7 +125,6 @@ const SKIP_FRAMES = 1;
 // depends on Metadata.
 // TODO(kjin): This could cause bugs if there are multiple gRPC modules being
 // used at once.
-// tslint:disable-next-line:variable-name
 let MetadataModuleValue: MetadataModule;
 
 function patchMetadata(metadata: MetadataModule) {
@@ -304,7 +303,6 @@ function patchClient(client: ClientModule, api: Tracer) {
   ): MakeClientConstructorFunction {
     return function makeClientConstructorTrace(this: never, methods) {
       // Client is a class.
-      // tslint:disable-next-line:variable-name
       // eslint-disable-next-line prefer-rest-params
       const Client = makeClientConstructor.apply(this, arguments);
       const methodsToWrap = [

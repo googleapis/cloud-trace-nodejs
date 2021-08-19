@@ -115,7 +115,6 @@ export function lastOf<T>(
     ) {
       return otherValues[i] as T;
     }
-    // tslint:enable:no-any
   }
   return defaultValue;
 }

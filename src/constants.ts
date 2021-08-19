@@ -15,7 +15,6 @@
 // TODO(kjin): Once tests are fully converted, undercase the name of this
 // variable.
 /** Constant values. */
-// tslint:disable-next-line:variable-name
 export const Constants = {
   /** The metadata key under which trace context is stored as a binary value. */
   TRACE_CONTEXT_GRPC_METADATA_NAME: 'grpc-trace-bin',

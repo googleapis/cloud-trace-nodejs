@@ -73,7 +73,6 @@ describeInterop<Grpc>('grpc', fixture => {
       server.start();
 
       // TesterClient is a class.
-      // tslint:disable-next-line:variable-name
       const TesterClient = grpc.makeGenericClientConstructor(
         testerService,
         'Tester',
