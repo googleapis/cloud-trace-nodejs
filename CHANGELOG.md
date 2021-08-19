@@ -1,5 +1,12 @@
 # Changelog
 
+### [5.1.4](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.3...v5.1.4) (2021-08-19)
+
+
+### Bug Fixes
+
+* **build:** migrate to using main branch ([#1373](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1373)) ([f065f97](https://www.github.com/googleapis/cloud-trace-nodejs/commit/f065f97259da372ca53abca0d06df6a8cc5cd146))
+
 ### [5.1.3](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.2...v5.1.3) (2021-02-09)
 
 
