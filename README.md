@@ -6,7 +6,7 @@
 
 [![release level](https://img.shields.io/badge/release%20level-beta-yellow.svg?style=flat)](https://cloud.google.com/terms/launch-stages)
 [![npm version](https://img.shields.io/npm/v/@google-cloud/trace-agent.svg)](https://www.npmjs.org/package/@google-cloud/trace-agent)
-[![codecov](https://img.shields.io/codecov/c/github/googleapis/cloud-trace-nodejs/master.svg?style=flat)](https://codecov.io/gh/googleapis/cloud-trace-nodejs)
+[![codecov](https://img.shields.io/codecov/c/github/googleapis/cloud-trace-nodejs/main.svg?style=flat)](https://codecov.io/gh/googleapis/cloud-trace-nodejs)
 
 
 
@@ -270,8 +270,8 @@ Contributions welcome! See the [Contributing Guide](https://github.com/googleapi
 Please note that this `README.md`, the `samples/README.md`,
 and a variety of configuration files in this repository (including `.nycrc` and `tsconfig.json`)
 are generated from a central template. To edit one of these files, make an edit
-to its template in this
-[directory](https://github.com/googleapis/synthtool/tree/master/synthtool/gcp/templates/node_library).
+to its templates in
+[directory](https://github.com/googleapis/synthtool).
 
 ## License
 
