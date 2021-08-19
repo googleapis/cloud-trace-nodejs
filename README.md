@@ -15,7 +15,7 @@ Node.js Support for StackDriver Trace
 
 
 A comprehensive list of changes in each version may be found in
-[the CHANGELOG](https://github.com/googleapis/cloud-trace-nodejs/blob/master/CHANGELOG.md).
+[the CHANGELOG](https://github.com/googleapis/cloud-trace-nodejs/blob/main/CHANGELOG.md).
 
 * [Stackdriver Trace Node.js Client API Reference][client-docs]
 * [Stackdriver Trace Documentation][product-docs]
@@ -212,12 +212,12 @@ The Trace Agent does not support bundled server code, so bundlers like webpack o
 
 ## Samples
 
-Samples are in the [`samples/`](https://github.com/googleapis/cloud-trace-nodejs/tree/master/samples) directory. Each sample's `README.md` has instructions for running its sample.
+Samples are in the [`samples/`](https://github.com/googleapis/cloud-trace-nodejs/tree/main/samples) directory. Each sample's `README.md` has instructions for running its sample.
 
 | Sample                      | Source Code                       | Try it |
 | --------------------------- | --------------------------------- | ------ |
-| App | [source code](https://github.com/googleapis/cloud-trace-nodejs/blob/master/samples/app.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/cloud-trace-nodejs&page=editor&open_in_editor=samples/app.js,samples/README.md) |
-| Snippets | [source code](https://github.com/googleapis/cloud-trace-nodejs/blob/master/samples/snippets.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/cloud-trace-nodejs&page=editor&open_in_editor=samples/snippets.js,samples/README.md) |
+| App | [source code](https://github.com/googleapis/cloud-trace-nodejs/blob/main/samples/app.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/cloud-trace-nodejs&page=editor&open_in_editor=samples/app.js,samples/README.md) |
+| Snippets | [source code](https://github.com/googleapis/cloud-trace-nodejs/blob/main/samples/snippets.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/cloud-trace-nodejs&page=editor&open_in_editor=samples/snippets.js,samples/README.md) |
 
 
 
@@ -265,7 +265,7 @@ More Information: [Google Cloud Platform Launch Stages][launch_stages]
 
 ## Contributing
 
-Contributions welcome! See the [Contributing Guide](https://github.com/googleapis/cloud-trace-nodejs/blob/master/CONTRIBUTING.md).
+Contributions welcome! See the [Contributing Guide](https://github.com/googleapis/cloud-trace-nodejs/blob/main/CONTRIBUTING.md).
 
 Please note that this `README.md`, the `samples/README.md`,
 and a variety of configuration files in this repository (including `.nycrc` and `tsconfig.json`)
@@ -277,7 +277,7 @@ to its template in this
 
 Apache Version 2.0
 
-See [LICENSE](https://github.com/googleapis/cloud-trace-nodejs/blob/master/LICENSE)
+See [LICENSE](https://github.com/googleapis/cloud-trace-nodejs/blob/main/LICENSE)
 
 [client-docs]: https://googleapis.dev/nodejs/trace/latest/
 [product-docs]: https://cloud.google.com/trace

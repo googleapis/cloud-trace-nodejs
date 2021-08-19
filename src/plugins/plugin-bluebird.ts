@@ -23,7 +23,6 @@ type BluebirdModule = typeof bluebird_3 & {prototype: {_then: Function}};
 const plugin: PluginTypes.Plugin = [
   {
     // Bluebird is a class.
-    // tslint:disable-next-line:variable-name
     patch: (Bluebird, tracer) => {
       // any is a type arg; args are type checked when read directly, otherwise
       // passed through to a function with the same type signature.
@@ -41,7 +40,6 @@ const plugin: PluginTypes.Plugin = [
           ]);
         };
       });
-      // tslint:enable:no-any
     },
   } as PluginTypes.Monkeypatch<BluebirdModule>,
 ];
