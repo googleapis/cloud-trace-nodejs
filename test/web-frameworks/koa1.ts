@@ -32,7 +32,6 @@ export class Koa1 implements WebFramework {
   server: http.Server | null = null;
 
   constructor() {
-    // tslint:disable-next-line:variable-name (Koa is a constructor)
     const Koa = require('../plugins/fixtures/koa1') as typeof koa_1;
     this.app = new Koa();
   }

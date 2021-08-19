@@ -83,7 +83,6 @@ const getTracesForPromiseImplementation = <T>(
 
 describe('Patch plugin for bluebird', () => {
   // BPromise is a class.
-  // tslint:disable-next-line:variable-name
   let BPromise: typeof BluebirdPromise;
 
   before(() => {

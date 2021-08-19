@@ -137,7 +137,6 @@ const plugin: PluginTypes.Plugin = [
     versions: '>=17',
     file: 'lib/request.js',
     // Request is a class name.
-    // tslint:disable-next-line:variable-name
     patch: (Request, api) => {
       // TODO(kjin): shimmer cannot wrap AsyncFunction objects.
       // Once shimmer introduces this functionality, change this code to use it.
@@ -153,7 +152,6 @@ const plugin: PluginTypes.Plugin = [
       );
     },
     // Request is a class name.
-    // tslint:disable-next-line:variable-name
     unpatch: Request => {
       if (Request.prototype._execute[ORIGINAL]) {
         Request.prototype._execute = Request.prototype._execute[ORIGINAL]!;
