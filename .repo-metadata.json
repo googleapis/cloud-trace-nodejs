@@ -2,7 +2,7 @@
   "name": "trace",
   "name_pretty": "Stackdriver Trace",
   "product_documentation": "https://cloud.google.com/trace",
-  "client_documentation": "https://googleapis.dev/nodejs/trace/latest/",
+  "client_documentation": "https://cloud.google.com/nodejs/docs/reference/trace-agent/latest",
   "issue_tracker": "https://issuetracker.google.com/savedsearches/559776",
   "release_level": "beta",
   "language": "nodejs",
