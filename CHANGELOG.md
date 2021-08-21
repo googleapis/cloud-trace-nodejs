@@ -1,5 +1,19 @@
 # Changelog
 
+### [5.1.5](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.4...v5.1.5) (2021-08-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @opencensus/propagation-stackdriver to v0.1.0 ([#1368](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1368)) ([29a0fba](https://www.github.com/googleapis/cloud-trace-nodejs/commit/29a0fbad13e4bd34f1ec6e6d14f9108a80b8ace2))
+
+### [5.1.4](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.3...v5.1.4) (2021-08-19)
+
+
+### Bug Fixes
+
+* **build:** migrate to using main branch ([#1373](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1373)) ([f065f97](https://www.github.com/googleapis/cloud-trace-nodejs/commit/f065f97259da372ca53abca0d06df6a8cc5cd146))
+
 ### [5.1.3](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.2...v5.1.3) (2021-02-09)
 
 
