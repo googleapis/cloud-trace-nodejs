@@ -60,7 +60,6 @@
     "@types/knex": "^0.15.1",
     "@types/methods": "^1.1.0",
     "@types/mocha": "^8.0.0",
-    "@types/mongoose": "^5.3.26",
     "@types/node": "^14.0.0",
     "@types/node-fetch": "^2.5.0",
     "@types/once": "^1.4.0",
