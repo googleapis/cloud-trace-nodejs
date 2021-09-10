@@ -14,9 +14,6 @@
 
 import * as assert from 'assert';
 import {it, before, after, afterEach} from 'mocha';
-// eslint-disable-next-line node/no-extraneous-import
-import * as mongooseTypes from 'mongoose';
-
 import * as traceTestModule from '../trace';
 import {describeInterop} from '../utils';
 
@@ -26,10 +23,11 @@ interface TestDocType {
   f3: number;
 }
 
-describeInterop<typeof mongooseTypes>('mongoose', fixture => {
-  let mongoose: typeof mongooseTypes;
-  // Simple will be treated as a class constructor.
-  let Simple: mongooseTypes.Model<mongooseTypes.Document & TestDocType>;
+describeInterop('mongoose', fixture => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mongoose: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let Simple: any;
 
   /**
    * Common logic used in multiple tests -- inserts an object into the database.
@@ -54,10 +52,7 @@ describeInterop<typeof mongooseTypes>('mongoose', fixture => {
 
     const {Schema} = mongoose;
     const simpleSchema = new Schema({f1: String, f2: Boolean, f3: Number});
-    Simple = mongoose.model<mongooseTypes.Document & TestDocType>(
-      'Simple',
-      simpleSchema
-    );
+    Simple = mongoose.model('Simple', simpleSchema);
   });
 
   after(async () => {

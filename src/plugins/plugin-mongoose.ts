@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// eslint-disable-next-line node/no-extraneous-import
-import * as mongooseTypes from 'mongoose';
 import {PluginTypes} from '..';
 
 const plugin: PluginTypes.Plugin = [
   {
     versions: '4 - 5',
     file: 'lib/query.js',
-    intercept: (Query: typeof mongooseTypes.Query, api) => {
+    intercept: (Query: Function, api) => {
       // Assume that the context desired at Query execution time should be the
       // context where the Query object was constructed. In most (if not all)
       // Mongoose read APIs, both of these appear to happen as part of the same
