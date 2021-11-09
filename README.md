@@ -86,12 +86,6 @@ require('@google-cloud/trace-agent').start({
 // ...
 ```
 
-If you want to use `import`, you will need to do the following to import all required types:
-
-```
-import * from '@google-cloud/trace-agent' as TraceAgent
-```
-
 The object returned by `start()` may be used to create [custom trace spans](#custom-tracing-api):
 
 ```js
