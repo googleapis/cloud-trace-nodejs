@@ -73,6 +73,12 @@ require('@google-cloud/trace-agent').start();
 // ...
 ```
 
+If you want to use `import`, you will need to do the following to import all required types:
+
+```
+import * as TraceAgent from '@google-cloud/trace-agent';
+```
+
 Optionally, you can pass a [configuration object](https://github.com/googleapis/cloud-trace-nodejs/blob/master/src/config.ts) to the `start()` function as follows:
 
 <!-- TODO(kjin): Generate documentation from the public interface of the Trace Agent, and link it here. -->
