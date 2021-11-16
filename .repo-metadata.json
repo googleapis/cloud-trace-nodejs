@@ -1,6 +1,6 @@
 {
   "name": "trace",
-  "name_pretty": "Stackdriver Trace",
+  "name_pretty": "Cloud Trace",
   "product_documentation": "https://cloud.google.com/trace",
   "client_documentation": "https://cloud.google.com/nodejs/docs/reference/trace-agent/latest",
   "issue_tracker": "https://issuetracker.google.com/savedsearches/559776",
@@ -9,5 +9,5 @@
   "repo": "googleapis/cloud-trace-nodejs",
   "distribution_name": "@google-cloud/trace-agent",
   "api_id": "cloudtrace.googleapis.com",
-  "codeowner_team": "@googleapis/api-trace"
+  "codeowner_team": "@googleapis/google-cloud-trace"
 }
