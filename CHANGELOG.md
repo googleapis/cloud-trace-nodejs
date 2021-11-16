@@ -1,5 +1,12 @@
 # Changelog
 
+### [5.1.6](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.5...v5.1.6) (2021-11-16)
+
+
+### Bug Fixes
+
+* Update README partials to mention how to use import ([#1400](https://www.github.com/googleapis/cloud-trace-nodejs/issues/1400)) ([da8741b](https://www.github.com/googleapis/cloud-trace-nodejs/commit/da8741b5168f8134d523fdcf7c83f1627bc4caf6))
+
 ### [5.1.5](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.4...v5.1.5) (2021-08-19)
 
 
