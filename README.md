@@ -2,7 +2,7 @@
 [//]: # "To regenerate it, use `python -m synthtool`."
 <img src="https://avatars2.githubusercontent.com/u/2810941?v=3&s=96" alt="Google Cloud Platform logo" title="Google Cloud Platform" align="right" height="96" width="96"/>
 
-# [Stackdriver Trace: Node.js Client](https://github.com/googleapis/cloud-trace-nodejs)
+# [Cloud Trace: Node.js Client](https://github.com/googleapis/cloud-trace-nodejs)
 
 [![release level](https://img.shields.io/badge/release%20level-beta-yellow.svg?style=flat)](https://cloud.google.com/terms/launch-stages)
 [![npm version](https://img.shields.io/npm/v/@google-cloud/trace-agent.svg)](https://www.npmjs.org/package/@google-cloud/trace-agent)
@@ -17,8 +17,8 @@ Node.js Support for StackDriver Trace
 A comprehensive list of changes in each version may be found in
 [the CHANGELOG](https://github.com/googleapis/cloud-trace-nodejs/blob/main/CHANGELOG.md).
 
-* [Stackdriver Trace Node.js Client API Reference][client-docs]
-* [Stackdriver Trace Documentation][product-docs]
+* [Cloud Trace Node.js Client API Reference][client-docs]
+* [Cloud Trace Documentation][product-docs]
 * [github.com/googleapis/cloud-trace-nodejs](https://github.com/googleapis/cloud-trace-nodejs)
 
 Read more about the client libraries for Cloud APIs, including the older
@@ -43,7 +43,7 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
 ### Before you begin
 
 1.  [Select or create a Cloud Platform project][projects].
-1.  [Enable the Stackdriver Trace API][enable_api].
+1.  [Enable the Cloud Trace API][enable_api].
 1.  [Set up authentication with a service account][auth] so you can access the
     API from your local workstation.
 
@@ -227,7 +227,7 @@ Samples are in the [`samples/`](https://github.com/googleapis/cloud-trace-nodejs
 
 
 
-The [Stackdriver Trace Node.js Client API Reference][client-docs] documentation
+The [Cloud Trace Node.js Client API Reference][client-docs] documentation
 also contains samples.
 
 ## Supported Node.js Versions
