@@ -11,5 +11,5 @@
   "api_id": "cloudtrace.googleapis.com",
   "codeowner_team": "@googleapis/google-cloud-trace",
   "api_shortname": "trace",
-  "library_type": ""
+  "library_type": "AGENT"
 }
