@@ -48,7 +48,7 @@
     "node": ">=10"
   },
   "devDependencies": {
-    "@compodoc/compodoc": "1.1.16",
+    "@compodoc/compodoc": "1.1.18",
     "@google-cloud/datastore": "^6.0.0",
     "@grpc/proto-loader": "^0.6.0",
     "@types/builtin-modules": "^2.0.0",
