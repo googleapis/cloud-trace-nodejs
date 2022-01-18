@@ -4,9 +4,8 @@
 
 # [Cloud Trace: Node.js Client](https://github.com/googleapis/cloud-trace-nodejs)
 
-
+[![release level](https://img.shields.io/badge/release%20level-preview-yellow.svg?style=flat)](https://cloud.google.com/terms/launch-stages)
 [![npm version](https://img.shields.io/npm/v/@google-cloud/trace-agent.svg)](https://www.npmjs.org/package/@google-cloud/trace-agent)
-[![codecov](https://img.shields.io/codecov/c/github/googleapis/cloud-trace-nodejs/main.svg?style=flat)](https://codecov.io/gh/googleapis/cloud-trace-nodejs)
 
 
 
