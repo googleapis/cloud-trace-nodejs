@@ -4,9 +4,8 @@
 
 # [Cloud Trace: Node.js Client](https://github.com/googleapis/cloud-trace-nodejs)
 
-[![release level](https://img.shields.io/badge/release%20level-beta-yellow.svg?style=flat)](https://cloud.google.com/terms/launch-stages)
+[![release level](https://img.shields.io/badge/release%20level-preview-yellow.svg?style=flat)](https://cloud.google.com/terms/launch-stages)
 [![npm version](https://img.shields.io/npm/v/@google-cloud/trace-agent.svg)](https://www.npmjs.org/package/@google-cloud/trace-agent)
-[![codecov](https://img.shields.io/codecov/c/github/googleapis/cloud-trace-nodejs/main.svg?style=flat)](https://codecov.io/gh/googleapis/cloud-trace-nodejs)
 
 
 
@@ -235,21 +234,21 @@ also contains samples.
 Our client libraries follow the [Node.js release schedule](https://nodejs.org/en/about/releases/).
 Libraries are compatible with all current _active_ and _maintenance_ versions of
 Node.js.
+If you are using an end-of-life version of Node.js, we recommend that you update
+as soon as possible to an actively supported LTS version.
+
+Google's client libraries support legacy versions of Node.js runtimes on a
+best-efforts basis with the following warnings:
+
+* Legacy versions are not tested in continuous integration.
+* Some security patches and features cannot be backported.
+* Dependencies cannot be kept up-to-date.
 
 Client libraries targeting some end-of-life versions of Node.js are available, and
-can be installed via npm [dist-tags](https://docs.npmjs.com/cli/dist-tag).
+can be installed through npm [dist-tags](https://docs.npmjs.com/cli/dist-tag).
 The dist-tags follow the naming convention `legacy-(version)`.
-
-_Legacy Node.js versions are supported as a best effort:_
-
-* Legacy versions will not be tested in continuous integration.
-* Some security patches may not be able to be backported.
-* Dependencies will not be kept up-to-date, and features will not be backported.
-
-#### Legacy tags available
-
-* `legacy-8`: install client libraries from this dist-tag for versions
-  compatible with Node.js 8.
+For example, `npm install @google-cloud/trace-agent@legacy-8` installs client libraries
+for versions compatible with Node.js 8.
 
 ## Versioning
 
@@ -257,12 +256,13 @@ This library follows [Semantic Versioning](http://semver.org/).
 
 
 
-This library is considered to be in **beta**. This means it is expected to be
-mostly stable while we work toward a general availability release; however,
-complete stability is not guaranteed. We will address issues and requests
-against beta libraries with a high priority.
 
 
+
+
+This library is considered to be in **preview**. This means it is still a
+work-in-progress and under active development. Any release is subject to
+backwards-incompatible changes at any time.
 
 
 More Information: [Google Cloud Platform Launch Stages][launch_stages]
