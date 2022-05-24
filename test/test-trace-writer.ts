@@ -19,7 +19,7 @@ import {describe, it, before, after, beforeEach, afterEach} from 'mocha';
 import * as nock from 'nock';
 import * as os from 'os';
 import * as path from 'path';
-import {Response} from 'teeny-request'; // Only for type declarations.
+import {CoreOptions, Response} from 'teeny-request'; // Only for type declarations.
 import * as shimmer from 'shimmer';
 
 import {SpanKind, Trace} from '../src/trace';
@@ -329,7 +329,7 @@ describe('Trace Writer', () => {
     // status code returned when Service#request is called.
     // By default, a 200 status code is always returned.
     let overrideRequestResponse: () => Promise<{statusCode: number}>;
-    let capturedRequestOptions: DecorateRequestOptions | null = null;
+    let capturedRequestOptions: DecorateRequestOptions | null;
     // We use this class to mock Service#request. Testing this function is the
     // responsibility of @google-cloud/common.
     // It also allows us to capture arguments upon trace publish.
@@ -407,9 +407,12 @@ describe('Trace Writer', () => {
       await wait(200);
       // Published, so look at capturedRequestOptions
       assert.ok(capturedRequestOptions);
-      assert.ok(typeof capturedRequestOptions!.body === 'string');
-      const capturedRequestBody: string = capturedRequestOptions!
-        .body as string;
+      assert.ok(
+        typeof (capturedRequestOptions! as CoreOptions).body === 'string'
+      );
+      const capturedRequestBody: string = (
+        capturedRequestOptions! as CoreOptions
+      ).body as string;
       const publishedTraces: Trace[] = JSON.parse(capturedRequestBody).traces;
       // We should observe that two traces were published. One has no spans,
       // the other one has NUM_SPANS spans.
@@ -438,9 +441,12 @@ describe('Trace Writer', () => {
         await wait(200);
         // Published, so look at capturedRequestOptions
         assert.ok(capturedRequestOptions);
-        assert.ok(typeof capturedRequestOptions!.body === 'string');
-        const capturedRequestBody: string = capturedRequestOptions!
-          .body as string;
+        assert.ok(
+          typeof (capturedRequestOptions! as CoreOptions).body === 'string'
+        );
+        const capturedRequestBody: string = (
+          capturedRequestOptions! as CoreOptions
+        ).body as string;
         const publishedTraces: Trace[] = JSON.parse(capturedRequestBody).traces;
         assert.strictEqual(publishedTraces.length, 2);
         // Count number of spans. It should be NUM_SPANS.

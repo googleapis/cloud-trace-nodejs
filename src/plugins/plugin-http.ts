@@ -241,8 +241,8 @@ function makeRequestTrace(
           req.setHeader(key, value);
         } catch (e) {
           if (
-            e.code === ERR_HTTP_HEADERS_SENT ||
-            e.message === ERR_HTTP_HEADERS_SENT_MSG
+            (e as NodeJS.ErrnoException).code === ERR_HTTP_HEADERS_SENT ||
+            (e as NodeJS.ErrnoException).message === ERR_HTTP_HEADERS_SENT_MSG
           ) {
             // Swallow the error.
             // This would happen in the pathological case where the Expect

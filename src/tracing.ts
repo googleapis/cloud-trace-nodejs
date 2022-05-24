@@ -119,7 +119,7 @@ export class Tracing implements Component {
     } catch (e) {
       this.logger.error(
         'StackdriverTracer#start: Disabling the Trace Agent for the',
-        `following reason: ${e.message}`
+        `following reason: ${(e as Error).message}`
       );
       this.disable();
       return;

@@ -21,7 +21,7 @@ async function mkdirSafeP(dir: string) {
     await mkdirP(dir);
     return true;
   } catch (e) {
-    if (e.code !== 'EEXIST') {
+    if ((e as NodeJS.ErrnoException).code !== 'EEXIST') {
       throw new Error(`Error creating directory ${dir}`);
     }
     return false;
