@@ -26,6 +26,7 @@ import {
   GoogleAuthOptions,
   Service,
 } from '@google-cloud/common';
+import {GaxiosError} from 'gaxios';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pjson = require('../../package.json');
@@ -227,7 +228,7 @@ export class TraceWriter extends Service {
     try {
       return await gcpMetadata.instance({property: 'hostname', headers});
     } catch (err) {
-      if (err.code !== 'ENOTFOUND') {
+      if ((err as GaxiosError).code !== 'ENOTFOUND') {
         // We are running on GCP.
         this.logger.warn(
           'TraceWriter#getHostname: Encountered an error while',
@@ -243,7 +244,7 @@ export class TraceWriter extends Service {
     try {
       return await gcpMetadata.instance({property: 'id', headers});
     } catch (err) {
-      if (err.code !== 'ENOTFOUND') {
+      if ((err as GaxiosError).code !== 'ENOTFOUND') {
         // We are running on GCP.
         this.logger.warn(
           'TraceWriter#getInstanceId: Encountered an error while',

@@ -91,7 +91,7 @@ describeInterop<Grpc>('grpc', fixture => {
     it('should work with async unary call handlers', async () => {
       const tracer = traceTestModule.get();
       await tracer.runInRootSpan({name: 'client-outer'}, async span => {
-        await new Promise((resolve, reject) =>
+        await new Promise<void>((resolve, reject) =>
           client.TestUnary({n: 0}, err => (err ? reject(err) : resolve()))
         );
         span.endSpan();
@@ -108,7 +108,7 @@ describeInterop<Grpc>('grpc', fixture => {
     it('should work with async client streaming handlers', async () => {
       const tracer = traceTestModule.get();
       await tracer.runInRootSpan({name: 'client-outer'}, async span => {
-        await new Promise((resolve, reject) =>
+        await new Promise<void>((resolve, reject) =>
           client.TestClientStream(err => (err ? reject(err) : resolve())).end()
         );
         span.endSpan();

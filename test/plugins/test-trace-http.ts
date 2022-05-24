@@ -346,7 +346,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       // On the server side, capture the incoming trace context.
       // The values in the captured context should be consistent with those
       // observed on the client side.
-      let serverCapturedTraceContext: TraceContext | null = null;
+      let serverCapturedTraceContext: TraceContext | null;
       server.addHandler({
         path: '/',
         hasResponse: true,
@@ -384,7 +384,7 @@ for (const nodule of Object.keys(servers) as Array<keyof typeof servers>) {
       assert.strictEqual(clientTrace.spans[1].kind, SpanKind.RPC_CLIENT);
       const httpSpan = clientTrace.spans[1];
       // Check that trace context is as expected.
-      assert.ok(serverCapturedTraceContext);
+      assert.ok(serverCapturedTraceContext!);
       assert.strictEqual(
         serverCapturedTraceContext!.traceId,
         clientTrace.traceId

@@ -298,7 +298,6 @@ describe('SpanData', () => {
       // Save the value of capturedTrace, and then clear it, so writeTrace
       // doesn't fail an assertion.
       const firstTrace = capturedTrace!;
-      capturedTrace = null;
       // Now end the second child span. This should trigger another call to
       // writeTrace.
       secondChildSpanData.endSpan();

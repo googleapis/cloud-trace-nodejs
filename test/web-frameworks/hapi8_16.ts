@@ -49,7 +49,7 @@ export class Hapi implements WebFramework {
             try {
               response = await options.fn(request.raw.req.headers);
             } catch (e) {
-              reply(e);
+              reply(e as Error);
               return;
             }
             reply(response.message).statusCode = response.statusCode;
@@ -61,7 +61,7 @@ export class Hapi implements WebFramework {
             try {
               await options.fn(request.raw.req.headers);
             } catch (e) {
-              reply(e);
+              reply(e as Error);
               return;
             }
             reply.continue();
@@ -82,7 +82,7 @@ export class Hapi implements WebFramework {
     this.server.connection({host: 'localhost', port});
     this.queuedHandlers.forEach(fn => fn());
     this.queuedHandlers = [];
-    await new Promise((resolve, reject) =>
+    await new Promise<void>((resolve, reject) =>
       this.server.start(err => {
         if (err) {
           reject(err);

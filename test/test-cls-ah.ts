@@ -166,7 +166,7 @@ describe('AsyncHooks-based CLS', () => {
         description: 'an async function with awaited values',
         fn: async () => {
           await 0;
-          await new Promise(resolve => resolve());
+          await new Promise<void>(resolve => resolve());
           await new Promise(resolve => setImmediate(resolve));
         },
       },
