@@ -281,7 +281,7 @@ describe('SpanData', () => {
       assert.ok(!capturedTrace);
     });
 
-    it.only('if already ended, allows open child spans to publish themselves later', () => {
+    it('if already ended, allows open child spans to publish themselves later', () => {
       const rootSpanData = new RootSpanData(trace, 'root', '0', 0);
       const firstChildSpanData = rootSpanData.createChildSpan({
         name: 'short-child',
