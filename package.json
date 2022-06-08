@@ -82,7 +82,7 @@
     "mocha": "^9.2.2",
     "nock": "^13.0.0",
     "once": "^1.4.0",
-    "retry-axios": "^2.0.0",
+    "retry-axios": "^3.0.0",
     "teeny-request": "^7.0.0",
     "timekeeper": "^2.0.0",
     "tmp": "0.2.1",
