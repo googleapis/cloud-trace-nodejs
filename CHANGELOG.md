@@ -1,5 +1,21 @@
 # Changelog
 
+## [6.0.0](https://github.com/googleapis/cloud-trace-nodejs/compare/v5.1.6...v6.0.0) (2022-06-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* update library to use Node 12 (#1442)
+
+### Bug Fixes
+
+* **deps:** update dependency gcp-metadata to v5 ([#1446](https://github.com/googleapis/cloud-trace-nodejs/issues/1446)) ([2f264d0](https://github.com/googleapis/cloud-trace-nodejs/commit/2f264d08e888db57fba0411b93500f8c952055e5))
+
+
+### Build System
+
+* update library to use Node 12 ([#1442](https://github.com/googleapis/cloud-trace-nodejs/issues/1442)) ([a5fd508](https://github.com/googleapis/cloud-trace-nodejs/commit/a5fd50830af74da261e05b478302d1e5fde1b556))
+
 ### [5.1.6](https://www.github.com/googleapis/cloud-trace-nodejs/compare/v5.1.5...v5.1.6) (2021-11-16)
 
 

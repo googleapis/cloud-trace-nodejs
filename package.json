@@ -1,6 +1,6 @@
 {
   "name": "@google-cloud/trace-agent",
-  "version": "5.1.6",
+  "version": "6.0.0",
   "description": "Node.js Support for StackDriver Trace",
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@compodoc/compodoc": "1.1.18",
-    "@google-cloud/datastore": "^6.0.0",
+    "@google-cloud/datastore": "^7.0.0",
     "@grpc/proto-loader": "^0.6.0",
     "@types/builtin-modules": "^2.0.0",
     "@types/console-log-level": "^1.4.0",
@@ -59,7 +59,7 @@
     "@types/is": "0.0.21",
     "@types/knex": "^0.15.1",
     "@types/methods": "^1.1.0",
-    "@types/mocha": "^8.0.0",
+    "@types/mocha": "^9.0.0",
     "@types/node": "^14.0.0",
     "@types/node-fetch": "^2.5.0",
     "@types/once": "^1.4.0",
