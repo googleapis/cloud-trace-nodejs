@@ -53,15 +53,15 @@ npm install @google-cloud/trace-agent
 ```
 
 
-This module provides automatic tracing for Node.js applications with Stackdriver Trace. [Stackdriver Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
+This module provides automatic tracing for Node.js applications with Cloud Trace. [Cloud Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
 
-<img src="https://raw.githubusercontent.com/googleapis/cloud-trace-nodejs/master/doc/images/cloud-trace-overview-page.png" alt="Stackdriver Trace Overview" />
+<img src="https://raw.githubusercontent.com/googleapis/cloud-trace-nodejs/master/doc/images/cloud-trace-overview-page.png" alt="Cloud Trace Overview" />
 
 ## Usage
 
 The Trace Agent supports Node 8+.
 
-> **Note**: Using the Trace Agent requires a Google Cloud Project with the [Stackdriver Trace API enabled](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) and associated credentials. These values are auto-detected if the application is running on Google Cloud Platform. If your application is not running on GCP, you will need to specify the project ID and credentials either through the configuration object, or with environment variables. See [Setting Up Stackdriver Trace for Node.js][setting-up-stackdriver-trace] for more details.
+> **Note**: Using the Trace Agent requires a Google Cloud Project with the [Cloud Trace API enabled](https://console.cloud.google.com/flows/enableapi?apiid=cloudtrace) and associated credentials. These values are auto-detected if the application is running on Google Cloud Platform. If your application is not running on GCP, you will need to specify the project ID and credentials either through the configuration object, or with environment variables. See [Setting Up Cloud Trace for Node.js][setting-up-stackdriver-trace] for more details.
 
 > **Note**: The Trace Agent does not currently work out-of-the-box with Google Cloud Functions (or Firebase Cloud Functions). See [#725](https://github.com/googleapis/cloud-trace-nodejs/issues/725) for a tracking issue and details on how to work around this.
 
