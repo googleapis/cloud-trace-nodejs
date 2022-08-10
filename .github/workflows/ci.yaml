@@ -16,8 +16,8 @@ jobs:
         image: mongo
         ports:
           - 27017:27017
-      mysql:
-        image: mysql:5
+      mysql2:
+        image: mysql:8
         env:
           MYSQL_ROOT_PASSWORD: Password12!
           MYSQL_DATABASE: test
