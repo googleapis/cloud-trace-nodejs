@@ -10,7 +10,7 @@
 
 
 
-Node.js Support for Cloud Trace (formerly known as Stackdriver Trace)
+Node.js Support for StackDriver Trace
 
 
 A comprehensive list of changes in each version may be found in
