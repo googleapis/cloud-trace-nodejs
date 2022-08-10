@@ -121,7 +121,7 @@ describe('generic-pool3', () => {
       },
 
       destroy: function () {
-        return new Promise(resolve => {
+        return new Promise<void>(resolve => {
           resolve();
         });
       },

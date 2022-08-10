@@ -275,7 +275,6 @@ describe('Trace Interface', () => {
         );
         assert.strictEqual(shouldTraceParam.options, rootSpanOptions);
       }
-      tracePolicy.capturedShouldTraceParam = null;
       // Limited params present
       {
         const rootSpanOptions = {name: 'root'};

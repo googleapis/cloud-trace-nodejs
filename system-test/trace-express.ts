@@ -85,7 +85,7 @@ describe('express + datastore', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let server: any;
-    await new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       server = app.listen(8080, async () => {
         try {
           console.log('server started');

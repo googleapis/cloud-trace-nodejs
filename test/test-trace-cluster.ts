@@ -46,7 +46,7 @@ describe('test-trace-cluster', () => {
 
   it('should not interfere with express span', async () => {
     if (cluster.isMaster) {
-      await new Promise(resolve => {
+      await new Promise<void>(resolve => {
         const worker = cluster.fork();
         worker.on('exit', code => {
           assert.strictEqual(code, 0);
