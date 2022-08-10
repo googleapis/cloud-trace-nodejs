@@ -117,7 +117,7 @@ describe('Continuation-Local Storage', () => {
             setImmediate(() => {
               assert.strictEqual(c.getContext(), 'modified');
               progress();
-            }, 1);
+            });
             setTimeout(() => {
               assert.strictEqual(c.getContext(), 'modified');
               progress();

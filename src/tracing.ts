@@ -170,7 +170,7 @@ export class Tracing implements Component {
     }
 
     // Make trace agent available globally without requiring package
-    global._google_trace_agent = this.traceAgent;
+    (global as any)._google_trace_agent = this.traceAgent;
 
     this.logger.info('StackdriverTracer#start: Trace Agent activated.');
   }
