@@ -48,7 +48,7 @@ function createCreateQueryWrap(api) {
 }
 
 function wrapCallback(api, span, done) {
-  const fn = function (err, res) {
+  const fn = function (err, res, fields) {
     if (api.enhancedDatabaseReportingEnabled()) {
       if (err) {
         span.addLabel('error', err);
@@ -59,7 +59,7 @@ function wrapCallback(api, span, done) {
     }
     span.endSpan();
     if (done) {
-      done(err, res);
+      done(err, res, fields);
     }
   };
   return api.wrap(fn);
