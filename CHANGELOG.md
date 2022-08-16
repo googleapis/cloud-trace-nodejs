@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.1.0](https://github.com/googleapis/cloud-trace-nodejs/compare/v7.0.0...v7.1.0) (2022-08-10)
+
+
+### Features
+
+* **mysql:** update MySQL wrapper to propagate fields. ([#1412](https://github.com/googleapis/cloud-trace-nodejs/issues/1412)) ([1b92362](https://github.com/googleapis/cloud-trace-nodejs/commit/1b92362d9a9b42aca338cb12fe2d6658744c9211))
+
 ## [7.0.0](https://github.com/googleapis/cloud-trace-nodejs/compare/v6.0.0...v7.0.0) (2022-08-10)
 
 
