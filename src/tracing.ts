@@ -170,6 +170,7 @@ export class Tracing implements Component {
     }
 
     // Make trace agent available globally without requiring package
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global as any)._google_trace_agent = this.traceAgent;
 
     this.logger.info('StackdriverTracer#start: Trace Agent activated.');
