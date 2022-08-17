@@ -10,6 +10,6 @@
   "distribution_name": "@google-cloud/trace-agent",
   "api_id": "cloudtrace.googleapis.com",
   "codeowner_team": "@googleapis/google-cloud-trace",
-  "api_shortname": "trace",
+  "api_shortname": "cloudtrace",
   "library_type": "AGENT"
 }
