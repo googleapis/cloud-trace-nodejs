@@ -15,7 +15,7 @@
 import * as assert from 'assert';
 import {describe, it, before, after} from 'mocha';
 import axiosModule from 'axios';
-import * as cluster from 'cluster';
+import * as _cluster from 'cluster';
 import {Server} from 'http';
 import {AddressInfo} from 'net';
 import {express_4 as expressModule} from '../src/plugins/types';
@@ -45,10 +45,10 @@ describe('test-trace-cluster', () => {
   });
 
   it('should not interfere with express span', async () => {
-    if (cluster.isMaster) {
+    if ((_cluster as unknown as _cluster.Cluster).isPrimary) {
       await new Promise<void>(resolve => {
-        const worker = cluster.fork();
-        worker.on('exit', code => {
+        const worker = (_cluster as unknown as _cluster.Cluster).fork();
+        worker.on('exit', (code: unknown) => {
           assert.strictEqual(code, 0);
           console.log('Success!');
           resolve();
@@ -74,7 +74,7 @@ describe('test-trace-cluster', () => {
       recordedTime = Date.now() - recordedTime;
       const serverSpan = testTraceModule.getOneSpan(isServerSpan);
       assertSpanDuration(serverSpan, [DEFAULT_SPAN_DURATION, recordedTime]);
-      cluster.worker.disconnect();
+      (_cluster as unknown as _cluster.Cluster)?.worker?.disconnect();
       server.close();
     }
   });
