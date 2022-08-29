@@ -1,5 +1,15 @@
 # Changelog
 
+## [7.1.1](https://github.com/googleapis/cloud-trace-nodejs/compare/v7.1.0...v7.1.1) (2022-08-29)
+
+
+### Bug Fixes
+
+* **pg:** Return patched promise instead of original ([#1470](https://github.com/googleapis/cloud-trace-nodejs/issues/1470)) ([e79407e](https://github.com/googleapis/cloud-trace-nodejs/commit/e79407e2eae08ac26aa67058b1b2c9db278f2735))
+* **redis:** Apply instrumentation only for Redis <4.0 ([b75f5d8](https://github.com/googleapis/cloud-trace-nodejs/commit/b75f5d81e9454ea90ea5b9c5c7576f809a88ff60))
+* remove pip install statements ([#1546](https://github.com/googleapis/cloud-trace-nodejs/issues/1546)) ([#1468](https://github.com/googleapis/cloud-trace-nodejs/issues/1468)) ([fbcc88c](https://github.com/googleapis/cloud-trace-nodejs/commit/fbcc88c017d9a368e800bb070f33ff52cf4f0b99))
+* Remove unused type arg ([#1467](https://github.com/googleapis/cloud-trace-nodejs/issues/1467)) ([ed422ed](https://github.com/googleapis/cloud-trace-nodejs/commit/ed422edac3de50551eadb791bc993356345d1647))
+
 ## [7.1.0](https://github.com/googleapis/cloud-trace-nodejs/compare/v7.0.0...v7.1.0) (2022-08-10)
 
 
