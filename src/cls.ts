@@ -174,7 +174,7 @@ export class TraceCLS implements CLS<RootContext> {
     return this.currentCLS.bindWithCurrentContext(fn);
   }
 
-  patchEmitterToPropagateContext<T>(ee: EventEmitter): void {
+  patchEmitterToPropagateContext(ee: EventEmitter): void {
     this.currentCLS.patchEmitterToPropagateContext(ee);
   }
 }
