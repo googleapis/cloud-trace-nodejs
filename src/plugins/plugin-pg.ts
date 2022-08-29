@@ -159,7 +159,7 @@ class PostgresPatchUtility {
     promise: Promise<pg_7.QueryResult>,
     span: Span
   ): Promise<pg_7.QueryResult> {
-    return (promise = promise.then(
+    return promise.then(
       res => {
         this.maybePopulateLabelsFromOutputs(span, null, res);
         span.endSpan();
@@ -170,7 +170,7 @@ class PostgresPatchUtility {
         span.endSpan();
         throw err;
       }
-    ));
+    );
   }
 }
 
@@ -288,7 +288,7 @@ const plugin: Plugin = [
               // Unlike in pg 6, the returned value can't be both a Promise and
               // a Submittable. So we don't run the risk of double-patching
               // here.
-              pgPatch.patchPromise(pgQuery, span);
+              pgQuery = pgPatch.patchPromise(pgQuery, span);
             }
           }
           return pgQuery;
