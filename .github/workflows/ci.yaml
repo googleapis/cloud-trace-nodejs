@@ -13,7 +13,7 @@ jobs:
     # Docker containers to run for database RPC tracing integration tests.
     services:
       mongo:
-        image: mongo
+        image: mongo:5
         ports:
           - 27017:27017
       mysql:
