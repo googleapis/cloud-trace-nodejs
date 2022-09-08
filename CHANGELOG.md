@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.1.2](https://github.com/googleapis/cloud-trace-nodejs/compare/v7.1.1...v7.1.2) (2022-09-08)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency uuid to v9 ([#1475](https://github.com/googleapis/cloud-trace-nodejs/issues/1475)) ([d77f2e1](https://github.com/googleapis/cloud-trace-nodejs/commit/d77f2e1cecdf0ab4b4568894a254b8699b81ab80))
+
 ## [7.1.1](https://github.com/googleapis/cloud-trace-nodejs/compare/v7.1.0...v7.1.1) (2022-08-29)
 
 
