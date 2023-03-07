@@ -42,6 +42,9 @@ import {
   Restify6,
   Restify7,
   Restify8,
+  Restify9,
+  Restify10,
+  Restify11,
 } from './web-frameworks/restify';
 
 // The type of a stack trace object after being parsed from a trace span's stack
@@ -70,6 +73,9 @@ const FRAMEWORKS: WebFrameworkConstructor[] = [
   Restify6,
   Restify7,
   Restify8,
+  Restify9,
+  Restify10,
+  Restify11,
 ];
 
 /**

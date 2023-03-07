@@ -91,3 +91,6 @@ export const Restify5 = makeRestifyClass(5);
 export const Restify6 = makeRestifyClass(6);
 export const Restify7 = makeRestifyClass(7);
 export const Restify8 = makeRestifyClass(8);
+export const Restify9 = makeRestifyClass(9);
+export const Restify10 = makeRestifyClass(10);
+export const Restify11 = makeRestifyClass(11);
