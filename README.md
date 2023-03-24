@@ -223,6 +223,7 @@ The Trace Agent does not support bundled server code, so bundlers like webpack o
 [codecov-url]: https://codecov.io/gh/googleapis/cloud-trace-nodejs
 [queuing-problem]: https://github.com/groundwater/nodejs-symposiums/tree/master/2016-02-26-Errors/Round1/UserModeQueuing
 [setting-up-stackdriver-trace]: https://cloud.google.com/trace/docs/setup/nodejs
+[otel]: https://opentelemetry.io/docs/instrumentation/js/libraries/
 
 
 ## Samples
