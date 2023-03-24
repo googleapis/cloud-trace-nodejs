@@ -53,6 +53,16 @@ npm install @google-cloud/trace-agent
 ```
 
 
+> **Warning**
+>
+> `cloud-trace-nodejs` is in maintenance mode. This means that we'll continue to fix bugs
+> add add security patches. We'll consider merging new feature contributions (depending
+> on the anticipated maintenance cost). But we won't develop new features ourselves.
+>
+> In particular, we will not add support for new major versions of libraries.
+>
+> We encourage users to migrate to [OpenTelemetry JS Instrumentation][otel] instead.
+
 This module provides automatic tracing for Node.js applications with Cloud Trace. [Cloud Trace](https://cloud.google.com/cloud-trace/) is a feature of [Google Cloud Platform](https://cloud.google.com/) that collects latency data (traces) from your applications and displays it in near real-time in the [Google Cloud Console][cloud-console].
 
 <img src="https://raw.githubusercontent.com/googleapis/cloud-trace-nodejs/master/doc/images/cloud-trace-overview-page.png" alt="Cloud Trace Overview" />
@@ -213,6 +223,7 @@ The Trace Agent does not support bundled server code, so bundlers like webpack o
 [codecov-url]: https://codecov.io/gh/googleapis/cloud-trace-nodejs
 [queuing-problem]: https://github.com/groundwater/nodejs-symposiums/tree/master/2016-02-26-Errors/Round1/UserModeQueuing
 [setting-up-stackdriver-trace]: https://cloud.google.com/trace/docs/setup/nodejs
+[otel]: https://opentelemetry.io/docs/instrumentation/js/libraries/
 
 
 ## Samples
