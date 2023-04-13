@@ -52,8 +52,7 @@ export class Restify implements WebFramework {
         }
         Promise.resolve()
           .then(() => options.fn(req.headers))
-          .then(() => next())
-          .catch(e => next(e));
+          .then(() => next(), next);
       });
     }
   }
