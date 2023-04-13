@@ -35,31 +35,26 @@ export class Restify implements WebFramework {
       );
     }
     if (options.hasResponse) {
-      this.server.get(options.path, async (req, res, next) => {
-        let response: WebFrameworkResponse;
-        try {
-          response = await options.fn(req.headers);
-        } catch (e) {
-          next(e);
-          return;
-        }
-        res.statusCode = response.statusCode;
-        res.end(response.message);
-        next();
+      this.server.get(options.path, (req, res, next) => {
+        Promise.resolve()
+          .then(() => options.fn(req.headers))
+          .then((response) => {
+            res.statusCode = response.statusCode;
+            res.end(response.message);
+            next();
+          })
+          .catch(e => next(e));
       });
     } else {
-      this.server.use(async (req, res, next) => {
+      this.server.use((req, res, next) => {
         if (req.getPath() !== options.path) {
           next();
           return;
         }
-        try {
-          await options.fn(req.headers);
-        } catch (e) {
-          next(e);
-          return;
-        }
-        next();
+        Promise.resolve()
+          .then(() => options.fn(req.headers))
+          .then(() => next())
+          .catch(e => next(e));
       });
     }
   }
