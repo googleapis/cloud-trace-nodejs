@@ -41,9 +41,8 @@ export class Restify implements WebFramework {
           .then((response) => {
             res.statusCode = response.statusCode;
             res.end(response.message);
-            next();
           })
-          .catch(e => next(e));
+          .then(() => next(), next);
       });
     } else {
       this.server.use((req, res, next) => {
