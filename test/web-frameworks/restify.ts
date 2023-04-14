@@ -14,11 +14,7 @@
 
 import {restify_5} from '../../src/plugins/types';
 
-import {
-  WebFramework,
-  WebFrameworkAddHandlerOptions,
-  WebFrameworkResponse,
-} from './base';
+import {WebFramework, WebFrameworkAddHandlerOptions} from './base';
 
 export class Restify implements WebFramework {
   server: restify_5.Server;
@@ -38,7 +34,7 @@ export class Restify implements WebFramework {
       this.server.get(options.path, (req, res, next) => {
         Promise.resolve()
           .then(() => options.fn(req.headers))
-          .then((response) => {
+          .then(response => {
             res.statusCode = response.statusCode;
             res.end(response.message);
           })
@@ -84,6 +80,6 @@ export const Restify5 = makeRestifyClass(5);
 export const Restify6 = makeRestifyClass(6);
 export const Restify7 = makeRestifyClass(7);
 export const Restify8 = makeRestifyClass(8);
-export const Restify9 = makeRestifyClass(9);
-export const Restify10 = makeRestifyClass(10);
-export const Restify11 = makeRestifyClass(11);
+export const Restify9 = makeRestifyClass(9, '>12');
+export const Restify10 = makeRestifyClass(10, '>12');
+export const Restify11 = makeRestifyClass(11, '>12');
