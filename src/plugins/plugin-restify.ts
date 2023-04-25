@@ -25,7 +25,7 @@ type Response = restify_5.Response;
 type Next = restify_5.Next;
 type CreateServerFn = (options?: restify_5.ServerOptions) => restify_5.Server;
 
-const SUPPORTED_VERSIONS = '<=8.x';
+const SUPPORTED_VERSIONS = '<=11.x';
 
 function unpatchRestify(restify: Restify5) {
   shimmer.unwrap(restify, 'createServer');

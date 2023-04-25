@@ -14,11 +14,7 @@
 
 import {restify_5} from '../../src/plugins/types';
 
-import {
-  WebFramework,
-  WebFrameworkAddHandlerOptions,
-  WebFrameworkResponse,
-} from './base';
+import {WebFramework, WebFrameworkAddHandlerOptions} from './base';
 
 export class Restify implements WebFramework {
   server: restify_5.Server;
@@ -35,31 +31,24 @@ export class Restify implements WebFramework {
       );
     }
     if (options.hasResponse) {
-      this.server.get(options.path, async (req, res, next) => {
-        let response: WebFrameworkResponse;
-        try {
-          response = await options.fn(req.headers);
-        } catch (e) {
-          next(e);
-          return;
-        }
-        res.statusCode = response.statusCode;
-        res.end(response.message);
-        next();
+      this.server.get(options.path, (req, res, next) => {
+        Promise.resolve()
+          .then(() => options.fn(req.headers))
+          .then(response => {
+            res.statusCode = response.statusCode;
+            res.end(response.message);
+          })
+          .then(() => next(), next);
       });
     } else {
-      this.server.use(async (req, res, next) => {
+      this.server.use((req, res, next) => {
         if (req.getPath() !== options.path) {
           next();
           return;
         }
-        try {
-          await options.fn(req.headers);
-        } catch (e) {
-          next(e);
-          return;
-        }
-        next();
+        Promise.resolve()
+          .then(() => options.fn(req.headers))
+          .then(() => next(), next);
       });
     }
   }
@@ -91,3 +80,6 @@ export const Restify5 = makeRestifyClass(5);
 export const Restify6 = makeRestifyClass(6);
 export const Restify7 = makeRestifyClass(7);
 export const Restify8 = makeRestifyClass(8);
+export const Restify9 = makeRestifyClass(9, '>12');
+export const Restify10 = makeRestifyClass(10, '>12');
+export const Restify11 = makeRestifyClass(11, '>12');
