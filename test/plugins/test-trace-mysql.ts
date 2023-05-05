@@ -34,7 +34,7 @@ const agent = require('../../..').start({
 
 const fixtures = ['mysql-2', 'mysql2-1'];
 fixtures.forEach(fixture => {
-  describe.skip('test-trace-' + fixture, () => {
+  describe('test-trace-' + fixture, () => {
     let connection;
     let mysql;
     let pool;

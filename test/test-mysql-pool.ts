@@ -32,7 +32,8 @@ if (semver.satisfies(process.version, '>=4')) {
       Hapi = require('./plugins/fixtures/hapi16');
     });
 
-    it('should work with connection pool access', done => {
+    // flaky - see https://github.com/googleapis/cloud-trace-nodejs/issues/1334
+    it.skip('should work with connection pool access', done => {
       const server = new Hapi.Server();
       server.connection({port: common.serverPort});
       server.register(
