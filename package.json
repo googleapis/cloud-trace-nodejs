@@ -96,7 +96,7 @@
     "console-log-level": "^1.4.0",
     "continuation-local-storage": "^3.2.1",
     "extend": "^3.0.2",
-    "gcp-metadata": "^5.0.0",
+    "gcp-metadata": "^6.0.0",
     "google-auth-library": "^8.0.2",
     "hex2dec": "^1.0.1",
     "is": "^3.2.0",
