@@ -21,7 +21,7 @@ import {CLS, Func} from './base';
  * in the same continuation. Therefore, only one unique value can be stored at
  * a time.
  */
-export class SingularCLS<Context> implements CLS<Context> {
+export class SingularCLS<Context extends {}> implements CLS<Context> {
   private enabled = false;
   private currentContext: Context;
 
