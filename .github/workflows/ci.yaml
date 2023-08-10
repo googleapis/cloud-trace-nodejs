@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 10
+          node-version: 14
       - run: npm install
       - run: npm test
       - name: coverage
@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 12
+          node-version: 14
       - run: npm install
       - run: npm run lint
   docs:
@@ -81,7 +81,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 12
+          node-version: 14
       - run: npm install
       - run: npm run docs-test
   license:
@@ -90,6 +90,6 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 12
+          node-version: 14
       - run: npm install
       - run: npm run license-check
