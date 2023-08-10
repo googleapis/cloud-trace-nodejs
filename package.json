@@ -48,14 +48,14 @@
     "node": ">=14.0.0"
   },
   "devDependencies": {
-    "@compodoc/compodoc": "1.1.21",
+    "@compodoc/compodoc": "1.1.19",
     "@google-cloud/datastore": "^7.0.0",
     "@grpc/proto-loader": "^0.7.0",
     "@types/builtin-modules": "^2.0.0",
     "@types/console-log-level": "^1.4.0",
     "@types/continuation-local-storage": "^3.2.1",
     "@types/extend": "^3.0.0",
-    "@types/glob": "^8.0.0",
+    "@types/glob": "^8.1.0",
     "@types/is": "0.0.22",
     "@types/knex": "^0.15.1",
     "@types/methods": "^1.1.0",
