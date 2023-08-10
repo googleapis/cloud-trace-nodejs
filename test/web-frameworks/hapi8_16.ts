@@ -114,3 +114,5 @@ export const Hapi8 = makeHapiClass(8);
 export const Hapi12 = makeHapiClass(12);
 export const Hapi15 = makeHapiClass(15);
 export const Hapi16 = makeHapiClass(16);
+export const Hapi18 = makeHapiClass(18);
+export const Hapi20 = makeHapiClass(20);
