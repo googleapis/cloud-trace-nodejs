@@ -45,6 +45,10 @@ describe('Web framework tracing', () => {
 
     // Skip this set for incompatible versions of Node
     const skip = !semver.satisfies(process.version, versionRange);
+    console.log('READ THESE LOGS --------------->');
+    console.log(process.version);
+    console.log(versionRange);
+    console.log(skip);
 
     (skip ? describe.skip : describe)(`Tracing ${commonName}`, () => {
       // How this test works:

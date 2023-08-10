@@ -103,7 +103,7 @@ const makeHapiClass = (version: number) =>
   class extends Hapi {
     static commonName = `hapi@${version}`;
     static expectedTopStackFrame = 'handler';
-    static versionRange = '*';
+    static versionRange = '<18';
 
     constructor() {
       super(`../plugins/fixtures/hapi${version}`);
