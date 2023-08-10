@@ -119,5 +119,5 @@ const makeHapiClass = (version: number, nodeVersionRange: string) =>
     }
   };
 
-export const Hapi18 = makeHapiClass(18, '>=7.5|| <18');
+export const Hapi18 = makeHapiClass(18, '>=7.5 && <18');
 export const Hapi19 = makeHapiClass(19, '>=12 && <18');
