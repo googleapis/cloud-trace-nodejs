@@ -19,7 +19,9 @@ node.owlbot_main(templates_excludes=[
   '.eslintignore',
   '.github/workflows/ci.yaml',
   '.nycrc',
-  '.prettierignore'
+  '.prettierignore',
+  '.kokoro/continuous',
+  '.kokoro/presubmit/Node14'
 ])
 
 ### SUPPORT DATABASE PLUGINS ###
