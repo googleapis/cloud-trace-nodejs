@@ -31,7 +31,10 @@ const notNull = <T>(x: T | null | undefined): T => {
 describe('Singleton', () => {
   const logger = new TestLogger();
   class MyClass {
-    constructor(public config: {}, public logger: Logger) {}
+    constructor(
+      public config: {},
+      public logger: Logger
+    ) {}
   }
 
   describe('create', () => {
