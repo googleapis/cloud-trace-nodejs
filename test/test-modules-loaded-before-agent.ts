@@ -30,6 +30,7 @@ describe('modules loaded before agent', () => {
   class CaptureTestLogger extends TestLogger {
     constructor() {
       super();
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       logger = this;
     }
   }

@@ -44,6 +44,7 @@ describe('Trace Writer', () => {
   class CaptureInstanceTestLogger extends TestLogger {
     constructor() {
       super();
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       capturedLogger = this;
     }
   }

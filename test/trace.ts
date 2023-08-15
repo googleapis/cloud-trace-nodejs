@@ -62,6 +62,7 @@ export class TestCLS extends TraceCLS {
 export class TestLogger extends testLogger.TestLogger {
   constructor(options?: Partial<logger.LoggerConfig>) {
     super(options);
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     capturedLogger = this;
   }
 }

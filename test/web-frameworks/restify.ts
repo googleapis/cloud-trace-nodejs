@@ -75,11 +75,11 @@ const makeRestifyClass = (version: number, nodeVersion?: string) =>
   };
 
 export const Restify3 = makeRestifyClass(3, '<7');
-export const Restify4 = makeRestifyClass(4);
-export const Restify5 = makeRestifyClass(5);
-export const Restify6 = makeRestifyClass(6);
-export const Restify7 = makeRestifyClass(7);
-export const Restify8 = makeRestifyClass(8);
-export const Restify9 = makeRestifyClass(9, '>12');
-export const Restify10 = makeRestifyClass(10, '>12');
-export const Restify11 = makeRestifyClass(11, '>12');
+export const Restify4 = makeRestifyClass(4, '<18');
+export const Restify5 = makeRestifyClass(5, '<18');
+export const Restify6 = makeRestifyClass(6, '<18');
+export const Restify7 = makeRestifyClass(7, '<18');
+export const Restify8 = makeRestifyClass(8, '<18');
+export const Restify9 = makeRestifyClass(9, '<18 && >12');
+export const Restify10 = makeRestifyClass(10, '<18 && >12');
+export const Restify11 = makeRestifyClass(11, '<18 && >12');

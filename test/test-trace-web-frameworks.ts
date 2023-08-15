@@ -103,7 +103,6 @@ describe('Web framework tracing', () => {
 
     // Skip this set for incompatible versions of Node
     const skip = !semver.satisfies(process.version, versionRange);
-
     (skip ? describe.skip : describe)(`Tracing ${commonName}`, () => {
       let webFramework: WebFramework;
       let port: number;

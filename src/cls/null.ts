@@ -20,7 +20,7 @@ import {CLS, Func} from './base';
  * A trivial implementation of continuation-local storage where context takes on
  * a default, immutable value.
  */
-export class NullCLS<Context> implements CLS<Context> {
+export class NullCLS<Context extends {}> implements CLS<Context> {
   private enabled = false;
 
   constructor(private readonly defaultContext: Context) {}

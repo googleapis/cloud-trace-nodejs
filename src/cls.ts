@@ -108,7 +108,10 @@ export class TraceCLS implements CLS<RootContext> {
    */
   readonly rootSpanStackOffset: number;
 
-  constructor(config: TraceCLSConfig, private readonly logger: Logger) {
+  constructor(
+    config: TraceCLSConfig,
+    private readonly logger: Logger
+  ) {
     switch (config.mechanism) {
       case TraceCLSMechanism.ASYNC_HOOKS:
         this.CLSClass = AsyncHooksCLS;
