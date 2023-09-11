@@ -228,7 +228,7 @@ The Trace Agent does not support bundled server code, so bundlers like webpack o
 
 ## Samples
 
-Samples are in the [`samples/`](https://github.com/googleapis/cloud-trace-nodejs/tree/main/samples) directory. Each sample's `README.md` has instructions for running its sample.
+Samples are in the [`samples/`](https://github.com/googleapis/cloud-trace-nodejs/tree/main/packages/google-cloud-functions/samples) directory. Each sample's `README.md` has instructions for running its sample.
 
 | Sample                      | Source Code                       | Try it |
 | --------------------------- | --------------------------------- | ------ |
