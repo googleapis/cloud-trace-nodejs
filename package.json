@@ -56,7 +56,7 @@
     "@types/continuation-local-storage": "^3.2.1",
     "@types/extend": "^3.0.0",
     "@types/glob": "^8.1.0",
-    "@types/is": "0.0.22",
+    "@types/is": "0.0.23",
     "@types/knex": "^0.15.1",
     "@types/methods": "^1.1.0",
     "@types/mocha": "^9.0.0",
