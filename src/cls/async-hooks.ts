@@ -192,7 +192,11 @@ export class AsyncHooksCLS<Context extends {}> implements CLS<Context> {
       if (ee[method]) {
         shimmer.wrap(ee, method, oldMethod => {
           return function (this: {}, event: string, cb: Func<void>) {
-            return oldMethod!.call(this, event, that.bindWithCurrentContext(cb));
+            return oldMethod!.call(
+              this,
+              event,
+              that.bindWithCurrentContext(cb)
+            );
           };
         });
       }
