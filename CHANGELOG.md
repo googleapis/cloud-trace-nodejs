@@ -1,5 +1,29 @@
 # Changelog
 
+## [8.0.0](https://github.com/googleapis/cloud-trace-nodejs/compare/v7.1.2...v8.0.0) (2024-02-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* upgrade to Node 14 ([#1517](https://github.com/googleapis/cloud-trace-nodejs/issues/1517))
+
+### Features
+
+* Support restify v9-v11 ([#1489](https://github.com/googleapis/cloud-trace-nodejs/issues/1489)) ([746f30c](https://github.com/googleapis/cloud-trace-nodejs/commit/746f30c084f8e2c9eb9dbaebb017ed3cc30304ca))
+
+
+### Bug Fixes
+
+* Assert oldMethod existence, and pin typescript version ([#1549](https://github.com/googleapis/cloud-trace-nodejs/issues/1549)) ([66a39fa](https://github.com/googleapis/cloud-trace-nodejs/commit/66a39fac603dbd0ab40afa5266236850124cd21b))
+* **deps:** Update dependency require-in-the-middle to v6 ([#1483](https://github.com/googleapis/cloud-trace-nodejs/issues/1483)) ([ddd4bbb](https://github.com/googleapis/cloud-trace-nodejs/commit/ddd4bbb765aaa698ace8ec35ae79331f930a6709))
+* **deps:** Update dependency require-in-the-middle to v7 ([#1494](https://github.com/googleapis/cloud-trace-nodejs/issues/1494)) ([58e7821](https://github.com/googleapis/cloud-trace-nodejs/commit/58e7821ce4abcba934431b9623bfef28c17da959))
+* Skip flaky test ([#1495](https://github.com/googleapis/cloud-trace-nodejs/issues/1495)) ([bb03060](https://github.com/googleapis/cloud-trace-nodejs/commit/bb03060c6cf6e9d80982dda9dbb62aa3704daedf)), closes [#1334](https://github.com/googleapis/cloud-trace-nodejs/issues/1334)
+
+
+### Miscellaneous Chores
+
+* Upgrade to Node 14 ([#1517](https://github.com/googleapis/cloud-trace-nodejs/issues/1517)) ([8b6c967](https://github.com/googleapis/cloud-trace-nodejs/commit/8b6c967a73eb3ce16b1a4471249f4266db32e478))
+
 ## [7.1.2](https://github.com/googleapis/cloud-trace-nodejs/compare/v7.1.1...v7.1.2) (2022-09-08)
 
 
