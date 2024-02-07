@@ -51,9 +51,9 @@ let traceAgent: StackdriverTracer;
 function initConfig(userConfig: Forceable<Config>): TopLevelConfig {
   let envSetConfig = {};
   if (process.env.GCLOUD_TRACE_CONFIG) {
-    envSetConfig = require(path.resolve(
-      process.env.GCLOUD_TRACE_CONFIG!
-    )) as Config;
+    envSetConfig = require(
+      path.resolve(process.env.GCLOUD_TRACE_CONFIG!)
+    ) as Config;
   }
   // Configuration order of precedence:
   // 1. Environment Variables
