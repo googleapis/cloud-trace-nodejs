@@ -216,10 +216,11 @@ describe('SpanData', () => {
 
       for (const sourceMapType of sourceMapTypes) {
         it(`uses source maps when available in stack traces: ${sourceMapType}`, () => {
-          const {applyGeneric} =
-            require(`./fixtures/source-maps-test/${sourceMapType}`) as {
-              applyGeneric: <T>(fn: () => T) => T;
-            };
+          const {applyGeneric} = require(
+            `./fixtures/source-maps-test/${sourceMapType}`
+          ) as {
+            applyGeneric: <T>(fn: () => T) => T;
+          };
           const spanData = applyGeneric(
             () => new CommonSpanData(trace, 'name', '0', 0)
           );
