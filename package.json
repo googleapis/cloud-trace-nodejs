@@ -85,7 +85,7 @@
     "retry-axios": "^2.0.0",
     "teeny-request": "^9.0.0",
     "timekeeper": "^2.0.0",
-    "tmp": "0.2.2",
+    "tmp": "0.2.3",
     "ts-node": "^10.7.0",
     "typescript": "5.1.6"
   },
