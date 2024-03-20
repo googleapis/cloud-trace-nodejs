@@ -51,7 +51,7 @@
     "@compodoc/compodoc": "1.1.19",
     "@google-cloud/datastore": "^8.0.0",
     "@grpc/proto-loader": "^0.7.0",
-    "@types/builtin-modules": "^2.0.0",
+    "@types/builtin-modules": "^3.0.0",
     "@types/console-log-level": "^1.4.0",
     "@types/continuation-local-storage": "^3.2.1",
     "@types/extend": "^3.0.0",
