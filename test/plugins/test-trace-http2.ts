@@ -81,7 +81,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
     });
 
     it('should patch the necessary functions', () => {
-      assert.strictEqual(http2.connect['__wrapped'], true);
+      assert.strictEqual((http2 as any).connect['__wrapped'], true);
     });
 
     it('should accurately measure request time', done => {
