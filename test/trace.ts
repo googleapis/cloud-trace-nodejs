@@ -120,7 +120,7 @@ export function get(): PluginTypes.Tracer {
 }
 
 export function setLoggerForTest(impl?: typeof logger.Logger) {
-  if (logger.Logger.__wrapped) {
+  if ((logger.Logger as any).__wrapped) {
     shimmer.unwrap(logger, 'Logger');
   }
   if (impl) {
