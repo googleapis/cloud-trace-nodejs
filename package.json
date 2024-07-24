@@ -57,7 +57,7 @@
     "@types/extend": "^3.0.0",
     "@types/glob": "^8.1.0",
     "@types/is": "0.0.25",
-    "@types/knex": "^0.15.1",
+    "@types/knex": "^0.16.0",
     "@types/methods": "^1.1.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^20.4.9",
