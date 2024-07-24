@@ -87,6 +87,6 @@ async function run(steps: string[]) {
 
 run(steps).catch(err => {
   console.error(err);
-  // eslint-disable-next-line no-process-exit
+  // eslint-disable-next-line n/no-process-exit
   process.exit(1);
 });

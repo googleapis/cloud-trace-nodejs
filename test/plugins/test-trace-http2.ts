@@ -16,7 +16,7 @@ import * as assert from 'assert';
 import {describe, it, after, afterEach, before} from 'mocha';
 // This is imported only for types. Generated .js file should NOT load 'http2'
 // in this place. It is dynamically loaded later from each test suite below.
-// eslint-disable-next-line node/no-unsupported-features/node-builtins
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import * as http2Types from 'http2';
 import * as semver from 'semver';
 import * as stream from 'stream';
@@ -46,7 +46,7 @@ maybeSkipHttp2('Trace Agent integration with http2', () => {
     traceTestModule.setPluginLoaderForTest();
     traceTestModule.setCLSForTest();
     traceTestModule.start();
-    // eslint-disable-next-line node/no-unsupported-features/node-builtins
+    // eslint-disable-next-line n/no-unsupported-features/node-builtins
     http2 = require('http2');
   });
 

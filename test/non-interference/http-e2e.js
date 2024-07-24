@@ -44,7 +44,7 @@ const testCommonPath = [
 });
 if (!testCommonPath) {
   console.error('No common.js or common/index.js found in test directory');
-  // eslint-disable-next-line no-process-exit
+  // eslint-disable-next-line n/no-process-exit
   process.exit(1);
 }
 cp.execFileSync('sed', [

@@ -14,7 +14,7 @@
 
 import {ServerResponse} from 'http';
 import * as shimmer from 'shimmer';
-// eslint-disable-next-line node/no-deprecated-api
+// eslint-disable-next-line n/no-deprecated-api
 import {parse as urlParse} from 'url';
 
 import {PluginTypes} from '..';

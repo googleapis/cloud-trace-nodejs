@@ -152,7 +152,7 @@ export class TraceWriter extends Service {
         this.flushBuffer();
         if (onUncaughtException === 'flushAndExit') {
           setTimeout(() => {
-            // eslint-disable-next-line no-process-exit
+            // eslint-disable-next-line n/no-process-exit
             process.exit(1);
           }, 2000);
         }
