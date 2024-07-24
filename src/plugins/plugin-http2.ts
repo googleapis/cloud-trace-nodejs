@@ -15,7 +15,7 @@
 
 // This is imported only for types. Generated .js file should NOT load 'http2'.
 // `http2` must be used only in type annotations, not in expressions.
-// eslint-disable-next-line node/no-unsupported-features/node-builtins
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import * as http2 from 'http2';
 import * as shimmer from 'shimmer';
 import {URL} from 'url';

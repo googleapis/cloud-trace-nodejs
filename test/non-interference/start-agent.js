@@ -15,7 +15,7 @@
 'use strict';
 
 const shimmer = require('shimmer');
-// eslint-disable-next-line node/no-missing-require
+// eslint-disable-next-line n/no-missing-require
 const util = require('../../build/src/util.js');
 // Stub generateTraceContext so that it always returns the same thing.
 // This is because web framework unit tests check that similar/identical
@@ -29,7 +29,7 @@ shimmer.wrap(util, 'generateTraceContext', () => {
     return 'ffeeddccbbaa99887766554433221100/0?o=1';
   };
 });
-// eslint-disable-next-line node/no-missing-require
+// eslint-disable-next-line n/no-missing-require
 require('../..').start({
   projectId: '0',
   logLevel: 1,
