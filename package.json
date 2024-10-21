@@ -21,7 +21,7 @@
     "license-check": "jsgl --local .",
     "predocs-test": "npm run docs",
     "docs-test": "linkinator docs/",
-    "docs": "compodoc src/",
+    "docs": "jsdoc -c .jsdoc.js",
     "presamples-test": "npm run compile",
     "samples-test": "cd samples/ && npm link ../ && npm install && npm test && cd ../",
     "prelint": "cd samples; npm link ../; npm i"
@@ -48,7 +48,6 @@
     "node": ">=14.0.0"
   },
   "devDependencies": {
-    "@compodoc/compodoc": "1.1.19",
     "@google-cloud/datastore": "^8.0.0",
     "@grpc/proto-loader": "^0.7.0",
     "@types/builtin-modules": "^2.0.0",
@@ -78,6 +77,9 @@
     "grpc": "1.24.11",
     "gts": "^5.0.0",
     "js-green-licenses": "^4.0.0",
+    "jsdoc": "^4.0.0",
+    "jsdoc-fresh": "^3.0.0",
+    "jsdoc-region-tag": "^3.0.0",
     "linkinator": "^2.0.0",
     "mocha": "^9.2.2",
     "nock": "^13.0.0",
