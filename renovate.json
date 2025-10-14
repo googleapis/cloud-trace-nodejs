@@ -4,6 +4,7 @@
     "docker:disable",
     ":disableDependencyDashboard"
   ],
+  "constraintsFiltering": "strict",
   "pinVersions": false,
   "rebaseStalePrs": true,
   "schedule": [
@@ -14,6 +15,10 @@
     {
       "extends": "packages:linters",
       "groupName": "linters"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "enabled": false
     }
   ],
   "ignoreDeps": ["typescript"]
