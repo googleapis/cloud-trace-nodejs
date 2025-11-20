@@ -20,6 +20,7 @@ node.owlbot_main(templates_excludes=[
   '.github/workflows/ci.yaml',
   '.nycrc',
   '.prettierignore',
+  'README.md'
 ])
 
 ### SUPPORT DATABASE PLUGINS ###
