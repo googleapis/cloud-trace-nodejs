@@ -2,6 +2,9 @@
 [//]: # "To regenerate it, use `python -m synthtool`."
 <img src="https://avatars2.githubusercontent.com/u/2810941?v=3&s=96" alt="Google Cloud Platform logo" title="Google Cloud Platform" align="right" height="96" width="96"/>
 
+**_THIS REPOSITORY IS DEPRECATED We encourage users to migrate to [OpenTelemetry JS Instrumentation][otel] instead._**
+
+
 # [Cloud Trace: Node.js Client](https://github.com/googleapis/cloud-trace-nodejs)
 
 [![release level](https://img.shields.io/badge/release%20level-preview-yellow.svg?style=flat)](https://cloud.google.com/terms/launch-stages)
