@@ -59,7 +59,7 @@
     "@types/is": "0.0.25",
     "@types/knex": "^0.15.1",
     "@types/methods": "^1.1.0",
-    "@types/mocha": "^9.0.0",
+    "@types/mocha": "^10.0.0",
     "@types/node": "^20.4.9",
     "@types/node-fetch": "^2.5.0",
     "@types/once": "^1.4.0",
