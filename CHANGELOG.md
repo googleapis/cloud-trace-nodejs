@@ -1,5 +1,15 @@
 # Changelog
 
+## [8.0.1](https://github.com/googleapis/cloud-trace-nodejs/compare/v8.0.0...v8.0.1) (2025-11-21)
+
+
+### Bug Fixes
+
+* Migrate eslint ignores ([78fde86](https://github.com/googleapis/cloud-trace-nodejs/commit/78fde86c157b2655dd6ac43a0427a666b8990f7c))
+* **test:** Disable codecov ([b6f9a4e](https://github.com/googleapis/cloud-trace-nodejs/commit/b6f9a4e58b72623bf8559d8f89ff0ac32a9a92ee))
+* **tests:** Delete flaky test ([7bcb4d5](https://github.com/googleapis/cloud-trace-nodejs/commit/7bcb4d54d8cfd273d11f2c536af00093a6213910))
+* **tests:** Work around type check failures ([f45952f](https://github.com/googleapis/cloud-trace-nodejs/commit/f45952fedacacb2741ede26a0143d64c17dc02d8))
+
 ## [8.0.0](https://github.com/googleapis/cloud-trace-nodejs/compare/v7.1.2...v8.0.0) (2024-02-07)
 
 
